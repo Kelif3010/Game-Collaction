@@ -34,9 +34,9 @@ struct SettingsRow: View {
                     .foregroundStyle(.white)
                     .font(.headline)
                 
-                // ÄNDERUNG: Detailtext hier nur anzeigen, wenn es NICHT die Gruppen-Zeile ist.
-                // Dadurch verschwindet die Zahl unter "Gruppen", bleibt aber rechts erhalten.
-                if let detail, !detail.isEmpty, rowType != .groups {
+                // ÄNDERUNG: Detailtext hier ausblenden, wenn es Gruppen ODER Kategorien sind.
+                // Dadurch steht der Text nur noch auf der rechten Seite.
+                if let detail, !detail.isEmpty, rowType != .groups, rowType != .categories {
                     Text(detail)
                         .foregroundStyle(Theme.mutedText)
                         .font(.subheadline)
@@ -50,7 +50,7 @@ struct SettingsRow: View {
                     .labelsHidden()
             default:
                 HStack(spacing: 6) {
-                    // Hier wird das Detail (die Zahl) am rechten Rand angezeigt
+                    // Hier wird das Detail für Gruppen und Kategorien angezeigt (rechts)
                     if let detail, !detail.isEmpty {
                         Text(detail)
                             .foregroundStyle(Theme.mutedText)

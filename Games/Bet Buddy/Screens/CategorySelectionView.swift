@@ -22,7 +22,8 @@ struct CategorySelectionView: View {
                     }
 
                     VStack(spacing: 12) {
-                        ForEach(CategoryType.allCases) { category in
+                        // ÄNDERUNG: Hier filtern wir .deep heraus, damit es nicht in der Liste erscheint.
+                        ForEach(CategoryType.allCases.filter { $0 != .deep }) { category in
                             CategoryRowView(
                                 category: category,
                                 isSelected: appModel.selectedCategories.contains(category)
@@ -41,8 +42,6 @@ struct CategorySelectionView: View {
                         title: "Fertig",
                         action: {
                             HapticsService.impact(.medium)
-                            // VORHER (mein letzter Tipp): dismiss()
-                            // JETZT WIEDER:
                             onContinue()
                         },
                         isDisabled: appModel.selectedCategories.isEmpty

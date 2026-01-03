@@ -12,6 +12,9 @@ struct HomeView: View {
 
     @State private var showTimerSheet = false
     @State private var showPenaltySheet = false
+    
+    // NEU: State für das Info-Sheet
+    @State private var showInfoSheet = false
 
     var body: some View {
         ZStack {
@@ -130,12 +133,15 @@ struct HomeView: View {
         .sheet(isPresented: $showPenaltySheet) {
             penaltySheet
         }
+        // NEU: Das Info-Sheet einbinden
+        .sheet(isPresented: $showInfoSheet) {
+            BetBuddyInfoSheet()
+        }
     }
 
     private var topBar: some View {
         HStack {
             Button {
-                // 2. Hier rufen wir dismiss() auf, um zum Hauptmenü zurückzukehren
                 dismiss()
             } label: {
                 Image(systemName: "chevron.left")
@@ -147,6 +153,19 @@ struct HomeView: View {
             }
 
             Spacer()
+            
+            // NEU: Der Info-Button (Fragezeichen)
+            Button {
+                HapticsService.impact(.light)
+                showInfoSheet = true
+            } label: {
+                Image(systemName: "questionmark")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Circle())
+            }
         }
     }
 

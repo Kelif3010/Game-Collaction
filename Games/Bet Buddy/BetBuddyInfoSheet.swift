@@ -1,3 +1,11 @@
+//
+//  BetBuddyInfoSheet.swift
+//  Games Collection
+//
+//  Created by Ken  on 03.01.26.
+//
+
+
 import SwiftUI
 
 struct BetBuddyInfoSheet: View {
