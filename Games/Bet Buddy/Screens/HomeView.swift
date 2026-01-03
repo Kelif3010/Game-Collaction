@@ -2,8 +2,6 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var appModel: AppViewModel
-    
-    // 1. Hier holen wir uns die Funktion zum Schließen der Ansicht
     @Environment(\.dismiss) private var dismiss
     
     var onSelectGroups: () -> Void
@@ -12,9 +10,15 @@ struct HomeView: View {
 
     @State private var showTimerSheet = false
     @State private var showPenaltySheet = false
-    
-    // NEU: State für das Info-Sheet
     @State private var showInfoSheet = false
+    @State private var showLeaderboardSheet = false
+    
+    // Dauerhafter Speicher (User hat es schon mal gesehen)
+    @AppStorage("hasSeenBetBuddyOnboarding") private var hasSeenOnboarding: Bool = false
+    
+    // Lokaler State: Haben wir in DIESER Session schon geprüft?
+    // Verhindert das Aufpoppen beim Zurücknavigieren.
+    @State private var checkPerformed = false
 
     var body: some View {
         ZStack {
@@ -35,7 +39,8 @@ struct HomeView: View {
                     SettingsRow(
                         icon: "brain.head.profile",
                         title: "Kategorien",
-                        detail: appModel.selectedCategoriesDisplay.isEmpty ? "Keine" : appModel.selectedCategoriesDisplay,
+                        // Hier wird jetzt automatisch "Mix" angezeigt (durch ViewModel Logik)
+                        detail: appModel.selectedCategoriesDisplay,
                         rowType: .categories,
                         onTap: onSelectCategories
                     )
@@ -114,8 +119,6 @@ struct HomeView: View {
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
 
-            
-
                 Spacer()
 
                 PrimaryButton(title: "Spiel starten") {
@@ -127,15 +130,25 @@ struct HomeView: View {
             .padding(Theme.padding)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showTimerSheet) {
-            timerSheet
-        }
-        .sheet(isPresented: $showPenaltySheet) {
-            penaltySheet
-        }
-        // NEU: Das Info-Sheet einbinden
+        .sheet(isPresented: $showTimerSheet) { timerSheet }
+        .sheet(isPresented: $showPenaltySheet) { penaltySheet }
         .sheet(isPresented: $showInfoSheet) {
             BetBuddyInfoSheet()
+        }
+        .sheet(isPresented: $showLeaderboardSheet) {
+            BetBuddyLeaderboardView()
+        }
+        // FIX: Nur einmal prüfen!
+        .onAppear {
+            if !checkPerformed {
+                checkPerformed = true
+                if !hasSeenOnboarding {
+                    // Kleine Verzögerung für schönere UX beim Start
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showInfoSheet = true
+                    }
+                }
+            }
         }
     }
 
@@ -154,7 +167,19 @@ struct HomeView: View {
 
             Spacer()
             
-            // NEU: Der Info-Button (Fragezeichen)
+            Button {
+                HapticsService.impact(.light)
+                showLeaderboardSheet = true
+            } label: {
+                Image(systemName: "trophy.fill")
+                    .font(.headline)
+                    .foregroundStyle(.yellow)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Circle())
+            }
+            .padding(.trailing, 8)
+            
             Button {
                 HapticsService.impact(.light)
                 showInfoSheet = true

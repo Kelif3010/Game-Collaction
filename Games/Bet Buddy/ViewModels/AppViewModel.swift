@@ -1,6 +1,33 @@
 import SwiftUI
 import Combine
 
+// MARK: - Highlights & Statistik (Persistent)
+
+struct HighlightRecord: Codable, Identifiable {
+    var id: String { teamName } // Für ForEach
+    let teamName: String
+    var value: Int // Punkte, Anzahl oder Zeit
+    let colorHex: String
+}
+
+struct GameHighlights: Codable {
+    var maxWin: HighlightRecord?
+    var maxLoss: HighlightRecord?
+    var currentStreak: HighlightRecord?
+    var bestStreak: HighlightRecord?
+    var fastestWin: HighlightRecord?
+    
+    var totalWins: [String: Int] = [:]
+    
+    // NEU: Die ewige Punktetabelle (Name -> Datensatz)
+    var allTimeScores: [String: HighlightRecord] = [:]
+    
+    var mostWinsLeader: HighlightRecord? {
+        guard let max = totalWins.max(by: { $0.value < $1.value }) else { return nil }
+        return HighlightRecord(teamName: max.key, value: max.value, colorHex: "#FFD700")
+    }
+}
+
 @MainActor
 final class AppViewModel: ObservableObject {
     struct VoteEntry: Equatable {
@@ -8,6 +35,7 @@ final class AppViewModel: ObservableObject {
         let amount: Int
     }
 
+    // MARK: - Properties
     @Published var selectedGroupCount: Int {
         didSet { syncGroups(to: selectedGroupCount) }
     }
@@ -17,17 +45,23 @@ final class AppViewModel: ObservableObject {
         didSet { refreshChallenge() }
     }
     @Published private(set) var currentChallenge: Challenge
+    
     @Published var timerSelection: Int
     @Published var isTimerEnabled: Bool
     @Published var isHintsEnabled: Bool = false
     @Published var isPartyMode: Bool = false
     @Published var isPenaltyEnabled: Bool = false
+    @Published var penaltyLevel: PenaltyLevel = .normal
+
     @Published var timerRemaining: Int = 0
     @Published var votesLocked: Bool = false
     @Published var voteCounters: [UUID: Int] = [:]
     @Published private(set) var voteHistory: [VoteEntry] = []
+    
+    // Session Scores (nur für das aktuelle Spiel / ResultView)
     @Published private(set) var scores: [UUID: Int] = [:]
-    @Published var penaltyLevel: PenaltyLevel = .normal
+    
+    @Published var highlights = GameHighlights()
 
     private var playedChallengeIDs: Set<UUID> = []
     let timerOptions: [Int] = [15, 30, 45, 60, 90, 120, 180]
@@ -35,7 +69,10 @@ final class AppViewModel: ObservableObject {
     private let challengeService = ChallengeService()
     private var nameStore = GroupNamePersistence()
     private var timer: Timer?
+    
+    private let statsStorageKey = "BetBuddy_GlobalStats_V1"
 
+    // MARK: - Init
     init() {
         let initialGroupCount = 2
         let initialCategories: Set<CategoryType> = [.classic]
@@ -65,14 +102,21 @@ final class AppViewModel: ObservableObject {
         voteCounters = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
         voteHistory = []
         scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
+        
+        loadStats()
     }
 
     var activeGroups: [GroupInfo] { Array(groups.prefix(selectedGroupCount)) }
     
+    // FIX: Zeigt "Mix" an, wenn mehr als 1 Kategorie gewählt ist
     var selectedCategoriesDisplay: String {
-        selectedCategories.map { $0.title }.sorted().joined(separator: ", ")
+        if selectedCategories.count > 1 {
+            return "Mix"
+        }
+        return selectedCategories.first?.title ?? "Keine"
     }
 
+    // Für ResultView (Session based)
     var leaderboard: [LeaderboardEntry] {
         activeGroups
             .map { group in
@@ -87,6 +131,13 @@ final class AppViewModel: ObservableObject {
                 lhs.score == rhs.score ? lhs.name < rhs.name : lhs.score > rhs.score
             }
     }
+    
+    // NEU: Für Home-Rangliste (All Time / Name based)
+    var allTimeLeaderboard: [HighlightRecord] {
+        highlights.allTimeScores.values.sorted { $0.value > $1.value }
+    }
+
+    // MARK: - Methods
 
     func setGroupCount(_ count: Int) {
         selectedGroupCount = max(2, min(count, GroupColor.allCases.count))
@@ -110,7 +161,6 @@ final class AppViewModel: ObservableObject {
         if result.didReset {
             playedChallengeIDs.removeAll()
             playedChallengeIDs.insert(result.challenge.id)
-            print("Alle Fragen durchgespielt! Zyklus startet neu.")
         } else {
             playedChallengeIDs.insert(result.challenge.id)
         }
@@ -123,6 +173,20 @@ final class AppViewModel: ObservableObject {
         stopTimer()
         voteHistory = []
     }
+    
+    // Setzt nur die Session zurück (Punkte auf 0), behält aber die ewige Statistik
+    func resetSessionScores() {
+        resetVotes()
+        scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
+        playedChallengeIDs.removeAll()
+        refreshChallenge()
+    }
+    
+    // Löscht die komplette "Hall of Fame" und ewige Rangliste
+    func resetGlobalStats() {
+        highlights = GameHighlights()
+        saveStats()
+    }
 
     func toggleCategory(_ category: CategoryType) {
         if selectedCategories.contains(category) {
@@ -134,17 +198,135 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    func awardScore(to group: GroupInfo, amount: Int) {
+    // MARK: - Scoring & Persistence
+
+    private func saveStats() {
+        if let data = try? JSONEncoder().encode(highlights) {
+            UserDefaults.standard.set(data, forKey: statsStorageKey)
+        }
+    }
+    
+    private func loadStats() {
+        if let data = UserDefaults.standard.data(forKey: statsStorageKey),
+           let decoded = try? JSONDecoder().decode(GameHighlights.self, from: data) {
+            highlights = decoded
+        } else {
+            highlights = GameHighlights()
+        }
+    }
+    
+    private func getHex(for color: GroupColor) -> String {
+        switch color {
+        case .red: return "#FF3B30"
+        case .blue: return "#007AFF"
+        case .green: return "#34C759"
+        case .yellow: return "#FFCC00"
+        case .purple: return "#AF52DE"
+        case .orange: return "#FF9500"
+        case .pink: return "#FF2D55"
+        case .teal: return "#30B0C7"
+        }
+    }
+
+    func awardScore(to group: GroupInfo, amount: Int, timeRemaining: Int? = nil) {
         guard amount > 0 else { return }
+        
+        // 1. Session Score aktualisieren (UUID basiert)
         scores[group.id, default: 0] += amount
+        
+        let name = group.displayName
+        let colorHex = getHex(for: group.color)
+        
+        // 2. Ewige Tabelle aktualisieren (Namens-basiert)
+        // Wenn der Name existiert, addiere Punkte. Wenn nicht, erstelle neu.
+        if var existing = highlights.allTimeScores[name] {
+            existing.value += amount
+            highlights.allTimeScores[name] = existing
+        } else {
+            highlights.allTimeScores[name] = HighlightRecord(teamName: name, value: amount, colorHex: colorHex)
+        }
+        
+        // 3. Highlights prüfen
+        if let currentMax = highlights.maxWin {
+            if amount > currentMax.value {
+                highlights.maxWin = HighlightRecord(teamName: name, value: amount, colorHex: colorHex)
+            }
+        } else {
+            highlights.maxWin = HighlightRecord(teamName: name, value: amount, colorHex: colorHex)
+        }
+        
+        highlights.totalWins[name, default: 0] += 1
+        
+        if let time = timeRemaining, isTimerEnabled {
+            if let currentFastest = highlights.fastestWin {
+                if time > currentFastest.value {
+                    highlights.fastestWin = HighlightRecord(teamName: name, value: time, colorHex: colorHex)
+                }
+            } else {
+                highlights.fastestWin = HighlightRecord(teamName: name, value: time, colorHex: colorHex)
+            }
+        }
+        saveStats()
     }
 
     func deductScore(for group: GroupInfo, amount: Int) {
         guard amount > 0 else { return }
+        
+        // 1. Session Score (nicht unter 0)
         let current = scores[group.id, default: 0]
         scores[group.id] = max(0, current - amount)
+        
+        let name = group.displayName
+        let colorHex = getHex(for: group.color)
+        
+        // 2. Ewige Tabelle: Punkte abziehen (hier erlauben wir auch negative Werte im All-Time, oder stoppen bei 0?)
+        // Üblicherweise zählt eine Rangliste eher Erfolge. Wenn du Abzüge auch langzeit willst:
+        /*
+        if var existing = highlights.allTimeScores[name] {
+            existing.value = max(0, existing.value - amount) // Nicht unter 0
+            highlights.allTimeScores[name] = existing
+        }
+        */
+        
+        // 3. Highlights (Pechvogel)
+        if let currentMax = highlights.maxLoss {
+            if amount > currentMax.value {
+                highlights.maxLoss = HighlightRecord(teamName: name, value: amount, colorHex: colorHex)
+            }
+        } else {
+            highlights.maxLoss = HighlightRecord(teamName: name, value: amount, colorHex: colorHex)
+        }
+        saveStats()
+    }
+    
+    func updatePlayStreak(for groupId: UUID) {
+        guard let group = groups.first(where: { $0.id == groupId }) else { return }
+        let name = group.displayName
+        let colorHex = getHex(for: group.color)
+        
+        if var current = highlights.currentStreak {
+            if current.teamName == name {
+                current.value += 1
+                highlights.currentStreak = current
+            } else {
+                highlights.currentStreak = HighlightRecord(teamName: name, value: 1, colorHex: colorHex)
+            }
+        } else {
+            highlights.currentStreak = HighlightRecord(teamName: name, value: 1, colorHex: colorHex)
+        }
+        
+        if let current = highlights.currentStreak,
+           let best = highlights.bestStreak {
+            if current.value > best.value {
+                highlights.bestStreak = current
+            }
+        } else if let current = highlights.currentStreak {
+            highlights.bestStreak = current
+        }
+        saveStats()
     }
 
+    // MARK: - Voting & Timer (Unverändert)
     func incrementVote(for group: GroupInfo) {
         guard !votesLocked else { return }
         let current = voteCounters[group.id, default: 0]
@@ -177,7 +359,6 @@ final class AppViewModel: ObservableObject {
         stopTimer()
         guard timerSelection > 0 else { return }
         
-        // FIX: MainActor Isolation
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -213,7 +394,6 @@ final class AppViewModel: ObservableObject {
                 updated.append(GroupInfo(color: color, customName: name))
             }
         }
-
         groups = updated
         resetVotes()
         syncScores()

@@ -52,6 +52,8 @@ struct GroupSelectionView: View {
                 }
                 .padding(Theme.padding)
             }
+            // NEU: Keyboard beim Scrollen ausblenden
+            .scrollDismissesKeyboard(.interactively)
         }
         .toolbar(.hidden, for: .navigationBar)
     }

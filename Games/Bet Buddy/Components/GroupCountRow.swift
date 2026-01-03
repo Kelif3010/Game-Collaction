@@ -21,6 +21,9 @@ struct GroupCountRow: View {
                     Text("\(count) Gruppen")
                         .foregroundStyle(.white)
                         .font(.headline)
+                    Text("je 2 Spieler")
+                        .foregroundStyle(Theme.mutedText)
+                        .font(.caption)
                 }
 
                 Spacer()
@@ -40,4 +43,3 @@ struct GroupCountRow: View {
         }
     }
 }
-

@@ -8,8 +8,11 @@ struct BetBuddyVotingView: View {
     var onConfirm: () -> Void
 
     @State private var didNavigateToGame = false
+    
+    // NEU: State für den Alert
+    @State private var showExitAlert = false
 
-    // NEU: Berechnet, ob überhaupt schon Stimmen abgegeben wurden
+    // Berechnet, ob überhaupt schon Stimmen abgegeben wurden
     private var hasVotes: Bool {
         appModel.voteCounters.values.reduce(0, +) > 0
     }
@@ -51,7 +54,7 @@ struct BetBuddyVotingView: View {
                     action: {
                         appModel.lockVotes()
                     },
-                    // FIX: Button ist deaktiviert, wenn gesperrt ODER keine Stimmen da sind
+                    // FIX: Deine originale Logik (funktioniert korrekt)
                     disabled: appModel.votesLocked || !hasVotes
                 )
                 .padding(.top, 20)
@@ -60,6 +63,18 @@ struct BetBuddyVotingView: View {
             .padding(Theme.padding)
         }
         .toolbar(.hidden, for: .navigationBar)
+        // NEU: Der Alert (Notausgang)
+        .alert("Spiel beenden?", isPresented: $showExitAlert) {
+            Button("Abbrechen", role: .cancel) { }
+            Button("Beenden", role: .destructive) {
+                appModel.stopTimer()
+                onClose()
+                dismiss()
+            }
+        } message: {
+            Text("Möchtest du das Spiel wirklich beenden?")
+        }
+        // WICHTIG: Deine originale Reset-Logik (damit die alten Zahlen verschwinden)
         .onAppear {
             appModel.resetVotes()
             didNavigateToGame = false
@@ -78,10 +93,11 @@ struct BetBuddyVotingView: View {
             Spacer()
             Text("Bet Buddy").foregroundStyle(.white).font(.headline)
             Spacer()
+            
+            // NEU: Button löst jetzt den Alert aus, statt direkt zu schließen
             Button {
-                appModel.stopTimer()
-                onClose()
-                dismiss()
+                HapticsService.impact(.medium)
+                showExitAlert = true
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline.bold())

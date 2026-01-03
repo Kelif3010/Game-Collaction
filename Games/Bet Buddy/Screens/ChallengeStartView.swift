@@ -6,20 +6,38 @@ struct ChallengeStartView: View {
 
     var onStart: () -> Void
     var onClose: () -> Void
+    
+    // Alert State für den "Notausgang"
+    @State private var showExitAlert = false
 
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            // 1. Spacing auf 0 setzen, damit wir es manuell steuern können
             VStack(spacing: 0) {
                 topBar
 
-                // 2. ERSTER SPACER: Drückt den Inhalt nach unten
                 Spacer()
 
-                // 3. GRUPPE: Alles, was mittig sein soll, kommt in diesen VStack
-                VStack(spacing: 28) {
+                VStack(spacing: 24) {
+                    
+                    // 1. KATEGORIE (Jetzt ganz oben)
+                    VStack(spacing: 8) {
+                        Text("Kategorie")
+                            .font(.caption)
+                            .foregroundStyle(Theme.mutedText)
+                            .textCase(.uppercase)
+                        
+                        Text(appModel.currentChallenge.category.title)
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(Capsule())
+                    }
+                    
+                    // 2. DIE KARTE (Bild + Text)
                     VStack(spacing: 12) {
                         Image(systemName: "brain.head.profile")
                             .font(.system(size: 52))
@@ -37,9 +55,10 @@ struct ChallengeStartView: View {
                                     .stroke(Theme.cardStroke, lineWidth: 1)
                             )
                             .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                            .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
                     }
-                    .padding(.horizontal, Theme.padding)
-
+                    
+                    // 3. CHALLENGE ÄNDERN BUTTON (Wieder da!)
                     Button {
                         appModel.refreshChallenge()
                         HapticsService.impact(.light)
@@ -53,11 +72,11 @@ struct ChallengeStartView: View {
                             .clipShape(Capsule())
                     }
                 }
+                .padding(.horizontal, Theme.padding)
 
-                // 4. ZWEITER SPACER: Drückt den Inhalt nach oben
                 Spacer()
 
-                // Unterer Bereich (Start Button)
+                // START BUTTON
                 VStack(spacing: 12) {
                     PrimaryButton(title: "Start") {
                         HapticsService.success()
@@ -69,6 +88,16 @@ struct ChallengeStartView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        // Alert Logik
+        .alert("Spiel beenden?", isPresented: $showExitAlert) {
+            Button("Abbrechen", role: .cancel) { }
+            Button("Beenden", role: .destructive) {
+                onClose()
+                dismiss()
+            }
+        } message: {
+            Text("Möchtest du das Spiel wirklich beenden?")
+        }
         .onAppear {
             appModel.refreshChallenge()
         }
@@ -84,8 +113,8 @@ struct ChallengeStartView: View {
                 .frame(maxWidth: .infinity)
 
             Button {
-                onClose()
-                dismiss()
+                HapticsService.impact(.medium)
+                showExitAlert = true
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline.bold())

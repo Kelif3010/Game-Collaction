@@ -11,16 +11,14 @@ struct GameView: View {
     @State private var ended = false
     @State private var hintItems: [HintItem] = []
     
-    // ZWISCHENSPEICHER für Hinweise
     @State private var allCachedHints: [String] = []
-    
-    // NEU: Globaler Speicher für alle abgehakten Lösungen (damit sie beim Blättern erhalten bleiben)
     @State private var solvedHints: Set<String> = []
-    
     @State private var roundStartValue: Int = 0
     
     @StateObject private var gameTimer = GameTimer()
+    
     @State private var showGiveUpAlert = false
+    @State private var showExitAlert = false
 
     private var displayValue: Int {
         if appModel.currentChallenge.inputType == .alphabet {
@@ -151,7 +149,7 @@ struct GameView: View {
 
                 VStack(spacing: 20) {
                     HStack(spacing: 30) {
-                        // Linker Button (Zurück / Fehler korrigieren)
+                        // Linker Button (Zurück)
                         Circle()
                             .fill(Color.white.opacity(0.08))
                             .frame(width: 80, height: 80)
@@ -195,24 +193,32 @@ struct GameView: View {
         .alert("Aufgeben?", isPresented: $showGiveUpAlert) {
             Button("Abbrechen", role: .cancel) { }
             Button("Ja, aufgeben", role: .destructive) { triggerLose() }
-        } message: { Text("Bist du sicher, dass du aufgeben möchtest?") }
+        } message: { Text("Bist du sicher, dass du aufgeben möchtest? Das wird als Niederlage gewertet.") }
+        .alert("Spiel beenden?", isPresented: $showExitAlert) {
+            Button("Abbrechen", role: .cancel) { }
+            Button("Beenden", role: .destructive) {
+                dismiss()
+            }
+        } message: {
+            Text("Der aktuelle Spielstand geht verloren. Es werden keine Punkte gewertet.")
+        }
         .onAppear {
             gameValue = winningScore
             roundStartValue = winningScore
             DispatchQueue.main.async { startTimer() }
             loadHints()
+            
+            // NEU: Streak aktualisieren, sobald das Spiel startet!
+            if let winnerId = winningGroup?.id {
+                appModel.updatePlayStreak(for: winnerId)
+            }
         }
-        // --- LOGIK-UPDATE START ---
         .onChange(of: gameValue) { _, _ in
             triggerWinIfNeeded()
-            
-            // WICHTIG: Nur im Alphabet-Modus müssen wir die Liste bei Wertänderung (Blättern) aktualisieren.
-            // Im Classic-Modus ist gameValue nur der Timer/Score, da soll die Liste gleich bleiben.
             if appModel.currentChallenge.inputType == .alphabet {
                 updateVisibleHints()
             }
         }
-        // WICHTIG: Wenn du einen Haken setzt, speichern wir das im "solvedHints" Set
         .onChange(of: hintItems) { _, items in
             for item in items {
                 if item.isChecked {
@@ -222,7 +228,6 @@ struct GameView: View {
                 }
             }
         }
-        // --- LOGIK-UPDATE ENDE ---
         .onDisappear {
             gameTimer.stop()
         }
@@ -232,7 +237,10 @@ struct GameView: View {
         HStack {
             Text("Bet Buddy").foregroundStyle(.white).font(.headline)
             Spacer()
-            Button { showGiveUpAlert = true } label: {
+            Button {
+                HapticsService.impact(.medium)
+                showExitAlert = true
+            } label: {
                 Image(systemName: "xmark").font(.headline.bold()).foregroundStyle(.white)
                     .frame(width: 36, height: 36).background(Color.white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -252,22 +260,28 @@ struct GameView: View {
     }
 
     private func triggerWinIfNeeded() {
-        guard !ended, gameValue == 0 else { return }
-        ended = true
-        gameTimer.stop()
-        
-        if let winner = winningGroup {
-            appModel.awardScore(to: winner, amount: roundStartValue)
+            guard !ended, gameValue == 0 else { return }
+            ended = true
+            gameTimer.stop()
+            
+            if let winner = winningGroup {
+                // UPDATE: Hier übergeben wir jetzt gameTimer.remaining
+                appModel.awardScore(
+                    to: winner,
+                    amount: roundStartValue,
+                    timeRemaining: gameTimer.remaining
+                )
+            }
+            
+            let result = GameResult(
+                outcome: .win,
+                finalScore: gameValue,
+                challengeText: appModel.currentChallenge.text,
+                inputType: appModel.currentChallenge.inputType,
+                leaderboard: appModel.leaderboard
+            )
+            onWin(result)
         }
-        let result = GameResult(
-            outcome: .win,
-            finalScore: gameValue,
-            challengeText: appModel.currentChallenge.text,
-            inputType: appModel.currentChallenge.inputType,
-            leaderboard: appModel.leaderboard
-        )
-        onWin(result)
-    }
 
     private func triggerLose() {
         guard !ended else { return }
@@ -295,14 +309,11 @@ struct GameView: View {
 
     private func loadHints() {
         allCachedHints = BetBuddyHintService.hintItems(for: appModel.currentChallenge)
-        // Reset der gelösten Hints beim Start einer neuen Runde
         solvedHints.removeAll()
         updateVisibleHints()
     }
 
     private func updateVisibleHints() {
-        // Wir prüfen jetzt beim Erstellen, ob der Hint schon in "solvedHints" ist
-        
         if appModel.currentChallenge.inputType == .alphabet {
             let letterIndex = displayValue
             let currentLetterChar = String(UnicodeScalar(64 + letterIndex) ?? "A")
@@ -314,12 +325,10 @@ struct GameView: View {
             }
             
             let sorted = filtered.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-            // HIER: Prüfen ob in solvedHints
             hintItems = sorted.map { HintItem(text: $0, isChecked: solvedHints.contains($0)) }
             
         } else {
             let sorted = allCachedHints.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-            // HIER: Prüfen ob in solvedHints
             hintItems = sorted.map { HintItem(text: $0, isChecked: solvedHints.contains($0)) }
         }
     }
