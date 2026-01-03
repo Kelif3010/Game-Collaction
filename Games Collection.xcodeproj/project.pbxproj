@@ -16,6 +16,11 @@
 			path = "Games Collection";
 			sourceTree = "<group>";
 		};
+		BED007852EFFFBB5008E5FDB /* Games */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Games;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +37,7 @@
 		BED0076D2EFFFB2B008E5FDB = {
 			isa = PBXGroup;
 			children = (
+				BED007852EFFFBB5008E5FDB /* Games */,
 				BED007782EFFFB2B008E5FDB /* Games Collection */,
 				BED007772EFFFB2B008E5FDB /* Products */,
 			);
@@ -62,6 +68,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				BED007782EFFFB2B008E5FDB /* Games Collection */,
+				BED007852EFFFBB5008E5FDB /* Games */,
 			);
 			name = "Games Collection";
 			packageProductDependencies = (
