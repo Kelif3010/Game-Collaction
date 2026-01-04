@@ -5,178 +5,170 @@
 
 import SwiftUI
 
-// MARK: - Color Helpers
-private extension Color {
-    init(hex: String, alpha: Double = 1.0) {
-        let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: cleaned).scanHexInt64(&int)
-        let r, g, b: UInt64
-        switch cleaned.count {
-        case 3: // RGB (12-bit)
-            (r, g, b) = ((int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (r, g, b) = (int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (r, g, b) = (0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: alpha
-        )
-    }
-}
-
+// MARK: - TimesUp Theme (Updated to match GameView)
 private struct SettingsTheme {
-    static let gradient = LinearGradient(
-        colors: [Color(hex: "#7C3AED"), Color(hex: "#22D3EE")],
+    // Matches TimesUpGameView background
+    static let background = LinearGradient(
+        colors: [
+            Color.black,
+            Color(.systemGray6).opacity(0.3),
+            Color.blue.opacity(0.15),
+            Color.purple.opacity(0.1)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    static let glassBackground = Color.white.opacity(0.08)
-    static let cardBackground = Color.white.opacity(0.06)
-    static let tileBackground = Color.white.opacity(0.04)
-    static let cornerRadius: CGFloat = 18
-    static let tileRadius: CGFloat = 14
-    static let horizontalPadding: CGFloat = 20
-    static let verticalSpacing: CGFloat = 16
-    static let blurRadius: CGFloat = 14
+    
+    static let cardBackground = Color.black.opacity(0.4)
+    static let cardStroke = Color.white.opacity(0.1)
+    static let cornerRadius: CGFloat = 16
+    static let padding: CGFloat = 20
+    
+    static let mutedText = Color.white.opacity(0.6)
 }
 
-private struct SettingsSectionCard<Content: View>: View {
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12, content: content)
-            .padding(16)
-            .background(SettingsTheme.cardBackground)
-            .background(.ultraThinMaterial)
-            .cornerRadius(SettingsTheme.cornerRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: SettingsTheme.cornerRadius)
-                    .stroke(Color.white.opacity(0.08))
-            )
-            .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 12)
+// MARK: - Haptics
+private enum TimesUpHaptics {
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 }
 
-private struct Pill: View {
-    let text: String
-    let color: Color
+// MARK: - Components
 
-    var body: some View {
-        Text(text)
-            .font(.footnote.weight(.semibold))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(12)
+private struct TimesUpSettingsRow: View {
+    enum RowType {
+        case teams
+        case categories
+        case timeWords
+        case perks
+        case difficulty
+        case mode
     }
-}
 
-private struct SummaryCard<Content: View>: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let tint: Color
-    @ViewBuilder let content: () -> Content
+    var icon: String
+    var title: String
+    var detail: String?
+    var rowType: RowType
+    var isToggleOn: Bool = false
+    var onTap: (() -> Void)?
+    var onToggle: ((Bool) -> Void)?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            LinearGradient(
-                colors: [tint, tint.opacity(0.7)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .mask(
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(colors: [.blue.opacity(0.3), .purple.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .frame(width: 44, height: 44)
                 Image(systemName: icon)
-                    .font(.title2.weight(.semibold))
-            )
-            .frame(width: 36, height: 36)
-            .background(tint.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.white)
+                    .font(.headline)
+            }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline.weight(.semibold))
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                content()
+                    .foregroundStyle(.white)
+                    .font(.headline)
+                
+                // Detail only for non-nav items that need explanation inline
+                if let detail, !detail.isEmpty, rowType != .teams, rowType != .categories {
+                    Text(detail)
+                        .foregroundStyle(SettingsTheme.mutedText)
+                        .font(.subheadline)
+                }
             }
             Spacer()
+
+            switch rowType {
+            case .perks:
+                // For Perks, we show a Toggle AND a Chevron if enabled?
+                // The user wants a view to open.
+                // Let's just use a Chevron for the view, but show status text.
+                 HStack(spacing: 6) {
+                    Text(isToggleOn ? "An" : "Aus")
+                         .foregroundStyle(isToggleOn ? .green : SettingsTheme.mutedText)
+                        .font(.subheadline.weight(.semibold))
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.white.opacity(0.5))
+                        .font(.subheadline)
+                }
+            default:
+                HStack(spacing: 6) {
+                    if let detail, !detail.isEmpty, (rowType == .teams || rowType == .categories) {
+                        Text(detail)
+                            .foregroundStyle(SettingsTheme.mutedText)
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.white.opacity(0.5))
+                        .font(.subheadline)
+                }
+            }
         }
-        .padding(16)
-        .background(SettingsTheme.tileBackground)
-        .background(.thinMaterial)
-        .cornerRadius(SettingsTheme.tileRadius)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(SettingsTheme.cardBackground)
         .overlay(
-            RoundedRectangle(cornerRadius: SettingsTheme.tileRadius)
-                .stroke(Color.white.opacity(0.08))
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(SettingsTheme.cardStroke, lineWidth: 1)
         )
-        .shadow(color: tint.opacity(0.2), radius: 12, x: 0, y: 8)
-    }
-}
-
-private struct SettingsHeader: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Spieleinstellungen")
-                .font(.system(size: 32, weight: .heavy, design: .rounded))
-                .foregroundStyle(SettingsTheme.gradient)
-
-            Text("Stell nur das Nötigste ein. Alles Weitere findest du in den Detailseiten.")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct StartGameButton: View {
-    let enabled: Bool
-    let action: () -> Void
+private struct TimesUpPrimaryButton: View {
+    var title: String
+    var action: () -> Void
+    var isDisabled: Bool = false
 
     var body: some View {
         Button(action: action) {
-            HStack {
-                Image(systemName: "play.fill")
-                Text("Spiel starten!")
-                    .font(.headline.weight(.bold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(
-                enabled
-                ? AnyShapeStyle(LinearGradient(colors: [Color(hex: "#22D3EE"), Color(hex: "#7C3AED")], startPoint: .leading, endPoint: .trailing))
-                : AnyShapeStyle(Color.gray.opacity(0.6))
-            )
-            .cornerRadius(18)
-            .shadow(color: enabled ? Color.blue.opacity(0.45) : .clear, radius: 12, x: 0, y: 6)
+            Text(title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    isDisabled
+                    ? AnyShapeStyle(Color.gray.opacity(0.3))
+                    : AnyShapeStyle(LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing))
+                )
+                .clipShape(Capsule())
+                .shadow(color: isDisabled ? .clear : .green.opacity(0.4), radius: 10, x: 0, y: 5)
         }
-        .disabled(!enabled)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.6 : 1.0)
     }
 }
 
-// MARK: - Router
-private enum SettingsRoute: Hashable {
-    case teams
-    case categories
-    case gameplay
-}
-
-// MARK: - Main View
+// MARK: - Main Settings View
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     private let categoryManager: CategoryManager
     @StateObject private var gameManager: GameManager
-    @State private var showGame = false
+    
+    // Navigation Path
     @State private var path: [SettingsRoute] = []
+    
+    // Sheets
+    @State private var showGame = false
+    @State private var showInfoSheet = false
+    @State private var showLeaderboardSheet = false
+    @State private var showTimeWordsSheet = false
+    @State private var showCategoryManagement = false
+    
+    enum SettingsRoute: Hashable {
+        case teams
+        case categories
+        case perks
+    }
 
     init(categoryManager: CategoryManager) {
         self.categoryManager = categoryManager
@@ -185,111 +177,195 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: SettingsTheme.verticalSpacing) {
-                    SettingsHeader()
+            ZStack {
+                SettingsTheme.background.ignoresSafeArea()
 
-                    NavigationLink(value: SettingsRoute.teams) {
-                        SummaryCard(
-                            title: "Teams",
-                            subtitle: "\(gameManager.gameState.settings.teams.count) Teams",
-                            icon: "person.3.fill",
-                            tint: .blue
-                        ) {
-                            if let first = gameManager.gameState.settings.teams.first {
-                                Text("Erstes Team: \(first.name)")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("Noch keine Teams – jetzt hinzufügen")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
+                VStack(spacing: 0) {
+                    // Header
+                    topBar
+                        .padding(.horizontal, SettingsTheme.padding)
+                        .padding(.top, SettingsTheme.padding) // Changed to 20 (SettingsTheme.padding)
+                        .padding(.bottom, 20)
+                    
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            
+                            // 1. Teams
+                            TimesUpSettingsRow(
+                                icon: "person.2.fill",
+                                title: "Teams",
+                                detail: "\(gameManager.gameState.settings.teams.count)",
+                                rowType: .teams,
+                                onTap: { path.append(.teams) }
+                            )
 
-                    NavigationLink(value: SettingsRoute.categories) {
-                        SummaryCard(
-                            title: "Kategorien",
-                            subtitle: "\(gameManager.gameState.settings.selectedCategories.count) ausgewählt",
-                            icon: "folder.badge.gearshape",
-                            tint: .orange
-                        ) {
-                            if gameManager.gameState.settings.selectedCategories.isEmpty {
-                                Text("Mindestens eine Kategorie wählen")
-                                    .font(.footnote)
-                                    .foregroundColor(.orange)
-                            } else {
-                                Text("Gesamt: \(gameManager.availableCategories.count) verfügbar")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
+                            // 2. Categories
+                            TimesUpSettingsRow(
+                                icon: "list.bullet.rectangle.portrait.fill",
+                                title: "Kategorien",
+                                detail: gameManager.gameState.settings.selectedCategories.isEmpty ? "Keine" : "\(gameManager.gameState.settings.selectedCategories.count)",
+                                rowType: .categories,
+                                onTap: { path.append(.categories) }
+                            )
 
-                    NavigationLink(value: SettingsRoute.gameplay) {
-                        SummaryCard(
-                            title: "Spiel & Perks",
-                            subtitle: "\(Int(gameManager.gameState.settings.turnTimeLimit)) Sek · \(gameManager.gameState.settings.wordCount) Wörter",
-                            icon: "slider.horizontal.3",
-                            tint: .purple
-                        ) {
-                            HStack(spacing: 8) {
-                                Pill(text: gameManager.gameState.settings.difficulty.rawValue, color: .purple)
-                                Pill(text: gameManager.gameState.settings.gameMode.rawValue, color: .pink)
-                                let perkText = gameManager.gameState.settings.perksEnabled ? "Perks an" : "Perks aus"
-                                Pill(text: perkText, color: gameManager.gameState.settings.perksEnabled ? .green : .gray)
-                            }
+                            // 3. Zeit & Wörter (Sheet)
+                            TimesUpSettingsRow(
+                                icon: "timer",
+                                title: "Zeit & Wörter",
+                                detail: "\(Int(gameManager.gameState.settings.turnTimeLimit))s · \(gameManager.gameState.settings.wordCount) Wörter",
+                                rowType: .timeWords,
+                                onTap: {
+                                    TimesUpHaptics.impact(.light)
+                                    showTimeWordsSheet = true
+                                }
+                            )
+                            
+                            // 4. Perks
+                            TimesUpSettingsRow(
+                                icon: "sparkles",
+                                title: "Perks",
+                                detail: nil,
+                                rowType: .perks,
+                                isToggleOn: gameManager.gameState.settings.perksEnabled,
+                                onTap: {
+                                    // Always open the view to let user toggle inside or configure
+                                    path.append(.perks)
+                                }
+                            )
+                            
+                            // 5. Difficulty
+                            TimesUpSettingsRow(
+                                icon: "gauge.medium",
+                                title: "Schwierigkeit",
+                                detail: gameManager.gameState.settings.difficulty.rawValue,
+                                rowType: .difficulty,
+                                onTap: {
+                                    cycleDifficulty()
+                                    TimesUpHaptics.impact(.light)
+                                }
+                            )
+                            
+                            // 6. Game Mode
+                            TimesUpSettingsRow(
+                                icon: "gamecontroller.fill",
+                                title: "Spielmodus",
+                                detail: gameManager.gameState.settings.gameMode.rawValue,
+                                rowType: .mode,
+                                onTap: {
+                                    cycleGameMode()
+                                    TimesUpHaptics.impact(.light)
+                                }
+                            )
                         }
+                        .padding()
+                        .background(Color.black.opacity(0.25))
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, SettingsTheme.padding)
+                        .padding(.bottom, 100)
                     }
                 }
-                .padding(.horizontal, SettingsTheme.horizontalPadding)
-                .padding(.top, 16)
-                .padding(.bottom, 80)
-            }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("Einstellungen")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(6)
-                            .background(Color.white.opacity(0.08))
-                            .clipShape(Circle())
-                    }
+                
+                // Start Button Floating at Bottom
+                VStack {
+                    Spacer()
+                    TimesUpPrimaryButton(
+                        title: "Spiel starten",
+                        action: {
+                            TimesUpHaptics.impact(.medium)
+                            startGame()
+                        },
+                        isDisabled: !gameManager.canStartGame
+                    )
+                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.bottom, 32) // Matched BetBuddy (20 container + 12 button padding)
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
                 case .teams:
                     TeamsDetailView(gameManager: gameManager)
                 case .categories:
                     CategoriesDetailView(gameManager: gameManager)
-                case .gameplay:
-                    GameplayDetailView(gameManager: gameManager)
+                case .perks:
+                    PerkSettingsDetailView(gameManager: gameManager)
                 }
             }
+            .sheet(isPresented: $showTimeWordsSheet) {
+                TimeAndWordsSheetView(gameManager: gameManager)
+                    .presentationDetents([.medium, .fraction(0.6)])
+                    .presentationDragIndicator(.visible)
+            }
             .fullScreenCover(isPresented: $showGame) {
-                // HIER GEÄNDERT: TimesUpGameView statt GameView
                 TimesUpGameView(gameManager: gameManager)
             }
-            .safeAreaInset(edge: .bottom) {
-                StartGameButton(enabled: gameManager.canStartGame, action: startGame)
-                .padding(.horizontal, SettingsTheme.horizontalPadding)
-                .padding(.bottom, 8)
-                .background(
-                    LinearGradient(
-                        colors: [Color.black.opacity(0.35), Color.black.opacity(0.6)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .blur(radius: 10)
-                )
+            .sheet(isPresented: $showInfoSheet) {
+                TimesUpInfoSheet()
+            }
+            .sheet(isPresented: $showLeaderboardSheet) {
+                TimesUpLeaderboardView()
+            }
+            .sheet(isPresented: $showCategoryManagement) {
+                CategoryManagementView(categoryManager: categoryManager)
+            }
+        }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+
+            Spacer()
+            
+            HStack(spacing: 12) {
+                Button {
+                    TimesUpHaptics.impact(.light)
+                    showLeaderboardSheet = true
+                } label: {
+                    Image(systemName: "trophy.fill")
+                        .font(.headline)
+                        .foregroundStyle(.yellow)
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                
+                Button {
+                    TimesUpHaptics.impact(.light)
+                    showCategoryManagement = true
+                } label: {
+                    Image(systemName: "folder.fill") // Or "folder.badge.gearshape" as requested
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                
+                Button {
+                    TimesUpHaptics.impact(.light)
+                    showInfoSheet = true
+                } label: {
+                    Image(systemName: "questionmark")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
             }
         }
     }
@@ -298,435 +374,497 @@ struct SettingsView: View {
         gameManager.startGame()
         showGame = true
     }
+    
+    private func cycleDifficulty() {
+        let all = Difficulty.allCases
+        if let currentIdx = all.firstIndex(of: gameManager.gameState.settings.difficulty) {
+            let nextIdx = (currentIdx + 1) % all.count
+            gameManager.gameState.settings.difficulty = all[nextIdx]
+        }
+    }
+    
+    private func cycleGameMode() {
+        let all = TimesUpGameMode.allCases
+        if let currentIdx = all.firstIndex(of: gameManager.gameState.settings.gameMode) {
+            let nextIdx = (currentIdx + 1) % all.count
+            gameManager.gameState.settings.gameMode = all[nextIdx]
+        }
+    }
 }
 
 // MARK: - Detail Screens
+
+// 1. Teams Detail (Cleaner UI)
 private struct TeamsDetailView: View {
     @ObservedObject var gameManager: GameManager
+    @Environment(\.dismiss) private var dismiss
     @State private var newTeamName = ""
 
     var body: some View {
-        ScrollView {
-            SettingsSectionCard {
+        ZStack {
+            SettingsTheme.background.ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                // Custom Header
                 HStack {
-                    Text("Teams verwalten")
-                        .font(.title2.weight(.bold))
-                    Spacer()
-                }
-
-                HStack(spacing: 12) {
-                    TextField("Teamname eingeben", text: $newTeamName)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(addTeamIfPossible)
-
-                    Button(action: addTeamIfPossible) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                            .padding(10)
-                            .background(Color.blue)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.1))
                             .clipShape(Circle())
                     }
-                    .disabled(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Spacer()
+                    Text("Teams")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+                    Spacer()
+                    Color.clear.frame(width: 44)
                 }
+                .padding(.horizontal, SettingsTheme.padding)
+                .padding(.top, 10)
 
-                VStack(spacing: 10) {
-                    ForEach(gameManager.gameState.settings.teams) { team in
-                        HStack {
-                            Image(systemName: "person.2.fill")
-                                .foregroundColor(.blue)
-                            Text(team.name)
-                                .font(.body.weight(.medium))
-                            Spacer()
-                            Button {
-                                gameManager.removeTeam(team)
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(.plain)
+                VStack(spacing: 16) {
+                    // Input Field
+                    HStack(spacing: 12) {
+                        TextField("", text: $newTeamName, prompt: Text("Teamname...").foregroundColor(.gray))
+                            .padding()
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                            .foregroundColor(.white)
+                            .onSubmit(addTeamIfPossible)
+
+                        Button(action: addTeamIfPossible) {
+                            Image(systemName: "plus")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                                .clipShape(Circle())
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 12)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
+                        .disabled(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    
+                    if gameManager.gameState.settings.teams.count < 2 {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text("Mindestens 2 Teams erforderlich")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                            Spacer()
+                        }
+                    }
+
+                    // Team List
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(gameManager.gameState.settings.teams) { team in
+                                HStack {
+                                    Circle()
+                                        .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            Text(String(team.name.prefix(1)))
+                                                .font(.headline.bold())
+                                                .foregroundColor(.white)
+                                        )
+                                    
+                                    Text(team.name)
+                                        .font(.body.weight(.medium))
+                                        .foregroundColor(.white)
+                                        .padding(.leading, 8)
+                                    
+                                    Spacer()
+                                    
+                                    Button {
+                                        withAnimation {
+                                            gameManager.removeTeam(team)
+                                        }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.8))
+                                            .padding(8)
+                                    }
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(16)
+                            }
+                        }
                     }
                 }
-
-                if gameManager.gameState.settings.teams.count < 2 {
-                    Label("Mindestens 2 Teams erforderlich", systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundColor(.orange)
-                }
+                .padding(.horizontal, SettingsTheme.padding)
             }
-            .padding(.horizontal, SettingsTheme.horizontalPadding)
-            .padding(.top, 16)
-            .padding(.bottom, 24)
         }
-        .background(
-            ZStack {
-                SettingsTheme.gradient
-                    .ignoresSafeArea()
-                Color.black.opacity(0.35)
-                    .ignoresSafeArea()
-            }
-        )
-        .navigationTitle("Teams")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func addTeamIfPossible() {
         let name = newTeamName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        gameManager.addTeam(name: name)
+        withAnimation {
+            gameManager.addTeam(name: name)
+        }
         newTeamName = ""
     }
 }
 
+// 2. Categories Detail (BetBuddy Style)
 private struct CategoriesDetailView: View {
     @ObservedObject var gameManager: GameManager
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            SettingsSectionCard {
+        ZStack {
+            SettingsTheme.background.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                // Header
                 HStack {
-                    Text("Kategorien")
-                        .font(.title2.weight(.bold))
-                    Spacer()
-                    Text("\(gameManager.gameState.settings.selectedCategories.count)/\(gameManager.availableCategories.count)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(gameManager.availableCategories) { category in
-                        CategoryCard(
-                            category: category,
-                            isSelected: gameManager.gameState.settings.selectedCategories.contains(category),
-                            onTap: { gameManager.toggleCategory(category) }
-                        )
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
                     }
+                    Spacer()
+                    Text("Kategorien")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("\(gameManager.gameState.settings.selectedCategories.count)")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.2))
+                        .clipShape(Capsule())
                 }
+                .padding(.horizontal, SettingsTheme.padding)
+                .padding(.top, 10)
 
-                if gameManager.gameState.settings.selectedCategories.isEmpty {
-                    Label("Mindestens eine Kategorie auswählen", systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundColor(.orange)
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(gameManager.availableCategories) { category in
+                            TimesUpCategoryRowView(
+                                category: category,
+                                isSelected: gameManager.gameState.settings.selectedCategories.contains(category)
+                            )
+                            .onTapGesture {
+                                TimesUpHaptics.impact(.light)
+                                gameManager.toggleCategory(category)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.bottom, 40)
                 }
             }
-            .padding(.horizontal, SettingsTheme.horizontalPadding)
-            .padding(.top, 16)
-            .padding(.bottom, 24)
         }
-        .background(
-            ZStack {
-                SettingsTheme.gradient
-                    .ignoresSafeArea()
-                Color.black.opacity(0.35)
-                    .ignoresSafeArea()
-            }
-        )
-        .navigationTitle("Kategorien")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-private struct GameplayDetailView: View {
-    @ObservedObject var gameManager: GameManager
+private struct TimesUpCategoryRowView: View {
+    let category: TimesUpCategory
+    let isSelected: Bool
 
-    private var wordCountRange: ClosedRange<Double> {
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            // Icon Box
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [category.type.color.opacity(0.3), category.type.color.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 48, height: 48)
+                
+                Image(systemName: category.type.systemImage)
+                    .font(.title3.bold())
+                    .foregroundStyle(category.type.color)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(category.name)
+                    .foregroundStyle(.white)
+                    .font(.headline)
+                
+                Text(category.type.rawValue)
+                    .foregroundStyle(SettingsTheme.mutedText)
+                    .font(.caption)
+            }
+
+            Spacer()
+
+            // Selection Indicator
+            ZStack {
+                if isSelected {
+                    Circle()
+                        .fill(category.type.color)
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Image(systemName: "checkmark")
+                                .font(.caption.bold())
+                                .foregroundColor(.black) // Black check on neon color looks punchy
+                        )
+                        .shadow(color: category.type.color.opacity(0.6), radius: 6, x: 0, y: 0) // Glow effect
+                } else {
+                    Circle()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+                }
+            }
+        }
+        .padding()
+        .background(
+            ZStack {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(category.type.color.opacity(0.15)) // Subtle colored background
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.black.opacity(0.3))
+                }
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isSelected ? category.type.color.opacity(0.6) : Color.white.opacity(0.05),
+                    lineWidth: isSelected ? 1.5 : 1
+                )
+        )
+        .shadow(color: isSelected ? category.type.color.opacity(0.15) : .clear, radius: 10, x: 0, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .scaleEffect(isSelected ? 1.02 : 1.0) // Slight pop when selected
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+    }
+}
+
+// 3. Time & Words Sheet (Clean)
+private struct TimeAndWordsSheetView: View {
+    @ObservedObject var gameManager: GameManager
+    @Environment(\.dismiss) private var dismiss
+
+    var wordCountRange: ClosedRange<Double> {
         let minVal = Double(gameManager.gameState.settings.minWordCount)
         let maxVal = max(minVal + 1, Double(gameManager.gameState.settings.maxWordCount))
         return minVal...maxVal
     }
 
-    private var wordCountBinding: Binding<Double> {
-        let range = wordCountRange
-        return Binding(
-            get: {
-                let current = Double(gameManager.gameState.settings.wordCount)
-                return min(max(current, range.lowerBound), range.upperBound)
-            },
-            set: { gameManager.gameState.settings.wordCount = Int($0) }
-        )
-    }
-
     var body: some View {
-        ScrollView {
-            VStack(spacing: SettingsTheme.verticalSpacing) {
-                SettingsSectionCard {
-                    Text("Zeit & Wörter")
-                        .font(.title3.weight(.bold))
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Label("Zeitlimit pro Zug", systemImage: "timer.circle.fill")
-                            Spacer()
-                            Text("\(Int(gameManager.gameState.settings.turnTimeLimit)) Sek.")
-                                .font(.headline.weight(.bold))
-                        }
+        ZStack {
+            // Sheet background
+            Color(red: 0.1, green: 0.1, blue: 0.15).ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                Capsule()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 10)
+                
+                Text("Zeit & Wörter")
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                
+                // Time Slider
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack {
+                        Label("Zeit pro Zug", systemImage: "timer")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text("\(Int(gameManager.gameState.settings.turnTimeLimit)) s")
+                            .font(.title3.bold())
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Slider(
+                        value: Binding(
+                            get: { gameManager.gameState.settings.turnTimeLimit },
+                            set: { gameManager.gameState.settings.turnTimeLimit = $0 }
+                        ),
+                        in: 10...120,
+                        step: 5
+                    )
+                    .tint(.blue)
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(16)
+                
+                // Words Slider
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack {
+                        Label("Anzahl Wörter", systemImage: "textformat.123")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text("\(gameManager.gameState.settings.wordCount)")
+                            .font(.title3.bold())
+                            .foregroundColor(.purple)
+                    }
+                    
+                    if gameManager.gameState.settings.selectedCategories.isEmpty {
+                         Text("Bitte zuerst Kategorien wählen.")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    } else {
                         Slider(
                             value: Binding(
-                                get: { gameManager.gameState.settings.turnTimeLimit },
-                                set: { gameManager.gameState.settings.turnTimeLimit = $0 }
+                                get: { Double(gameManager.gameState.settings.wordCount) },
+                                set: { gameManager.gameState.settings.wordCount = Int($0) }
                             ),
-                            in: 10...120,
-                            step: 1
-                        )
-                    }
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Label("Anzahl Wörter", systemImage: "textformat.123")
-                            Spacer()
-                            Text("\(gameManager.gameState.settings.wordCount)")
-                                .font(.headline.weight(.bold))
-                        }
-                        Slider(
-                            value: wordCountBinding,
                             in: wordCountRange,
                             step: 1
                         )
-                        .disabled(gameManager.gameState.settings.selectedCategories.isEmpty)
-
+                        .tint(.purple)
+                        
                         HStack {
                             Text("Min: \(gameManager.gameState.settings.minWordCount)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
                             Spacer()
                             Text("Verfügbar: \(gameManager.gameState.settings.availableWordCount)")
-                                .font(.caption)
-                                .foregroundColor(gameManager.gameState.settings.availableWordCount < gameManager.gameState.settings.minWordCount ? .red : .secondary)
                         }
-
-                        if gameManager.gameState.settings.availableWordCount < gameManager.gameState.settings.minWordCount {
-                            Label("Wähle mehr Kategorien für mindestens \(gameManager.gameState.settings.minWordCount) Wörter", systemImage: "exclamationmark.triangle.fill")
-                                .font(.caption.weight(.medium))
-                                .foregroundColor(.orange)
-                        }
+                        .font(.caption)
+                        .foregroundColor(.gray)
                     }
                 }
-
-                SettingsSectionCard {
-                    Text("Schwierigkeit & Modus")
-                        .font(.title3.weight(.bold))
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Schwierigkeit")
-                            .font(.headline)
-                        HStack(spacing: 10) {
-                            ForEach(Difficulty.allCases, id: \.self) { diff in
-                                Button {
-                                    gameManager.gameState.settings.difficulty = diff
-                                } label: {
-                                    Text(diff.rawValue)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundColor(gameManager.gameState.settings.difficulty == diff ? .white : .primary)
-                                        .padding(.vertical, 10)
-                                        .frame(maxWidth: .infinity)
-                                        .background(gameManager.gameState.settings.difficulty == diff ? diffColor(diff) : Color(.systemGray6))
-                                        .cornerRadius(12)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Spielmodus")
-                            .font(.headline)
-                        HStack(spacing: 10) {
-                            ForEach(TimesUpGameMode.allCases, id: \.self) { mode in
-                                Button {
-                                    gameManager.gameState.settings.gameMode = mode
-                                } label: {
-                                    Text(mode.rawValue)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundColor(gameManager.gameState.settings.gameMode == mode ? .white : .purple)
-                                        .padding(.vertical, 10)
-                                        .frame(maxWidth: .infinity)
-                                        .background(gameManager.gameState.settings.gameMode == mode ? Color.purple : Color(.systemGray6))
-                                        .cornerRadius(12)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        Text(gameManager.gameState.settings.gameMode.description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                PerkSettingsCard(gameManager: gameManager)
-            }
-            .padding(.horizontal, SettingsTheme.horizontalPadding)
-            .padding(.top, 16)
-            .padding(.bottom, 24)
-        }
-        .background(
-            ZStack {
-                SettingsTheme.gradient
-                    .ignoresSafeArea()
-                Color.black.opacity(0.35)
-                    .ignoresSafeArea()
-            }
-        )
-        .navigationTitle("Spiel & Perks")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func diffColor(_ difficulty: Difficulty) -> Color {
-        let label = difficulty.rawValue.lowercased()
-        if label.contains("leicht") || label.contains("easy") { return .green }
-        if label.contains("mittel") || label.contains("medium") { return .yellow }
-        if label.contains("schwer") || label.contains("hard") { return .red }
-        return .purple
-    }
-}
-
-// MARK: - Supporting Views
-private struct CategoryCard: View {
-    // HIER GEÄNDERT: TimesUpCategory
-    let category: TimesUpCategory
-    let isSelected: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 8) {
-                Image(systemName: category.type.systemImage)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(isSelected ? category.type.color : .secondary)
-
-                Text(category.name)
-                    .font(.callout.weight(.semibold))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
-                    .lineLimit(2)
-            }
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? category.type.color.opacity(0.15) : Color(.systemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(isSelected ? category.type.color : Color.primary.opacity(0.08), lineWidth: 1.5)
-            )
-            .shadow(color: isSelected ? category.type.color.opacity(0.2) : .clear, radius: 4, x: 0, y: 2)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct PerkSettingsCard: View {
-    @ObservedObject var gameManager: GameManager
-
-    private var perksEnabled: Binding<Bool> {
-        Binding(
-            get: { gameManager.gameState.settings.perksEnabled },
-            set: { newValue in
-                gameManager.gameState.settings.perksEnabled = newValue
-                if !newValue {
-                    gameManager.gameState.settings.selectedPerkPacks.removeAll()
-                    gameManager.gameState.settings.clearCustomPerks()
-                    gameManager.gameState.settings.perkPartyMode = false
-                }
-            }
-        )
-    }
-
-    private var partyModeEnabled: Binding<Bool> {
-        Binding(
-            get: { gameManager.gameState.settings.perkPartyMode },
-            set: { newValue in
-                gameManager.gameState.settings.perkPartyMode = newValue
-            }
-        )
-    }
-
-    private func packTint(_ pack: PerkPack) -> Color {
-        switch pack {
-        case .tempo: return .blue
-        case .score: return .green
-        case .sabotage: return .pink
-        case .custom: return .orange
-        }
-    }
-
-    var body: some View {
-        SettingsSectionCard {
-            HStack {
-                Text("Perks")
-                    .font(.title3.weight(.bold))
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(16)
+                
                 Spacer()
-                Toggle("", isOn: perksEnabled)
-                    .labelsHidden()
-            }
-
-            Text("Optionale Power-Ups. Nach mehreren richtigen Antworten erscheinen Perks aus ausgewählten Paketen.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            if gameManager.gameState.settings.perksEnabled {
-                Toggle(isOn: partyModeEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Party Modus")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Frühere Perks bei 3/6/9 Treffern.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+                
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Übernehmen")
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(14)
                 }
-                .toggleStyle(SwitchToggleStyle(tint: .purple))
+                .padding(.bottom, 20)
+            }
+            .padding(.horizontal, 24)
+        }
+    }
+}
 
-                let columns = [GridItem(.flexible()), GridItem(.flexible())]
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(PerkPack.allCases) { pack in
-                        let isSelected = gameManager.gameState.settings.selectedPerkPacks.contains(pack)
-                        Button {
-                            toggle(pack)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Image(systemName: pack.iconName)
-                                    .font(.title3)
-                                    .foregroundColor(packTint(pack))
-                                Text(pack.title)
+// 4. Perks Detail (Beautified)
+private struct PerkSettingsDetailView: View {
+    @ObservedObject var gameManager: GameManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            SettingsTheme.background.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    Spacer()
+                    Text("Perks")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+                    Spacer()
+                    
+                    Toggle("", isOn: $gameManager.gameState.settings.perksEnabled)
+                        .labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: .green))
+                }
+                .padding(.horizontal, SettingsTheme.padding)
+                .padding(.top, 10)
+                .padding(.bottom, 20)
+
+                ScrollView {
+                    VStack(spacing: 24) {
+                        
+                        if !gameManager.gameState.settings.perksEnabled {
+                            VStack(spacing: 20) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray)
+                                Text("Perks sind deaktiviert")
                                     .font(.headline)
-                                Text(pack.subtitle)
+                                    .foregroundColor(.gray)
+                                Text("Aktiviere sie oben rechts, um Power-Ups ins Spiel zu bringen.")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(2)
+                                    .foregroundColor(.gray.opacity(0.7))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
+                            .padding(.top, 60)
+                        } else {
+                            // Party Mode Toggle Card
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Party Modus")
+                                        .font(.headline.bold())
+                                        .foregroundColor(.white)
+                                    Text("Häufigere Perks bei 3/6/9 Treffern")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                Spacer()
+                                Toggle("", isOn: $gameManager.gameState.settings.perkPartyMode)
+                                    .labelsHidden()
+                                    .toggleStyle(SwitchToggleStyle(tint: .purple))
                             }
                             .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(isSelected ? packTint(pack).opacity(0.15) : Color(.systemGray6))
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(isSelected ? packTint(pack) : Color.clear, lineWidth: 1.5)
-                            )
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(16)
+                            
+                            // Perk Packs List
+                            VStack(spacing: 16) {
+                                Text("Verfügbare Pakete")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                ForEach(PerkPack.allCases) { pack in
+                                    PerkPackCard(
+                                        pack: pack,
+                                        isSelected: gameManager.gameState.settings.selectedPerkPacks.contains(pack),
+                                        onTap: { toggle(pack) }
+                                    )
+                                }
+                            }
+                            
+                            // Custom Selection Area
+                            if gameManager.gameState.settings.selectedPerkPacks.contains(.custom) {
+                                CustomPerkSelectionView(gameManager: gameManager)
+                            }
                         }
-                        .buttonStyle(.plain)
                     }
-                }
-
-                if gameManager.gameState.settings.selectedPerkPacks.contains(.custom) {
-                    CustomPerkSelectionView(gameManager: gameManager)
-                }
-
-                if !gameManager.gameState.settings.hasAnyPerkSelection {
-                    Text("Wähle mindestens ein Paket oder stelle eigene Perks zusammen, damit Perks erscheinen können.")
-                        .font(.footnote)
-                        .foregroundColor(.pink)
+                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.bottom, 40)
                 }
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func toggle(_ pack: PerkPack) {
+        TimesUpHaptics.impact(.light)
         if pack.isCustom {
             if gameManager.gameState.settings.selectedPerkPacks.contains(.custom) {
                 gameManager.gameState.settings.clearCustomPerks()
@@ -744,83 +882,141 @@ private struct PerkSettingsCard: View {
     }
 }
 
-private struct CustomPerkSelectionView: View {
-    @ObservedObject var gameManager: GameManager
-    @State private var expandedPacks: Set<PerkPack> = []
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Individuelle Auswahl")
-                    .font(.headline.weight(.semibold))
-                Spacer()
-                // HIER GEÄNDERT: Explizite Button-Syntax
-                Button(action: {
-                    gameManager.gameState.settings.clearCustomPerks()
-                }) {
-                    Text("Zurücksetzen")
-                }
-                .font(.caption.bold())
-                .disabled(gameManager.gameState.settings.customPerks.isEmpty)
-            }
-
-            ForEach(PerkPack.standardCases) { pack in
-                DisclosureGroup(isExpanded: binding(for: pack)) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(pack.associatedPerks, id: \.self) { perk in
-                            Toggle(isOn: binding(for: perk)) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(perk.displayName)
-                                        .font(.subheadline.weight(.semibold))
-                                    Text(perk.detailDescription)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: .purple))
-                        }
-                    }
-                    .padding(.top, 6)
-                } label: {
-                    HStack {
-                        Text(pack.title)
-                            .font(.headline)
-                        Spacer()
-                        Text("\(selectedCount(for: pack))/\(pack.associatedPerks.count)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-            }
-
-            if gameManager.gameState.settings.customPerks.isEmpty {
-                Text("Wähle mindestens einen Perk aus, damit der individuelle Modus aktiv ist.")
-                    .font(.footnote)
-                    .foregroundColor(.pink)
-            } else {
-                Text("\(gameManager.gameState.settings.customPerks.count) Perks ausgewählt.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
+private struct PerkPackCard: View {
+    let pack: PerkPack
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    // Gradient helper based on pack
+    var packGradient: LinearGradient {
+        switch pack {
+        case .tempo:
+            return LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .score:
+            return LinearGradient(colors: [.green, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .sabotage:
+            return LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .custom:
+            return LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
-        .padding(.top, 8)
-        .animation(.easeInOut, value: gameManager.gameState.settings.customPerks.count)
     }
 
-    private func binding(for pack: PerkPack) -> Binding<Bool> {
-        Binding(
-            get: { expandedPacks.contains(pack) },
-            set: { newValue in
-                if newValue {
-                    expandedPacks.insert(pack)
-                } else {
-                    expandedPacks.remove(pack)
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 16) {
+                // Icon Box
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(packGradient.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: pack.iconName)
+                        .font(.title2)
+                        .foregroundStyle(packGradient)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(pack.title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(pack.subtitle)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                // Checkbox
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.3), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(packGradient)
+                    }
                 }
             }
-        )
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.black.opacity(0.3))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(isSelected ? packGradient : LinearGradient(colors: [.white.opacity(0.1)], startPoint: .top, endPoint: .bottom), lineWidth: isSelected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
+    }
+}
+
+private struct CustomPerkSelectionView: View {
+    @ObservedObject var gameManager: GameManager
+    @State private var expandedPacks: Set<String> = [] // Using ID string for ease
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Individuelle Perks wählen")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.top, 10)
+            
+            ForEach(PerkPack.standardCases) { pack in
+                VStack(spacing: 0) {
+                    Button {
+                        withAnimation {
+                            if expandedPacks.contains(pack.id) {
+                                expandedPacks.remove(pack.id)
+                            } else {
+                                expandedPacks.insert(pack.id)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(pack.title)
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .rotationEffect(.degrees(expandedPacks.contains(pack.id) ? 90 : 0))
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                    }
+                    
+                    if expandedPacks.contains(pack.id) {
+                        VStack(spacing: 0) {
+                            ForEach(pack.associatedPerks, id: \.self) { perk in
+                                Toggle(isOn: binding(for: perk)) {
+                                    Text(perk.displayName)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white.opacity(0.9))
+                                }
+                                .toggleStyle(SwitchToggleStyle(tint: .purple))
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                
+                                Divider().background(Color.white.opacity(0.1))
+                            }
+                        }
+                        .background(Color.black.opacity(0.2))
+                    }
+                }
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+            }
+        }
     }
 
     private func binding(for perk: PerkType) -> Binding<Bool> {
@@ -831,10 +1027,37 @@ private struct CustomPerkSelectionView: View {
             }
         )
     }
+}
 
-    private func selectedCount(for pack: PerkPack) -> Int {
-        let selected = gameManager.gameState.settings.customPerks
-        return pack.associatedPerks.filter { selected.contains($0) }.count
+// MARK: - Placeholders
+
+struct TimesUpLeaderboardView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        ZStack {
+            SettingsTheme.background.ignoresSafeArea()
+            VStack {
+                Text("Leaderboard")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                Button("Close") { dismiss() }
+            }
+        }
+    }
+}
+
+struct TimesUpInfoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        ZStack {
+            SettingsTheme.background.ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text("Info")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                Button("Close") { dismiss() }
+            }
+        }
     }
 }
 

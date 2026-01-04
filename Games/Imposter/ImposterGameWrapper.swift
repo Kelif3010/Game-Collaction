@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct ImposterGameWrapper: View {
+    @StateObject private var gameSettings = GameSettings()
+    
     var body: some View {
-        ImposterMainMenuView()
+        GameSetupView()
+            .environmentObject(gameSettings)
     }
 }

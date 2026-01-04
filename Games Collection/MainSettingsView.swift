@@ -3,20 +3,29 @@ import SwiftUI
 struct MainSettingsView: View {
     @Environment(\.dismiss) var dismiss
     
+    // Global Language Settings
+    @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
+    @AppStorage("useSystemLanguage") private var useSystemLanguage = true
+    
     var body: some View {
         NavigationStack {
             List {
                 // MARK: - Allgemein
                 Section(header: Text("Allgemein")) {
-                    NavigationLink(destination: Text("Sprachauswahl hier")) {
-                        Label("Sprache", systemImage: "globe")
+                    NavigationLink(destination: LanguageSelectionView()) {
+                        HStack {
+                            Label("Sprache", systemImage: "globe")
+                            Spacer()
+                            Text(currentLanguageName)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     NavigationLink(destination: Text("App Icons hier")) {
                         Label("App Icon", systemImage: "app.badge")
                     }
                 }
                 
-                // MARK: - Community (NEU)
+                // MARK: - Community
                 Section(header: Text("Community")) {
                     // YouTube Link
                     Link(destination: URL(string: "https://www.youtube.com/@elfiandken")!) {
@@ -52,7 +61,7 @@ struct MainSettingsView: View {
                     Toggle("Benachrichtigungen", isOn: .constant(true))
                 }
                 
-                // MARK: - Branding Footer (NEU)
+                // MARK: - Branding Footer
                 Section {
                     VStack(alignment: .center, spacing: 6) {
                         Text("Made with ❤️ by KELIF")
@@ -68,7 +77,7 @@ struct MainSettingsView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear) // Transparenter Hintergrund für Footer-Look
+                    .listRowBackground(Color.clear)
                 }
             }
             .navigationTitle("Einstellungen")
@@ -82,6 +91,58 @@ struct MainSettingsView: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+    
+    private var currentLanguageName: String {
+        if useSystemLanguage {
+            return "System"
+        }
+        return selectedLanguageCode == "de" ? "Deutsch" : "English"
+    }
+}
+
+private struct LanguageSelectionView: View {
+    @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
+    @AppStorage("useSystemLanguage") private var useSystemLanguage = true
+    
+    var body: some View {
+        List {
+            Section {
+                Toggle("Systemsprache verwenden", isOn: $useSystemLanguage)
+            }
+            
+            if !useSystemLanguage {
+                Section(header: Text("Wähle eine Sprache")) {
+                    Button {
+                        selectedLanguageCode = "de"
+                    } label: {
+                        HStack {
+                            Text("Deutsch")
+                            Spacer()
+                            if selectedLanguageCode == "de" {
+                                Image(systemName: "checkmark").foregroundColor(.blue)
+                            }
+                        }
+                    }
+                    .foregroundColor(.primary)
+                    
+                    Button {
+                        selectedLanguageCode = "en"
+                    } label: {
+                        HStack {
+                            Text("English")
+                            Spacer()
+                            if selectedLanguageCode == "en" {
+                                Image(systemName: "checkmark").foregroundColor(.blue)
+                            }
+                        }
+                    }
+                    .foregroundColor(.primary)
+                }
+            }
+        }
+        .navigationTitle("Sprache")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

@@ -132,26 +132,10 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $isBetBuddyPresented) { BetBuddyWrapper() }
         .fullScreenCover(isPresented: $isQuestionGamePresented) { QuestionGameWrapper() }
         .fullScreenCover(isPresented: $isImposterPresented) {
-            ZStack(alignment: .topTrailing) {
-                ImposterGameWrapper()
-                Button { isImposterPresented = false } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.largeTitle)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .padding()
-                }
-            }
+            ImposterGameWrapper()
         }
         .fullScreenCover(isPresented: $isTimesUpPresented) {
-            ZStack(alignment: .topTrailing) {
-                TimesUpWrapper()
-                Button { isTimesUpPresented = false } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.largeTitle)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .padding()
-                }
-            }
+            TimesUpWrapper()
         }
     }
 }

@@ -52,20 +52,6 @@ private struct GradientPrimaryButton: View {
     }
 }
 
-private struct CircularDismissButton: View {
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "xmark")
-                .font(.title3.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(Color.white.opacity(0.15)))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 struct GameSetupView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
@@ -77,7 +63,9 @@ struct GameSetupView: View {
     @State private var showingSpyOptionsSheet = false
 
     @State private var showingGameModeSheet = false
-    @State private var showingCategorySheet = false
+    @State private var showingCategorySelectionSheet = false // For selecting game category
+    @State private var showingCategoryManagementSheet = false // For managing categories (Folder)
+    @State private var showingSettingsSheet = false // For global settings (Gear)
     @State private var showingAddPlayersSheet = false
     @State private var addPlayersSheetDetent: PresentationDetent = .medium
     @State private var route: SetupRoute?
@@ -89,6 +77,7 @@ struct GameSetupView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Background
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
                     startPoint: .topLeading,
@@ -96,140 +85,198 @@ struct GameSetupView: View {
                 )
                 .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 10) {
-                        // Header image + title
-                        VStack(spacing: -20) {
-                            Image("impostorHeader")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxWidth: 100)
-                                .accessibilityHidden(true)
-                            Text("Imposter")
-                                .font(.system(size: 35, weight: .heavy, design: .rounded))
-                                .foregroundColor(.red)
-                                .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                VStack(spacing: 0) {
+                    // Top Bar
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.headline.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(Color.white.opacity(0.15))
+                                .clipShape(Circle())
                         }
-                        .padding(.top, -80)
 
-                        GroupedCard {
-                            // Spieler Row
-                            RowCell(icon: "person.3.fill", title: "Spieler", value: "\(gameSettings.players.count)")
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    showingAddPlayersSheet = true
-                                }
+                        Spacer()
 
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
+                        HStack(spacing: 12) {
+                            // Trophy (Placeholder for Leaderboard)
+                            Button {
+                                // Action for Leaderboard
+                            } label: {
+                                Image(systemName: "trophy.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(.yellow)
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.white.opacity(0.15))
+                                    .clipShape(Circle())
+                            }
 
-                            // Spione Row with Stepper-like controls
-                            HStack(spacing: 12) {
-                                IconBadge(systemName: "eye.slash.fill", tint: .red)
-                                Text("Spione")
-                                    .font(.body)
-                                    .fontWeight(.semibold)
-                                Spacer()
-                                HStack(spacing: 8) {
-                                    Button {
-                                        let minValue = gameSettings.maxAllowedImpostersCap == 0 ? 0 : 1
-                                        gameSettings.numberOfImposters = max(minValue, gameSettings.numberOfImposters - 1)
-                                    } label: {
-                                        Image(systemName: "minus")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .frame(width: 30, height: 30)
-                                            .background(Color.secondary.opacity(0.15))
-                                            .foregroundColor(.primary)
-                                            .clipShape(Circle())
+                            // Folder (Category Management)
+                            Button {
+                                showingCategoryManagementSheet = true
+                            } label: {
+                                Image(systemName: "folder.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(.orange)
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.white.opacity(0.15))
+                                    .clipShape(Circle())
+                            }
+
+                            // Gear (Settings)
+                            Button {
+                                showingSettingsSheet = true
+                            } label: {
+                                Image(systemName: "gearshape.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(.gray)
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.white.opacity(0.15))
+                                    .clipShape(Circle())
+                            }
+
+                            // Question Mark (Rules/Help)
+                            Button {
+                                // Action for Help
+                            } label: {
+                                Image(systemName: "questionmark")
+                                    .font(.headline.bold())
+                                    .foregroundStyle(.white)
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.white.opacity(0.15))
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
+
+                    ScrollView {
+                        VStack(spacing: 10) {
+
+                            GroupedCard {
+                                // Spieler Row
+                                RowCell(icon: "person.3.fill", title: "Spieler", value: "\(gameSettings.players.count)")
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        showingAddPlayersSheet = true
                                     }
-                                    .disabled(gameSettings.randomSpyCount)
-                                    Text("\(gameSettings.numberOfImposters)")
-                                        .font(.callout)
-                                        .frame(minWidth: 24)
-                                    Button {
-                                        let cap = gameSettings.maxAllowedImpostersCap
-                                        guard cap > 0 else {
-                                            gameSettings.numberOfImposters = 0
-                                            return
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                // Spione Row with Stepper-like controls
+                                HStack(spacing: 12) {
+                                    IconBadge(systemName: "eye.slash.fill", tint: .red)
+                                    Text("Spione")
+                                        .font(.body)
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    HStack(spacing: 8) {
+                                        Button {
+                                            let minValue = gameSettings.maxAllowedImpostersCap == 0 ? 0 : 1
+                                            gameSettings.numberOfImposters = max(minValue, gameSettings.numberOfImposters - 1)
+                                        } label: {
+                                            Image(systemName: "minus")
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .frame(width: 30, height: 30)
+                                                .background(Color.secondary.opacity(0.15))
+                                                .foregroundColor(.primary)
+                                                .clipShape(Circle())
                                         }
-                                        gameSettings.numberOfImposters = min(cap, gameSettings.numberOfImposters + 1)
-                                    } label: {
-                                        Image(systemName: "plus")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .frame(width: 30, height: 30)
-                                            .background(Color.secondary.opacity(0.15))
-                                            .foregroundColor(.primary)
-                                            .clipShape(Circle())
+                                        .disabled(gameSettings.randomSpyCount)
+                                        Text("\(gameSettings.numberOfImposters)")
+                                            .font(.callout)
+                                            .frame(minWidth: 24)
+                                        Button {
+                                            let cap = gameSettings.maxAllowedImpostersCap
+                                            guard cap > 0 else {
+                                                gameSettings.numberOfImposters = 0
+                                                return
+                                            }
+                                            gameSettings.numberOfImposters = min(cap, gameSettings.numberOfImposters + 1)
+                                        } label: {
+                                            Image(systemName: "plus")
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .frame(width: 30, height: 30)
+                                                .background(Color.secondary.opacity(0.15))
+                                                .foregroundColor(.primary)
+                                                .clipShape(Circle())
+                                        }
+                                        .disabled(gameSettings.randomSpyCount)
                                     }
-                                    .disabled(gameSettings.randomSpyCount)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .opacity(gameSettings.randomSpyCount ? 0.5 : 1.0)
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                .opacity(gameSettings.randomSpyCount ? 0.5 : 1.0)
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                // Spion-Optionen Row
+                                RowCell(
+                                    icon: "eye.fill",
+                                    title: "Spion-Optionen",
+                                    value: "\(activeSpyOptionsCount) aktiv",
+                                    tint: .red
+                                )
+                                .contentShape(Rectangle())
+                                .onTapGesture { showingSpyOptionsSheet = true }
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                // Spielmodus Row
+                                RowCell(icon: "gamecontroller.fill", title: "Spielmodus", value: gameSettings.gameMode.localizedTitle, tint: .accentColor, showsChevron: true)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        showingGameModeSheet = true
+                                    }
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                // Kategorie Row (Selection for Game)
+                                RowCell(icon: "folder.fill", title: "Kategorie wählen", value: categoryDisplayName)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        showingCategorySelectionSheet = true
+                                    }
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                // Dauer Row
+                                RowCell(icon: "timer.circle.fill", title: "Dauer", value: timeString(from: gameSettings.timeLimit), tint: .green, showsChevron: false)
+
+                                Divider()
+                                    .opacity(0.2)
+                                    .padding(.leading, 64)
+
+                                Slider(value: Binding(
+                                    get: { Double(gameSettings.timeLimit) },
+                                    set: { gameSettings.timeLimit = Int($0) }
+                                ), in: 60...1800, step: 60)
+                                .tint(.green)
+                                .padding(.horizontal, 14)
+                                .padding(.bottom, 14)
                             }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
-
-                            // Spion-Optionen Row
-                            RowCell(
-                                icon: "eye.fill",
-                                title: "Spion-Optionen",
-                                value: "\(activeSpyOptionsCount) aktiv",
-                                tint: .red
-                            )
-                            .contentShape(Rectangle())
-                            .onTapGesture { showingSpyOptionsSheet = true }
-
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
-
-                            // Spielmodus Row
-                            RowCell(icon: "gamecontroller.fill", title: "Spielmodus", value: gameSettings.gameMode.localizedTitle, tint: .accentColor, showsChevron: true)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    showingGameModeSheet = true
-                                }
-
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
-
-                            // Kategorie Row
-                            RowCell(icon: "folder.fill", title: "Kategorie", value: categoryDisplayName)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    showingCategorySheet = true
-                                }
-
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
-
-                            // Dauer Row
-                            RowCell(icon: "timer.circle.fill", title: "Dauer", value: timeString(from: gameSettings.timeLimit), tint: .green, showsChevron: false)
-
-                            Divider()
-                                .opacity(0.2)
-                                .padding(.leading, 64)
-
-                            Slider(value: Binding(
-                                get: { Double(gameSettings.timeLimit) },
-                                set: { gameSettings.timeLimit = Int($0) }
-                            ), in: 60...1800, step: 60)
-                            .tint(.green)
-                            .padding(.horizontal, 14)
-                            .padding(.bottom, 14)
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 120)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 120)
                 }
             }
             .navigationDestination(item: $route) { route in
@@ -244,13 +291,6 @@ struct GameSetupView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                CircularDismissButton {
-                    dismiss()
-                }
-            }
-        }
         .onChange(of: gameSettings.players.count) { _ in
             gameSettings.clampNumberOfImpostersToCap()
         }
@@ -310,7 +350,7 @@ struct GameSetupView: View {
             .presentationCornerRadius(28)
             .presentationBackground(.regularMaterial)
         }
-        .sheet(isPresented: $showingCategorySheet) {
+        .sheet(isPresented: $showingCategorySelectionSheet) {
             CategorySelectionSheet(gameSettings: gameSettings)
             .presentationDetents([.large])
             .presentationCornerRadius(28)
@@ -319,6 +359,14 @@ struct GameSetupView: View {
         .sheet(isPresented: $showingSpyOptionsSheet) {
             SpyOptionsView()
                 .environmentObject(gameSettings)
+        }
+        // New Sheets for Top Bar Icons
+        .sheet(isPresented: $showingCategoryManagementSheet) {
+            CategoriesView()
+                .environmentObject(gameSettings)
+        }
+        .sheet(isPresented: $showingSettingsSheet) {
+            ImposterSettingsView()
         }
         .alert("Fehler", isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }

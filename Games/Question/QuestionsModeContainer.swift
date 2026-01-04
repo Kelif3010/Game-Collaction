@@ -48,7 +48,7 @@ struct QuestionsModeContainer: View {
                         numberOfSpies: $numberOfSpies,
                         onStartGame: startRound
                     )
-                    .padding(.top, 70)
+                    .padding(.top, 0)
                     
                 case .collecting:
                     collectingView
@@ -64,8 +64,10 @@ struct QuestionsModeContainer: View {
                 }
             }
             
-            // LAYER 2: HEADER (Immer sichtbar)
-            customHeader
+            // LAYER 2: HEADER (Immer sichtbar, außer im Setup)
+            if engine.phase != .setup {
+                customHeader
+            }
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)

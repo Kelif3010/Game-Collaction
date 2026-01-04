@@ -12,75 +12,126 @@ struct CategoriesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingAddCategory = false
     
+    // Theme
+    private let backgroundGradient = LinearGradient(
+        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     var body: some View {
-        ZStack {
-            // Hintergrund-Gradient wie im Hauptmenü
-            LinearGradient(
-                colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            ScrollView {
-                VStack(spacing: 30) {
-                    // Header
-                    VStack(spacing: 10) {
-                        Image(systemName: "folder.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.blue)
+        NavigationStack {
+            ZStack {
+                backgroundGradient.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
                         
-                        Text("KATEGORIEN")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                        Spacer()
+                        
+                        Text("Kategorien")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingAddCategory = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.blue)
+                                .clipShape(Circle())
+                        }
                     }
-                    .padding(.top, 20)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
                     
-                    // Kategorien Grid
-                    VStack(spacing: 20) {
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 15),
-                            GridItem(.flexible(), spacing: 15)
-                        ], spacing: 15) {
+                    ScrollView {
+                        VStack(spacing: 12) {
                             ForEach(gameSettings.categories) { category in
                                 NavigationLink(destination: ImposterCategoryDetailView(category: category).environmentObject(gameSettings)) {
-                                    ImposterCategoryCard(category: category) { }
+                                    CategoryRow(category: category)
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .buttonStyle(.plain)
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 40)
                     }
-                    
-                    // Action Buttons
-                    VStack(spacing: 15) {
-                        Button(action: { showingAddCategory = true }) {
-                            GameActionButton(
-                                title: "Neue Kategorie erstellen",
-                                icon: "plus.circle.fill",
-                                isEnabled: true
-                            )
-                        }
-                        
-                        Button("Zurück zum Hauptmenü") {
-                            dismiss()
-                        }
-                        .foregroundColor(.secondary)
-                        .font(.headline)
-                    }
-                    .padding(.bottom, 30)
                 }
-                .padding(.horizontal, 20)
             }
-        }
-        .sheet(isPresented: $showingAddCategory) {
-            ImposterAddCategoryView()
-                .environmentObject(gameSettings)
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showingAddCategory) {
+                ImposterAddCategoryView()
+                    .environmentObject(gameSettings)
+            }
         }
     }
 }
 
-// MARK: - Add Category View
+// MARK: - Category Row Component
+private struct CategoryRow: View {
+    let category: Category
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon / Emoji
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange.opacity(0.2), Color.red.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 50, height: 50)
+                
+                Text(category.emoji)
+                    .font(.title)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(category.name)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Text("\(category.words.count) Begriffe")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.3))
+        }
+        .padding()
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(18)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Add Category View (Refactored)
 struct ImposterAddCategoryView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
@@ -92,122 +143,126 @@ struct ImposterAddCategoryView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
+    // Theme
+    private let backgroundGradient = LinearGradient(
+        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     var body: some View {
         NavigationView {
             ZStack {
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                backgroundGradient.ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 25) {
-                        // Header
-                        VStack(spacing: 10) {
-                            Image(systemName: "folder.badge.plus")
-                                .font(.system(size: 50))
-                                .foregroundColor(.purple)
-                            
-                            Text("NEUE KATEGORIE")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-                        }
-                        .padding(.top, 20)
-                        
-                        // Kategorie Name
-                        VStack(alignment: .leading, spacing: 15) {
-                            SectionHeader(title: "Kategorie-Name", icon: "textformat")
-                            
-                            TextField("z.B. Superhelden", text: $categoryName)
-                                .textFieldStyle(ModernTextFieldStyle())
-                        }
-                        
-                        // Kategorie Emoji
-                        VStack(alignment: .leading, spacing: 15) {
-                            SectionHeader(title: "Emoji", icon: "face.smiling")
-                            
-                            TextField("z.B. 🦸‍♂️", text: $categoryEmoji)
-                                .textFieldStyle(ModernTextFieldStyle())
-                        }
-                        
-                        // Begriffe hinzufügen
-                        VStack(alignment: .leading, spacing: 15) {
-                            SectionHeader(title: "Begriffe", icon: "list.bullet")
-                            
-                            HStack(spacing: 12) {
-                                TextField("Begriff eingeben", text: $newWord)
-                                    .textFieldStyle(ModernTextFieldStyle())
-                                
-                                Button(action: addWord) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.white)
-                                }
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
-                                .background(
-                                    LinearGradient(
-                                        colors: newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
-                                            [Color.gray, Color.gray] : [Color.purple, Color.blue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(22)
-                                .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-                            }
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        Spacer()
+                        Text("Neue Kategorie")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button("Speichern") {
+                            saveCategory()
+                        }
+                        .font(.headline.bold())
+                        .foregroundColor(canSave ? .green : .gray)
+                        .disabled(!canSave)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
                             
-                            // Wortliste
-                            if !words.isEmpty {
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))], spacing: 10) {
+                            // 1. Details
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Details")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                
+                                TextField("", text: $categoryName, prompt: Text("Name (z.B. Superhelden)").foregroundColor(.gray))
+                                    .padding()
+                                    .background(Color.white.opacity(0.08))
+                                    .cornerRadius(12)
+                                    .foregroundColor(.white)
+                                
+                                TextField("", text: $categoryEmoji, prompt: Text("Emoji (z.B. 🦸‍♂️)").foregroundColor(.gray))
+                                    .padding()
+                                    .background(Color.white.opacity(0.08))
+                                    .cornerRadius(12)
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal)
+                            
+                            // 2. Words
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Begriffe")
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                    Spacer()
+                                    Text("\(words.count) / 4 min.")
+                                        .font(.caption)
+                                        .foregroundColor(words.count >= 4 ? .green : .orange)
+                                }
+                                
+                                HStack(spacing: 12) {
+                                    TextField("", text: $newWord, prompt: Text("Neues Wort...").foregroundColor(.gray))
+                                        .padding()
+                                        .background(Color.white.opacity(0.08))
+                                        .cornerRadius(12)
+                                        .foregroundColor(.white)
+                                        .onSubmit { addWord() }
+                                    
+                                    Button(action: addWord) {
+                                        Image(systemName: "plus")
+                                            .font(.title2.bold())
+                                            .foregroundColor(.white)
+                                            .frame(width: 50, height: 50)
+                                            .background(newWord.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                                            .clipShape(Circle())
+                                    }
+                                    .disabled(newWord.trimmingCharacters(in: .whitespaces).isEmpty)
+                                }
+                                
+                                // Word List
+                                LazyVStack(spacing: 10) {
                                     ForEach(Array(words.enumerated()), id: \.offset) { index, word in
                                         HStack {
                                             Text(word)
-                                                .font(.subheadline)
-                                                .lineLimit(1)
+                                                .font(.body.bold())
+                                                .foregroundColor(.white)
                                             
                                             Spacer()
                                             
-                                            Button(action: { removeWord(at: index) }) {
+                                            Button {
+                                                removeWord(at: index)
+                                            } label: {
                                                 Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.red)
-                                                    .font(.caption)
+                                                    .foregroundColor(.red.opacity(0.7))
                                             }
                                         }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(Color.purple.opacity(0.1))
-                                        .cornerRadius(8)
+                                        .padding()
+                                        .background(Color.white.opacity(0.05))
+                                        .cornerRadius(12)
                                     }
                                 }
-                            } else {
-                                InfoCard(text: "Mindestens 4 Begriffe erforderlich", icon: "info.circle")
                             }
+                            .padding(.horizontal)
                         }
-                        
-                        // Action Buttons
-                        VStack(spacing: 15) {
-                            Button(action: saveCategory) {
-                                GameActionButton(
-                                    title: "Kategorie speichern",
-                                    icon: "checkmark.circle.fill",
-                                    isEnabled: canSave
-                                )
-                            }
-                            .disabled(!canSave)
-                            
-                            Button("Abbrechen") {
-                                dismiss()
-                            }
-                            .foregroundColor(.secondary)
-                            .font(.headline)
-                        }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 40)
                     }
-                    .padding(.horizontal, 20)
                 }
             }
             .navigationBarHidden(true)
@@ -219,26 +274,26 @@ struct ImposterAddCategoryView: View {
         }
     }
     
+    // Logic (same as before)
     private func addWord() {
         let word = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if word.isEmpty {
-            return
-        }
-        
+        if word.isEmpty { return }
         if words.contains(word) {
             alertMessage = "Dieser Begriff existiert bereits."
             showingAlert = true
             return
         }
-        
-        words.append(word)
+        withAnimation {
+            words.append(word)
+        }
         newWord = ""
     }
     
     private func removeWord(at index: Int) {
         if index < words.count {
-            words.remove(at: index)
+            withAnimation {
+                words.remove(at: index)
+            }
         }
     }
     
@@ -249,12 +304,7 @@ struct ImposterAddCategoryView: View {
     }
     
     private func saveCategory() {
-        guard canSave else {
-            alertMessage = "Bitte geben Sie einen Kategorie-Namen, ein Emoji ein und fügen Sie mindestens 4 Begriffe hinzu."
-            showingAlert = true
-            return
-        }
-        
+        guard canSave else { return }
         let name = categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
         let emoji = categoryEmoji.trimmingCharacters(in: .whitespacesAndNewlines)
         

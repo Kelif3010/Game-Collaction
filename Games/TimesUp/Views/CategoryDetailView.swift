@@ -10,16 +10,24 @@ import SwiftUI
 struct CategoryDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     
-    // HIER GEÄNDERT: TimesUpCategory
     let category: TimesUpCategory
     @ObservedObject var categoryManager: CategoryManager
     
     @State private var newTermText = ""
-    
-    // HIER GEÄNDERT: TimesUpCategory
     @State private var editingCategory: TimesUpCategory
     
-    // HIER GEÄNDERT: TimesUpCategory
+    // Theme Reference
+    private let backgroundGradient = LinearGradient(
+        colors: [
+            Color.black,
+            Color(.systemGray6).opacity(0.3),
+            Color.blue.opacity(0.15),
+            Color.purple.opacity(0.1)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     init(category: TimesUpCategory, categoryManager: CategoryManager) {
         self.category = category
         self.categoryManager = categoryManager
@@ -33,297 +41,208 @@ struct CategoryDetailView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Hintergrund mit Kategorie-Farbe
-                LinearGradient(
-                    colors: [
-                        category.type.color.opacity(0.15),
-                        category.type.color.opacity(0.25),
-                        Color(.systemBackground).opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Background
+                backgroundGradient.ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 25) {
-                        // Header
-                        VStack(spacing: 15) {
-                            Image(systemName: category.type.systemImage)
-                                .font(.system(size: 50))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [category.type.color, category.type.color.opacity(0.7)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            VStack(spacing: 8) {
-                                if canEdit {
-                                    TextField("Kategoriename", text: $editingCategory.name)
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                colors: [category.type.color, category.type.color.opacity(0.8)],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
-                                        .multilineTextAlignment(.center)
-                                        .onSubmit {
-                                            saveChanges()
-                                        }
-                                } else {
-                                    Text(category.name)
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                colors: [category.type.color, category.type.color.opacity(0.8)],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button {
+                            if hasChanges && canEdit {
+                                saveChanges()
+                            }
+                            presentationMode.wrappedValue.dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        
+                        Spacer()
+                        
+                        Text(canEdit ? "Bearbeiten" : "Details")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        // Save Button (only if changes)
+                        if canEdit && hasChanges {
+                            Button(action: saveChanges) {
+                                Image(systemName: "checkmark")
+                                    .font(.title2.bold())
+                                    .foregroundColor(.green)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.white.opacity(0.1))
+                                    .clipShape(Circle())
+                            }
+                        } else {
+                            Color.clear.frame(width: 44, height: 44)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Category Icon & Name Header
+                            VStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(category.type.color.opacity(0.2))
+                                        .frame(width: 100, height: 100)
+                                    Image(systemName: category.type.systemImage)
+                                        .font(.system(size: 40))
+                                        .foregroundStyle(category.type.color)
                                 }
+                                .shadow(color: category.type.color.opacity(0.5), radius: 20)
                                 
-                                HStack(spacing: 15) {
-                                    Label("\(editingCategory.terms.count) Wörter", systemImage: "textformat.123")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                VStack(spacing: 8) {
+                                    if canEdit {
+                                        TextField("Name", text: $editingCategory.name)
+                                            .font(.title.bold())
+                                            .multilineTextAlignment(.center)
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal)
+                                            .padding(.vertical, 8)
+                                            .background(Color.white.opacity(0.1))
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
+                                            .padding(.horizontal, 40)
+                                    } else {
+                                        Text(category.name)
+                                            .font(.title.bold())
+                                            .foregroundColor(.white)
+                                    }
                                     
-                                    if !canEdit {
-                                        Label("Systemkategorie", systemImage: "lock.fill")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
+                                    HStack(spacing: 12) {
+                                        Label("\(editingCategory.terms.count) Wörter", systemImage: "textformat.123")
+                                        if !canEdit {
+                                            Label("Systemkategorie", systemImage: "lock.fill")
+                                        }
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.6))
+                                }
+                            }
+                            .padding(.bottom, 10)
+                            
+                            // Add Word Section
+                            if canEdit {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Neues Wort")
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .padding(.leading, 4)
+                                    
+                                    HStack(spacing: 12) {
+                                        TextField("", text: $newTermText, prompt: Text("Wort eingeben...").foregroundColor(.gray))
+                                            .padding()
+                                            .background(Color.white.opacity(0.08))
+                                            .cornerRadius(12)
+                                            .foregroundColor(.white)
+                                            .onSubmit { addTerm() }
+                                        
+                                        Button(action: addTerm) {
+                                            Image(systemName: "plus")
+                                                .font(.title2.bold())
+                                                .foregroundColor(.white)
+                                                .frame(width: 50, height: 50)
+                                                .background(newTermText.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : category.type.color)
+                                                .clipShape(Circle())
+                                        }
+                                        .disabled(newTermText.trimmingCharacters(in: .whitespaces).isEmpty)
                                     }
                                 }
+                                .padding(.horizontal)
                             }
-                        }
-                        .padding(.top, 20)
-                        
-                        // Wörter hinzufügen (nur bei eigenen Kategorien)
-                        if canEdit {
-                            AddTermSection(newTermText: $newTermText, onAdd: addTerm)
-                        }
-                        
-                        // Wörter Liste
-                        TermsListSection(
-                            terms: editingCategory.terms,
-                            categoryColor: category.type.color,
-                            canEdit: canEdit,
-                            onDelete: deleteTerm
-                        )
-                        
-                        if canEdit && hasChanges {
-                            // Änderungen speichern Button
-                            Button(action: saveChanges) {
-                                HStack {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.title2)
-                                    Text("Änderungen speichern")
-                                        .font(.title2)
-                                        .fontWeight(.bold)
+                            
+                            // Terms List
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Begriffe")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.leading, 20)
+                                
+                                if editingCategory.terms.isEmpty {
+                                    Text("Keine Wörter vorhanden.")
+                                        .foregroundColor(.gray)
+                                        .italic()
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+                                        ForEach(Array(editingCategory.terms.enumerated()), id: \.element.id) { index, term in
+                                            HStack {
+                                                Text(term.text)
+                                                    .font(.subheadline.bold())
+                                                    .foregroundColor(.white)
+                                                    .lineLimit(1)
+                                                
+                                                Spacer()
+                                                
+                                                if canEdit {
+                                                    Button {
+                                                        deleteTerm(at: IndexSet(integer: index))
+                                                    } label: {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .foregroundColor(.red.opacity(0.8))
+                                                    }
+                                                }
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 10)
+                                            .background(Color.white.opacity(0.08))
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                                            )
+                                        }
+                                    }
+                                    .padding(.horizontal)
                                 }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 60)
-                                .background(
-                                    LinearGradient(
-                                        colors: [category.type.color, category.type.color.opacity(0.8)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(20)
-                                .shadow(color: category.type.color.opacity(0.4), radius: 10, x: 0, y: 5)
                             }
-                            .padding(.horizontal)
                         }
-                        
-                        Spacer(minLength: 30)
+                        .padding(.bottom, 40)
                     }
                 }
             }
             .navigationBarHidden(true)
-            .overlay(alignment: .topLeading) {
-                Button(action: {
-                    if hasChanges && canEdit {
-                        saveChanges()
-                    }
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: hasChanges && canEdit ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.title)
-                        .foregroundColor(hasChanges && canEdit ? .green : .secondary)
-                        .background(Color(.systemBackground))
-                        .clipShape(Circle())
-                        .shadow(color: .primary.opacity(0.2), radius: 2)
-                }
-                .padding(.top, 50)
-                .padding(.leading, 20)
-            }
         }
     }
     
-    // MARK: - Helper Properties
+    // MARK: - Logic
+    
     private var hasChanges: Bool {
         editingCategory.name != category.name ||
         editingCategory.terms.count != category.terms.count ||
         !editingCategory.terms.elementsEqual(category.terms, by: { $0.text == $1.text })
     }
     
-    // MARK: - Actions
     private func addTerm() {
         guard !newTermText.isEmpty else { return }
         let newTerm = Term(text: newTermText)
-        editingCategory.terms.append(newTerm)
+        withAnimation {
+            editingCategory.terms.append(newTerm)
+        }
         newTermText = ""
     }
     
     private func deleteTerm(at indexSet: IndexSet) {
-        editingCategory.terms.remove(atOffsets: indexSet)
+        withAnimation {
+            editingCategory.terms.remove(atOffsets: indexSet)
+        }
     }
     
     private func saveChanges() {
         categoryManager.updateCategory(editingCategory)
     }
-}
-
-// MARK: - Add Term Section
-struct AddTermSection: View {
-    @Binding var newTermText: String
-    let onAdd: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            HStack {
-                Image(systemName: "plus.circle")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-                Text("Wort hinzufügen")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.blue)
-                Spacer()
-            }
-            
-            HStack(spacing: 12) {
-                TextField("Neues Wort", text: $newTermText)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(15)
-                    .shadow(color: .primary.opacity(0.1), radius: 3, x: 0, y: 1)
-                    .onSubmit {
-                        onAdd()
-                    }
-                
-                Button(action: onAdd) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(20)
-                        .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 2)
-                }
-                .disabled(newTermText.isEmpty)
-                .scaleEffect(newTermText.isEmpty ? 0.9 : 1.0)
-                .animation(.easeInOut(duration: 0.2), value: newTermText.isEmpty)
-            }
-        }
-        .padding(20)
-        .background(Color(.systemBackground).opacity(0.9))
-        .cornerRadius(20)
-        .shadow(color: .primary.opacity(0.12), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Terms List Section
-struct TermsListSection: View {
-    let terms: [Term]
-    let categoryColor: Color
-    let canEdit: Bool
-    let onDelete: (IndexSet) -> Void
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            HStack {
-                Image(systemName: "list.bullet.rectangle")
-                    .font(.title2)
-                    .foregroundColor(categoryColor)
-                Text("Alle Wörter")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(categoryColor)
-                Spacer()
-            }
-            
-            if terms.isEmpty {
-                VStack(spacing: 15) {
-                    Image(systemName: "text.badge.xmark")
-                        .font(.system(size: 40))
-                        .foregroundColor(.secondary)
-                    Text("Keine Wörter vorhanden")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    if canEdit {
-                        Text("Füge dein erstes Wort hinzu!")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 100)
-            } else {
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 12) {
-                    ForEach(Array(terms.enumerated()), id: \.element.id) { index, term in
-                        HStack {
-                            Text(term.text)
-                                .font(.body)
-                                .fontWeight(.medium)
-                            Spacer()
-                            
-                            if canEdit {
-                                Button(action: {
-                                    onDelete(IndexSet(integer: index))
-                                }) {
-                                    Image(systemName: "trash.circle.fill")
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 12)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: .primary.opacity(0.08), radius: 3, x: 0, y: 2)
-                    }
-                }
-            }
-        }
-        .padding(20)
-        .background(Color(.systemBackground).opacity(0.9))
-        .cornerRadius(20)
-        .shadow(color: .primary.opacity(0.12), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
-    }
-}
-
-#Preview {
-    // HIER GEÄNDERT: TimesUpCategory
-    CategoryDetailView(category: TimesUpCategory(name: "Test", type: .custom, terms: [Term(text: "Test1"), Term(text: "Test2")]), categoryManager: CategoryManager())
 }

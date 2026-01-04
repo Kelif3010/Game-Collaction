@@ -17,8 +17,9 @@ struct TimesUpWrapper: View {
     }
 
     var body: some View {
-        // Hier rufen wir den Root-View von TimesUp auf
-        TimesUpRootView(categoryManager: categoryManager)
+        // Hier rufen wir jetzt direkt den SettingsView auf, der als neuer HomeView dient.
+        // Das alte MainMenuView wird übersprungen.
+        SettingsView(categoryManager: categoryManager)
             // WICHTIG: Die Spracheinstellung muss hier injected werden
             .environment(\.locale, activeLanguage.locale)
     }

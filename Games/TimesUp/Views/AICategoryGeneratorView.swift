@@ -14,7 +14,7 @@ struct AICategoryGeneratorView: View {
     @State private var selectedThemes: [String] = []
     @State private var newTheme = ""
     @State private var selectedDifficulty: CategoryDifficulty = .medium
-    @State private var showPresetThemes = false
+    @State private var showPresetThemes = true // Default open for better UX
     
     private let presetThemes = [
         "Tiere", "Filme", "Musik", "Sport", "Essen", "Reisen",
@@ -22,374 +22,245 @@ struct AICategoryGeneratorView: View {
         "Literatur", "Natur", "Weltraum", "Märchen", "Berufe"
     ]
     
+    // Theme
+    private let backgroundGradient = LinearGradient(
+        colors: [
+            Color.black,
+            Color(.systemGray6).opacity(0.3),
+            Color.blue.opacity(0.15),
+            Color.purple.opacity(0.1)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     var body: some View {
         NavigationView {
             ZStack {
-                // Hintergrund
-                LinearGradient(
-                    colors: [
-                        Color.orange.opacity(0.15),
-                        Color.pink.opacity(0.15),
-                        Color.purple.opacity(0.15),
-                        Color(.systemBackground).opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                backgroundGradient.ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 25) {
-                        // Header
-                        VStack(spacing: 15) {
-                            Image(systemName: "sparkles.rectangle.stack")
-                                .font(.system(size: 50))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.orange, .pink, .purple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            Text("KI-Kategorie Generator")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.orange, .pink, .purple],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                            
-                            Text("Lassen Sie die KI automatisch Kategorien mit Begriffen erstellen")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button { presentationMode.wrappedValue.dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
                         }
-                        .padding(.top, 20)
-                        
-                        // Schwierigkeit Auswahl
-                        DifficultySection(selectedDifficulty: $selectedDifficulty)
-                        
-                        // Theme Auswahl
-                        ThemeSelectionSection(
-                            selectedThemes: $selectedThemes,
-                            newTheme: $newTheme,
-                            showPresetThemes: $showPresetThemes,
-                            presetThemes: presetThemes
-                        )
-                        
-                        // Generieren Button
-                        GenerateButton(
-                            categoryManager: categoryManager,
-                            selectedThemes: selectedThemes,
-                            selectedDifficulty: selectedDifficulty
-                        )
-                        
-                        // Status und Fehler
-                        StatusSection(categoryManager: categoryManager)
-                        
-                        Spacer(minLength: 30)
-                    }
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Abbrechen") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Difficulty Section
-struct DifficultySection: View {
-    @Binding var selectedDifficulty: CategoryDifficulty
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            HStack {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .purple],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Text("Schwierigkeit")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .purple],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Spacer()
-            }
-            
-            Picker("Schwierigkeit", selection: $selectedDifficulty) {
-                ForEach(CategoryDifficulty.allCases, id: \.self) { difficulty in
-                    VStack(alignment: .leading) {
-                        Text(difficulty.rawValue)
-                            .font(.headline)
-                        Text(difficulty.description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .tag(difficulty)
-                }
-            }
-            .pickerStyle(WheelPickerStyle())
-            .frame(height: 120)
-        }
-        .padding(20)
-        .background(Color(.systemBackground).opacity(0.9))
-        .cornerRadius(20)
-        .shadow(color: .primary.opacity(0.12), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Theme Selection Section
-struct ThemeSelectionSection: View {
-    @Binding var selectedThemes: [String]
-    @Binding var newTheme: String
-    @Binding var showPresetThemes: Bool
-    let presetThemes: [String]
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            HStack {
-                Image(systemName: "list.bullet.rectangle")
-                    .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.green, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Text("Themen auswählen")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.green, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Spacer()
-            }
-            
-            // Preset Themes Toggle
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showPresetThemes.toggle()
-                }
-            }) {
-                HStack {
-                    Text("Vordefinierte Themen")
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: showPresetThemes ? "chevron.up" : "chevron.down")
-                        .font(.title3)
-                }
-                .foregroundColor(.primary)
-                .padding(.vertical, 8)
-            }
-            
-            if showPresetThemes {
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 10) {
-                    ForEach(presetThemes, id: \.self) { theme in
-                        ThemeChip(
-                            theme: theme,
-                            isSelected: selectedThemes.contains(theme),
-                            onTap: {
-                                toggleTheme(theme)
-                            }
-                        )
-                    }
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            }
-            
-            // Custom Theme Input
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Eigenes Thema hinzufügen")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                HStack {
-                    TextField("z.B. Fantasy, Kochen, Autos...", text: $newTheme)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: .primary.opacity(0.1), radius: 3, x: 0, y: 1)
-                    
-                    Button(action: addCustomTheme) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                        Spacer()
+                        Text("KI Generator")
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                            .frame(width: 40, height: 40)
-                            .background(
-                                LinearGradient(
-                                    colors: [.green, .blue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(20)
-                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
+                        Spacer()
+                        Color.clear.frame(width: 44)
                     }
-                    .disabled(newTheme.isEmpty)
-                }
-            }
-            
-            // Selected Themes
-            if !selectedThemes.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Ausgewählte Themen (\(selectedThemes.count))")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
                     
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 8) {
-                        ForEach(selectedThemes, id: \.self) { theme in
-                            ThemeChip(
-                                theme: theme,
-                                isSelected: true,
-                                onTap: {
-                                    toggleTheme(theme)
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            
+                            // 1. Difficulty
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Schwierigkeit", systemImage: "gauge.medium")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                
+                                Picker("Schwierigkeit", selection: $selectedDifficulty) {
+                                    ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
+                                        Text(diff.rawValue).tag(diff)
+                                    }
                                 }
-                            )
+                                .pickerStyle(.segmented)
+                                .onAppear {
+                                     UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.darkGray
+                                     UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+                                     UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.lightGray], for: .normal)
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // 2. Custom Theme Input
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Themen wählen", systemImage: "sparkles")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                
+                                HStack(spacing: 12) {
+                                    TextField("", text: $newTheme, prompt: Text("Eigenes Thema (z.B. 80er)...").foregroundColor(.gray))
+                                        .padding()
+                                        .background(Color.white.opacity(0.08))
+                                        .cornerRadius(12)
+                                        .foregroundColor(.white)
+                                        .onSubmit { addCustomTheme() }
+                                    
+                                    Button(action: addCustomTheme) {
+                                        Image(systemName: "plus")
+                                            .font(.title2.bold())
+                                            .foregroundColor(.white)
+                                            .frame(width: 50, height: 50)
+                                            .background(newTheme.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.purple)
+                                            .clipShape(Circle())
+                                    }
+                                    .disabled(newTheme.trimmingCharacters(in: .whitespaces).isEmpty)
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // 3. Selected Themes Chips
+                            if !selectedThemes.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(selectedThemes, id: \.self) { theme in
+                                            HStack(spacing: 6) {
+                                                Text(theme)
+                                                    .font(.subheadline.bold())
+                                                    .foregroundColor(.white)
+                                                Button {
+                                                    toggleTheme(theme)
+                                                } label: {
+                                                    Image(systemName: "xmark")
+                                                        .font(.caption)
+                                                        .foregroundColor(.white.opacity(0.7))
+                                                }
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
+                                            )
+                                            .cornerRadius(20)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                            
+                            // 4. Presets
+                            VStack(alignment: .leading, spacing: 12) {
+                                Button {
+                                    withAnimation { showPresetThemes.toggle() }
+                                } label: {
+                                    HStack {
+                                        Text("Vorschläge")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                        Image(systemName: "chevron.right")
+                                            .rotationEffect(.degrees(showPresetThemes ? 90 : 0))
+                                            .foregroundColor(.gray)
+                                        Spacer()
+                                    }
+                                }
+                                
+                                if showPresetThemes {
+                                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 10) {
+                                        ForEach(presetThemes, id: \.self) { theme in
+                                            Button {
+                                                toggleTheme(theme)
+                                            } label: {
+                                                Text(theme)
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(selectedThemes.contains(theme) ? .white : .gray)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.vertical, 8)
+                                                    .background(
+                                                        selectedThemes.contains(theme) ?
+                                                        Color.purple.opacity(0.6) :
+                                                        Color.white.opacity(0.05)
+                                                    )
+                                                    .cornerRadius(10)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 10)
+                                                            .stroke(selectedThemes.contains(theme) ? Color.purple : Color.white.opacity(0.1), lineWidth: 1)
+                                                    )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // 5. Generate Action
+                            Button(action: generateCategories) {
+                                HStack {
+                                    if categoryManager.isGeneratingAI {
+                                        ProgressView().tint(.white)
+                                            .padding(.trailing, 8)
+                                    } else {
+                                        Image(systemName: "wand.and.stars")
+                                            .font(.title2)
+                                            .padding(.trailing, 4)
+                                    }
+                                    
+                                    Text(categoryManager.isGeneratingAI ? "Generiere..." : "Generieren")
+                                        .font(.title3.bold())
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 60)
+                                .background(
+                                    canGenerate ?
+                                    LinearGradient(colors: [.orange, .purple], startPoint: .leading, endPoint: .trailing) :
+                                        LinearGradient(colors: [.gray.opacity(0.5), .gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
+                                )
+                                .cornerRadius(20)
+                                .shadow(color: canGenerate ? .purple.opacity(0.4) : .clear, radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(!canGenerate)
+                            .padding(.horizontal)
+                            .padding(.top, 10)
+                            
+                            // Status / Error
+                            if let error = categoryManager.aiErrorMessage {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.red)
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red.opacity(0.9))
+                                }
+                                .padding()
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(12)
+                                .padding(.horizontal)
+                            }
+                            
+                            Spacer()
                         }
                     }
                 }
             }
+            .navigationBarHidden(true)
         }
-        .padding(20)
-        .background(Color(.systemBackground).opacity(0.9))
-        .cornerRadius(20)
-        .shadow(color: .primary.opacity(0.12), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
+    }
+    
+    // Logic
+    private var canGenerate: Bool {
+        !selectedThemes.isEmpty && !categoryManager.isGeneratingAI
     }
     
     private func toggleTheme(_ theme: String) {
-        if selectedThemes.contains(theme) {
-            selectedThemes.removeAll { $0 == theme }
-        } else {
-            selectedThemes.append(theme)
+        withAnimation(.spring()) {
+            if selectedThemes.contains(theme) {
+                selectedThemes.removeAll { $0 == theme }
+            } else {
+                selectedThemes.append(theme)
+            }
         }
     }
     
     private func addCustomTheme() {
-        guard !newTheme.isEmpty && !selectedThemes.contains(newTheme) else { return }
-        selectedThemes.append(newTheme)
-        newTheme = ""
-    }
-}
-
-// MARK: - Theme Chip
-struct ThemeChip: View {
-    let theme: String
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            Text(theme)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    isSelected ?
-                    LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing) :
-                    LinearGradient(colors: [Color(.systemGray6)], startPoint: .leading, endPoint: .trailing)
-                )
-                .cornerRadius(15)
-                .shadow(
-                    color: isSelected ? .green.opacity(0.3) : .clear,
-                    radius: 3,
-                    x: 0,
-                    y: 1
-                )
+        let trimmed = newTheme.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty && !selectedThemes.contains(trimmed) else { return }
+        withAnimation {
+            selectedThemes.append(trimmed)
+            newTheme = ""
         }
-        .scaleEffect(isSelected ? 1.05 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-}
-
-// MARK: - Generate Button
-struct GenerateButton: View {
-    @ObservedObject var categoryManager: CategoryManager
-    let selectedThemes: [String]
-    let selectedDifficulty: CategoryDifficulty
-    
-    var canGenerate: Bool {
-        !selectedThemes.isEmpty && !categoryManager.isGeneratingAI
-    }
-    
-    var body: some View {
-        Button(action: generateCategories) {
-            HStack {
-                if categoryManager.isGeneratingAI {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "sparkles.rectangle.stack.fill")
-                        .font(.title2)
-                }
-                
-                Text(categoryManager.isGeneratingAI ? 
-                     "Generiere 1 Kategorie aus \(selectedThemes.count) Themen..." : 
-                     "1 Kategorie aus \(selectedThemes.count) Themen generieren")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .background(
-                LinearGradient(
-                    colors: canGenerate ? 
-                        [.orange, .pink, .purple] : 
-                        [.gray, .gray.opacity(0.8)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .cornerRadius(20)
-            .shadow(
-                color: canGenerate ? .orange.opacity(0.4) : .clear,
-                radius: 10,
-                x: 0,
-                y: 5
-            )
-        }
-        .disabled(!canGenerate)
-        .padding(.horizontal)
     }
     
     private func generateCategories() {
@@ -398,43 +269,8 @@ struct GenerateButton: View {
                 themes: selectedThemes,
                 difficulty: selectedDifficulty
             )
+            presentationMode.wrappedValue.dismiss()
         }
-    }
-}
-
-// MARK: - Status Section
-struct StatusSection: View {
-    @ObservedObject var categoryManager: CategoryManager
-    
-    var body: some View {
-        VStack(spacing: 10) {
-            if categoryManager.isGeneratingAI {
-                HStack {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                    Text("KI generiert Kategorien...")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                }
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(15)
-            }
-            
-            if let errorMessage = categoryManager.aiErrorMessage {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
-                    Text(errorMessage)
-                        .font(.subheadline)
-                        .foregroundColor(.red)
-                }
-                .padding()
-                .background(Color.red.opacity(0.1))
-                .cornerRadius(15)
-            }
-        }
-        .padding(.horizontal)
     }
 }
 
