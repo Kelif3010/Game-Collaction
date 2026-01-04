@@ -19,14 +19,14 @@ struct DrawingLineWidthSelector: View {
                 Image(systemName: "lineweight")
                     .font(.subheadline)
                     .foregroundColor(.primary)
-                Text("Strichstärke")
+                Text(LocalizedStringKey("Strichstärke"))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                 Spacer()
                 
                 // Current width indicator
-                Text(DrawingLineWidths.name(for: drawingState.selectedLineWidth))
+                Text(LocalizedStringKey(DrawingLineWidths.name(for: drawingState.selectedLineWidth)))
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 8)
@@ -99,7 +99,7 @@ struct DrawingLineWidthSlider: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                Text("Strichstärke")
+                Text(LocalizedStringKey("Strichstärke"))
                     .font(.subheadline)
                     .fontWeight(.medium)
                 Spacer()
@@ -122,7 +122,7 @@ struct DrawingLineWidthSlider: View {
                     in: 1...20,
                     step: 1
                 ) {
-                    Text("Line Width")
+                    Text(LocalizedStringKey("Strichstärke"))
                 } minimumValueLabel: {
                     Text("1")
                         .font(.caption)

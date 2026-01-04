@@ -44,28 +44,28 @@ enum GameRound: Int, CaseIterable, Codable {
     
     var title: String {
         switch self {
-        case .round1: return "Runde 1"
-        case .round2: return "Runde 2"
-        case .round3: return "Runde 3"
-        case .round4: return "Runde 4"
+        case .round1: return String(localized: "Runde 1")
+        case .round2: return String(localized: "Runde 2")
+        case .round3: return String(localized: "Runde 3")
+        case .round4: return String(localized: "Runde 4")
         }
     }
     
     var description: String {
             switch self {
-            case .round1: return "Erklären"
-            case .round2: return "Nur ein Wort"
-            case .round3: return "Nur Pantomime"
-            case .round4: return "Zeichnen"
+            case .round1: return String(localized: "Erklären")
+            case .round2: return String(localized: "Nur ein Wort")
+            case .round3: return String(localized: "Nur Pantomime")
+            case .round4: return String(localized: "Zeichnen")
             }
     }
     
     var shortDescription: String {
         switch self {
-        case .round1: return "Erklären"
-        case .round2: return "Nur ein Wort"
-        case .round3: return "Nur Pantomime"
-        case .round4: return "Zeichnen"
+        case .round1: return String(localized: "Erklären")
+        case .round2: return String(localized: "Nur ein Wort")
+        case .round3: return String(localized: "Nur Pantomime")
+        case .round4: return String(localized: "Zeichnen")
         }
     }
     
@@ -76,13 +76,13 @@ enum GameRound: Int, CaseIterable, Codable {
     var detailedRules: String {
         switch self {
         case .round1:
-            return "Du musst den vorgegebenen Begriff beschreiben. Du darfst keine Wörter verwenden, die zum Wortstamm des gesuchten Begriffs gehören, die gleich klingen, übersetzen oder buchstabieren."
+            return String(localized: "Du musst den vorgegebenen Begriff beschreiben. Du darfst keine Wörter verwenden, die zum Wortstamm des gesuchten Begriffs gehören, die gleich klingen, übersetzen oder buchstabieren.")
         case .round2:
-            return "Du darfst nur EIN Wort sagen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen."
+            return String(localized: "Du darfst nur EIN Wort sagen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen.")
         case .round3:
-            return "Du darfst nur pantomimisch agieren - keine Geräusche, keine Wörter, nicht auf Dinge zeigen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen."
+            return String(localized: "Du darfst nur pantomimisch agieren - keine Geräusche, keine Wörter, nicht auf Dinge zeigen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen.")
         case .round4:
-            return "Du darfst nur zeichnen - keine Wörter, keine Geräusche, keine Pantomime, keine Buchstaben, keine Zahlen, keine Symbole. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen."
+            return String(localized: "Du darfst nur zeichnen - keine Wörter, keine Geräusche, keine Pantomime, keine Buchstaben, keine Zahlen, keine Symbole. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen.")
         }
     }
     

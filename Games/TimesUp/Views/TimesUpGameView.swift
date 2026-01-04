@@ -114,7 +114,7 @@ struct SetupPhaseView: View {
                     }
                     
                     // Runde Info
-                    Text(gameManager.gameState.currentRound.title)
+                    Text(LocalizedStringKey(gameManager.gameState.currentRound.title))
                         .font(.title2)
                         .foregroundColor(.gray)
                         .fontWeight(.bold)
@@ -124,13 +124,13 @@ struct SetupPhaseView: View {
                 
                 // Runden-Beschreibung Banner - Größerer Style
                 VStack(spacing: 15) {
-                    Text(gameManager.gameState.currentRound.description)
+                    Text(LocalizedStringKey(gameManager.gameState.currentRound.description))
                         .font(.title2)
                         .foregroundColor(.primary)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
                     
-                    Text(gameManager.gameState.currentRound.detailedRules)
+                    Text(LocalizedStringKey(gameManager.gameState.currentRound.detailedRules))
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -167,7 +167,7 @@ struct SetupPhaseView: View {
                                 Image(systemName: "play.fill")
                                     .font(.system(size: 30, weight: .bold))
                                     .foregroundColor(.white)
-                                Text("Start!")
+                                Text(LocalizedStringKey("Start!"))
                                     .font(.caption)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
@@ -187,49 +187,79 @@ struct SlotRewardFullView: View {
     
     var body: some View {
         ZStack {
+            // Animierter Hintergrund
             LinearGradient(
-                colors: [Color.black, Color.blue.opacity(0.2), Color.purple.opacity(0.2)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.2)],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
             
-            VStack(spacing: 32) {
-                Text("Slot Bonus – \(team.name)")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: .blue.opacity(0.6), radius: 12, x: 0, y: 4)
+            // Subtile Lichteffekte im Hintergrund
+            GeometryReader { geo in
+                Circle()
+                    .fill(Color.blue.opacity(0.15))
+                    .frame(width: 400, height: 400)
+                    .blur(radius: 80)
+                    .offset(x: -100, y: -100)
+                
+                Circle()
+                    .fill(Color.purple.opacity(0.15))
+                    .frame(width: 400, height: 400)
+                    .blur(radius: 80)
+                    .offset(x: geo.size.width - 300, y: geo.size.height - 300)
+            }
+            
+            VStack(spacing: 40) {
+                VStack(spacing: 8) {
+                    Text(LocalizedStringKey("Slot Bonus"))
+                        .font(.system(size: 16, weight: .black))
+                        .kerning(4)
+                        .foregroundColor(.blue.opacity(0.8))
+                    
+                    Text(team.name)
+                        .font(.system(size: 44, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .blue, radius: 10)
+                }
+                .padding(.top, 40)
                 
                 SlotMachineCard(gameManager: gameManager, team: team)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                 
-                Button(action: {
-                    gameManager.finishSlotReward()
-                }) {
-                    Text("Weiter")
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(gameManager.slotRewardCredits() > 0 ? Color.gray.opacity(0.4) : Color.green)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 32)
-                }
-                .disabled(gameManager.slotRewardCredits() > 0)
+                Spacer()
                 
-                if gameManager.slotRewardCredits() > 0 {
-                    Text("Verbrauche oder überspringe alle Spins, um fortzufahren.")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                VStack(spacing: 20) {
+                    if gameManager.slotRewardCredits() > 0 {
+                        Text(LocalizedStringKey("Verbrauche oder überspringe alle Spins, um fortzufahren."))
+                            .font(.footnote)
+                            .foregroundColor(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                    
+                    Button(action: {
+                        gameManager.finishSlotReward()
+                    }) {
+                        Text(LocalizedStringKey("Weiter"))
+                            .font(.title3.bold())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(gameManager.slotRewardCredits() > 0 ? Color.white.opacity(0.1) : Color.green)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(gameManager.slotRewardCredits() > 0 ? Color.white.opacity(0.1) : Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+                    .disabled(gameManager.slotRewardCredits() > 0)
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 40)
                 }
             }
-            .padding(.top, 60)
         }
     }
 }
@@ -242,108 +272,180 @@ struct SlotMachineCard: View {
     @State private var leverTilt = 0.0
     @State private var timer: Timer?
     @State private var localResultText: String?
+    @State private var blinkActive = false
+    
     private let symbolPool = [SlotSymbol(value: 10), SlotSymbol(value: -15)]
     
     var body: some View {
         let credits = gameManager.slotRewardCredits()
-        VStack(spacing: 18) {
+        
+        VStack(spacing: 0) {
+            // Machine Header / Scoreboard
             HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("50/50 Slot – \(team.name)")
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("JACKPOT")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.orange)
+                    Text("50 / 50")
+                        .font(.system(.title3, design: .monospaced))
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                    Text("Spins übrig: \(credits)")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
                 }
+                
                 Spacer()
-                Text("🎰")
-                    .font(.system(size: 32))
-            }
-            
-            HStack(spacing: 12) {
-                ForEach(0..<3, id: \.self) { index in
-                    SlotReel(symbol: reelSymbols[index])
+                
+                // Digital Credit Counter
+                VStack(alignment: .trailing, spacing: 4) {
+                    let spinsLabel = String(localized: "SPINS")
+                    Text(spinsLabel)
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.blue)
+                    Text(String(format: "%02d", credits))
+                        .font(.system(.title2, design: .monospaced))
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.2))
+                        .cornerRadius(8)
                 }
-                LeverHandle(angle: leverTilt)
-                    .frame(width: 52)
             }
+            .padding(20)
+            .background(Color.black.opacity(0.4))
             
-            HStack(alignment: .center, spacing: 12) {
+            // The Reels Area
+            HStack(spacing: 15) {
+                // Left Light Strip
+                VStack(spacing: 10) {
+                    ForEach(0..<5) { i in
+                        Circle()
+                            .fill(blinkActive ? Color.blue : Color.blue.opacity(0.3))
+                            .frame(width: 6, height: 6)
+                            .shadow(color: .blue, radius: blinkActive ? 4 : 0)
+                            .animation(.easeInOut(duration: 0.5).delay(Double(i) * 0.1).repeatForever(), value: blinkActive)
+                    }
+                }
+                
+                // Slots Case
+                HStack(spacing: 10) {
+                    ForEach(0..<3, id: \.self) { index in
+                        SlotReel(symbol: reelSymbols[index], isSpinning: spinning)
+                    }
+                }
+                .padding(15)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.black.opacity(0.5), lineWidth: 1)
+                )
+                
+                // Lever (Attached to the right)
+                LeverHandle(angle: leverTilt)
+                    .frame(width: 40)
+                    .onTapGesture {
+                        if !spinning && credits > 0 { startSpin() }
+                    }
+            }
+            .padding(.vertical, 30)
+            .padding(.horizontal, 10)
+            
+            // Action Area
+            HStack(spacing: 20) {
+                // Skip Button
+                Button(action: { gameManager.skipSlotReward() }) {
+                    Text(LocalizedStringKey("Überspringen"))
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(15)
+                }
+                .disabled(spinning)
+                
+                // Big Spin Button
                 Button(action: startSpin) {
-                    Label(spinning ? "Spin läuft" : "Hebel ziehen", systemImage: "figure.pullpush")
-                        .font(.subheadline.bold())
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(spinning || credits == 0 ? Color.gray.opacity(0.3) : Color.green)
-                        .clipShape(Capsule())
+                    let btnText = spinning ? LocalizedStringKey("SPINNING...") : LocalizedStringKey("PUSH")
+                    Text(btnText)
+                        .font(.system(size: 18, weight: .black))
                         .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 18)
+                                    .fill(spinning || credits == 0 ? Color.gray.opacity(0.3) : Color.red)
+                                
+                                if !spinning && credits > 0 {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                        .blur(radius: blinkActive ? 4 : 0)
+                                }
+                            }
+                        )
+                        .shadow(color: spinning || credits == 0 ? .clear : .red.opacity(0.5), radius: 10)
                 }
                 .disabled(spinning || credits == 0)
-                
-                if let text = localResultText ?? gameManager.slotRewardLastResultText() {
-                    Text(text)
-                        .font(.subheadline.bold())
-                        .foregroundColor(.white)
-                        .transition(.opacity)
-                }
-                
-                Button("Überspringen") {
-                    gameManager.skipSlotReward()
-                }
-                .font(.caption.bold())
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
-                .background(Color.red.opacity(0.4))
-                .clipShape(Capsule())
-                .foregroundColor(.white)
-                .disabled(spinning)
             }
+            .padding(20)
+            .background(Color.black.opacity(0.2))
         }
-        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color.black.opacity(0.35))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing), lineWidth: 1)
-                )
+            RoundedRectangle(cornerRadius: 28)
+                .fill(LinearGradient(colors: [Color(white: 0.25), Color(white: 0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
         )
-        .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 12)
-        .onDisappear {
-            stopTimer()
-        }
-        .onChange(of: team.id) { _ in
-            localResultText = nil
-        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(LinearGradient(colors: [.white.opacity(0.2), .black.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 2)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 20)
+        .onAppear { blinkActive = true }
+        .onDisappear { stopTimer() }
     }
     
     private func startSpin() {
-        guard !spinning,
-              gameManager.slotRewardTeam()?.id == team.id,
-              gameManager.slotRewardCredits() > 0 else { return }
+        guard !spinning, gameManager.slotRewardCredits() > 0 else { return }
+        
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         localResultText = nil
         spinning = true
-        animateLever()
+        
+        // Lever animation
+        withAnimation(.easeIn(duration: 0.2)) {
+            leverTilt = 25
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.4)) {
+                leverTilt = 0
+            }
+        }
+        
         startTimer()
-        let spinDuration = 1.8
+        
+        let spinDuration = 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + spinDuration) {
             stopTimer()
-            guard let result = gameManager.spinSlotReward() else {
-                spinning = false
-                return
+            if let result = gameManager.spinSlotReward() {
+                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    reelSymbols = Array(repeating: SlotSymbol(value: result.isWin ? 10 : -15), count: 3)
+                    localResultText = result.text
+                }
             }
-            reelSymbols = Array(repeating: SlotSymbol(value: result.isWin ? 10 : -15), count: 3)
-            localResultText = result.text
             spinning = false
         }
     }
     
     private func startTimer() {
         stopTimer()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { _ in
-            for index in reelSymbols.indices {
-                reelSymbols[index] = symbolPool.randomElement() ?? SlotSymbol(value: 10)
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            for i in 0..<3 {
+                reelSymbols[i] = symbolPool.randomElement()!
             }
         }
     }
@@ -351,17 +453,6 @@ struct SlotMachineCard: View {
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
-    }
-    
-    private func animateLever() {
-        withAnimation(.easeIn(duration: 0.15)) {
-            leverTilt = -18
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.45)) {
-                leverTilt = 0
-            }
-        }
     }
 }
 
@@ -373,21 +464,40 @@ private struct SlotSymbol {
 
 private struct SlotReel: View {
     let symbol: SlotSymbol
+    let isSpinning: Bool
     
     var body: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color.white.opacity(0.15))
-            .frame(width: 74, height: 80)
-            .overlay(
-                VStack(spacing: 0) {
-                    Text(symbol.primaryText)
-                        .font(.system(size: 22, weight: .heavy, design: .rounded))
-                    Text("Pkt")
-                        .font(.caption.bold())
-                }
+        VStack(spacing: 0) {
+            Text(symbol.primaryText)
+                .font(.system(size: 28, weight: .black, design: .rounded))
                 .foregroundColor(symbol.color)
-            )
-            .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 4)
+                .shadow(color: symbol.color.opacity(0.5), radius: 5)
+            
+            Text(LocalizedStringKey("PKT"))
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(symbol.color.opacity(0.7))
+        }
+        .frame(width: 70, height: 90)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.black)
+                
+                // Glass effect
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(colors: [.white.opacity(0.1), .clear, .black.opacity(0.2)], 
+                                       startPoint: .topLeading, 
+                                       endPoint: .bottomTrailing)
+                    )
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+        .scaleEffect(isSpinning ? 0.95 : 1.0)
+        .offset(y: isSpinning ? CGFloat.random(in: -2...2) : 0)
     }
 }
 
@@ -395,16 +505,25 @@ private struct LeverHandle: View {
     let angle: Double
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 0) {
+            // Ball
             Circle()
-                .fill(Color.red)
-                .frame(width: 18, height: 18)
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color.gray.opacity(0.8))
-                .frame(width: 10, height: 60)
+                .fill(RadialGradient(colors: [.red, Color(red: 0.5, green: 0, blue: 0)], center: .center, startRadius: 2, endRadius: 15))
+                .frame(width: 24, height: 24)
+                .shadow(color: .black.opacity(0.5), radius: 4, x: 2, y: 2)
+            
+            // Rod
+            RoundedRectangle(cornerRadius: 4)
+                .fill(LinearGradient(colors: [Color(white: 0.6), Color(white: 0.3), Color(white: 0.5)], startPoint: .leading, endPoint: .trailing))
+                .frame(width: 8, height: 60)
+            
+            // Base
+            Circle()
+                .fill(Color(white: 0.2))
+                .frame(width: 30, height: 30)
+                .overlay(Circle().stroke(Color.black, lineWidth: 2))
         }
-        .rotationEffect(.degrees(angle), anchor: .top)
-        .animation(.easeInOut(duration: 0.2), value: angle)
+        .rotationEffect(.degrees(angle), anchor: .bottom)
     }
 }
 
@@ -634,16 +753,17 @@ struct PerkNoticeStack: View {
 }
 
 private struct PerkNoticeGroup: View {
-    let title: String
+    let title: LocalizedStringKey
     let color: Color
     let notices: [GameManager.PerkNotice]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
+            Text(title)
                 .font(.caption.bold())
                 .foregroundColor(color.opacity(0.9))
                 .padding(.leading, 6)
+                .textCase(.uppercase)
             
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(notices) { notice in
@@ -675,16 +795,17 @@ private struct PerkNoticeGroup: View {
 }
 
 private struct PerkAttackNoticeGroup: View {
-    let title: String
+    let title: LocalizedStringKey
     let color: Color
     let notices: [GameManager.PerkAttackNotice]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
+            Text(title)
                 .font(.caption.bold())
                 .foregroundColor(color.opacity(0.9))
                 .padding(.leading, 6)
+                .textCase(.uppercase)
 
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(notices) { notice in
@@ -918,11 +1039,11 @@ struct RoundEndView: View {
         VStack(spacing: 30) {
             Spacer()
             
-            Text("Runde beendet!")
+            Text(LocalizedStringKey("Runde beendet!"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
-            Text("Zug beendet - Nächstes Team!")
+            Text(LocalizedStringKey("Zug beendet - Nächstes Team!"))
                 .font(.title3)
                 .foregroundColor(.secondary)
             
@@ -934,7 +1055,7 @@ struct RoundEndView: View {
             Button(action: {
                 gameManager.nextTurn()
             }) {
-                Text("Weiter")
+                Text(LocalizedStringKey("Weiter"))
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
@@ -958,7 +1079,7 @@ struct GameEndView: View {
         VStack(spacing: 30) {
             Spacer()
             
-            Text("🎉 Spiel beendet! 🎉")
+            Text(LocalizedStringKey("🎉 Spiel beendet! 🎉"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
@@ -979,7 +1100,7 @@ struct GameEndView: View {
                 gameManager.startGame()
                 presentationMode.wrappedValue.dismiss()
             }) {
-                Text("Neues Spiel")
+                Text(LocalizedStringKey("Neues Spiel"))
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
@@ -1011,7 +1132,7 @@ struct ScoreboardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text(showFinal ? "🏆 Endstand" : "Zwischenstand")
+            Text(showFinal ? LocalizedStringKey("🏆 Endstand") : LocalizedStringKey("Zwischenstand"))
                 .font(.title2)
                 .fontWeight(.bold)
             
@@ -1229,7 +1350,7 @@ struct PenaltyRevealRow: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .onChange(of: isActiveReveal) { newValue in
+        .onChange(of: isActiveReveal) { oldValue, newValue in
             guard newValue else { return }
             glowPulse = true
             if penalty > 0 {
@@ -1238,7 +1359,7 @@ struct PenaltyRevealRow: View {
                 }
             }
         }
-        .onChange(of: showFinalScores) { showFinal in
+        .onChange(of: showFinalScores) { oldValue, showFinal in
             if showFinal {
                 withAnimation {
                     showPenaltyBadge = false
@@ -1246,7 +1367,7 @@ struct PenaltyRevealRow: View {
                 stopShaking()
             }
         }
-        .onChange(of: showInterimScores) { isInterim in
+        .onChange(of: showInterimScores) { oldValue, isInterim in
             if isInterim {
                 startShaking()
             } else {

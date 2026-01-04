@@ -136,12 +136,12 @@ struct EmptyCanvasView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.gray.opacity(0.6))
             
-            Text("Bereit zum Zeichnen!")
+            Text(LocalizedStringKey("Bereit zum Zeichnen!"))
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(.gray)
             
-            Text("Tippe und ziehe, um zu zeichnen")
+            Text(LocalizedStringKey("Tippe und ziehe, um zu zeichnen"))
                 .font(.subheadline)
                 .foregroundColor(.gray.opacity(0.8))
         }

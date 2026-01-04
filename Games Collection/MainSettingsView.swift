@@ -11,54 +11,61 @@ struct MainSettingsView: View {
         NavigationStack {
             List {
                 // MARK: - Allgemein
-                Section(header: Text("Allgemein")) {
+                Section(header: Text(LocalizedStringKey("Allgemein"))) {
                     NavigationLink(destination: LanguageSelectionView()) {
                         HStack {
-                            Label("Sprache", systemImage: "globe")
+                            Label(LocalizedStringKey("Sprache"), systemImage: "globe")
                             Spacer()
                             Text(currentLanguageName)
                                 .foregroundStyle(.secondary)
                         }
                     }
                     NavigationLink(destination: Text("App Icons hier")) {
-                        Label("App Icon", systemImage: "app.badge")
+                        Label(LocalizedStringKey("App Icon"), systemImage: "app.badge")
                     }
                 }
                 
                 // MARK: - Community
-                Section(header: Text("Community")) {
+                Section(header: Text(LocalizedStringKey("Community"))) {
                     // YouTube Link
                     Link(destination: URL(string: "https://www.youtube.com/@elfiandken")!) {
                         Label {
-                            Text("YouTube")
+                            Text(LocalizedStringKey("Elfiandken"))
                                 .foregroundStyle(.primary)
                         } icon: {
-                            Image(systemName: "play.rectangle.fill")
-                                .foregroundStyle(.red) // YouTube Rot
+                            Image("Youtube")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)  // YouTube Rot
                         }
                     }
                     
                     // Instagram Link
                     Link(destination: URL(string: "https://www.instagram.com/elfiandken/")!) {
                         Label {
-                            Text("Instagram")
+                            Text(LocalizedStringKey("Elfiandken"))
                                 .foregroundStyle(.primary)
                         } icon: {
-                            Image(systemName: "camera.fill")
-                                .foregroundStyle(.purple) // Insta Purple
+                            Image("Instagram")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24) // Insta Purple
                         }
                     }
                 }
                 
                 // MARK: - Support & Info
-                Section(header: Text("Support & Info")) {
-                    NavigationLink(destination: Text("Über uns Text")) {
-                        Label("Über uns", systemImage: "info.circle")
+                Section(header: Text(LocalizedStringKey("Support & Info"))) {
+                    NavigationLink(destination: Text(LocalizedStringKey("Über uns Text"))) {
+                        Label(LocalizedStringKey("Über uns"), systemImage: "info.circle")
                     }
-                    Button("Feedback senden") {
-                        // Action für Feedback
+                    
+                    Link(destination: URL(string: "mailto:elfiandken@icloud.com")!) {
+                        Label(LocalizedStringKey("Feedback senden"), systemImage: "envelope")
+                            .foregroundStyle(.primary)
                     }
-                    Toggle("Benachrichtigungen", isOn: .constant(true))
+                    
+                    Toggle(LocalizedStringKey("Benachrichtigungen"), isOn: .constant(true))
                 }
                 
                 // MARK: - Branding Footer
@@ -80,11 +87,11 @@ struct MainSettingsView: View {
                     .listRowBackground(Color.clear)
                 }
             }
-            .navigationTitle("Einstellungen")
+            .navigationTitle(LocalizedStringKey("Einstellungen"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fertig") {
+                    Button(LocalizedStringKey("Fertig")) {
                         dismiss()
                     }
                 }
@@ -93,11 +100,11 @@ struct MainSettingsView: View {
         .presentationDetents([.medium, .large])
     }
     
-    private var currentLanguageName: String {
+    private var currentLanguageName: LocalizedStringKey {
         if useSystemLanguage {
-            return "System"
+            return LocalizedStringKey("System")
         }
-        return selectedLanguageCode == "de" ? "Deutsch" : "English"
+        return selectedLanguageCode == "de" ? LocalizedStringKey("Deutsch") : LocalizedStringKey("English")
     }
 }
 
@@ -108,16 +115,16 @@ private struct LanguageSelectionView: View {
     var body: some View {
         List {
             Section {
-                Toggle("Systemsprache verwenden", isOn: $useSystemLanguage)
+                Toggle(LocalizedStringKey("Systemsprache verwenden"), isOn: $useSystemLanguage)
             }
             
             if !useSystemLanguage {
-                Section(header: Text("Wähle eine Sprache")) {
+                Section(header: Text(LocalizedStringKey("Wähle eine Sprache"))) {
                     Button {
                         selectedLanguageCode = "de"
                     } label: {
                         HStack {
-                            Text("Deutsch")
+                            Text(LocalizedStringKey("Deutsch"))
                             Spacer()
                             if selectedLanguageCode == "de" {
                                 Image(systemName: "checkmark").foregroundColor(.blue)
@@ -130,7 +137,7 @@ private struct LanguageSelectionView: View {
                         selectedLanguageCode = "en"
                     } label: {
                         HStack {
-                            Text("English")
+                            Text(LocalizedStringKey("English"))
                             Spacer()
                             if selectedLanguageCode == "en" {
                                 Image(systemName: "checkmark").foregroundColor(.blue)
@@ -141,7 +148,7 @@ private struct LanguageSelectionView: View {
                 }
             }
         }
-        .navigationTitle("Sprache")
+        .navigationTitle(LocalizedStringKey("Sprache"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

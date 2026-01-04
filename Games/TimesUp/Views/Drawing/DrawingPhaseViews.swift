@@ -38,7 +38,7 @@ struct DrawingTermRevealView: View {
                         .shadow(color: .green.opacity(0.4), radius: 20, x: 0, y: 8)
                     
                     VStack(spacing: 15) {
-                        Text("Zeichne diesen Begriff:")
+                        Text(LocalizedStringKey("Zeichne diesen Begriff:"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .fontWeight(.medium)
@@ -59,7 +59,8 @@ struct DrawingTermRevealView: View {
                         HStack {
                             Image(systemName: "paintbrush.pointed")
                                 .foregroundColor(.orange)
-                            Text("\(gameManager.gameState.remainingTermsCount) Begriffe übrig")
+                            let remainingLabel = String(localized: "Begriffe übrig")
+                            Text("\(gameManager.gameState.remainingTermsCount) \(remainingLabel)")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.orange)
@@ -86,7 +87,7 @@ struct DrawingTermRevealView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "pencil")
                         .font(.title2)
-                    Text("Los geht's - Zeichnen!")
+                    Text(LocalizedStringKey("Los geht's - Zeichnen!"))
                         .font(.title2)
                         .fontWeight(.bold)
                 }
@@ -166,7 +167,7 @@ struct DrawingActiveView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "arrow.right")
                                 .font(.title3)
-                            Text("Skip")
+                            Text(LocalizedStringKey("Skip"))
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
@@ -196,7 +197,7 @@ struct DrawingActiveView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "xmark")
                                     .font(.title3)
-                                Text("Falsch")
+                                Text(LocalizedStringKey("Falsch"))
                                     .font(.headline)
                                     .fontWeight(.bold)
                             }
@@ -213,7 +214,7 @@ struct DrawingActiveView: View {
                 
                 // Correct Button
                 if forcedSkipActive {
-                    Text("Zwangs-Skip aktiv – erst Skip drücken.")
+                    Text(LocalizedStringKey("Zwangs-Skip aktiv – erst Skip drücken."))
                         .font(.footnote)
                         .foregroundColor(.yellow)
                 } else {
@@ -221,7 +222,7 @@ struct DrawingActiveView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "checkmark")
                                 .font(.title3)
-                            Text("Richtig!")
+                            Text(LocalizedStringKey("Richtig!"))
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
@@ -265,7 +266,7 @@ struct DrawingGuessedView: View {
                     )
                     .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 5)
                 
-                Text("Richtig erraten!")
+                Text(LocalizedStringKey("Richtig erraten!"))
                     .font(.system(size: 32, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing)
@@ -287,7 +288,7 @@ struct DrawingGuessedView: View {
                         .shadow(color: .green.opacity(0.3), radius: 15, x: 0, y: 5)
                     
                     VStack(spacing: 12) {
-                        Text("Der Begriff war:")
+                        Text(LocalizedStringKey("Der Begriff war:"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .fontWeight(.medium)
@@ -314,7 +315,7 @@ struct DrawingGuessedView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title2)
-                    Text("Bereit für nächsten Begriff")
+                    Text(LocalizedStringKey("Bereit für nächsten Begriff"))
                         .font(.title2)
                         .fontWeight(.bold)
                 }

@@ -24,11 +24,6 @@ class GameLogic: ObservableObject {
     /// Startet das Spiel und weist Begriffe und Imposter zu
     @MainActor
     func startGame() async {
-        print("🎮 GameLogic.startGame() aufgerufen")
-        print("📊 Spieleranzahl: \(gameSettings.players.count)")
-        print("📂 Kategorie-Auswahl: \(gameSettings.categorySelectionDisplayName)")
-        print("🎯 Anzahl Spione: \(gameSettings.numberOfImposters)")
-
         stopGameTimer()
         
         // Manuelle Einstellung an Obergrenze anpassen, falls Zufall AUS ist
@@ -39,35 +34,27 @@ class GameLogic: ObservableObject {
         
         // Spiel zurücksetzen bevor neue Spione ausgewählt werden
         gameSettings.resetGame()
-        print("🔄 Spiel zurückgesetzt")
         HintService.shared.resetState()
 
         guard let roundCategory = gameSettings.chooseRoundCategory(),
               !roundCategory.words.isEmpty,
               gameSettings.players.count >= 4 else {
-            print("❌ Guard-Fehler: selection=\(gameSettings.categorySelectionDisplayName), roundCategory=\(gameSettings.roundCategory?.name ?? "nil"), players.count=\(gameSettings.players.count)")
             return
         }
         
-        print("✅ Guard erfolgreich, starte Spiel (Runden-Kategorie: \(roundCategory.name))")
-
         // Begriffe basierend auf Spielmodus wählen
         let gameWords = selectWordsForGameMode(from: roundCategory)
-        print("📝 Begriffe ausgewählt: primary=\(gameWords.primary), secondary=\(gameWords.secondary ?? "nil")")
         
         // Imposter zufällig auswählen
         let imposters = selectRandomImposters()
-        print("🕵️ Ausgewählte Spione: \(imposters.count) - IDs: \(imposters)")
         
         // Begriffe zuweisen (mit KI-Unterstützung für Hinweise)
         await assignWordsToPlayers(gameWords: gameWords, imposters: imposters)
-        print("🎯 Begriffe zugewiesen")
         
         // Spielzustand setzen
         gameSettings.gamePhase = .cardReveal
         gameSettings.currentPlayerIndex = 0
         gameSettings.timeRemaining = gameSettings.timeLimit
-        print("🎮 Spielzustand gesetzt: phase=\(gameSettings.gamePhase), currentPlayer=\(gameSettings.currentPlayerIndex)")
     }
     
     /// Wählt Begriffe basierend auf dem aktuellen Spielmodus
@@ -106,15 +93,11 @@ class GameLogic: ObservableObject {
     
     /// Wählt zufällig Imposter aus den Spielern aus
     private func selectRandomImposters() -> Set<UUID> {
-        print("🕵️ selectRandomImposters() aufgerufen")
         let players = gameSettings.players
         let playerIds = players.map { $0.id }
         _ = playerIds.shuffled()
-        print("👥 Spieler-IDs: \(playerIds)")
-        print("🎲 randomSpyCount: \(gameSettings.randomSpyCount), players.count: \(players.count)")
         
         // Wenn Zufall aktiv ist, erzwinge, dass die manuelle Einstellung nicht über der Obergrenze liegt
-        // (UI sollte die manuelle Steuerung deaktivieren; hier nur als Sicherheitsnetz)
         if gameSettings.randomSpyCount {
             let capForUI = maxAllowedImposters(for: players.count)
             if gameSettings.numberOfImposters > capForUI {
@@ -122,32 +105,25 @@ class GameLogic: ObservableObject {
             }
         }
         
-        // Determine imposter count with rules:
-        // - Random only if option enabled AND players >= 5
-        // - Never exceed 50% of players (floor(n/2)), with special case: 4 players -> max 1
+        // Determine imposter count with rules
         let cap = maxAllowedImposters(for: players.count)
         let imposterCount: Int
         if gameSettings.randomSpyCount && players.count >= 5 {
             let upperBound = max(1, cap)
             imposterCount = Int.random(in: 1...upperBound)
-            print("🎲 Zufällige Spion-Anzahl: \(imposterCount) (upperBound: \(upperBound), cap: \(cap))")
             DispatchQueue.main.async { [weak gameSettings] in
                 gameSettings?.numberOfImposters = imposterCount
             }
         } else {
-            // Fixed: clamp requested to valid range [1, cap]
             let requested = max(1, gameSettings.numberOfImposters)
             imposterCount = min(requested, cap)
-            print("📊 Feste Spion-Anzahl: \(imposterCount) (requested: \(gameSettings.numberOfImposters), cap: \(cap))")
         }
         
         if imposterCount <= 0 || players.isEmpty { 
-            print("❌ Keine Spione möglich: imposterCount=\(imposterCount), players.isEmpty=\(players.isEmpty)")
             return [] 
         }
         
         // Use fairness-aware picker
-        print("🎯 Rufe ImposterPicker.pickImposters auf...")
         var rng: any RandomNumberGeneratorLike = SystemRNGAdapter()
         // KI-Tuner: Multiplikatoren berechnen (optional)
         let multipliers = AITuner.shared.suggestWeightMultipliers(
@@ -156,12 +132,6 @@ class GameLogic: ObservableObject {
             state: gameSettings.fairnessState
         )
         
-        // Debug-Quelle der Multiplikatoren eindeutig in der Konsole markieren
-        if AIService.shared.isAvailable {
-            print("🧠 Quelle Multiplikatoren: On-Device KI verfügbar (derzeit heuristische Berechnung)")
-        } else {
-            print("🧪 Quelle Multiplikatoren: Fallback (KI nicht verfügbar)")
-        }
         // Optional: auch in Moderator-Log schreiben
         ModeratorLog.shared.logDebug(
             AIService.shared.isAvailable ? "Spion-Verteilung: KI verfügbar (Heuristik aktiv)" : "Spion-Verteilung: Fallback aktiv",
@@ -179,16 +149,13 @@ class GameLogic: ObservableObject {
             rng: &rng,
             weightMultipliers: multipliers
         )
-        print("🎯 ImposterPicker Ergebnis: \(picked.count) Spione ausgewählt - \(picked)")
         
         // Update fairness state: set cooldowns for picked, reset streaks for others, record pairs
         let round = gameSettings.fairnessState.currentRound
         let pickedSet = Set(picked)
-        print("📊 Fairness Round: \(round)")
         
         // Record pairs and per-player increments
         gameSettings.fairnessState.recordImposters(picked)
-        print("📝 Fairness State aktualisiert")
         
         // Apply hard cooldowns for picked
         for id in picked {
@@ -204,28 +171,23 @@ class GameLogic: ObservableObject {
             }
         }
         
-        print("✅ selectRandomImposters() abgeschlossen: \(pickedSet.count) Spione")
         return Set(picked)
     }
     
     /// Weist allen Spielern Begriffe zu (Imposter bekommen "SPION" oder Kategorieinfo)
     @MainActor
     private func assignWordsToPlayers(gameWords: GameWords, imposters: Set<UUID>) async {
-        print("🎯 assignWordsToPlayers() aufgerufen mit \(imposters.count) Spionen")
         // Normale Spieler (ohne Spione) sammeln
         var normalPlayers: [Int] = []
         
         guard let roundCategory = gameSettings.roundCategory else {
-            print("❌ Keine Kategorie ausgewählt")
             return
         }
         
         for i in gameSettings.players.indices {
             let playerId = gameSettings.players[i].id
-            let playerName = gameSettings.players[i].name
             
             if imposters.contains(playerId) {
-                print("🕵️ \(playerName) ist ein Spion!")
                 gameSettings.players[i].isImposter = true
                 
                 // Spion-Wort abhängig von Einstellungen
@@ -241,10 +203,7 @@ class GameLogic: ObservableObject {
                     return nil
                 }
                 
-                // Für Spione wird NUR der inhaltliche Text (Kategorie optional, Hinweise optional, Mitspione optional) in den Karten-Text geschrieben.
-                // Wichtig: KEIN Titel ("Du bist der Spion") mehr im Text – die UI rendert "IMPOSTER" mittig, Kategorie oben, Mitspione unten.
-                // So vermeiden wir jegliche Duplikate zwischen Daten und UI.
-                // Nutze KI-Version wenn Hinweise aktiviert sind, sonst normale Version
+                // Für Spione wird NUR der inhaltliche Text in den Karten-Text geschrieben.
                 let spyText: String
                 if gameSettings.showSpyHints {
                     // Nutze KI-Version für automatische Hinweis-Generierung
@@ -325,13 +284,8 @@ class GameLogic: ObservableObject {
     }
     
     /// Weist normalen Spielern im Rollen-Modus Rollen zu
-    /// - Parameters:
-    ///   - normalPlayers: Indizes der normalen Spieler (nicht Imposter)
-    ///   - location: Der Ort, an dem das Spiel stattfindet
     @MainActor
     private func assignRolesToPlayers(normalPlayers: [Int], location: String) async {
-        print("🎭 Rollen-Modus: Weise Rollen für \(normalPlayers.count) Spieler am Ort '\(location)' zu")
-        
         // Alle Spieler bekommen den Ort als Wort
         for playerIndex in normalPlayers {
             gameSettings.players[playerIndex].word = location
@@ -345,15 +299,12 @@ class GameLogic: ObservableObject {
         for (index, playerIndex) in normalPlayers.enumerated() {
             if index < roles.count {
                 gameSettings.players[playerIndex].role = roles[index]
-                print("🎭 Spieler '\(gameSettings.players[playerIndex].name)' bekommt Rolle: '\(roles[index])'")
             } else {
                 // Fallback: Generiere einzelne Rolle falls nicht genug generiert wurden
                 if let role = await aiService.generateRole(for: location, playerName: gameSettings.players[playerIndex].name) {
                     gameSettings.players[playerIndex].role = role
-                    print("🎭 Spieler '\(gameSettings.players[playerIndex].name)' bekommt Rolle (einzeln generiert): '\(role)'")
                 } else {
                     gameSettings.players[playerIndex].role = "Besucher"
-                    print("🎭 Spieler '\(gameSettings.players[playerIndex].name)' bekommt Fallback-Rolle: 'Besucher'")
                 }
             }
         }
@@ -384,7 +335,6 @@ class GameLogic: ObservableObject {
         if allPlayersSeenCards {
             startGameTimer()
             gameSettings.isTimerPaused = false
-            print("⏰ Timer gestartet - alle Karten wurden gesehen")
             
             // Hinweise-System starten
             if gameSettings.gameMode != .twoWords,
@@ -394,7 +344,6 @@ class GameLogic: ObservableObject {
             }
         } else {
             gameSettings.isTimerPaused = true
-            print("⏸️ Timer pausiert - noch nicht alle Karten gesehen")
         }
     }
 
@@ -439,16 +388,9 @@ class GameLogic: ObservableObject {
     }
     
     
-    // MARK: - Neues Spiel (Option A)
+    // MARK: - Neues Spiel
     /// Startet sofort einen komplett neuen Durchlauf.
-    /// Verwendung (Option A):
-    /// 1) "Neues Spiel"-Button schließt die aktuelle Ansicht (dismiss)
-    /// 2) Direkt danach `gameLogic.restartGame()` aufrufen
-    ///
-    /// WICHTIG: Timer wird pausiert und Spiel wird zurückgesetzt
     func restartGame() async {
-        print("🔁 GameLogic.restartGame() aufgerufen")
-        
         // Timer stoppen und pausieren
         stopGameTimer()
         gameSettings.isTimerPaused = true

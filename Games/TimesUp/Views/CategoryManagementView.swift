@@ -50,7 +50,7 @@ struct CategoryManagementView: View {
                         
                         Spacer()
                         
-                        Text("Kategorien verwalten")
+                        Text(LocalizedStringKey("Kategorien verwalten"))
                             .font(.title2.bold())
                             .foregroundColor(.white)
                         
@@ -83,10 +83,10 @@ struct CategoryManagementView: View {
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("Mit KI generieren")
+                                            Text(LocalizedStringKey("Mit KI generieren"))
                                                 .font(.headline)
                                                 .foregroundColor(.white)
-                                            Text("Lass dir Begriffe vorschlagen")
+                                            Text(LocalizedStringKey("Lass dir Begriffe vorschlagen"))
                                                 .font(.caption)
                                                 .foregroundColor(.white.opacity(0.7))
                                         }
@@ -118,10 +118,10 @@ struct CategoryManagementView: View {
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("Manuell erstellen")
+                                            Text(LocalizedStringKey("Manuell erstellen"))
                                                 .font(.headline)
                                                 .foregroundColor(.white)
-                                            Text("Erstelle eine leere Kategorie")
+                                            Text(LocalizedStringKey("Erstelle eine leere Kategorie"))
                                                 .font(.caption)
                                                 .foregroundColor(.white.opacity(0.7))
                                         }
@@ -142,7 +142,7 @@ struct CategoryManagementView: View {
                             
                             // MARK: - List Section
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Deine Kategorien")
+                                Text(LocalizedStringKey("Deine Kategorien"))
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                     .padding(.horizontal)
@@ -179,11 +179,11 @@ struct CategoryManagementView: View {
             .sheet(item: $selectedCategory) { category in
                 CategoryDetailView(category: category, categoryManager: categoryManager)
             }
-            .alert("Kategorie löschen?", isPresented: $showingDeleteAlert) {
-                Button("Abbrechen", role: .cancel) {
+            .alert(LocalizedStringKey("Kategorie löschen?"), isPresented: $showingDeleteAlert) {
+                Button(LocalizedStringKey("Abbrechen"), role: .cancel) {
                     categoryToDelete = nil
                 }
-                Button("Löschen", role: .destructive) {
+                Button(LocalizedStringKey("Löschen"), role: .destructive) {
                     if let cat = categoryToDelete {
                         categoryManager.deleteCategory(cat)
                     }
@@ -193,7 +193,7 @@ struct CategoryManagementView: View {
                 if let cat = categoryToDelete {
                     Text("Möchtest du '\(cat.name)' wirklich löschen?")
                 } else {
-                    Text("Möchtest du diese Kategorie löschen?")
+                    Text(LocalizedStringKey("Möchtest du diese Kategorie löschen?"))
                 }
             }
         }
@@ -227,11 +227,11 @@ private struct ManagementRow: View {
             
             // Text
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.name)
+                Text(LocalizedStringKey(category.name))
                     .font(.headline)
                     .foregroundColor(.white)
                 
-                Text("\(category.terms.count) Begriffe")
+                (Text("\(category.terms.count) ") + Text("Begriffe"))
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
             }

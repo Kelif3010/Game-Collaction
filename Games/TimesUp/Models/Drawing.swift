@@ -37,9 +37,9 @@ enum DrawingTool: CaseIterable, Identifiable {
     
     var name: String {
         switch self {
-        case .pen: return "Stift"
-        case .eraser: return "Radiergummi"
-        case .fill: return "Ausfüllen"
+        case .pen: return String(localized: "Stift")
+        case .eraser: return String(localized: "Radiergummi")
+        case .fill: return String(localized: "Ausfüllen")
         }
     }
     
@@ -84,10 +84,10 @@ struct DrawingLineWidths {
     
     static func name(for width: CGFloat) -> String {
         switch width {
-        case thin: return "Dünn"
-        case medium: return "Normal"
-        case thick: return "Dick" 
-        case extraThick: return "Extra Dick"
+        case thin: return String(localized: "Dünn")
+        case medium: return String(localized: "Normal")
+        case thick: return String(localized: "Dick")
+        case extraThick: return String(localized: "Extra Dick")
         default: return "Custom"
         }
     }

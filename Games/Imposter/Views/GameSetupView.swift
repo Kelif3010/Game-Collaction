@@ -20,6 +20,8 @@ extension ImposterGameMode {
             return "Zwei‑Begriffe"
         case .roles:
             return "Rollen Modus"
+        case .questions:
+            return "Fragen Modus"
         @unknown default:
             return rawValue
         }
@@ -291,7 +293,7 @@ struct GameSetupView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .onChange(of: gameSettings.players.count) { _ in
+        .onChange(of: gameSettings.players.count) { _, _ in
             gameSettings.clampNumberOfImpostersToCap()
         }
         .onChange(of: gameSettings.isRolesCategorySelected) { _, isValid in

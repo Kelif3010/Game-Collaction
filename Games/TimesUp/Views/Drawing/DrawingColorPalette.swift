@@ -27,7 +27,7 @@ struct DrawingColorPalette: View {
                 Image(systemName: "paintpalette")
                     .font(.subheadline)
                     .foregroundColor(.primary)
-                Text("Farben")
+                Text(LocalizedStringKey("Farben"))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)

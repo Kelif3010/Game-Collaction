@@ -22,5 +22,11 @@ struct TimesUpWrapper: View {
         SettingsView(categoryManager: categoryManager)
             // WICHTIG: Die Spracheinstellung muss hier injected werden
             .environment(\.locale, activeLanguage.locale)
+            .onChange(of: useSystemLanguage) { _ in
+                categoryManager.updateLanguage(activeLanguage)
+            }
+            .onChange(of: selectedLanguageCode) { _ in
+                categoryManager.updateLanguage(activeLanguage)
+            }
     }
 }

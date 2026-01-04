@@ -1,0 +1,407 @@
+/* ContentView */
+"Deine Bibliothek" = "Your Library";
+"Wetten & Lachen" = "Bet & Laugh";
+"Erklären & Raten" = "Explain & Guess";
+"Wer blufft?" = "Who is bluffing?";
+"Finde den Spion" = "Find the spy";
+"Lügner" = "Liar";
+
+/* MainSettingsView */
+"Allgemein" = "General";
+"Sprache" = "Language";
+"App Icon" = "App Icon";
+"Community" = "Community";
+"YouTube" = "YouTube";
+"Instagram" = "Instagram";
+"Support & Info" = "Support & Info";
+"Über uns" = "About Us";
+"Über uns Text" = "We are KELIF Studios, creating fun games for everyone.";
+"Feedback senden" = "Send Feedback";
+"Benachrichtigungen" = "Notifications";
+"Einstellungen" = "Settings";
+"Fertig" = "Done";
+"System" = "System";
+"Deutsch" = "German";
+"English" = "English";
+
+/* LanguageSelectionView */
+"Systemsprache verwenden" = "Use System Language";
+"Wähle eine Sprache" = "Choose a Language";
+"Sprache" = "Language";
+/* Allgemein / Navigation */
+"Abbrechen" = "Cancel";
+"Beenden" = "Quit";
+"Einstellungen" = "Settings";
+"Zeit:" = "Time:";
+"Weiter" = "Continue";
+"Start!" = "Start!";
+"Neues Spiel" = "New Game";
+"Spielregeln" = "Rules";
+"Das ultimative Ratespiel" = "The ultimate guessing game";
+"Time's Up!" = "Time's Up!";
+"Team:" = "Team:";
+"Team: %@" = "Team: %@";
+"Überspringen" = "Skip";
+
+/* App-Einstellungen */
+"Sprachen" = "Languages";
+"In Vorbereitung" = "Coming soon";
+
+/* Hauptmenü / Kategorien */
+"Kategorien verwalten" = "Manage categories";
+"Kategorie löschen?" = "Delete category?";
+"Alle Kategorien" = "All categories";
+"Keine Kategorien vorhanden" = "No categories available";
+"Füge deine erste Kategorie hinzu!" = "Add your first category!";
+"Manuell erstellen" = "Create manually";
+"Mit KI generieren" = "Generate with AI";
+"Möchtest du die Kategorie '%@' und alle ihre Wörter wirklich löschen?" = "Do you really want to delete the category '%@' and all its words?";
+"%lld Wörter" = "%lld words";
+"Sehr leicht" = "Very easy";
+"Schwere Kategorie" = "Hard category";
+"FSK 18" = "18+";
+"Sehr leichte Kategorie" = "Very easy category";
+"Leichte Kategorie" = "Easy category";
+"Mittel Kategorie" = "Medium category";
+"Eigene Kategorie" = "Custom category";
+
+/* Kategorie-Details */
+"Alle Wörter" = "All words";
+"Füge dein erstes Wort hinzu!" = "Add your first word!";
+"Keine Wörter vorhanden" = "No words available";
+"Wort hinzufügen" = "Add word";
+"Änderungen speichern" = "Save changes";
+"Kategoriename" = "Category name";
+"Name der Kategorie" = "Category name";
+"Systemkategorie" = "System category";
+
+/* Kategorie erstellen */
+"Neue Kategorie" = "New category";
+"Kategorie speichern" = "Save category";
+"Thema der Kategorie" = "Category topic";
+"Kategoriename" = "Category name";
+"Neues Wort" = "New word";
+"Wörter" = "Words";
+"Mindestens 5 Wörter erforderlich" = "At least 5 words required";
+"Schwierigkeit" = "Difficulty";
+"Alle übersetzen" = "Translate all";
+"Übersetze…" = "Translate…";
+"Mit KI generieren" = "Generate with AI";
+"KI-Generator" = "AI generator";
+"Generiere..." = "Generating...";
+"Apple KI verfügbar" = "Apple AI available";
+"Apple KI nicht verfügbar - Mock-Daten" = "Apple AI not available - mock data";
+"Englische Übersetzung" = "English translation";
+"z.B. Tiere, Filme, Sport..." = "e.g. animals, movies, sports...";
+
+/* KI-Kategorie-Generator */
+"KI-Kategorie Generator" = "AI category generator";
+"Lassen Sie die KI automatisch Kategorien mit Begriffen erstellen" = "Let the AI automatically create categories with terms";
+"Themen auswählen" = "Choose themes";
+"Vordefinierte Themen" = "Preset themes";
+"Eigenes Thema hinzufügen" = "Add custom theme";
+"z.B. Fantasy, Kochen, Autos..." = "e.g. fantasy, cooking, cars...";
+"Ausgewählte Themen (%lld)" = "Selected themes (%lld)";
+"1 Kategorie aus %lld Themen generieren" = "Generate 1 category from %lld themes";
+"Generiere 1 Kategorie aus %lld Themen..." = "Generating 1 category from %lld themes...";
+"KI generiert Kategorien..." = "AI is generating categories...";
+"Tiere" = "Animals";
+"Filme" = "Movies";
+"Musik" = "Music";
+"Sport" = "Sports";
+"Essen" = "Food";
+"Reisen" = "Travel";
+"Wissenschaft" = "Science";
+"Geschichte" = "History";
+"Technologie" = "Technology";
+"Kunst" = "Art";
+"Literatur" = "Literature";
+"Natur" = "Nature";
+"Weltraum" = "Space";
+"Märchen" = "Fairy tales";
+"Berufe" = "Professions";
+
+/* Category Management */
+"min." = "min.";
+"Neue Kategorie" = "New Category";
+"Speichern" = "Save";
+"Name der Kategorie" = "Category Name";
+"z.B. 90er Hits" = "e.g. 90s Hits";
+"KI-Unterstützung" = "AI Support";
+"Thema für KI (z.B. Weltraum)" = "Topic for AI (e.g. Space)";
+"Vorschläge generieren" = "Generate Suggestions";
+"Alle fehlenden Englisch-Übersetzungen ergänzen" = "Add all missing English translations";
+"Englisch (optional)" = "English (optional)";
+"Bearbeiten" = "Edit";
+"Details" = "Details";
+"Name" = "Name";
+"Wort eingeben..." = "Enter word...";
+"Deine Kategorien" = "Your Categories";
+"Begriffe" = "Terms";
+"Kategorien verwalten" = "Manage Categories";
+"Lass dir Begriffe vorschlagen" = "Get term suggestions";
+
+/* Drawing */
+"Farbe wählen" = "Choose Color";
+"Bereit zum Zeichnen!" = "Ready to Draw!";
+"Tippe und ziehe, um zu zeichnen" = "Tap and drag to draw";
+"Strichstärke" = "Line Width";
+"Zeichne:" = "Draw:";
+"Übrig" = "Left";
+"Zeichne diesen Begriff:" = "Draw this term:";
+"Begriffe übrig" = "terms remaining";
+"Los geht's - Zeichnen!" = "Let's go - draw!";
+"Richtig erraten!" = "Guessed correctly!";
+"Der Begriff war:" = "The term was:";
+"Bereit für nächsten Begriff" = "Ready for next term";
+"min." = "min.";
+"Dünn" = "Thin";
+"Normal" = "Normal";
+"Dick" = "Dick";
+"Extra Dick" = "Extra Thick";
+
+/* Game Phases & UI */
+"Spins übrig:" = "Spins left:";
+"Spin läuft" = "Spin running";
+"Hebel ziehen" = "Pull lever";
+"Boosts" = "Boosts";
+"Angriff" = "Attack";
+"Sabotage" = "Sabotage";
+"Runde beendet!" = "Round finished!";
+"Zug beendet - Nächstes Team!" = "Turn over - next team!";
+"🎉 Spiel beendet! 🎉" = "🎉 Game over! 🎉";
+"Neues Spiel" = "New Game";
+"🏆 Finale Enthüllung" = "🏆 Final Reveal";
+"🏆 Endstand" = "🏆 Final Score";
+"Zwischenstand" = "Current Standings";
+"Endstand" = "Final Score";
+
+/* Remaining UI */
+"Keine" = "None";
+"Schließen" = "Close";
+"Leaderboard" = "Leaderboard";
+"Info" = "Info";
+
+/* AI Category Generator */
+"KI Generator" = "AI Generator";
+"Themen wählen" = "Choose Themes";
+"Eigenes Thema (z.B. 80er)..." = "Custom theme (e.g. 80s)...";
+"Vorschläge" = "Suggestions";
+"Generieren" = "Generate";
+"Einfach" = "Easy";
+"Mittel" = "Medium";
+"Schwer" = "Hard";
+"Einfache, bekannte Begriffe" = "Simple, well-known terms";
+"Mittlere Schwierigkeit, gemischte Begriffe" = "Medium difficulty, mixed terms";
+"Schwierige, spezielle Begriffe" = "Difficult, specialized terms";
+
+/* Perks */
+"Zeit & Tempo" = "Time & Tempo";
+"Punkte & Boosts" = "Points & Boosts";
+"Sabotage" = "Sabotage";
+"Individuell" = "Custom";
+"Timer einfrieren, Slow Motion & mehr Tempo-Tricks." = "Freeze the timer, use slow motion & more tempo tricks.";
+"Doppelte Punkte, Steals oder Schutzschilde." = "Double points, steals, or shields.";
+"Verwirrung, Glitches & Zwangs-Skips beim Gegner." = "Cause confusion, glitches & forced skips for your opponent.";
+"Stelle deine Lieblings-Perks frei zusammen." = "Freely choose your favorite perks.";
+
+"Zeit einfrieren" = "Freeze Time";
+"Slow Motion Gegner" = "Slow Motion Opponent";
+"Zeit-Boost" = "Time Boost";
+"Zeitbombe" = "Time Bomb";
+"Sudden Rush" = "Sudden Rush";
+"Nächstes Wort x2" = "Next Word x2";
+"Doppelte Punkte im Zug" = "Double Points This Turn";
+"Punkte stehlen" = "Steal Points";
+"Schutzschild" = "Shield";
+"Combo Bonus" = "Combo Bonus";
+"Assist Punkte" = "Assist Points";
+"Spiegelwort" = "Mirrored Word";
+"Zwangs-Skip" = "Forced Skip";
+"Skip gesperrt" = "Skip Locked";
+"Glitch-Buchstaben" = "Glitch Letters";
+"Zeitbremse" = "Time Brake";
+"Worttausch" = "Word Swap";
+"Unsichtbares Wort" = "Invisible Word";
+"English Word" = "English Word";
+
+"Doppelte Punkte aktiv" = "Double points active";
+"+2s pro Treffer" = "+2s per hit";
+"Zeit eingefroren (%llds)" = "Time frozen (%llds)";
+"Schutzschild bereit" = "Shield ready";
+"Combo Bonus aktiv" = "Combo bonus active";
+"Assist gegen euch aktiv" = "Assist active against you";
+"Assist von %@" = "Assist from %@";
+"Timer doppelt so schnell" = "Timer twice as fast";
+"Slow Motion aktiv (-5s)" = "Slow motion active (-5s)";
+"Slow Motion vorbereitet (-5s)" = "Slow motion queued (-5s)";
+"-2s beim nächsten Treffer" = "-2s on next hit";
+"Zeitbombe aktiv (-1s pro 3s)" = "Time bomb active (-1s per 3s)";
+"Spiegel-Wort aktiv" = "Mirror word active";
+"Wort verschwindet gleich" = "Word will vanish soon";
+"Wort wird getauscht" = "Word will be swapped";
+"Skip gesperrt (%llds)" = "Skip locked (%llds)";
+"Zwangs-Skip aktiv" = "Forced skip active";
+"-5s Slow Motion" = "-5s slow motion";
+"Rush" = "Rush";
+"2 Punkte gestohlen" = "2 points stolen";
+"Assist aktiv" = "Assist active";
+"-2s Penalty" = "-2s penalty";
+"Wort verschwindet" = "Word disappears";
+"Wort auf Englisch" = "Word in English";
+
+"Stoppt euren Timer für 5 Sekunden." = "Stops your timer for 5 seconds.";
+"Nimmt dem Gegner 5 Sekunden beim nächsten Start." = "Takes 5 seconds from the opponent at their next start.";
+"+2 Sekunden auf den Timer nach jedem Treffer in diesem Zug." = "+2 seconds on the timer after each hit this turn.";
+"Gegner verliert alle 3 Sekunden 1 Sekunde, bis ein Treffer gelingt." = "Opponent loses 1 second every 3 seconds until they get a hit.";
+"Euer Timer läuft 10 Sekunden doppelt so schnell." = "Your timer runs twice as fast for 10 seconds.";
+"Der nächste Begriff zählt doppelt." = "The next term counts for double points.";
+"Alle Treffer dieses Zuges geben doppelte Punkte." = "All hits this turn grant double points.";
+"Stiehlt dem Gegner 2 Punkte und addiert sie zu euch." = "Steals 2 points from the opponent and adds them to you.";
+"Blockiert die nächste Zeit- oder Punktestrafe." = "Blocks the next time or point penalty.";
+"+3 Punkte nach drei Treffern in Folge." = "+3 points after three consecutive hits.";
+"+1 Punkt, wenn der Gegner als Nächstes skippt." = "+1 point if the opponent skips next.";
+"Der Gegner sieht sein Wort 5 Sekunden lang spiegelverkehrt." = "The opponent sees their word mirrored for 5 seconds.";
+"Der Gegner muss den nächsten Begriff sofort skippen." = "The opponent must skip their next term immediately.";
+"Sperrt den gegnerischen Skip-Button für 10 Sekunden." = "Locks the opponent's skip button for 10 seconds.";
+"Verstümmelt Buchstaben im gegnerischen Wort für 5 Sekunden." = "Glitches letters in the opponent's word for 5 seconds.";
+"-2 Sekunden für den Gegner, sobald er den nächsten Begriff löst." = "-2 seconds for the opponent as soon as they solve the next term.";
+"Wechselt das aktuelle Gegnerwort nach 3 Sekunden zufällig." = "Randomly swaps the opponent's current word after 3 seconds.";
+"Lässt das Wort 2 Sekunden nach Anzeige verschwinden." = "Makes the word disappear 2 seconds after it is shown.";
+"Zeigt das Wort für 7 Sekunden auf Englisch an und verwirrt den Gegner." = "Shows the word in English for 7 seconds, confusing the opponent.";
+
+"Freeze" = "Freeze";
+"Slow" = "Slow";
+"Next x2" = "Next x2";
+"2x Punkte" = "2x Points";
+"Shield" = "Shield";
+"Steal" = "Steal";
+
+/* Runden & Spiel */
+"Runde 1" = "Round 1";
+"Runde 2" = "Round 2";
+"Runde 3" = "Round 3";
+"Runde 4" = "Round 4";
+"Erklären" = "Explain";
+"Nur ein Wort" = "One Word Only";
+"Nur Pantomime" = "Pantomime Only";
+"Zeichnen" = "Drawing";
+
+"Du musst den vorgegebenen Begriff beschreiben. Du darfst keine Wörter verwenden, die zum Wortstamm des gesuchten Begriffs gehören, die gleich klingen, übersetzen oder buchstabieren." = "You must describe the given term. You may not use words that belong to the root of the word, sound the same, are translations, or spell it out.";
+"Du darfst nur EIN Wort sagen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen." = "You may only say ONE word. The team may only guess ONCE. If the guess is wrong, you must skip.";
+"Du darfst nur pantomimisch agieren - keine Geräusche, keine Wörter, nicht auf Dinge zeigen. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen." = "You may only act in pantomime - no sounds, no words, no pointing at things. The team may only guess ONCE. If the guess is wrong, you must skip.";
+"Du darfst nur zeichnen - keine Wörter, keine Geräusche, keine Pantomime, keine Buchstaben, keine Zahlen, keine Symbole. Das Team darf nur EINMAL raten. Wenn das Wort falsch ist, musst du es skippen." = "You may only draw - no words, no sounds, no pantomime, no letters, no numbers, no symbols. The team may only guess ONCE. If the guess is wrong, you must skip.";
+
+"Stift" = "Pen";
+"Radiergummi" = "Eraser";
+"Ausfüllen" = "Fill";
+"Dünn" = "Thin";
+"Normal" = "Normal";
+"Dick" = "Thick";
+"Extra Dick" = "Extra Thick";
+
+/* Einstellungen / Setup */
+"Spieleinstellungen" = "Game settings";
+"Teams" = "Teams";
+"Teamname eingeben" = "Enter team name";
+"Spielmodus" = "Game mode";
+"Kategorien" = "Categories";
+"Anzahl Wörter" = "Number of words";
+"Schwierigkeit" = "Difficulty";
+"Zeitlimit pro Zug" = "Time limit per turn";
+"Perk-System" = "Perk system";
+"Party Modus" = "Party mode";
+"Individuelle Auswahl" = "Custom selection";
+"Spiel starten!" = "Start game!";
+"Spiel starten" = "Start game";
+"Mindestens 2 Teams erforderlich" = "At least 2 teams required";
+"Mindestens eine Kategorie auswählen" = "Select at least one category";
+"Verfügbar: %lld" = "Available: %lld";
+"Verfügbar:" = "Available:";
+"Min: %lld" = "Min: %lld";
+"Min:" = "Min:";
+"Wähle mehr Kategorien für mindestens %lld Wörter" = "Select more categories for at least %lld words";
+"Wähle mindestens ein Paket oder stelle eigene Perks zusammen, damit Perks erscheinen können." = "Select at least one pack or add custom perks so perks can appear.";
+"Wähle mindestens einen Perk aus, damit der individuelle Modus aktiv ist." = "Select at least one perk to enable custom mode.";
+"Aktiviere optionale Power-Ups. Nach %@ richtigen Antworten können zufällig Perks aus ausgewählten Paketen erscheinen (%@)." = "Enable optional power-ups. After %@ correct answers, perks from selected packs can appear at random (%@).";
+"Frühere Perks bei 3/6/9 Treffern für mehr Action." = "Earlier perks at 3/6/9 hits for more action.";
+"15 Sek." = "15 sec";
+"2 Min." = "2 min";
+"%lld Sek." = "%lld sec.";
+"%lld Perks ausgewählt." = "%lld perks selected.";
+"Zurücksetzen" = "Reset";
+"max. 2 pro Zug" = "max. 2 per turn";
+"max. 3 pro Zug" = "max. 3 per turn";
+"leicht" = "easy";
+"mittel" = "medium";
+"schwer" = "hard";
+
+/* Status & Enums */
+"An" = "On";
+"Aus" = "Off";
+"Leicht" = "Easy";
+"Mittel" = "Medium";
+"Schwer" = "Hard";
+"Klassisch" = "Classic";
+"Mit Zeichnen" = "With Drawing";
+"Zufällige Reihenfolge" = "Random Order";
+"Zeit & Wörter" = "Time & Words";
+"Zeit pro Zug" = "Time per turn";
+
+"Teamname..." = "Team name...";
+"Mindestens 2 Teams erforderlich" = "At least 2 teams required";
+"Perks sind deaktiviert" = "Perks are disabled";
+"Aktiviere sie oben rechts, um Power-Ups ins Spiel zu bringen." = "Enable them in the top right to bring power-ups into the game.";
+"Party Modus" = "Party Mode";
+"Häufigere Perks bei 3/6/9 Treffern" = "More frequent perks at 3/6/9 hits";
+"Verfügbare Pakete" = "Available Packs";
+"Individuelle Perks wählen" = "Select Custom Perks";
+"Perks" = "Perks";
+"Teams" = "Teams";
+"Kategorien" = "Categories";
+
+/* Spiel / Runden */
+"Spiel beenden?" = "End game?";
+"Möchtest du das aktuelle Spiel wirklich beenden?" = "Do you really want to end the current game?";
+"Runde beendet!" = "Round finished!";
+"Zug beendet - Nächstes Team!" = "Turn over - next team!";
+"Begriffe übrig:" = "Terms remaining:";
+"Slot Bonus – %@" = "Slot bonus – %@";
+"50/50 Slot – %@" = "50/50 slot – %@";
+"Spins übrig: %lld" = "Spins left: %lld";
+"Verbrauche oder überspringe alle Spins, um fortzufahren." = "Use or skip all spins to continue.";
+"Streak %lldx" = "Streak %lldx";
+"An %@, %@" = "To %@, %@";
+"Zwangs-Skip aktiv – zuerst Skip ausführen." = "Forced skip active – perform Skip first.";
+"Boosts" = "Boosts";
+"Angriff" = "Attack";
+"Sabotage" = "Sabotage";
+"Zwischenstand" = "Current standings";
+"Endstand" = "Final score";
+"Spin läuft" = "Spin running";
+"Hebel ziehen" = "Pull lever";
+"🎉 Spiel beendet! 🎉" = "🎉 Game over! 🎉";
+"🏆 Finale Enthüllung" = "🏆 Final reveal";
+"🏆 Endstand" = "🏆 Final score";
+"Team: %lld" = "Team: %lld";
+"%lld Begriffe übrig" = "%lld terms left";
+
+/* Zeichnen */
+"Bereit zum Zeichnen!" = "Ready to draw!";
+"Tippe und ziehe, um zu zeichnen" = "Tap and drag to draw";
+"Farben" = "Colors";
+"Farbe wählen" = "Choose color";
+"Falsch" = "Wrong";
+"Richtig" = "Correct";
+"Skip" = "Skip";
+"Zeichne:" = "Draw:";
+"Zwangs-Skip aktiv – erst Skip ausführen." = "Forced skip active – perform Skip first.";
+"Übrig" = "Left";
+"Strichstärke" = "Line width";
+"Bereit für nächsten Begriff" = "Ready for next term";
+"Der Begriff war:" = "The term was:";
+"Los geht's - Zeichnen!" = "Let's go - draw!";
+"Richtig erraten!" = "Guessed correctly!";
+"Richtig!" = "Correct!";
+"Zeichne diesen Begriff:" = "Draw this term:";
+"Zwangs-Skip aktiv – erst Skip drücken." = "Forced skip active – press Skip first.";

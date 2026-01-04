@@ -1,4 +1,3 @@
-
 import Foundation
 import SwiftUI
 import Combine
@@ -30,14 +29,6 @@ class GameManager: ObservableObject {
     @Published private var visualEffects: [UUID: VisualEffectState] = [:]
     @Published private var skipButtonFreezeUntil: [UUID: Date] = [:]
     private var pendingVisualEffects: [UUID: [VisualEffectRequest]] = [:]
-    
-    // DEBUG logging
-    private let loggerPrefix = "🎮 GameManager"
-    private var isDebugLoggingEnabled: Bool = true
-    private func log(_ message: String) {
-        guard isDebugLoggingEnabled else { return }
-        print("\(loggerPrefix) | \(message)")
-    }
     
     private func notifyUIChange() {
         DispatchQueue.main.async { [weak self] in
@@ -94,6 +85,27 @@ class GameManager: ObservableObject {
     private let skipFreezeDuration: TimeInterval = 10
     private var maxPerksPerTurn: Int {
         gameState.settings.perkPartyMode ? 3 : 2
+    }
+
+    private var appLocale: Locale {
+        let defaults = UserDefaults.standard
+        let useSystem: Bool
+        if defaults.object(forKey: "useSystemLanguage") == nil {
+            useSystem = true
+        } else {
+            useSystem = defaults.bool(forKey: "useSystemLanguage")
+        }
+        if useSystem {
+            return AppLanguage.fromSystemPreferred().locale
+        }
+        let code = defaults.string(forKey: "selectedLanguageCode")
+        return AppLanguage.from(code: code).locale
+    }
+
+    private func localized(_ key: String.LocalizationValue, _ args: CVarArg...) -> String {
+        let format = String(localized: key, locale: appLocale)
+        guard !args.isEmpty else { return format }
+        return String(format: format, locale: appLocale, arguments: args)
     }
     
     private enum VisualEffectKind {
@@ -175,12 +187,14 @@ class GameManager: ObservableObject {
     
     init(categoryManager: CategoryManager? = nil) {
         self.categoryManager = categoryManager ?? CategoryManager()
-        // Categories werden jetzt von CategoryManager verwaltet
     }
     
     deinit {
-        turnTimer.invalidate()
-        activeTimeBombTimers.values.forEach { $0.invalidate() }
+        // Safe invalidation
+        Task { @MainActor [weak self] in
+            self?.turnTimer.invalidate()
+            self?.activeTimeBombTimers.values.forEach { $0.invalidate() }
+        }
     }
     
     // MARK: - Setup
@@ -334,9 +348,6 @@ class GameManager: ObservableObject {
         for i in gameState.allTerms.indices {
             gameState.allTerms[i].reset()  // Setzt alle Runden auf false zurück
         }
-
-        logCurrentDeck(context: "Nach startGame (Initiales Deck)")
-        gameState.debugDump(context: "after startGame")
     }
     
     func startRound() {
@@ -345,30 +356,18 @@ class GameManager: ObservableObject {
     
     func correctGuess() {
         guard gameState.phase == .playing else { return }
-        log("===== CORRECT GUESS =====")
         let currentTeamId = gameState.currentTeam?.id
-        let visibleIndexForCorrect = gameState.resolvedCurrentTermIndex()
-        if let term = gameState.currentTerm {
-            log("Current term: '\(term.text)' | rawIndex: \(gameState.currentTermIndex) | visibleIndex: \(visibleIndexForCorrect)")
-        } else {
-            log("Current term: nil | rawIndex: \(gameState.currentTermIndex) | visibleIndex: \(visibleIndexForCorrect)")
-        }
-        log("Before correct - seen in turn: \(gameState.seenTermsInCurrentTurn)")
-        log("Before correct - seen in round: \(gameState.seenTermsInCurrentRound)")
-
+        
         if let teamId = currentTeamId, pausePenaltyTargets.remove(teamId) != nil {
-            let before = gameState.turnTimeRemaining
             gameState.turnTimeRemaining = max(0, gameState.turnTimeRemaining - 2)
-            log("⏱️ Pause-Penalty aktiv: -2s (\(Int(before)) -> \(Int(gameState.turnTimeRemaining)))")
             triggerTimerBurst(for: teamId, text: "-2s", isNegative: true)
         }
         
         // Score
-        addPointsToCurrentTeam(basePoints: 1, reason: "✅ Richtig")
+        addPointsToCurrentTeam(basePoints: 1, reason: String(localized: "✅ Richtig"))
         
         if let teamId = currentTeamId, rewindBonusTeams.contains(teamId) {
             gameState.turnTimeRemaining += 2
-            log("⏪ Rewind Bonus: +2s -> \(Int(gameState.turnTimeRemaining))s")
             triggerTimerBurst(for: teamId, text: "+2s", isNegative: false)
         }
         
@@ -380,23 +379,16 @@ class GameManager: ObservableObject {
         
         // Mark seen and completed
         gameState.markCurrentTermAsSeen()
-        log("After mark seen - seen in turn: \(gameState.seenTermsInCurrentTurn)")
-        log("After mark seen - seen in round: \(gameState.seenTermsInCurrentRound)")
         gameState.markCurrentTermCompleted()
-        log("After mark completed - checking turn/round end...")
         lastAction = .correct
         lastSkippedIndex = nil
         if gameState.hasTeamSeenAllAvailableTermsForTurn {
-            log("Team has seen all available terms - ending turn")
             turnTimer.invalidate()
             handleTurnTimeEnd()
         } else {
-            log("Team has not seen all terms - going to next term")
             gameState.nextTerm(avoiding: nil)
-            if let term = gameState.currentTerm { log("After nextTerm - new term: '\(term.text)'") } else { log("After nextTerm - currentTerm: nil") }
             refreshTermVisualEffectsForCurrentTeam()
         }
-        log("===== END CORRECT =====")
         handlePerkProgressAfterCorrect()
     }
     
@@ -416,57 +408,31 @@ class GameManager: ObservableObject {
     }
     
     private func handleMissedTerm(reason: MissReason) {
-        let actionLabel = reason == .skip ? "SKIP TERM" : "WRONG GUESS"
         guard gameState.currentTerm != nil else {
-            log("⚠️ \(actionLabel): No current term available, aborting")
             return
         }
-        log("===== \(actionLabel) =====")
         let visibleIndex = gameState.resolvedCurrentTermIndex()
-        if let term = gameState.currentTerm {
-            log("Current term: '\(term.text)' | rawIndex: \(gameState.currentTermIndex) | visibleIndex: \(visibleIndex)")
-        } else {
-            log("Current term: nil | rawIndex: \(gameState.currentTermIndex) | visibleIndex: \(visibleIndex)")
-        }
-        log("Before \(actionLabel.lowercased()) - seen in turn: \(gameState.seenTermsInCurrentTurn)")
-        log("Before \(actionLabel.lowercased()) - seen in round: \(gameState.seenTermsInCurrentRound)")
         gameState.markCurrentTermAsSeen()
-        log("After mark seen - seen in turn: \(gameState.seenTermsInCurrentTurn)")
-        log("After mark seen - seen in round: \(gameState.seenTermsInCurrentRound)")
         
         applySkipPenaltyIfNeeded()
         if reason == .wrongGuess {
             addPenaltyCardForCurrentTeam()
         }
         if gameState.hasTeamSeenAllAvailableTermsForTurn {
-            log("Team has seen all available terms - ending turn")
             turnTimer.invalidate()
             handleTurnTimeEnd()
-            log("===== END \(actionLabel) =====")
             return
         }
         
         lastAction = reason == .skip ? .skip : .wrongGuess
         lastSkippedIndex = visibleIndex
-        log("Team has not seen all terms - going to next term (avoid visible: \(lastSkippedIndex?.description ?? "nil"))")
         gameState.nextTerm(avoiding: lastSkippedIndex)
-        if let term = gameState.currentTerm {
-            let newVisible = gameState.resolvedCurrentTermIndex()
-            log("After nextTerm - new term: '\(term.text)' | rawIndex: \(gameState.currentTermIndex) | visibleIndex: \(newVisible)")
-            if let avoided = lastSkippedIndex, newVisible == avoided && gameState.availableIndices.count > 1 {
-                log("⚠️ Avoidance failed: selected same visible index \(avoided) despite multiple candidates: \(gameState.availableIndices)")
-            }
-        } else {
-            log("After nextTerm - currentTerm: nil")
-        }
         refreshTermVisualEffectsForCurrentTeam()
         
         if gameState.currentTerm == nil {
-            log("No more terms available -> ending turn")
             turnTimer.invalidate()
             handleTurnTimeEnd()
         }
-        log("===== END \(actionLabel) =====")
         resetStreakForCurrentTeam()
     }
     
@@ -474,11 +440,12 @@ class GameManager: ObservableObject {
         guard let teamId = teamId,
               let listeners = assistListeners[teamId],
               !listeners.isEmpty else { return }
-        let roundReason = "🤝 Assist Bonus"
+        let roundReason = String(localized: "🤝 Assist Bonus")
         listeners.forEach { recipientId in
             addFlatPoints(1, to: recipientId, reason: roundReason)
             if let teamName = gameState.settings.teams.first(where: { $0.id == recipientId })?.name {
-                showPerkToast(.init(icon: "hand.wave", message: "\(teamName): Assist +1"))
+                let msg = String(localized: "\(teamName): Assist +1")
+                showPerkToast(.init(icon: "hand.wave", message: msg))
             }
             triggerTimerBurst(for: recipientId, text: "+1", isNegative: false)
             triggerScoreBurst(for: recipientId, text: "+1Pkt", isNegative: false)
@@ -492,19 +459,16 @@ class GameManager: ObservableObject {
         let round = gameState.currentRound.rawValue
         let teamId = gameState.settings.teams[gameState.currentTeamIndex].id
         if consumeShieldIfAvailable(for: teamId) {
-            log("🛡 Schutzschild aktiviert – Strafpunkt ignoriert.")
             return
         }
         switch gameState.settings.difficulty {
         case .easy:
             break // keine Strafe
         case .medium:
-            log("⚖️ Pending-Penalty (Medium) -> Team: \(gameState.settings.teams[gameState.currentTeamIndex].name), Round: \(round + 1)")
             gameState.settings.teams[gameState.currentTeamIndex].applyPenalty(1, for: round, revealAtEnd: true)
             logPendingPenalties()
         case .hard:
             gameState.settings.teams[gameState.currentTeamIndex].applyPenalty(1, for: round)
-            log("⚖️ Direkte Penalty (Hard) -> Team: \(gameState.settings.teams[gameState.currentTeamIndex].name), Round: \(round + 1)")
             logCurrentScores()
         }
     }
@@ -514,7 +478,6 @@ class GameManager: ObservableObject {
             scoreRevealSnapshots = [:]
             return
         }
-        log("🎭 Enthülle aufgeschobene Minuspunkte für Finale.")
         var snapshot: [UUID: ScoreRevealSnapshot] = [:]
         let gameMode = gameState.settings.gameMode
         for i in gameState.settings.teams.indices {
@@ -525,7 +488,6 @@ class GameManager: ObservableObject {
             let finalScore = team.score
             gameState.settings.teams[i] = team
             snapshot[team.id] = ScoreRevealSnapshot(preScore: preScore, penalty: penalty, finalScore: finalScore)
-            log("📉 Reveal: \(team.name) hatte \(preScore) Punkte, -\(penalty) Pending -> \(finalScore)")
         }
         scoreRevealSnapshots = snapshot
         logCurrentScores()
@@ -539,8 +501,6 @@ class GameManager: ObservableObject {
         let currentTurnCount = gameState.teamTurnCounters[team.id] ?? 0
         penaltyTerm.availableFromTeamTurn = currentTurnCount + 1
         gameState.allTerms.append(penaltyTerm)
-        log("Penalty term '\(penaltyTerm.text)' assigned to team \(team.name)")
-        logCurrentDeck(context: "Nach Penalty-Karte für \(team.name)")
     }
     
     private func generatePenaltyTerm(for team: Team) -> Term {
@@ -559,38 +519,14 @@ class GameManager: ObservableObject {
     
     private func makeFallbackPenaltyTerm(for team: Team) -> Term {
         penaltyCardCounter += 1
-        return Term(text: "Strafkarte \(penaltyCardCounter) - \(team.name)")
+        let text = String(localized: "Strafkarte \(penaltyCardCounter) - \(team.name)")
+        return Term(text: text)
     }
 
-    private func logCurrentDeck(context: String) {
-        let deckListing = gameState.allTerms.enumerated().map { index, term -> String in
-            let status = term.completedInRounds[gameState.currentRound.rawValue] ? "✅" : "🟡"
-            let ownerId = term.assignedTeamId
-            let ownerName = ownerId.flatMap { id in
-                gameState.settings.teams.first { $0.id == id }?.name
-            }
-            let ownerSuffix = ownerName.map { " | Team: \($0)" } ?? ""
-            let availability: String
-            if let ownerId = ownerId {
-                let counter = gameState.teamTurnCounters[ownerId] ?? 0
-                availability = " | verfügbar ab Team-Zug \(term.availableFromTeamTurn) (aktuell: \(counter))"
-            } else {
-                availability = ""
-            }
-            return "\(index + 1). \(status) \(term.text)\(ownerSuffix)\(availability)"
-        }
-        log("===== DECK LIST (\(context)) =====")
-        deckListing.forEach { log($0) }
-        log("===== END DECK LIST =====")
-    }
-    
     private func logScoreChange(for teamIndex: Int, round: Int, delta: Int, reason: String) {
         guard teamIndex < gameState.settings.teams.count,
               round >= 0,
               round < gameState.settings.teams[teamIndex].roundScores.count else { return }
-        let team = gameState.settings.teams[teamIndex]
-        let roundScore = team.roundScores[round]
-        log("📒 Score Update | \(team.name) | Runde \(round + 1) | \(reason) | Δ \(delta >= 0 ? "+" : "")\(delta) | Rundenpunkte: \(roundScore) | Gesamt: \(team.score)")
     }
     
     private func addPointsToCurrentTeam(basePoints: Int, reason: String) {
@@ -613,20 +549,12 @@ class GameManager: ObservableObject {
             triggerTimerBurst(for: teamId, text: "+\(total)", isNegative: false)
             triggerScoreBurst(for: teamId, text: "+\(total)Pkt", isNegative: false)
         }
-        logScoreChange(for: gameState.currentTeamIndex,
-                       round: gameState.currentRound.rawValue,
-                       delta: total,
-                       reason: reason + (total != basePoints ? " (x\(total / basePoints))" : ""))
     }
     
     private func addFlatPoints(_ points: Int, to teamId: UUID, reason: String) {
         guard let index = gameState.settings.teams.firstIndex(where: { $0.id == teamId }) else { return }
         let round = gameState.currentRound.rawValue
         gameState.settings.teams[index].addScore(points, for: round)
-        logScoreChange(for: index,
-                       round: round,
-                       delta: points,
-                       reason: reason)
     }
     
     private func incrementComboCounter(for teamId: UUID) {
@@ -634,9 +562,10 @@ class GameManager: ObservableObject {
         comboBonusCounters[teamId, default: 0] += 1
         if comboBonusCounters[teamId, default: 0] >= 3 {
             comboBonusCounters[teamId] = 0
-            addFlatPoints(3, to: teamId, reason: "🔥 Combo Bonus")
+            addFlatPoints(3, to: teamId, reason: String(localized: "🔥 Combo Bonus"))
             if let teamName = gameState.settings.teams.first(where: { $0.id == teamId })?.name {
-                showPerkToast(.init(icon: "flame", message: "\(teamName): Combo +3"))
+                let msg = String(localized: "\(teamName): Combo +3")
+                showPerkToast(.init(icon: "flame", message: msg))
             }
             triggerTimerBurst(for: teamId, text: "+3", isNegative: false)
         }
@@ -675,7 +604,6 @@ class GameManager: ObservableObject {
             return
         }
         gameState.turnTimeRemaining = max(0, gameState.turnTimeRemaining - 1)
-        log("💣 Time Bomb tick for \(gameState.currentTeam?.name ?? "Team"): -1s -> \(Int(gameState.turnTimeRemaining))s")
         triggerTimerBurst(for: teamId, text: "-1s", isNegative: true)
     }
     
@@ -739,7 +667,6 @@ class GameManager: ObservableObject {
         swapWordTasks.removeValue(forKey: teamId)
         let previousIndex = gameState.currentTermIndex
         gameState.nextTerm(avoiding: previousIndex)
-        log("🔁 SwapWord aktiv: Begriff gewechselt für \(gameState.currentTeam?.name ?? "Team")")
         refreshTermVisualEffectsForCurrentTeam()
         showPerkToast(.init(icon: "arrow.2.circlepath", message: "Wort gewechselt!"))
     }
@@ -854,19 +781,9 @@ class GameManager: ObservableObject {
     
     private func logPendingPenalties() {
         guard gameState.settings.difficulty == .medium else { return }
-        let mode = gameState.settings.gameMode
-        log("📊 Pending Penalties Snapshot:")
-        for team in gameState.settings.teams {
-            let pending = team.pendingPenaltyTotal(for: mode)
-            log("   • \(team.name): pending -\(pending)")
-        }
     }
     
     private func logCurrentScores() {
-        log("📈 Aktuelle Scores:")
-        for team in gameState.settings.teams {
-            log("   • \(team.name): \(team.score) Punkte (Rounds: \(team.roundScores))")
-        }
     }
     
     private func consumeShieldIfAvailable(for teamId: UUID) -> Bool {
@@ -876,10 +793,6 @@ class GameManager: ObservableObject {
     }
     
     private func logRoundSummary(context: String) {
-        log("🧾 Runden-Zwischenstand (\(context))")
-        for team in gameState.settings.teams {
-            log("   • \(team.name): \(team.score) Gesamt | pro Runde \(team.roundScores)")
-        }
     }
     
     private func showPerkToast(_ toast: PerkToast) {
@@ -966,22 +879,23 @@ class GameManager: ObservableObject {
         
         // Positive effects (green)
         if nextWordMultiplier[teamId, default: 1] > 1 {
-            notices.append(PerkNotice(icon: "🔁", text: "Nächstes Wort x2", isNegative: false))
+            notices.append(PerkNotice(icon: "🔁", text: localized("Nächstes Wort x2"), isNegative: false))
         }
         if turnPointMultiplier[teamId, default: 1] > 1 {
-            notices.append(PerkNotice(icon: "✨", text: "Doppelte Punkte aktiv", isNegative: false))
+            notices.append(PerkNotice(icon: "✨", text: localized("Doppelte Punkte aktiv"), isNegative: false))
         }
         if rewindBonusTeams.contains(teamId) {
-            notices.append(PerkNotice(icon: "⏪", text: "+2s pro Treffer", isNegative: false))
+            notices.append(PerkNotice(icon: "⏪", text: localized("+2s pro Treffer"), isNegative: false))
         }
         if let freezeRemaining = freezeTimeRemainingSeconds(for: teamId) {
-            notices.append(PerkNotice(icon: "❄️", text: "Zeit eingefroren (\(freezeRemaining)s)", isNegative: false))
+            let msg = localized("Zeit eingefroren (%llds)", Int64(freezeRemaining))
+            notices.append(PerkNotice(icon: "❄️", text: msg, isNegative: false))
         }
         if shieldCharges[teamId, default: 0] > 0 {
-            notices.append(PerkNotice(icon: "🛡", text: "Schutzschild bereit", isNegative: false))
+            notices.append(PerkNotice(icon: "🛡", text: localized("Schutzschild bereit"), isNegative: false))
         }
         if comboBonusCounters[teamId] != nil {
-            notices.append(PerkNotice(icon: "🔥", text: "Combo Bonus aktiv", isNegative: false))
+            notices.append(PerkNotice(icon: "🔥", text: localized("Combo Bonus aktiv"), isNegative: false))
         }
         if let attackers = assistListeners[teamId], !attackers.isEmpty {
             let attackerNames = attackers.compactMap { attackerId in
@@ -989,51 +903,52 @@ class GameManager: ObservableObject {
             }
             let label: String
             if attackerNames.isEmpty {
-                label = "Assist gegen euch aktiv"
+                label = localized("Assist gegen euch aktiv")
             } else if attackerNames.count == 1 {
-                label = "Assist von \(attackerNames[0])"
+                label = localized("Assist von %@", attackerNames[0])
             } else {
-                label = "Assist von \(attackerNames.joined(separator: ", "))"
+                label = localized("Assist von %@", attackerNames.joined(separator: ", "))
             }
             notices.append(PerkNotice(icon: "🤝", text: label, isNegative: true))
         }
         
         // Negative effects (red)
         if isSuddenRushActive(for: teamId) {
-            notices.append(PerkNotice(icon: "⚡️", text: "Timer doppelt so schnell", isNegative: true))
+            notices.append(PerkNotice(icon: "⚡️", text: localized("Timer doppelt so schnell"), isNegative: true))
         }
         if hasActiveSlowMotion(for: teamId) {
-            notices.append(PerkNotice(icon: "🐢", text: "Slow Motion aktiv (-5s)", isNegative: true))
+            notices.append(PerkNotice(icon: "🐢", text: localized("Slow Motion aktiv (-5s)"), isNegative: true))
         } else if pendingTurnTimePenalty[teamId] != nil {
-            notices.append(PerkNotice(icon: "🐢", text: "Slow Motion vorbereitet (-5s)", isNegative: true))
+            notices.append(PerkNotice(icon: "🐢", text: localized("Slow Motion vorbereitet (-5s)"), isNegative: true))
         }
         if pausePenaltyTargets.contains(teamId) {
-            notices.append(PerkNotice(icon: "⏱", text: "-2s beim nächsten Treffer", isNegative: true))
+            notices.append(PerkNotice(icon: "⏱", text: localized("-2s beim nächsten Treffer"), isNegative: true))
         }
         if pendingTimeBombTargets.contains(teamId) || activeTimeBombTimers[teamId] != nil {
-            notices.append(PerkNotice(icon: "💣", text: "Zeitbombe aktiv (-1s pro 3s)", isNegative: true))
+            notices.append(PerkNotice(icon: "💣", text: localized("Zeitbombe aktiv (-1s pro 3s)"), isNegative: true))
         }
         if isMirrorActive(for: teamId) {
-            notices.append(PerkNotice(icon: "🪞", text: "Spiegel-Wort aktiv", isNegative: true))
+            notices.append(PerkNotice(icon: "🪞", text: localized("Spiegel-Wort aktiv"), isNegative: true))
         }
         if isGlitchActive(for: teamId) {
-            notices.append(PerkNotice(icon: "✨", text: "Glitch-Buchstaben", isNegative: true))
+            notices.append(PerkNotice(icon: "✨", text: localized("Glitch-Buchstaben"), isNegative: true))
         }
         if pendingInvisibleWordTargets.contains(teamId) || invisibleWordActiveTeams.contains(teamId) {
-            notices.append(PerkNotice(icon: "🙈", text: "Wort verschwindet gleich", isNegative: true))
+            notices.append(PerkNotice(icon: "🙈", text: localized("Wort verschwindet gleich"), isNegative: true))
         }
         if pendingSwapWordTeams.contains(teamId) {
-            notices.append(PerkNotice(icon: "🔄", text: "Wort wird getauscht", isNegative: true))
+            notices.append(PerkNotice(icon: "🔄", text: localized("Wort wird getauscht"), isNegative: true))
         }
         if isSkipButtonFrozen(for: teamId) {
             if let remaining = skipFreezeRemainingSeconds(for: teamId) {
-                notices.append(PerkNotice(icon: "🔒", text: "Skip gesperrt (\(remaining)s)", isNegative: true))
+                let msg = localized("Skip gesperrt (%llds)", Int64(remaining))
+                notices.append(PerkNotice(icon: "🔒", text: msg, isNegative: true))
             } else {
-                notices.append(PerkNotice(icon: "🔒", text: "Skip gesperrt", isNegative: true))
+                notices.append(PerkNotice(icon: "🔒", text: localized("Skip gesperrt"), isNegative: true))
             }
         }
         if forcedSkipTeams.contains(teamId) || activeForcedSkipTeamId == teamId {
-            notices.append(PerkNotice(icon: "⛔️", text: "Zwangs-Skip aktiv", isNegative: true))
+            notices.append(PerkNotice(icon: "⛔️", text: localized("Zwangs-Skip aktiv"), isNegative: true))
         }
         
         return notices
@@ -1097,11 +1012,11 @@ class GameManager: ObservableObject {
               slotSpinCredits[teamId, default: 0] > 0 else { return nil }
         let didWin = Bool.random()
         let delta = didWin ? 10 : -15
-        addFlatPoints(delta, to: teamId, reason: "🎰 Slot Maschine")
+        addFlatPoints(delta, to: teamId, reason: String(localized: "🎰 Slot Maschine"))
         triggerScoreBurst(for: teamId,
                           text: delta >= 0 ? "+10Pkt" : "-15Pkt",
                           isNegative: delta < 0)
-        let message = delta >= 0 ? "+10 Punkte!" : "-15 Punkte..."
+        let message = delta >= 0 ? String(localized: "+10 Punkte!") : String(localized: "-15 Punkte...")
         showPerkToast(.init(icon: didWin ? "gift.fill" : "hand.thumbsdown.fill", message: message))
         slotSpinCredits[teamId, default: 0] -= 1
         let result = SlotSpinResult(text: message, isWin: didWin)
@@ -1130,7 +1045,6 @@ class GameManager: ObservableObject {
         guard slotRewardActiveTeamId == nil else { return }
         if gameState.allTermsCompletedForCurrentRound {
             gameState.phase = .roundEnd
-            logRoundSummary(context: "Slot beendet -> Rundenabschluss")
         } else {
             gameState.phase = .setup
         }
@@ -1166,7 +1080,6 @@ class GameManager: ObservableObject {
         guard let penalty = pendingTurnTimePenalty.removeValue(forKey: team.id), penalty > 0 else { return }
         let oldTime = gameState.turnTimeRemaining
         gameState.turnTimeRemaining = max(1, gameState.turnTimeRemaining - penalty)
-        log("🐢 Slow Motion aktiv: \(team.name) startet mit \(Int(oldTime - gameState.turnTimeRemaining)) Sek. weniger")
         slowMotionFlashUntil[team.id] = Date().addingTimeInterval(3)
         triggerTimerBurst(for: team.id, text: "-\(Int(min(penalty, oldTime)))s", isNegative: true)
     }
@@ -1306,8 +1219,8 @@ class GameManager: ObservableObject {
         if forcedSkipTeams.remove(teamId) != nil {
             activeForcedSkipTeamId = teamId
             let name = gameState.currentTeam?.name ?? "Team"
-            log("🚫 \(name) muss zuerst einen Zwangs-Skip durchführen.")
-            showPerkToast(.init(icon: "forward.fill", message: "\(name): Zwangs-Skip aktiv"))
+            let msg = String(localized: "\(name): Zwangs-Skip aktiv")
+            showPerkToast(.init(icon: "forward.fill", message: msg))
         }
     }
     
@@ -1327,14 +1240,12 @@ class GameManager: ObservableObject {
         guard thresholds.contains(newStreak) else { return }
         
         guard let perkType = nextPerkTypeToAward(excluding: lastPerkTypeThisTurn) else {
-            log("⚠️ Kein Perk verfügbar trotz Treffer – fehlen Pakete?")
             return
         }
         
         perksTriggeredThisTurn += 1
         let perk = AwardedPerk(teamId: team.id, teamName: team.name, round: gameState.currentRound, type: perkType, streak: newStreak)
         awardedPerks.append(perk)
-        log("✨ PERK! \(team.name) erhält '\(perkType.displayName)' (Streak: \(newStreak), \(perksTriggeredThisTurn)/2 im Zug)")
         applyPerkEffect(perk, teamIndex: gameState.currentTeamIndex)
         lastPerkTypeThisTurn = perkType
     }
@@ -1344,7 +1255,6 @@ class GameManager: ObservableObject {
         gameState.teamHitStreaks[teamId] = newValue
         if newValue % 10 == 0 {
             pendingSlotSpinCredits[teamId, default: 0] += 1
-            log("🎰 Slot-Bonus verfügbar: Team \(teamId) hat \(newValue) Treffer in Folge")
         }
     }
     
@@ -1362,27 +1272,19 @@ class GameManager: ObservableObject {
     private func activateFreezeTime(for teamId: UUID) {
         timerFreezeTeamId = teamId
         timerFreezeRemaining = 5
-        if let team = gameState.settings.teams.first(where: { $0.id == teamId }) {
-            log("❄️ \(team.name) friert die Zeit für 5 Sekunden ein!")
-        } else {
-            log("❄️ Zeit wird eingefroren!")
-        }
     }
     
     private func activateSlowMotionOpponent(from teamIndex: Int) {
         guard let opponentIndex = nextTeamIndex(after: teamIndex) else {
-            log("⚠️ Slow Motion ohne Gegner nicht möglich.")
             return
         }
         let opponent = gameState.settings.teams[opponentIndex]
         pendingTurnTimePenalty[opponent.id, default: 0] += 5
-        log("🐢 Slow Motion: \(opponent.name) startet nächsten Zug mit -5 Sekunden.")
     }
     
     @discardableResult
     private func applyStealPoints(from teamIndex: Int) -> Team? {
         guard let opponentIndex = nextTeamIndex(after: teamIndex) else {
-            log("⚠️ Steal-Punkt ohne Gegner nicht möglich.")
             return nil
         }
         let round = gameState.currentRound.rawValue
@@ -1390,8 +1292,10 @@ class GameManager: ObservableObject {
         let opponent = gameState.settings.teams[opponentIndex]
         gameState.settings.teams[opponentIndex].applyPenalty(stealAmount, for: round)
         gameState.settings.teams[teamIndex].addScore(stealAmount, for: round)
-        log("💰 \(gameState.settings.teams[teamIndex].name) stiehlt \(stealAmount) Punkte von \(opponent.name)!")
-        showPerkToast(.init(icon: "figure.ninja", message: "Steal! +\(stealAmount) Punkte"))
+        
+        let msg = String(localized: "Steal! +\(stealAmount) Punkte")
+        showPerkToast(.init(icon: "figure.ninja", message: msg))
+        
         let winnerId = gameState.settings.teams[teamIndex].id
         let loserId = opponent.id
         triggerTimerBurst(for: winnerId, text: "+\(stealAmount)", isNegative: false)
@@ -1438,170 +1342,137 @@ class GameManager: ObservableObject {
         switch perk.type {
         case .freezeTime:
             activateFreezeTime(for: perk.teamId)
-            showPerkToast(.init(icon: "snowflake", message: "\(perk.teamName): Zeit eingefroren!"))
+            // showPerkToast(.init(icon: "snowflake", message: "\(perk.teamName): Zeit eingefroren!"))
         case .slowMotionOpponent:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Slow Motion ohne Gegner nicht möglich.")
                 return
             }
             activateSlowMotionOpponent(from: teamIndex)
-            showPerkToast(.init(icon: "tortoise.fill", message: "Gegner -5s"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🐢", label: "-5s Slow Motion")
+            // showPerkToast(.init(icon: "tortoise.fill", message: "Gegner -5s"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🐢", label: localized("-5s Slow Motion"))
         case .rewindHit:
             rewindBonusTeams.insert(perk.teamId)
-            showPerkToast(.init(icon: "backward.fill", message: "\(perk.teamName): +2s je Treffer"))
+            // showPerkToast(.init(icon: "backward.fill", message: "\(perk.teamName): +2s je Treffer"))
         case .timeBomb:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für TimeBomb verfügbar.")
                 return
             }
             pendingTimeBombTargets.insert(target.id)
             if gameState.currentTeam?.id == target.id {
                 activateTimeBombIfNeeded()
             }
-            showPerkToast(.init(icon: "timer", message: "\(target.name): Zeitbombe aktiv"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "💣", label: "Zeitbombe")
+            // showPerkToast(.init(icon: "timer", message: "\(target.name): Zeitbombe aktiv"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "💣", label: localized("Zeitbombe"))
         case .suddenRush:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Sudden Rush verfügbar.")
                 return
             }
             applySuddenRush(to: target.id)
-            showPerkToast(.init(icon: "bolt.fill", message: "\(target.name): Rush!"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⚡️", label: "Rush")
+            // showPerkToast(.init(icon: "bolt.fill", message: "\(target.name): Rush!"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⚡️", label: localized("Rush"))
         case .nextWordDouble:
             nextWordMultiplier[perk.teamId] = 2
-            log("🎯 \(perk.teamName): Nächster Begriff zählt doppelt!")
-            showPerkToast(.init(icon: "textformat.abc", message: "Nächstes Wort x2"))
+            // showPerkToast(.init(icon: "textformat.abc", message: "Nächstes Wort x2"))
         case .doublePointsThisTurn:
             turnPointMultiplier[perk.teamId] = 2
-            log("🔥 \(perk.teamName): Doppelte Punkte für den restlichen Zug!")
-            showPerkToast(.init(icon: "rosette", message: "Doppelte Punkte aktiv"))
+            // showPerkToast(.init(icon: "rosette", message: "Doppelte Punkte aktiv"))
         case .stealPoints:
             let target = applyStealPoints(from: teamIndex)
             activeStealBadges.insert(perk.teamId)
             if let target {
-                registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "💰", label: "2 Punkte gestohlen")
+                registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "💰", label: localized("2 Punkte gestohlen"))
             }
         case .shield:
             shieldCharges[perk.teamId, default: 0] += 1
-            log("🛡 \(perk.teamName) erhält ein Schutzschild gegen Strafpunkte.")
-            showPerkToast(.init(icon: "shield.fill", message: "Schutzschild geladen"))
+            // showPerkToast(.init(icon: "shield.fill", message: "Schutzschild geladen"))
         case .comboBonus:
             comboBonusCounters[perk.teamId] = 0
-            showPerkToast(.init(icon: "flame", message: "\(perk.teamName): Combo aktiv"))
+            // showPerkToast(.init(icon: "flame", message: "\(perk.teamName): Combo aktiv"))
         case .assistPoints:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Assist verfügbar.")
                 return
             }
             assistListeners[target.id, default: []].append(perk.teamId)
-            showPerkToast(.init(icon: "hand.wave", message: "\(perk.teamName): Assist wartet"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🤝", label: "Assist aktiv")
+            // showPerkToast(.init(icon: "hand.wave", message: "\(perk.teamName): Assist wartet"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🤝", label: localized("Assist aktiv"))
         case .mirroredWord:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Spiegel-Perk verfügbar.")
                 return
             }
             queueVisualEffect(.mirror, for: target.id, duration: 5)
-            log("🪞 \(target.name) sieht das Wort gespiegelt!")
-            showPerkToast(.init(icon: "rectangle.on.rectangle", message: "\(target.name): Wort gespiegelt"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🪞", label: "Spiegelwort")
+            // showPerkToast(.init(icon: "rectangle.on.rectangle", message: "\(target.name): Wort gespiegelt"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🪞", label: localized("Spiegelwort"))
         case .forcedSkip:
             guard gameState.currentRound.canSkip else {
-                log("⚠️ Zwangs-Skip nicht verfügbar, bevor Runde 2 beginnt.")
                 return
             }
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Zwangs-Skip verfügbar.")
                 return
             }
             scheduleForcedSkip(for: target.id)
-            log("🚫 \(target.name) muss den nächsten Begriff sofort skippen!")
-            showPerkToast(.init(icon: "forward.fill", message: "\(target.name) Zwangs-Skip"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⛔️", label: "Zwangs-Skip")
+            // showPerkToast(.init(icon: "forward.fill", message: "\(target.name) Zwangs-Skip"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⛔️", label: localized("Zwangs-Skip"))
         case .freezeSkipButton:
             guard gameState.currentRound.canSkip else {
-                log("⚠️ Skip-Sperre wird erst ab Runde 2 freigeschaltet.")
                 return
             }
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Skip-Sperre verfügbar.")
                 return
             }
             freezeSkipButton(for: target.id, duration: skipFreezeDuration)
-            log("🔒 Skip-Button von \(target.name) ist für \(Int(skipFreezeDuration)) Sekunden gesperrt!")
-            showPerkToast(.init(icon: "lock.fill", message: "\(target.name) Skip gesperrt"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🔒", label: "Skip gesperrt")
+            // showPerkToast(.init(icon: "lock.fill", message: "\(target.name) Skip gesperrt"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🔒", label: localized("Skip gesperrt"))
         case .glitchLetters:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Glitch verfügbar.")
                 return
             }
             queueVisualEffect(.glitch, for: target.id, duration: 5)
-            log("🤯 \(target.name) sieht nur noch Glitch-Buchstaben!")
-            showPerkToast(.init(icon: "sparkles", message: "\(target.name) Glitch!"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "✨", label: "Glitch-Buchstaben")
+            // showPerkToast(.init(icon: "sparkles", message: "\(target.name) Glitch!"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "✨", label: localized("Glitch-Buchstaben"))
         case .pausePenalty:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Pause-Penalty verfügbar.")
                 return
             }
             pausePenaltyTargets.insert(target.id)
-            showPerkToast(.init(icon: "pause.circle", message: "\(target.name): -2s beim nächsten Treffer"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⏱", label: "-2s Penalty")
+            // showPerkToast(.init(icon: "pause.circle", message: "\(target.name): -2s beim nächsten Treffer"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "⏱", label: localized("-2s Penalty"))
         case .swapWord:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für SwapWord verfügbar.")
                 return
             }
             pendingSwapWordTeams.insert(target.id)
             if gameState.currentTeam?.id == target.id {
                 activateSwapWordIfNeeded()
             }
-            showPerkToast(.init(icon: "arrow.2.circlepath", message: "\(target.name): Worttausch"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🔄", label: "Worttausch")
+            // showPerkToast(.init(icon: "arrow.2.circlepath", message: "\(target.name): Worttausch"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🔄", label: localized("Worttausch"))
         case .invisibleWord:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für Invisible Word verfügbar.")
                 return
             }
             activateInvisibleWord(for: target.id)
-            showPerkToast(.init(icon: "eye.slash", message: "\(target.name): Wort verschwindet"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🙈", label: "Wort verschwindet")
+            // showPerkToast(.init(icon: "eye.slash", message: "\(target.name): Wort verschwindet"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🙈", label: localized("Wort verschwindet"))
         case .englishWord:
             guard let target = nextTeamIndex(after: teamIndex).map({ gameState.settings.teams[$0] }) else {
-                log("⚠️ Kein Gegner für English Word verfügbar.")
                 return
             }
             activateEnglishWordEffect(for: target.id)
-            log("🌍 \(target.name) sieht das Wort auf Englisch für 7 Sekunden")
-            showPerkToast(.init(icon: "globe", message: "\(target.name): Wort auf Englisch"))
-            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🌍", label: "Wort auf Englisch")
+            // showPerkToast(.init(icon: "globe", message: "\(target.name): Wort auf Englisch"))
+            registerAttackNotice(for: perk.teamId, targetName: target.name, icon: "🌍", label: localized("Wort auf Englisch"))
         }
     }
     
     private func checkForNextTermOrRoundEnd() {
-        print("🔍 DEBUG: ===== CHECK NEXT TERM OR ROUND END =====")
-        print("🔍 DEBUG: Current phase: \(gameState.phase)")
-        print("🔍 DEBUG: Current round: \(gameState.currentRound.rawValue + 1)")
-        print("🔍 DEBUG: Current team: \(gameState.currentTeam?.name ?? "none")")
-        print("🔍 DEBUG: Current term index: \(gameState.currentTermIndex)")
-        print("🔍 DEBUG: Current term: '\(gameState.currentTerm?.text ?? "none")'")
-        
         // Prüfe ob alle Begriffe der aktuellen Runde abgearbeitet wurden
         if gameState.allTermsCompletedForCurrentRound {
-            print("🔍 DEBUG: Round completed! Ending round...")
             turnTimer.invalidate()
             gameState.phase = .roundEnd
         } else {
-            print("🔍 DEBUG: Round not completed, going to next term...")
             // Gehe zum nächsten verfügbaren Begriff
             gameState.nextTerm()
-            print("🔍 DEBUG: After nextTerm - new term: '\(gameState.currentTerm?.text ?? "none")'")
             refreshTermVisualEffectsForCurrentTeam()
         }
-        print("🔍 DEBUG: ===== END CHECK =====")
     }
     
     private func transform(text: String, for teamId: UUID?) -> String {
@@ -1659,7 +1530,6 @@ class GameManager: ObservableObject {
     
     // Timer-Ende bedeutet jetzt Team-Wechsel oder Rundenende
     private func handleTurnTimeEnd() {
-        print("🔍 DEBUG: ===== HANDLE TURN TIME END =====")
         turnTimer.invalidate()
         gameState.isTimerRunning = false
         let finishingTeamId = gameState.currentTeam?.id
@@ -1687,15 +1557,12 @@ class GameManager: ObservableObject {
         if slotRewardActiveTeamId != nil {
             gameState.phase = .slotReward
         } else if roundCompleted {
-            print("🔍 DEBUG: All terms completed - ending round")
             gameState.phase = .roundEnd
-            logRoundSummary(context: "Alle Begriffe erledigt")
+            logRoundSummary(context: String(localized: "Alle Begriffe erledigt"))
         } else {
-            print("🔍 DEBUG: Round not completed - switching to next team")
             gameState.phase = .setup
-            logRoundSummary(context: "Team-Wechsel")
+            logRoundSummary(context: String(localized: "Team-Wechsel"))
         }
-        gameState.debugDump(context: "after handleTurnTimeEnd")
     }
     
     func nextTurn() {
@@ -1743,7 +1610,6 @@ class GameManager: ObservableObject {
         
         lastAction = .none
         lastSkippedIndex = nil
-        gameState.debugDump(context: "startTurn")
         perksTriggeredThisTurn = 0
         resetStreakForCurrentTeam()
         applyPendingTimePenaltyIfNeeded()
@@ -1755,7 +1621,6 @@ class GameManager: ObservableObject {
         activatePendingInvisibleWordIfNeeded()
         
         if gameState.currentTerm == nil {
-            log("Kein Begriff für aktuelles Team verfügbar -> Zug wird übersprungen")
             handleTurnTimeEnd()
             return
         }

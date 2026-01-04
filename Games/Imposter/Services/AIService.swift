@@ -43,19 +43,8 @@ class AIService: ObservableObject {
         switch model.availability {
         case .available:
             isAvailable = true
-            print("🧠 Apple Intelligence verfügbar – Session wird eingerichtet")
             setupSession()
-        case .unavailable(.deviceNotEligible):
-            print("🤖 KI nicht verfügbar: Gerät nicht unterstützt")
-            isAvailable = false
-        case .unavailable(.appleIntelligenceNotEnabled):
-            print("🤖 KI nicht verfügbar: Apple Intelligence nicht aktiviert")
-            isAvailable = false
-        case .unavailable(.modelNotReady):
-            print("🤖 KI nicht verfügbar: Modell wird noch geladen")
-            isAvailable = false
-        case .unavailable(let other):
-            print("🤖 KI nicht verfügbar: \(other)")
+        case .unavailable:
             isAvailable = false
         }
         #else
@@ -77,7 +66,6 @@ class AIService: ObservableObject {
         - Halte Antworten kurz und prägnant
         - Verwende einen spannenden, geheimnisvollen Ton
         """
-        print("🧠 KI-Session initialisiert mit System-Instruktionen")
         session = LanguageModelSession(instructions: instructions)
         #endif
     }
@@ -86,7 +74,6 @@ class AIService: ObservableObject {
     func generateMissionFlavor(for player: Player, category: Category) async -> String {
         #if canImport(FoundationModels)
         guard isAvailable, let session = session else {
-            print("🧪 Hint-Quelle: Fallback (KI nicht verfügbar)")
             return fallbackService.generateMissionFlavor(for: player, category: category)
         }
         
@@ -101,11 +88,8 @@ class AIService: ObservableObject {
             """
             
             let response = try await session.respond(to: prompt)
-            print("🧠 Hint-Quelle: KI (LanguageModelSession)")
             return response.content
         } catch {
-            print("🧪 Hint-Quelle: Fallback (KI-Fehler)")
-            print("🤖 KI-Fehler beim Mission-Flavor: \(error)")
             return fallbackService.generateMissionFlavor(for: player, category: category)
         }
         #else
@@ -117,7 +101,6 @@ class AIService: ObservableObject {
     func generateModeratorLog(for selection: ImposterSelection) async -> String {
         #if canImport(FoundationModels)
         guard isAvailable, let session = session else {
-            print("🧪 Moderator-Log-Quelle: Fallback (KI nicht verfügbar)")
             return fallbackService.generateModeratorLog(for: selection)
         }
         
@@ -127,11 +110,8 @@ class AIService: ObservableObject {
         do {
             let prompt = createModeratorLogPrompt(selection: selection)
             let response = try await session.respond(to: prompt)
-            print("🧠 Moderator-Log-Quelle: KI (LanguageModelSession)")
             return response.content
         } catch {
-            print("🧪 Moderator-Log-Quelle: Fallback (KI-Fehler)")
-            print("🤖 KI-Fehler beim Moderator-Log: \(error)")
             return fallbackService.generateModeratorLog(for: selection)
         }
         #else
@@ -141,25 +121,20 @@ class AIService: ObservableObject {
     
     /// Finds a German Siri (female) voice if available, otherwise falls back to any German voice
     private func germanSiriVoice() -> AVSpeechSynthesisVoice? {
-        // Prefer a voice that is clearly marked as Siri and German, with enhanced quality if possible
         let voices = AVSpeechSynthesisVoice.speechVoices()
-        // 1) Siri-branded German with enhanced quality
         if let v = voices.first(where: { voice in
             voice.language == "de-DE" && voice.name.localizedCaseInsensitiveContains("Siri") && voice.quality == .enhanced
         }) {
             return v
         }
-        // 2) Any Siri-branded German
         if let v = voices.first(where: { voice in
             voice.language == "de-DE" && voice.name.localizedCaseInsensitiveContains("Siri")
         }) {
             return v
         }
-        // 3) Any enhanced German voice
         if let v = voices.first(where: { $0.language == "de-DE" && $0.quality == .enhanced }) {
             return v
         }
-        // 4) Any German voice
         if let v = voices.first(where: { $0.language == "de-DE" }) {
             return v
         }
@@ -169,31 +144,22 @@ class AIService: ObservableObject {
     /// Speaks the given text using a German Siri (female) voice where available
     func speak(_ text: String) {
         let utterance = AVSpeechUtterance(string: text)
-        // Prepare audio session for speech playback
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
             try AVAudioSession.sharedInstance().setActive(true, options: [])
         } catch {
-            print("🔊 TTS: Konnte Audio-Session nicht konfigurieren: \(error)")
+            // Error ignored
         }
-        // Configure utterance for more natural prosody
         utterance.voice = germanSiriVoice()
-        // A slightly slower, more natural pace for German
         utterance.rate = 0.48
         utterance.pitchMultiplier = 1.03
         utterance.volume = 0.95
         utterance.preUtteranceDelay = 0.10
         utterance.postUtteranceDelay = 0.05
         if #available(iOS 17.0, macOS 14.0, *) {
-            // Ensure we don't inherit system accessibility speech rates unintentionally
             utterance.prefersAssistiveTechnologySettings = false
         }
 
-        if let v = utterance.voice {
-            print("🔊 TTS: Verwende Stimme '" + v.name + "' (\(v.language))")
-        } else {
-            print("🔊 TTS: Keine passende de-DE Stimme gefunden. Verwende Systemstandard.")
-        }
         synthesizer.speak(utterance)
     }
     

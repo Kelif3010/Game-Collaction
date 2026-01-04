@@ -143,10 +143,6 @@ struct VotingResultsView: View {
                             .minimumScaleFactor(0.9)
                             .opacity(showContent ? 1 : 0)
                             .animation(.easeOut(duration: 0.8).delay(0.4), value: showContent)
-                        
-                        if !votingManager.playersWon {
-                            // Geheimwort / -wörter (boxed style similar to WordGuessingView)
-                        }
                     }
                 }
                 
@@ -192,8 +188,6 @@ struct VotingResultsView: View {
                 VStack(spacing: 15) {
                     if !votingManager.gameEnded && votingManager.remainingSpies > 0 {
                         Button(action: {
-                            print("➡️ [Continue] Tapped – preparing next round…")
-                            logState(context: "before-continue")
                             // Bewahre bereits gefundene Spione und die dieser Runde eliminierten
                             let previouslyFound = votingManager.foundSpies
                             let eliminatedIDs = Set(eliminatedSpiesThisRound.map { $0.id })
@@ -206,8 +200,6 @@ struct VotingResultsView: View {
 
                             // Timer wiederherstellen und zurück ins Gameplay
                             votingManager.restoreTimerState()
-                            logState(context: "after-continue-reset")
-                            print("✅ [Continue] Next round prepared. Navigating back to gameplay…")
                             onContinueToGameplay()
                         }) {
                             HStack(spacing: 12) {
@@ -239,11 +231,8 @@ struct VotingResultsView: View {
                     
                     if votingManager.gameEnded || gameSettings.gamePhase == .finished {
                         Button(action: {
-                            print("🔁 [NewGame] Restarting game from VotingResultsView…")
-                            logState(context: "before-new-game")
                             Task { @MainActor in
                                 await gameLogic.restartGame()
-                                print("✅ [NewGame] Game restarted.")
                                 onNewGame()
                             }
                         }) {
@@ -275,7 +264,6 @@ struct VotingResultsView: View {
                     }
 
                     Button(action: {
-                        print("🛑 [Exit] Exiting to main menu from VotingResultsView…")
                         // Signal GamePlayView to exit to main and dismiss this sheet
                         gameSettings.requestExitToMain = true
                         dismiss()
@@ -312,7 +300,6 @@ struct VotingResultsView: View {
             GeometryReader { proxy in
                 Color.clear
                     .onAppear {
-                        logState(context: "onAppear")
                         withAnimation {
                             showContent = true
                             laserOffset = proxy.size.width + 100
@@ -328,39 +315,6 @@ struct VotingResultsView: View {
                     }
             }
         )
-        .onChange(of: votingManager.selectedPlayers) { _, newValue in
-            let names = gameSettings.players.filter { newValue.contains($0.id) }.map { $0.name }
-            print("🟡 [Change] selectedPlayers -> ids=\(Array(newValue)) | names=\(names)")
-        }
-        .onChange(of: votingManager.foundSpies) { _, newValue in
-            let names = gameSettings.players.filter { newValue.contains($0.id) }.map { $0.name }
-            print("🟢 [Change] foundSpies -> ids=\(Array(newValue)) | names=\(names) | remaining=\(votingManager.remainingSpies)")
-        }
-        .onChange(of: votingManager.gameEnded) { _, ended in
-            print("🔴 [Change] gameEnded -> \(ended)")
-            logState(context: "onChange-gameEnded")
-        }
-    }
-    
-    // MARK: - Debug Helpers
-    private func logState(context: String) {
-        print("\n===== 📊 VotingResultsView DEBUG [\(context)] =====")
-        print("gameEnded=\(votingManager.gameEnded) | playersWon=\(votingManager.playersWon)")
-        print("totalSpies=\(votingManager.totalSpies) | foundSpies=\(votingManager.foundSpies.count) | remainingSpies=\(votingManager.remainingSpies)")
-        let foundNames = gameSettings.players.filter { votingManager.foundSpies.contains($0.id) }.map { $0.name }
-        print("foundSpies(names)=\(foundNames)")
-        let selectedNames = gameSettings.players.filter { votingManager.selectedPlayers.contains($0.id) }.map { $0.name }
-        print("selectedPlayers=\(Array(votingManager.selectedPlayers)) | names=\(selectedNames)")
-        let eliminatedNames = eliminatedSpiesThisRound.map { $0.name }
-        print("eliminatedSpiesThisRound(names)=\(eliminatedNames)")
-        let correctNames = lastVoteResult.correctGuesses.compactMap { id in gameSettings.players.first(where: { $0.id == id })?.name }
-        let incorrectNames = lastVoteResult.incorrectGuesses.compactMap { id in gameSettings.players.first(where: { $0.id == id })?.name }
-        print("lastVoteResult.correct=\(lastVoteResult.correctGuesses.count) [\(correctNames)] | incorrect=\(lastVoteResult.incorrectGuesses.count) [\(incorrectNames)] | gameEnded=\(lastVoteResult.gameEnded) | playersWon=\(lastVoteResult.playersWon)")
-        print("-- Players --")
-        for p in gameSettings.players {
-            print("  • \(p.name) | isImposter=\(p.isImposter) | isEliminated=\(p.isEliminated) | id=\(p.id)")
-        }
-        print("===== END DEBUG =====\n")
     }
     
     // MARK: - Helper Functions

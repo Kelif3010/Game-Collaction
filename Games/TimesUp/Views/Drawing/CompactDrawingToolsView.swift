@@ -59,7 +59,7 @@ struct CompactDrawingToolsView: View {
             .buttonStyle(PlainButtonStyle())
             .sheet(isPresented: $showingColorPicker) {
                 VStack(spacing: 20) {
-                    Text("Farbe wählen")
+                    Text(LocalizedStringKey("Farbe wählen"))
                         .font(.headline)
                         .padding(.top)
                     

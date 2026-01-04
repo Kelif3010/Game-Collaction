@@ -47,7 +47,7 @@ private struct TimesUpSettingsRow: View {
     }
 
     var icon: String
-    var title: String
+    var title: LocalizedStringKey
     var detail: String?
     var rowType: RowType
     var isToggleOn: Bool = false
@@ -73,8 +73,13 @@ private struct TimesUpSettingsRow: View {
                     .font(.headline)
                 
                 // Detail only for non-nav items that need explanation inline
-                if let detail, !detail.isEmpty, rowType != .teams, rowType != .categories {
-                    Text(detail)
+                // HIDE detail for difficulty and mode (since it's shown on the right)
+                if let detail, !detail.isEmpty, 
+                   rowType != .teams, 
+                   rowType != .categories,
+                   rowType != .difficulty,
+                   rowType != .mode {
+                    Text(LocalizedStringKey(detail))
                         .foregroundStyle(SettingsTheme.mutedText)
                         .font(.subheadline)
                 }
@@ -97,10 +102,14 @@ private struct TimesUpSettingsRow: View {
                 }
             default:
                 HStack(spacing: 6) {
-                    if let detail, !detail.isEmpty, (rowType == .teams || rowType == .categories) {
-                        Text(detail)
-                            .foregroundStyle(SettingsTheme.mutedText)
-                            .font(.subheadline.weight(.semibold))
+                    if let detail, !detail.isEmpty {
+                        // For difficulty and mode, detail is the raw value which is also the translation key
+                        // Only show detail on the right for these types or teams/categories count
+                        if rowType == .teams || rowType == .categories || rowType == .difficulty || rowType == .mode {
+                            Text(LocalizedStringKey(detail))
+                                .foregroundStyle(SettingsTheme.mutedText)
+                                .font(.subheadline.weight(.semibold))
+                        }
                     }
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.white.opacity(0.5))
@@ -124,7 +133,7 @@ private struct TimesUpSettingsRow: View {
 }
 
 private struct TimesUpPrimaryButton: View {
-    var title: String
+    var title: LocalizedStringKey
     var action: () -> Void
     var isDisabled: Bool = false
 
@@ -151,6 +160,7 @@ private struct TimesUpPrimaryButton: View {
 // MARK: - Main Settings View
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     private let categoryManager: CategoryManager
     @StateObject private var gameManager: GameManager
     
@@ -209,10 +219,16 @@ struct SettingsView: View {
                             )
 
                             // 3. Zeit & Wörter (Sheet)
+                            let time = Int(gameManager.gameState.settings.turnTimeLimit)
+                            let count = gameManager.gameState.settings.wordCount
+                            // Construct localized detail string manually to ensure "Words" is translated
+                            let wordsLabel = String(localized: "Wörter", locale: locale)
+                            let detailText = "\(time)s · \(count) \(wordsLabel)"
+                            
                             TimesUpSettingsRow(
                                 icon: "timer",
                                 title: "Zeit & Wörter",
-                                detail: "\(Int(gameManager.gameState.settings.turnTimeLimit))s · \(gameManager.gameState.settings.wordCount) Wörter",
+                                detail: detailText,
                                 rowType: .timeWords,
                                 onTap: {
                                     TimesUpHaptics.impact(.light)
@@ -404,61 +420,61 @@ private struct TeamsDetailView: View {
         ZStack {
             SettingsTheme.background.ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                // Custom Header
-                HStack {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
-                    }
-                    Spacer()
-                    Text("Teams")
-                        .font(.title2.bold())
-                        .foregroundColor(.white)
-                    Spacer()
-                    Color.clear.frame(width: 44)
-                }
-                .padding(.horizontal, SettingsTheme.padding)
-                .padding(.top, 10)
-
-                VStack(spacing: 16) {
-                    // Input Field
-                    HStack(spacing: 12) {
-                        TextField("", text: $newTeamName, prompt: Text("Teamname...").foregroundColor(.gray))
-                            .padding()
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(12)
-                            .foregroundColor(.white)
-                            .onSubmit(addTeamIfPossible)
-
-                        Button(action: addTeamIfPossible) {
-                            Image(systemName: "plus")
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Custom Header (scrolls with content like in Bet Buddy)
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.1))
                                 .clipShape(Circle())
                         }
-                        .disabled(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty)
+                        Spacer()
+                        Text("Teams")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        Spacer()
+                        Color.clear.frame(width: 44)
                     }
-                    
-                    if gameManager.gameState.settings.teams.count < 2 {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text("Mindestens 2 Teams erforderlich")
-                                .font(.caption)
-                                .foregroundColor(.orange)
-                            Spacer()
-                        }
-                    }
+                    .padding(.top, 10)
 
-                    // Team List
-                    ScrollView {
+                    VStack(spacing: 16) {
+                        // Input Field
+                        HStack(spacing: 12) {
+                            TextField("", text: $newTeamName, prompt: Text(LocalizedStringKey("Teamname...")).foregroundColor(.gray))
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(12)
+                                .foregroundColor(.white)
+                                .onSubmit(addTeamIfPossible)
+
+                            Button(action: addTeamIfPossible) {
+                                Image(systemName: "plus")
+                                    .font(.title2.bold())
+                                    .foregroundColor(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                                    .clipShape(Circle())
+                            }
+                            .disabled(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty)
+                        }
+                        
+                        if gameManager.gameState.settings.teams.count < 2 {
+                            HStack(spacing: 6) {
+                                Spacer()
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text(LocalizedStringKey("Mindestens 2 Teams erforderlich"))
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                                Spacer()
+                            }
+                        }
+
+                        // Team List (directly in the main scroll view)
                         VStack(spacing: 12) {
                             ForEach(gameManager.gameState.settings.teams) { team in
                                 HStack {
@@ -495,9 +511,11 @@ private struct TeamsDetailView: View {
                         }
                     }
                 }
-                .padding(.horizontal, SettingsTheme.padding)
             }
+            .padding(.horizontal, SettingsTheme.padding)
+            .padding(.bottom, 40) // Bottom padding for scroll content
         }
+        .scrollDismissesKeyboard(.interactively)
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -532,7 +550,7 @@ private struct CategoriesDetailView: View {
                             .clipShape(Circle())
                     }
                     Spacer()
-                    Text("Kategorien")
+                    Text(LocalizedStringKey("Kategorien"))
                         .font(.title2.bold())
                         .foregroundColor(.white)
                     Spacer()
@@ -593,11 +611,11 @@ private struct TimesUpCategoryRowView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.name)
+                Text(LocalizedStringKey(category.name))
                     .foregroundStyle(.white)
                     .font(.headline)
                 
-                Text(category.type.rawValue)
+                Text(LocalizedStringKey(category.type.rawValue))
                     .foregroundStyle(SettingsTheme.mutedText)
                     .font(.caption)
             }
@@ -665,7 +683,7 @@ private struct TimeAndWordsSheetView: View {
             // Sheet background
             Color(red: 0.1, green: 0.1, blue: 0.15).ignoresSafeArea()
             
-            VStack(spacing: 30) {
+            VStack(spacing: 10) {
                 Capsule()
                     .fill(Color.white.opacity(0.1))
                     .frame(width: 40, height: 5)
@@ -714,7 +732,7 @@ private struct TimeAndWordsSheetView: View {
                     }
                     
                     if gameManager.gameState.settings.selectedCategories.isEmpty {
-                         Text("Bitte zuerst Kategorien wählen.")
+                         Text("Mindestens eine Kategorie auswählen")
                             .font(.caption)
                             .foregroundColor(.orange)
                     } else {
@@ -729,9 +747,15 @@ private struct TimeAndWordsSheetView: View {
                         .tint(.purple)
                         
                         HStack {
-                            Text("Min: \(gameManager.gameState.settings.minWordCount)")
+                            HStack(spacing: 4) {
+                                Text("Min:")
+                                Text("\(gameManager.gameState.settings.minWordCount)")
+                            }
                             Spacer()
-                            Text("Verfügbar: \(gameManager.gameState.settings.availableWordCount)")
+                            HStack(spacing: 4) {
+                                Text("Verfügbar:")
+                                Text("\(gameManager.gameState.settings.availableWordCount)")
+                            }
                         }
                         .font(.caption)
                         .foregroundColor(.gray)
@@ -746,7 +770,7 @@ private struct TimeAndWordsSheetView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Übernehmen")
+                    Text("Weiter")
                         .font(.headline.bold())
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -782,7 +806,7 @@ private struct PerkSettingsDetailView: View {
                             .clipShape(Circle())
                     }
                     Spacer()
-                    Text("Perks")
+                    Text(LocalizedStringKey("Perks"))
                         .font(.title2.bold())
                         .foregroundColor(.white)
                     Spacer()
@@ -803,10 +827,10 @@ private struct PerkSettingsDetailView: View {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 60))
                                     .foregroundColor(.gray)
-                                Text("Perks sind deaktiviert")
+                                Text(LocalizedStringKey("Perks sind deaktiviert"))
                                     .font(.headline)
                                     .foregroundColor(.gray)
-                                Text("Aktiviere sie oben rechts, um Power-Ups ins Spiel zu bringen.")
+                                Text(LocalizedStringKey("Aktiviere sie oben rechts, um Power-Ups ins Spiel zu bringen."))
                                     .font(.caption)
                                     .foregroundColor(.gray.opacity(0.7))
                                     .multilineTextAlignment(.center)
@@ -817,10 +841,10 @@ private struct PerkSettingsDetailView: View {
                             // Party Mode Toggle Card
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Party Modus")
+                                    Text(LocalizedStringKey("Party Modus"))
                                         .font(.headline.bold())
                                         .foregroundColor(.white)
-                                    Text("Häufigere Perks bei 3/6/9 Treffern")
+                                    Text(LocalizedStringKey("Häufigere Perks bei 3/6/9 Treffern"))
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                 }
@@ -835,7 +859,7 @@ private struct PerkSettingsDetailView: View {
                             
                             // Perk Packs List
                             VStack(spacing: 16) {
-                                Text("Verfügbare Pakete")
+                                Text(LocalizedStringKey("Verfügbare Pakete"))
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -916,10 +940,10 @@ private struct PerkPackCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(pack.title)
+                    Text(LocalizedStringKey(pack.title))
                         .font(.headline)
                         .foregroundColor(.white)
-                    Text(pack.subtitle)
+                    Text(LocalizedStringKey(pack.subtitle))
                         .font(.caption)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.leading)
@@ -963,7 +987,7 @@ private struct CustomPerkSelectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Individuelle Perks wählen")
+            Text(LocalizedStringKey("Individuelle Perks wählen"))
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.top, 10)
@@ -980,7 +1004,7 @@ private struct CustomPerkSelectionView: View {
                         }
                     } label: {
                         HStack {
-                            Text(pack.title)
+                            Text(LocalizedStringKey(pack.title))
                                 .font(.subheadline.bold())
                                 .foregroundColor(.white)
                             Spacer()
@@ -996,7 +1020,7 @@ private struct CustomPerkSelectionView: View {
                         VStack(spacing: 0) {
                             ForEach(pack.associatedPerks, id: \.self) { perk in
                                 Toggle(isOn: binding(for: perk)) {
-                                    Text(perk.displayName)
+                                    Text(LocalizedStringKey(perk.displayName))
                                         .font(.subheadline)
                                         .foregroundColor(.white.opacity(0.9))
                                 }

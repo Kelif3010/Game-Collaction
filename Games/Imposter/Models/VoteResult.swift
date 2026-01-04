@@ -43,39 +43,15 @@ class VotingManager: ObservableObject {
     private let gameSettings: GameSettings
     private var wasTimerPausedBefore = false
 
-    private func debugDumpState(_ context: String) {
-        print("\n===== 🧭 VotingManager DEBUG [\(context)] =====")
-        print("isVotingActive=\(isVotingActive) | showResults=\(showResults) | votingRound=\(votingRound)")
-        print("gameEnded=\(gameEnded) | playersWon=\(playersWon)")
-        print("totalSpies=\(totalSpies) | foundSpies=\(foundSpies.count) | remainingSpies=\(remainingSpies)")
-        print("selectedPlayers(ids)=\(Array(selectedPlayers))")
-        if let gs = Optional(gameSettings) {
-            let selectedNames = gs.players.filter { selectedPlayers.contains($0.id) }.map { $0.name }
-            let foundNames = gs.players.filter { foundSpies.contains($0.id) }.map { $0.name }
-            print("selectedPlayers(names)=\(selectedNames)")
-            print("foundSpies(names)=\(foundNames)")
-            print("-- Players --")
-            for p in gs.players {
-                print("  • \(p.name) | isImposter=\(p.isImposter) | isEliminated=\(p.isEliminated) | id=\(p.id)")
-            }
-        }
-        print("===== END VM DEBUG =====\n")
-    }
-    
     init(gameSettings: GameSettings) {
         self.gameSettings = gameSettings
     }
     
     /// Startet die Abstimmungsphase
     func startVoting() {
-        print("🚦 VotingManager.startVoting()")
-        debugDumpState("before-startVoting")
         // Sync VM state from truth in gameSettings: rebuild foundSpies from eliminated imposters
         let eliminatedImposters = gameSettings.players.filter { $0.isImposter && $0.isEliminated }.map { $0.id }
         let eliminatedSet = Set(eliminatedImposters)
-        if !eliminatedSet.isEmpty {
-            print("🔗 Sync: Rebuilding foundSpies from eliminated imposters in GameSettings → ids=\(eliminatedImposters)")
-        }
         foundSpies = eliminatedSet
         // Ensure no eliminated player remains in selection
         selectedPlayers.subtract(eliminatedSet)
@@ -87,28 +63,22 @@ class VotingManager: ObservableObject {
         isVotingActive = true
         showResults = false
         lastRoundResult = nil
-        debugDumpState("after-startVoting")
     }
     
     /// Wählt einen Spieler aus/ab
     func togglePlayerSelection(_ playerID: UUID) {
         guard isVotingActive else {
-            print("⚠️ togglePlayerSelection ignored: voting not active")
             return
         }
         // Block eliminated players from being selected
         if let p = gameSettings.players.first(where: { $0.id == playerID }), p.isEliminated {
-            print("🚫 togglePlayerSelection blocked: \(p.name) is eliminated")
             return
         }
         if selectedPlayers.contains(playerID) {
             selectedPlayers.remove(playerID)
-            print("➖ Deselected: \(playerID)")
         } else {
             selectedPlayers.insert(playerID)
-            print("➕ Selected: \(playerID)")
         }
-        debugDumpState("after-togglePlayerSelection")
     }
     
     /// Überprüft ob Spieler ausgewählt werden können
@@ -125,7 +95,6 @@ class VotingManager: ObservableObject {
     /// Führt die Abstimmung durch und berechnet Ergebnisse
     func executeVote() -> VotingRoundResult {
         guard isVotingActive else {
-            print("⚠️ executeVote ignored: voting not active")
             return VotingRoundResult(
                 selectedPlayers: [],
                 correctGuesses: [],
@@ -143,8 +112,6 @@ class VotingManager: ObservableObject {
                 playersWon: false
             )
         }
-        print("🗳️ VotingManager.executeVote()")
-        debugDumpState("before-executeVote")
         
         var correctGuesses: [UUID] = []
         var incorrectGuesses: [UUID] = []
@@ -173,12 +140,6 @@ class VotingManager: ObservableObject {
         self.gameEnded = gameEnded
         self.playersWon = playersWon
         
-        print("📌 executeVote result: correct=\(correctGuesses.count), incorrect=\(incorrectGuesses.count), gameEnded=\(gameEnded), playersWon=\(playersWon)")
-        let correctNames = correctGuesses.compactMap { id in gameSettings.players.first(where: { $0.id == id })?.name }
-        let incorrectNames = incorrectGuesses.compactMap { id in gameSettings.players.first(where: { $0.id == id })?.name }
-        print("   correct(names)=\(correctNames) | incorrect(names)=\(incorrectNames)")
-        debugDumpState("after-executeVote")
-        
         let result = VotingRoundResult(
             selectedPlayers: Array(selectedPlayers),
             correctGuesses: correctGuesses,
@@ -192,26 +153,20 @@ class VotingManager: ObservableObject {
     
     /// Beendet die Abstimmung und zeigt Ergebnisse
     func finishVoting() {
-        print("🏁 VotingManager.finishVoting()")
-        debugDumpState("before-finishVoting")
         isVotingActive = false
         showResults = true
         if gameEnded {
             gameSettings.markRoundCompleted()
         }
-        debugDumpState("after-finishVoting")
     }
     
     /// Setzt die Abstimmung zurück für nächste Runde
     func resetForNextRound() {
-        print("🔄 VotingManager.resetForNextRound()")
-        debugDumpState("before-resetForNextRound")
         selectedPlayers.removeAll()
         isVotingActive = false
         showResults = false
         votingRound += 1
         lastRoundResult = nil
-        debugDumpState("after-resetForNextRound")
     }
     
     /// Setzt die gesamte Abstimmung zurück
@@ -224,13 +179,10 @@ class VotingManager: ObservableObject {
         playersWon = false
         votingRound = 1
         lastRoundResult = nil
-        print("🧹 VotingManager.resetVoting()")
-        debugDumpState("after-resetVoting")
     }
     
     /// Setzt Timer-Status zurück
     func restoreTimerState() {
-        print("⏱️ VotingManager.restoreTimerState() wasTimerPausedBefore=\(wasTimerPausedBefore)")
         if !wasTimerPausedBefore {
             gameSettings.isTimerPaused = false
         }

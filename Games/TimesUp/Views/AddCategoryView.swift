@@ -57,13 +57,13 @@ struct AddCategoryView: View {
                                 .clipShape(Circle())
                         }
                         Spacer()
-                        Text("Neue Kategorie")
+                        Text(LocalizedStringKey("Neue Kategorie"))
                             .font(.title2.bold())
                             .foregroundColor(.white)
                         Spacer()
                         // Save Button
                         Button(action: saveCategory) {
-                            Text("Speichern")
+                            Text(LocalizedStringKey("Speichern"))
                                 .font(.headline.bold())
                                 .foregroundColor(canSave ? .green : .gray)
                         }
@@ -78,11 +78,11 @@ struct AddCategoryView: View {
                             
                             // 1. Name Input
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Name der Kategorie")
+                                Text(LocalizedStringKey("Name der Kategorie"))
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                 
-                                TextField("", text: $categoryName, prompt: Text("z.B. 90er Hits").foregroundColor(.gray))
+                                TextField("", text: $categoryName, prompt: Text(LocalizedStringKey("z.B. 90er Hits")).foregroundColor(.gray))
                                     .padding()
                                     .background(Color.white.opacity(0.08))
                                     .cornerRadius(12)
@@ -102,7 +102,7 @@ struct AddCategoryView: View {
                                     HStack {
                                         Image(systemName: "sparkles")
                                             .foregroundColor(.purple)
-                                        Text("KI-Unterstützung")
+                                        Text(LocalizedStringKey("KI-Unterstützung"))
                                             .font(.headline)
                                             .foregroundColor(.white)
                                         Spacer()
@@ -116,15 +116,15 @@ struct AddCategoryView: View {
                                 
                                 if showAIGenerator {
                                     VStack(spacing: 16) {
-                                        TextField("", text: $aiTheme, prompt: Text("Thema für KI (z.B. Weltraum)").foregroundColor(.gray))
+                                        TextField("", text: $aiTheme, prompt: Text(LocalizedStringKey("Thema für KI (z.B. Weltraum)")).foregroundColor(.gray))
                                             .padding()
                                             .background(Color.black.opacity(0.3))
                                             .cornerRadius(10)
                                             .foregroundColor(.white)
                                         
-                                        Picker("Schwierigkeit", selection: $selectedDifficulty) {
+                                        Picker(LocalizedStringKey("Schwierigkeit"), selection: $selectedDifficulty) {
                                             ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
-                                                Text(diff.rawValue).tag(diff)
+                                                Text(LocalizedStringKey(diff.rawValue)).tag(diff)
                                             }
                                         }
                                         .pickerStyle(.segmented)
@@ -141,7 +141,7 @@ struct AddCategoryView: View {
                                                 } else {
                                                     Image(systemName: "wand.and.stars")
                                                 }
-                                                Text(categoryManager.isGeneratingAI ? "Generiere..." : "Vorschläge generieren")
+                                                Text(categoryManager.isGeneratingAI ? String(localized: "Generiere...") : String(localized: "Vorschläge generieren"))
                                             }
                                             .font(.headline)
                                             .foregroundColor(.white)
@@ -163,17 +163,18 @@ struct AddCategoryView: View {
                             // 3. Add Words
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
-                                    Text("Begriffe")
+                                    Text(LocalizedStringKey("Begriffe"))
                                         .font(.headline)
                                         .foregroundColor(.white.opacity(0.8))
                                     Spacer()
-                                    Text("\(terms.count) / 5 min.")
+                                    let minLabel = String(localized: "min.")
+                                    Text("\(terms.count) / 5 \(minLabel)")
                                         .font(.caption)
                                         .foregroundColor(terms.count >= 5 ? .green : .orange)
                                 }
                                 
                                 HStack(spacing: 12) {
-                                    TextField("", text: $newTermText, prompt: Text("Neues Wort...").foregroundColor(.gray))
+                                    TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Neues Wort...")).foregroundColor(.gray))
                                         .padding()
                                         .background(Color.white.opacity(0.08))
                                         .cornerRadius(12)
@@ -200,7 +201,7 @@ struct AddCategoryView: View {
                                             } else {
                                                 Image(systemName: "globe")
                                             }
-                                            Text("Alle fehlenden Englisch-Übersetzungen ergänzen")
+                                            Text(LocalizedStringKey("Alle fehlenden Englisch-Übersetzungen ergänzen"))
                                                 .font(.subheadline)
                                         }
                                         .foregroundColor(.blue)
@@ -218,7 +219,7 @@ struct AddCategoryView: View {
                                                     .font(.body.bold())
                                                     .foregroundColor(.white)
                                                 
-                                                TextField("Englisch (optional)", text: Binding(
+                                                TextField(String(localized: "Englisch (optional)"), text: Binding(
                                                     get: { term.englishTranslation ?? "" },
                                                     set: { term.englishTranslation = $0.isEmpty ? nil : $0 }
                                                 ))

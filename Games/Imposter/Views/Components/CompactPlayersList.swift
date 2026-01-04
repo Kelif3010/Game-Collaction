@@ -295,9 +295,7 @@ struct AllPlayersManagementSheet: View {
     ]
     
     return ScrollView {
-        CompactPlayersList(players: players) { index in
-            print("Remove player at \(index)")
-        }
+        CompactPlayersList(players: players) { _ in }
         .padding(20)
     }
     .background(

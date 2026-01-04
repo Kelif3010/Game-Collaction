@@ -97,7 +97,6 @@ struct GamePlayView: View {
         }
         .onChange(of: gameSettings.gamePhase) { _, newPhase in
             if newPhase == .finished {
-                print("[GamePlayView] gamePhase changed to .finished")
                 gameLogic.stopGameTimer()
             } else if newPhase == .cardReveal {
                 showStartingPlayerAnnouncement = false
@@ -115,23 +114,17 @@ struct GamePlayView: View {
     // MARK: - Game Management
     
     private func startGame() {
-        print("🎮 GamePlayView.startGame() aufgerufen")
-        print("📊 gamePhase: \(gameSettings.gamePhase)")
-        print("👥 Spieler: \(gameSettings.players.map { "\($0.name) (\($0.isImposter ? "Spion" : "Normal"))" })")
-        
         // Timer stoppen falls er läuft
         gameLogic.stopGameTimer()
         
         // Prüfen ob das Spiel bereits gestartet wurde (Spione bereits ausgewählt)
         if gameSettings.gamePhase == .setup {
-            print("🔄 Spiel noch nicht gestartet, rufe gameLogic.startGame() auf")
             Task { @MainActor in
                 await gameLogic.startGame()
                 showingNextCardPreparation = false
                 loadCurrentCard()
             }
         } else {
-            print("✅ Spiel bereits gestartet, überspringe gameLogic.startGame()")
             showingNextCardPreparation = false
             loadCurrentCard()
         }
@@ -458,21 +451,16 @@ struct GameTimerView: View {
                 gameSettings.isTimerPaused = true
                 startWordGuessImmediateWin = true
                 showWordGuessingView = true
-                print("[GameTimerView] Wort erraten -> showWordGuessingView=true, immediateWin=true")
             }
         } message: {
             Text("Bestätige nur, wenn das Wort korrekt genannt wurde.")
         }
         .fullScreenCover(isPresented: $showWordGuessingView, onDismiss: {
             // Dismiss wird jetzt nur noch aus der Result-View ausgelöst
-            print("[GameTimerView] WordGuessingView dismissed; gamePhase=\(gameSettings.gamePhase)")
         }) {
             WordGuessingView(gameSettings: gameSettings, startWithImmediateWin: startWordGuessImmediateWin)
                 .environmentObject(gameLogic)
                 .interactiveDismissDisabled(true)
-                .onAppear {
-                    print("[GameTimerView] WordGuessingView presented. gamePhase=\(gameSettings.gamePhase)")
-                }
                 .onDisappear {
                     if !wasTimerPausedBeforeWordGuess {
                         gameSettings.isTimerPaused = false

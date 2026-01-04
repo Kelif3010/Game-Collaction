@@ -13,6 +13,8 @@ class CategoryManager: ObservableObject {
     private let loggerPrefix = "🧩 CategoryManager"
     private var isDebugLoggingEnabled: Bool = true
     private var cancellables = Set<AnyCancellable>()
+    private var currentLanguage: AppLanguage = .fallback
+    private let defaultCustomCategoryNames: Set<String> = ["FSK 18", "18+"]
     
     private func log(_ message: String) {
         guard isDebugLoggingEnabled else { return }
@@ -27,11 +29,10 @@ class CategoryManager: ObservableObject {
     }()
     
     init() {
+        let language = Self.resolveLanguagePreference()
+        currentLanguage = language
         loadSavedCategories()
-        if categories.isEmpty {
-            loadDefaultCategories()
-            saveCategories()
-        }
+        applyDefaultLanguage(language)
         setupAIObserver()
         log("Initialized. Categories loaded: \(categories.count). AI available: \(isAIAvailable)")
     }
@@ -47,93 +48,32 @@ class CategoryManager: ObservableObject {
     }
     
     // MARK: - DEFAULT CATEGORIES
-    private func loadDefaultCategories() {
-        
-        // 1. SEHR LEICHT (Grün)
-        let greenTerms = [
-            "Katze", "Hund", "Maus", "Fisch", "Vogel", "Hase", "Kuh", "Pferd", "Schaf", "Schwein",
-            "Ente", "Huhn", "Bär", "Löwe", "Tiger", "Elefant", "Giraffe", "Affe", "Pinguin", "Frosch",
-            "Schmetterling", "Biene", "Spinne", "Schlange", "Krokodil", "Nashorn", "Zebra", "Esel", "Hamster", "Papagei",
-            "Marienkäfer", "Eichhörnchen", "Fuchs", "Wolf", "Igel", "Schildkröte", "Wal", "Delfin", "Hai", "Robbe",
-            "Apfel", "Banane", "Traube", "Erdbeere", "Wassermelone", "Brot", "Käse", "Pizza", "Eis", "Kuchen",
-            "Milch", "Wasser", "Saft", "Ei", "Wurst", "Pommes", "Nudel", "Tomate", "Gurke", "Karotte",
-            "Schokolade", "Keks", "Bonbon", "Suppe", "Salat", "Marmelade", "Honig", "Butter", "Joghurt", "Birne",
-            "Auto", "Bus", "Zug", "Flugzeug", "Schiff", "Fahrrad", "Roller", "Ball", "Ballon", "Puppe",
-            "Teddy", "Rucksack", "Schuh", "Mütze", "Jacke", "Hose", "Kleid", "Brille", "Uhr", "Schlüssel",
-            "Lampe", "Tisch", "Stuhl", "Bett", "Sofa", "Tür", "Fenster", "Haus", "Dach", "Treppe",
-            "Zahnbürste", "Seife", "Handtuch", "Kamm", "Buch", "Stift", "Teller", "Gabel", "Löffel", "Glas",
-            "Sonne", "Mond", "Stern", "Regen", "Schnee", "Regenbogen", "Wolke", "Baum", "Blume", "Blatt",
-            "Stein", "Sand", "Meer", "Strand", "See", "Berg", "Wald", "Wiese", "Feuer", "Wind"
-        ].map { Term(text: $0) }
-
-        // 2. LEICHT (Gelb)
-        let yellowTerms = [
-            "Feuerwehr", "Polizei", "Arzt", "Bäcker", "Lehrer", "Gärtner", "Koch", "Pilot", "Verkäufer", "Postbote",
-            "Astronaut", "Clown", "Zauberer", "Pirat", "Ritter", "König", "Prinzessin", "Hexe", "Fee", "Vampir",
-            "Detektiv", "Tierarzt", "Bauarbeiter", "Friseur", "Kellner", "Maler", "Sänger", "Tänzer", "Bauer", "Kapitän",
-            "Harry Potter", "Mickey Maus", "Spongebob", "Spiderman", "Batman", "Superman", "Elsa", "Pikachu", "Super Mario", "Darth Vader",
-            "Simba", "Nemo", "Shrek", "Barbie", "James Bond", "Tarzan", "Pippi Langstrumpf", "Pinocchio", "Schneewittchen", "Aschenputtel",
-            "Minions", "Yoda", "Hulk", "Iron Man", "Rotkäppchen", "Froschkönig", "Hänsel und Gretel", "Biene Maja", "Wickie", "Garfield",
-            "Fußball", "Tennis", "Basketball", "Schwimmen", "Tanzen", "Reiten", "Malen", "Singen", "Kochen", "Lesen",
-            "Angeln", "Wandern", "Skifahren", "Zelten", "Bowling", "Karate", "Schach", "Yoga", "Joggen", "Boxen",
-            "Kino", "Zoo", "Schule", "Kirche", "Burg", "Schloss", "Insel", "Bauernhof", "Supermarkt", "Krankenhaus",
-            "Fernseher", "Computer", "Handy", "Tablet", "Kamera", "Gitarre", "Klavier", "Trommel", "Geige", "Flöte",
-            "Roboter", "Rakete", "Ufo", "Geist", "Mumie", "Monster", "Alien", "Drache", "Einhorn", "Meerjungfrau"
-        ].map { Term(text: $0) }
-
-        // 3. MITTEL (Rot)
-        let redTerms = [
-            "Deutschland", "Italien", "Spanien", "Frankreich", "USA", "China", "Japan", "Russland", "Brasilien", "Australien",
-            "Berlin", "Paris", "London", "Rom", "New York", "Tokio", "Mallorca", "Hawaii", "Las Vegas", "Hollywood",
-            "Ägypten", "Türkei", "Griechenland", "Schweden", "Schweiz", "Österreich", "Kanada", "Indien", "Mexiko", "Polen",
-            "Eiffelturm", "Freiheitsstatue", "Kolosseum", "Chinesische Mauer", "Pyramiden", "Big Ben", "Brandenburger Tor", "Schiefer Turm von Pisa", "Taj Mahal", "Mount Everest",
-            "Niagarafälle", "Grand Canyon", "Amazonas", "Nordpol", "Südpol", "Sahara", "Atlantik", "Pazifik", "Venedig", "Alpen",
-            "Angela Merkel", "Donald Trump", "Barack Obama", "Albert Einstein", "Mozart", "Beethoven", "Michael Jackson", "Elvis Presley", "Madonna", "Beyoncé",
-            "Cristiano Ronaldo", "Lionel Messi", "Arnold Schwarzenegger", "Brad Pitt", "Angelina Jolie", "Leonardo DiCaprio", "Bill Gates", "Mark Zuckerberg", "Steve Jobs", "Elon Musk",
-            "Papst", "Queen Elizabeth", "Kleopatra", "Caesar", "Napoleon", "Hitler", "Jesus", "Buddha", "Ghandi", "Martin Luther King",
-            "Coca Cola", "McDonalds", "Burger King", "Apple", "Samsung", "Google", "Facebook", "Amazon", "Nike", "Adidas",
-            "Ikea", "Lego", "Disney", "Netflix", "YouTube", "Mercedes", "BMW", "Audi", "Porsche", "Ferrari",
-            "Volkswagen", "Tesla", "Red Bull", "Nutealla", "Haribo", "PlayStation", "Nintendo", "Xbox", "Starbucks", "Rolex"
-        ].map { Term(text: $0) }
-
-        // 4. SCHWER (Blau)
-        let blueTerms = [
-            "Atom", "Molekül", "DNA", "Genetik", "Evolution", "Schwerkraft", "Relativitätstheorie", "Photosynthese", "Sauerstoff", "Kohlendioxid",
-            "Mikroskop", "Teleskop", "Satellit", "Algorithmus", "Künstliche Intelligenz", "Blockchain", "Kryptowährung", "Quantenphysik", "Schwarzes Loch", "Supernova",
-            "Meteorit", "Asteroid", "Komet", "Galaxie", "Universum", "Vakuum", "Radioaktivität", "Kernfusion", "Ozonloch", "Klimawandel",
-            "Demokratie", "Diktatur", "Monarchie", "Kommunismus", "Kapitalismus", "Revolution", "Inflation", "Globalisierung", "Mauerfall", "Weltkrieg",
-            "Mittelalter", "Renaissance", "Antike", "Steinzeit", "Industrialisierung", "Kolonialismus", "Sklaverei", "Holocaust", "Apartheid", "Bürgerkrieg",
-            "Verfassung", "Parlament", "Senat", "Minister", "Präsident", "Kanzler", "Botschafter", "Spion", "Diplomat", "Veto",
-            "Goethe", "Schiller", "Shakespeare", "Da Vinci", "Picasso", "Van Gogh", "Dali", "Rembrandt", "Michelangelo", "Monet",
-            "Mona Lisa", "Der Schrei", "Bibel", "Koran", "Tora", "Philosophie", "Psychologie", "Soziologie", "Archäologie", "Astronomie",
-            "Oper", "Ballett", "Theater", "Orchester", "Sinfonie", "Literatur", "Poesie", "Roman", "Drama", "Komödie",
-            "Kaleidoskop", "Labyrinth", "Oase", "Fata Morgana", "Echo", "Schatten", "Silhouette", "Horizont", "Vulkanasche", "Stalaktit",
-            "Hieroglyphen", "Mumifizierung", "Sarkophag", "Obelisk", "Kathedrale", "Moschee", "Synagoge", "Tempel", "Pagode", "Wolkenkratzer"
-        ].map { Term(text: $0) }
-
-        // 5. FSK 18 (Custom)
-        let fsk18Terms = [
-            "Koks", "Hure", "Stripper", "Stripclub", "Dildo", "Penis", "Brüste", "Arsch", "Blowjob", "Orgasmus",
-            "Puff", "Kondom", "Anal", "Lecken", "Reiten", "Stöhnen", "Erotik", "Sextoy", "Fesselspiel", "Peitsche",
-            "Swingerclub", "Escort", "Camgirl", "Nippel", "Kiffen", "Ecstasy", "Dealer", "Bordell",
-            "Handschellen", "Vibrator", "Pornostar", "One Night Stand", "Affäre", "Kamasutra", "Fetisch", "Domina",
-            "Lack und Leder", "Sperma", "Schlucken", "Doggy Style", "69", "Dreier", "Gangbang", "Milf",
-            "Sugar Daddy", "Callboy", "Gleitgel", "Viagra", "Pille", "Schwangerschaftstest", "Frauenarzt", "Urologe",
-            "Rotlichtbezirk", "Darkroom", "Glory Hole", "Exhibitionist", "Voyeur", "Nacktstrand", "FKK", "Saunaclub",
-            "Tinder Date", "Walk of Shame", "Kater", "Filmriss", "Saufspiel", "Bierpong", "Schnapsleiche", "Kotzen"
-        ].map { Term(text: $0) }
-
-        // Zuweisung mit TimesUpCategory
-        categories = [
-            TimesUpCategory(name: "Sehr leicht", type: .green, terms: greenTerms),
-            TimesUpCategory(name: "Leicht", type: .yellow, terms: yellowTerms),
-            TimesUpCategory(name: "Mittel", type: .red, terms: redTerms),
-            TimesUpCategory(name: "Schwere Kategorie", type: .blue, terms: blueTerms),
-            TimesUpCategory(name: "FSK 18", type: .custom, terms: fsk18Terms)
-        ]
+    
+    /// Loads default categories for the specified language.
+    /// Uses the external CategoryDefaultData struct to keep this file clean.
+    private func loadDefaultCategories(for language: AppLanguage = .german) {
+        log("Loading default categories for language: \(language.displayName)")
+        categories = CategoryDefaultData.getData(for: language)
         
         log("Default categories loaded: \(categories.count)")
         categories.forEach { log("Kategorie '\($0.name)' hat \($0.terms.count) Begriffe") }
+    }
+    
+    /// Public method to force reload defaults (e.g. when language changes).
+    /// WARNING: Overwrites existing categories!
+    func reloadDefaults(for language: AppLanguage) {
+        log("Force reloading defaults for: \(language.displayName)")
+        currentLanguage = language
+        loadDefaultCategories(for: language)
+        saveCategories()
+        objectWillChange.send()
+    }
+
+    /// Updates default categories when the app language changes, without touching user-created ones.
+    func updateLanguage(_ language: AppLanguage) {
+        guard language != currentLanguage else { return }
+        currentLanguage = language
+        applyDefaultLanguage(language)
     }
     
     private func loadSavedCategories() {
@@ -160,6 +100,68 @@ class CategoryManager: ObservableObject {
         } catch {
             log("Failed to save categories: \(error.localizedDescription)")
         }
+    }
+
+    private func applyDefaultLanguage(_ language: AppLanguage) {
+        let defaults = CategoryDefaultData.getData(for: language)
+        guard !categories.isEmpty else {
+            categories = defaults
+            saveCategories()
+            return
+        }
+
+        var updated = categories
+        var didChange = false
+
+        for defaultCategory in defaults {
+            if defaultCategory.type != .custom {
+                if let index = updated.firstIndex(where: { $0.type == defaultCategory.type }) {
+                    if updated[index].name != defaultCategory.name ||
+                        !termsMatch(updated[index].terms, defaultCategory.terms) {
+                        updated[index].name = defaultCategory.name
+                        updated[index].terms = defaultCategory.terms
+                        didChange = true
+                    }
+                } else {
+                    updated.append(defaultCategory)
+                    didChange = true
+                }
+            } else if defaultCustomCategoryNames.contains(defaultCategory.name) {
+                if let index = updated.firstIndex(where: { defaultCustomCategoryNames.contains($0.name) }) {
+                    if updated[index].name != defaultCategory.name ||
+                        !termsMatch(updated[index].terms, defaultCategory.terms) {
+                        updated[index].name = defaultCategory.name
+                        updated[index].terms = defaultCategory.terms
+                        didChange = true
+                    }
+                }
+            }
+        }
+
+        if didChange {
+            categories = updated
+            saveCategories()
+        }
+    }
+
+    private func termsMatch(_ lhs: [Term], _ rhs: [Term]) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+        return zip(lhs, rhs).allSatisfy { $0.text == $1.text && $0.englishTranslation == $1.englishTranslation }
+    }
+
+    private static func resolveLanguagePreference() -> AppLanguage {
+        let defaults = UserDefaults.standard
+        let useSystem: Bool
+        if defaults.object(forKey: "useSystemLanguage") == nil {
+            useSystem = true
+        } else {
+            useSystem = defaults.bool(forKey: "useSystemLanguage")
+        }
+        if useSystem {
+            return AppLanguage.fromSystemPreferred()
+        }
+        let code = defaults.string(forKey: "selectedLanguageCode")
+        return AppLanguage.from(code: code)
     }
     
     // MARK: - Category Management

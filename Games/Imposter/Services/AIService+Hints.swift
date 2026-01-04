@@ -524,4 +524,4 @@ extension AIService {
         // Mische und nimm die benötigte Anzahl
         return Array(roles.shuffled().prefix(count))
     }
-}   
+}

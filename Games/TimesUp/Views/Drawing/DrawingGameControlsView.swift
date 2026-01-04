@@ -34,7 +34,7 @@ struct DrawingGameControlsView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "arrow.right.circle.fill")
                                 .font(.system(size: 40))
-                            Text("Skip")
+                            Text(LocalizedStringKey("Skip"))
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
@@ -74,7 +74,7 @@ struct DrawingGameControlsView: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 40))
-                                Text("Falsch")
+                                Text(LocalizedStringKey("Falsch"))
                                     .font(.headline)
                                     .fontWeight(.bold)
                             }
@@ -98,7 +98,7 @@ struct DrawingGameControlsView: View {
                 
                 // Correct Button (gleich wie in anderen Runden)
                 if forcedSkipActive {
-                    Text("Zwangs-Skip aktiv – erst Skip ausführen.")
+                    Text(LocalizedStringKey("Zwangs-Skip aktiv – erst Skip ausführen."))
                         .font(.footnote)
                         .foregroundColor(.yellow)
                 } else {
@@ -110,7 +110,7 @@ struct DrawingGameControlsView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 40))
-                            Text("Richtig")
+                            Text(LocalizedStringKey("Richtig"))
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
@@ -158,7 +158,7 @@ struct TermDisplayBanner: View {
             
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Zeichne:")
+                    Text(LocalizedStringKey("Zeichne:"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .fontWeight(.medium)
@@ -178,7 +178,7 @@ struct TermDisplayBanner: View {
                 
                 // Begriff-Counter Badge (wie in anderen Runden)
                 VStack(spacing: 4) {
-                    Text("Übrig")
+                    Text(LocalizedStringKey("Übrig"))
                         .font(.caption2)
                         .foregroundColor(.white)
                     

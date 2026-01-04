@@ -33,7 +33,7 @@ struct CategoriesView: View {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
+                                .frame(width: 36, height: 36)
                                 .background(Color.white.opacity(0.1))
                                 .clipShape(Circle())
                         }
@@ -52,13 +52,13 @@ struct CategoriesView: View {
                             Image(systemName: "plus")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
+                                .frame(width: 36, height: 36)
                                 .background(Color.blue)
                                 .clipShape(Circle())
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 10)
+                    .padding(.top, 20)
                     .padding(.bottom, 20)
                     
                     ScrollView {
@@ -274,7 +274,7 @@ struct ImposterAddCategoryView: View {
         }
     }
     
-    // Logic (same as before)
+    // Logic
     private func addWord() {
         let word = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
         if word.isEmpty { return }

@@ -381,7 +381,8 @@ struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.
 
     var body: some View {
         FlowRowsLayout(spacing: spacing, runSpacing: runSpacing) {
-            ForEach(Array(items), id: \.self) { item in
+            ForEach(Array(items), id: \.self) {
+                item in
                 content(item)
             }
         }
@@ -488,8 +489,8 @@ private struct FlowRowsLayout: Layout {
     return SpyCardView(
         card: sampleCard,
         gameSettings: gameSettings,
-        onCardTap: { print("Card tapped") },
-        onCardDismissed: { print("Card dismissed") }
+        onCardTap: { },
+        onCardDismissed: { }
     )
     .padding()
     .background(

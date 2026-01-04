@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-@MainActor // Sicherstellen, dass alles auf dem UI-Thread läuft
+@MainActor
 final class GameTimer: ObservableObject {
     @Published private(set) var remaining: Int = 0
     @Published private(set) var isPaused: Bool = false
@@ -15,26 +15,33 @@ final class GameTimer: ObservableObject {
         isPaused = false
         self.onTimeout = onTimeout
         
-        // Sofort prüfen, falls 0 Sekunden übergeben wurden
         if remaining == 0 {
             onTimeout()
             return
         }
         
+        // Timer startet auf dem aktuellen RunLoop (Main), da wir im MainActor sind.
+        // Wir nutzen den Block-basierten Timer, der auf dem Main-Thread feuert, wenn er dort geplant wurde.
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            // Da wir wissen, dass dieser Timer auf dem MainThread läuft (weil hier gestartet),
+            // können wir MainActor.assumeIsolated nutzen oder Task.
+            // Sicherer für Swift 6 Concurrency ist ein Task.
+            Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                if self.isPaused { return }
-                
-                if self.remaining > 0 {
-                    self.remaining -= 1
-                } else {
-                    // WICHTIG: Erst den Handler sichern, dann stoppen!
-                    let handler = self.onTimeout
-                    self.stop()
-                    handler?() // Jetzt feuern wir das Event
-                }
+                self.tick()
             }
+        }
+    }
+    
+    private func tick() {
+        if isPaused { return }
+        
+        if remaining > 0 {
+            remaining -= 1
+        } else {
+            let handler = onTimeout
+            stop()
+            handler?()
         }
     }
 

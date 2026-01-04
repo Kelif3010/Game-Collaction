@@ -63,7 +63,7 @@ struct CategoryDetailView: View {
                         
                         Spacer()
                         
-                        Text(canEdit ? "Bearbeiten" : "Details")
+                        Text(canEdit ? LocalizedStringKey("Bearbeiten") : LocalizedStringKey("Details"))
                             .font(.title2.bold())
                             .foregroundColor(.white)
                         
@@ -103,7 +103,7 @@ struct CategoryDetailView: View {
                                 
                                 VStack(spacing: 8) {
                                     if canEdit {
-                                        TextField("Name", text: $editingCategory.name)
+                                        TextField(String(localized: "Name"), text: $editingCategory.name)
                                             .font(.title.bold())
                                             .multilineTextAlignment(.center)
                                             .foregroundColor(.white)
@@ -117,15 +117,19 @@ struct CategoryDetailView: View {
                                             )
                                             .padding(.horizontal, 40)
                                     } else {
-                                        Text(category.name)
+                                        Text(LocalizedStringKey(category.name))
                                             .font(.title.bold())
                                             .foregroundColor(.white)
                                     }
                                     
                                     HStack(spacing: 12) {
-                                        Label("\(editingCategory.terms.count) Wörter", systemImage: "textformat.123")
+                                        Label {
+                                            Text("\(editingCategory.terms.count) ") + Text("Wörter")
+                                        } icon: {
+                                            Image(systemName: "textformat.123")
+                                        }
                                         if !canEdit {
-                                            Label("Systemkategorie", systemImage: "lock.fill")
+                                            Label(LocalizedStringKey("Systemkategorie"), systemImage: "lock.fill")
                                         }
                                     }
                                     .font(.subheadline)
@@ -137,13 +141,13 @@ struct CategoryDetailView: View {
                             // Add Word Section
                             if canEdit {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text("Neues Wort")
+                                    Text(LocalizedStringKey("Neues Wort"))
                                         .font(.headline)
                                         .foregroundColor(.white.opacity(0.8))
                                         .padding(.leading, 4)
                                     
                                     HStack(spacing: 12) {
-                                        TextField("", text: $newTermText, prompt: Text("Wort eingeben...").foregroundColor(.gray))
+                                        TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Wort eingeben...")).foregroundColor(.gray))
                                             .padding()
                                             .background(Color.white.opacity(0.08))
                                             .cornerRadius(12)
@@ -166,13 +170,13 @@ struct CategoryDetailView: View {
                             
                             // Terms List
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Begriffe")
+                                Text(LocalizedStringKey("Begriffe"))
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                     .padding(.leading, 20)
                                 
                                 if editingCategory.terms.isEmpty {
-                                    Text("Keine Wörter vorhanden.")
+                                    Text(LocalizedStringKey("Keine Wörter vorhanden."))
                                         .foregroundColor(.gray)
                                         .italic()
                                         .padding()

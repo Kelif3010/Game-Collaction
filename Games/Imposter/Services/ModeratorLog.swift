@@ -127,8 +127,6 @@ class ModeratorLog: ObservableObject {
         if logs.count > maxLogEntries {
             logs = Array(logs.prefix(maxLogEntries))
         }
-        
-        print("📝 Moderator-Log: \(entry.title) - \(entry.details)")
     }
     
     private func calculateFairnessScore(selectedImposters: [Player], allPlayers: [Player]) -> Double {

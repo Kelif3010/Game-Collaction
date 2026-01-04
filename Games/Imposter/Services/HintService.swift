@@ -40,11 +40,8 @@ class HintService: ObservableObject {
         currentCategory = category
         
         guard settings.enableHints else {
-            print("💡 Hinweise deaktiviert – kein Start")
             return
         }
-        
-        print("💡 Hinweise-System gestartet für: \(word) (\(category.name))")
         
         // Ersten Hinweis sofort generieren
         Task {
@@ -62,8 +59,6 @@ class HintService: ObservableObject {
         activeHints.removeAll()
         currentWord = ""
         currentCategory = nil
-        
-        print("💡 Hinweise-System gestoppt")
     }
 
     /// Vollständiger Reset nach einem Spiel
@@ -125,43 +120,17 @@ class HintService: ObservableObject {
             )
             
         } catch {
-            print("💡 Fehler beim Generieren des Hinweises: \(error)")
+            // Error ignored
         }
     }
     
     private func createHint(word: String, category: Category, isTrue: Bool) async throws -> GameHint {
         if aiService.isAvailable {
             if let hint = await aiService.generateAIHint(word: word, category: category, mustBeTrue: isTrue) {
-                print("🧠 Hint-Quelle: KI (AIService)")
                 return hint
-            } else {
-                print("🧪 Hint-Quelle: Fallback (KI lieferte kein valides JSON)")
             }
-        } else {
-            print("🧪 Hint-Quelle: Fallback (KI nicht verfügbar)")
         }
         return createFallbackHint(word: word, category: category, isTrue: isTrue)
-    }
-    
-    private func createHintPrompt(word: String, category: Category, isTrue: Bool) -> String {
-        let truthStr = isTrue ? "true" : "false"
-        return """
-        Du bist der Moderator eines Spion-Spiels. Analysiere das Zielwort inhaltlich (Bedeutung, Wortart, Silben, typische Buchstabenfolgen, Reime, deutsche Morphologie) und antworte ausschließlich mit EINEM JSON-Objekt. KEINE Einleitung, KEIN Markdown, KEINE Codeblöcke, KEIN Zusatztext.
-        SCHEMA: {"content":"...","isTrue":true|false,"type":"general|letter|length|category|rhyme|type"}
-
-        word=\(word)
-        category=\(category.name)
-        mustBeTrue=\(truthStr)
-        Spielregeln:
-        - Wenn mustBeTrue=true, muss der Hinweis faktisch korrekt sein. Wenn false, dann subtil und plausibel falsch (keine triviale Negation, kein offensichtlicher Unsinn).
-        - type=letter: content enthält genau EINEN Buchstaben (Großbuchstabe) mit kurzem Kontext.
-        - type=length: content erwähnt die exakte Länge des Wortes (Zahl) oder eine präzise Aussage dazu.
-        - type=category: content erwähnt die Kategorie explizit und passend.
-        - type=rhyme: content nennt ein kurzes deutsches Reimwort oder beschreibt die Reimform glaubwürdig.
-        - type=type: content benennt die Wortart (Substantiv/Verb/Adjektiv) konsistent mit dem Wort.
-        - Maximal 2 Sätze, deutsch, geheimnisvoll, keine Namen von Spielern.
-        - Antworte NUR mit dem JSON-Objekt im SCHEMA oben.
-        """
     }
     
     private func createFallbackHint(word: String, category: Category, isTrue: Bool) -> GameHint {
@@ -295,85 +264,22 @@ class HintService: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
             self.activeHints.removeAll { $0.id == hint.id }
         }
-        
-        print("💡 Hinweis aktiviert: \(hint.content) (Echt: \(hint.isTrue))")
     }
     
     // MARK: - Helper Methods
     
-    /// Versucht, aus einem beliebigen Text das erste balancierte JSON-Objekt ({}-Block) zu extrahieren
-    private func extractFirstJSONObject(from text: String) -> Data? {
-        let chars = Array(text)
-        var i = 0
-        var inString = false
-        var escape = false
-        var started = false
-        var braceCount = 0
-        var startIndex: Int? = nil
-        while i < chars.count {
-            let c = chars[i]
-            if inString {
-                if escape {
-                    escape = false
-                } else if c == "\\" {
-                    escape = true
-                } else if c == "\"" {
-                    inString = false
-                }
-            } else {
-                if c == "\"" { inString = true }
-                else if c == "{" {
-                    if !started {
-                        started = true
-                        startIndex = i
-                    }
-                    braceCount += 1
-                } else if c == "}" {
-                    if started { braceCount -= 1 }
-                    if started && braceCount == 0 {
-                        let s = startIndex ?? 0
-                        let substring = String(chars[s...i])
-                        return substring.data(using: .utf8)
-                    }
-                }
-            }
-            i += 1
-        }
-        return nil
-    }
-    
     private func generateRhyme(_ word: String) -> String {
-        // Vereinfachte Reim-Generierung
         let endings = ["-at", "-en", "-er", "-ig", "-lich"]
         return word + endings.randomElement()!
-    }
-    
-    private func getWordType(_ word: String) -> String {
-        // Vereinfachte Wort-Typ-Erkennung
-        if word.hasSuffix("ung") { return "Substantiv" }
-        if word.hasSuffix("en") { return "Verb" }
-        if word.hasSuffix("ig") { return "Adjektiv" }
-        return "Substantiv"
     }
     
     private func getRandomLetter(from word: String? = nil) -> String {
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         return String(letters.randomElement()!)
     }
-    
-    private func getRandomCategory() -> String {
-        let categories = ["Tier", "Pflanze", "Gegenstand", "Beruf", "Ort"]
-        return categories.randomElement()!
-    }
-    
-    private func getRandomWordType() -> String {
-        let types = ["Substantiv", "Verb", "Adjektiv", "Nomen"]
-        return types.randomElement()!
-    }
 }
 
-// MARK: - Game Hint Model
-
+// MARK: - Game Hint Model (Rest bleibt gleich)
 struct GameHint: Identifiable, Codable {
     let id: UUID
     let content: String

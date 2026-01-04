@@ -51,7 +51,7 @@ struct AICategoryGeneratorView: View {
                                 .clipShape(Circle())
                         }
                         Spacer()
-                        Text("KI Generator")
+                        Text(LocalizedStringKey("KI Generator"))
                             .font(.title2.bold())
                             .foregroundColor(.white)
                         Spacer()
@@ -66,13 +66,13 @@ struct AICategoryGeneratorView: View {
                             
                             // 1. Difficulty
                             VStack(alignment: .leading, spacing: 12) {
-                                Label("Schwierigkeit", systemImage: "gauge.medium")
+                                Label(LocalizedStringKey("Schwierigkeit"), systemImage: "gauge.medium")
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                 
-                                Picker("Schwierigkeit", selection: $selectedDifficulty) {
+                                Picker(LocalizedStringKey("Schwierigkeit"), selection: $selectedDifficulty) {
                                     ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
-                                        Text(diff.rawValue).tag(diff)
+                                        Text(LocalizedStringKey(diff.rawValue)).tag(diff)
                                     }
                                 }
                                 .pickerStyle(.segmented)
@@ -86,12 +86,12 @@ struct AICategoryGeneratorView: View {
                             
                             // 2. Custom Theme Input
                             VStack(alignment: .leading, spacing: 12) {
-                                Label("Themen wählen", systemImage: "sparkles")
+                                Label(LocalizedStringKey("Themen wählen"), systemImage: "sparkles")
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
                                 
                                 HStack(spacing: 12) {
-                                    TextField("", text: $newTheme, prompt: Text("Eigenes Thema (z.B. 80er)...").foregroundColor(.gray))
+                                    TextField("", text: $newTheme, prompt: Text(LocalizedStringKey("Eigenes Thema (z.B. 80er)...")).foregroundColor(.gray))
                                         .padding()
                                         .background(Color.white.opacity(0.08))
                                         .cornerRadius(12)
@@ -117,7 +117,7 @@ struct AICategoryGeneratorView: View {
                                     HStack(spacing: 10) {
                                         ForEach(selectedThemes, id: \.self) { theme in
                                             HStack(spacing: 6) {
-                                                Text(theme)
+                                                Text(LocalizedStringKey(theme))
                                                     .font(.subheadline.bold())
                                                     .foregroundColor(.white)
                                                 Button {
@@ -146,7 +146,7 @@ struct AICategoryGeneratorView: View {
                                     withAnimation { showPresetThemes.toggle() }
                                 } label: {
                                     HStack {
-                                        Text("Vorschläge")
+                                        Text(LocalizedStringKey("Vorschläge"))
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                         Image(systemName: "chevron.right")
@@ -162,7 +162,7 @@ struct AICategoryGeneratorView: View {
                                             Button {
                                                 toggleTheme(theme)
                                             } label: {
-                                                Text(theme)
+                                                Text(LocalizedStringKey(theme))
                                                     .font(.caption)
                                                     .fontWeight(.medium)
                                                     .foregroundColor(selectedThemes.contains(theme) ? .white : .gray)
@@ -197,7 +197,7 @@ struct AICategoryGeneratorView: View {
                                             .padding(.trailing, 4)
                                     }
                                     
-                                    Text(categoryManager.isGeneratingAI ? "Generiere..." : "Generieren")
+                                    Text(categoryManager.isGeneratingAI ? String(localized: "Generiere...") : String(localized: "Generieren"))
                                         .font(.title3.bold())
                                 }
                                 .foregroundColor(.white)

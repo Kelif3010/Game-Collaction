@@ -84,22 +84,7 @@ struct ImposterSettingsView: View {
                     }
                     
 #if DEBUG
-                    NavigationLink(destination: FairnessDebugView()) {
-                        HStack {
-                            Image(systemName: "ladybug.fill")
-                                .foregroundColor(.orange)
-                            Text("Fairness-Simulator (Debug)")
-                                .font(.headline)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.secondarySystemBackground))
-                        )
-                    }
+             
 #else
                     NavigationLink(destination: FairnessDebugView()) {
                         HStack {

@@ -1,3 +1,10 @@
+//
+//  ImposterPicker.swift
+//  Imposter
+//
+//  Created by Ken on 22.09.25.
+//
+
 import Foundation
 
 /// Simple protocol so we can inject a deterministic RNG in tests.
@@ -42,18 +49,12 @@ final class ImposterPicker {
         rng: inout any RandomNumberGeneratorLike,
         weightMultipliers: [UUID: Double] = [:]
     ) -> [UUID] {
-        print("🎯 ImposterPicker.pickImposters() aufgerufen")
-        print("👥 Spieler: \(players.count), gewünschte Spione: \(count)")
-        
         guard count > 0, !players.isEmpty else { 
-            print("❌ ImposterPicker: count=\(count), players.isEmpty=\(players.isEmpty)")
             return [] 
         }
         // Never pick all players as imposters, must leave at least one non-imposter
         let desired = min(count, max(0, players.count - 1))
-        print("🎯 Gewünschte Spione: \(desired)")
         if desired == 0 { 
-            print("❌ ImposterPicker: desired=0")
             return [] 
         }
         
@@ -62,30 +63,24 @@ final class ImposterPicker {
         let round = state.currentRound
         
         // Step 1: Compute hard exclusions based on maxConsecutive, cooldown, and new player hard cooldown
-        print("🔍 Prüfe hard exclusions...")
         for id in players {
             let s = state.stats(for: id)
             let consecutiveCap = s.currentStreak >= policy.maxConsecutive
             let cooldownCap = s.cooldownUntilRound > round
             let newPlayerHard = (round < s.joinRound + policy.newPlayerHardCooldownRounds)
-            print("👤 Spieler \(id): consecutiveCap=\(consecutiveCap), cooldownCap=\(cooldownCap), newPlayerHard=\(newPlayerHard)")
             if consecutiveCap || cooldownCap || newPlayerHard {
                 hardExcluded.insert(id)
-                print("❌ Spieler \(id) hard excluded")
             }
         }
-        print("🚫 Hard excluded: \(hardExcluded.count) Spieler")
         
         // Helper to compute base weight for a player (without team penalty)
         func baseWeight(for id: UUID, ignoreRecentWindow: Bool = false) -> Double {
             let s = state.stats(for: id)
             var w = 1.0
-            var debugInfo = "Spieler \(id): "
             
             // Frequency penalty: more times imposter reduces weight
             let freqPenalty = policy.alphaFrequencyPenalty * Double(max(0, s.timesImposter))
             w /= (1.0 + freqPenalty)
-            debugInfo += "freq=\(s.timesImposter), streak=\(s.currentStreak), "
             
             // Distance bonus: if last picked long ago, increase chance
             let last = s.lastPickedRound
@@ -93,18 +88,15 @@ final class ImposterPicker {
                 let d = max(0, round - last)
                 let distanceBonus = policy.betaDistanceBonus * Double(d)
                 w *= (1.0 + distanceBonus)
-                debugInfo += "lastRound=\(last), distance=\(d), "
             } else {
                 // Never picked before → small bonus to integrate gradually but not dominate
                 w *= 1.15
-                debugInfo += "neverPicked, "
             }
             
             // Recent window penalty (soft)
             if !ignoreRecentWindow {
                 if s.lastPickedRound >= 0, (round - s.lastPickedRound) <= policy.recentWindow {
                     w *= 0.5
-                    debugInfo += "recentPenalty, "
                 }
             }
             
@@ -113,17 +105,13 @@ final class ImposterPicker {
                 if round >= s.joinRound + policy.newPlayerHardCooldownRounds {
                     let newPlayerPenalty = max(0.0, min(1.0, policy.newPlayerPenaltyFactor))
                     w *= newPlayerPenalty
-                    debugInfo += "newPlayerPenalty=\(newPlayerPenalty), "
                 }
             }
             // KI-Tuning anwenden (Multiplikator)
             if let m = weightMultipliers[id], m > 0 {
                 w *= m
-                debugInfo += "multiplier=\(String(format: "%.2f", m)), "
             }
             let finalWeight = max(w, 0.0001)
-            debugInfo += "finalWeight=\(String(format: "%.3f", finalWeight))"
-            print("⚖️ \(debugInfo)")
             
             return finalWeight
         }
@@ -179,7 +167,6 @@ final class ImposterPicker {
         
         // Create initial pool of candidates excluding hard-excluded players
         var pool = players.filter { !hardExcluded.contains($0) }
-        print("🏊 Initial pool: \(pool.count) Spieler verfügbar")
         
         // Flags to track soft constraint relaxation
         var relaxedPairPenalty = false
@@ -187,7 +174,6 @@ final class ImposterPicker {
         
         // Iteratively pick imposters until desired count or no candidates left
         while chosen.count < desired {
-            print("🔄 While-Schleife: chosen=\(chosen.count), desired=\(desired), pool=\(pool.count)")
             if pool.isEmpty {
                 // Try progressively relaxing soft constraints
                 
@@ -228,8 +214,6 @@ final class ImposterPicker {
             pool.removeAll { $0 == picked }
         }
         
-        print("✅ ImposterPicker abgeschlossen: \(chosen.count) Spione ausgewählt")
-        print("🕵️ Ausgewählte Spione: \(chosen)")
         return chosen
     }
 
