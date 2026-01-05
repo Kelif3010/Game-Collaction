@@ -18,7 +18,7 @@ struct GroupCountRow: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(count) Gruppen")
+                    (Text("\(count) ") + Text("Gruppen"))
                         .foregroundStyle(.white)
                         .font(.headline)
                     Text("je 2 Spieler")

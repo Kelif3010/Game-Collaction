@@ -204,7 +204,7 @@ struct HomeView: View {
                         HapticsService.impact(.light)
                     } label: {
                         HStack {
-                            Text("\(option) Sekunden")
+                            (Text("\(option) ") + Text("Sekunden"))
                                 .foregroundStyle(.white)
                             Spacer()
                             if appModel.timerSelection == option {
@@ -236,7 +236,7 @@ struct HomeView: View {
                         HapticsService.impact(.light)
                     } label: {
                         HStack {
-                            Text(level.title)
+                            Text(LocalizedStringKey(level.title))
                                 .foregroundStyle(.white)
                             Spacer()
                             if appModel.penaltyLevel == level {

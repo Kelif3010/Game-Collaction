@@ -24,13 +24,40 @@ class AppModel: ObservableObject {
     
     init() {
         // Test-Spieler
-        self.players = [
-            Player(name: "Spieler 1"),
-            Player(name: "Spieler 2"),
-            Player(name: "Spieler 3"),
-            Player(name: "Spieler 4")
-        ]
+        self.players = (1...4).map { Player(name: defaultPlayerName(for: $0)) }
         self.selectedQuestionsCategory = QuestionsDefaults.all.first
+    }
+
+    func defaultPlayerName(for index: Int) -> String {
+        let format = localizedString("Spieler %d")
+        return String(format: format, index)
+    }
+
+    private func localizedString(_ key: String) -> String {
+        let code: String
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "useSystemLanguage") == nil || defaults.bool(forKey: "useSystemLanguage") {
+            var preferred = "de"
+            for identifier in Locale.preferredLanguages {
+                if identifier.hasPrefix("de") {
+                    preferred = "de"
+                    break
+                }
+                if identifier.hasPrefix("en") {
+                    preferred = "en"
+                    break
+                }
+            }
+            code = preferred
+        } else {
+            code = defaults.string(forKey: "selectedLanguageCode") ?? "de"
+        }
+
+        if let path = Bundle.main.path(forResource: code, ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return bundle.localizedString(forKey: key, value: key, table: nil)
+        }
+        return NSLocalizedString(key, comment: "")
     }
     
     func pickFairSpies() -> Set<UUID> {

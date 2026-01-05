@@ -30,14 +30,14 @@ struct SettingsRow: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .foregroundStyle(.white)
                     .font(.headline)
                 
                 // ÄNDERUNG: Detailtext hier ausblenden, wenn es Gruppen ODER Kategorien sind.
                 // Dadurch steht der Text nur noch auf der rechten Seite.
                 if let detail, !detail.isEmpty, rowType != .groups, rowType != .categories {
-                    Text(detail)
+                    Text(LocalizedStringKey(detail))
                         .foregroundStyle(Theme.mutedText)
                         .font(.subheadline)
                 }
@@ -52,7 +52,7 @@ struct SettingsRow: View {
                 HStack(spacing: 6) {
                     // Hier wird das Detail für Gruppen und Kategorien angezeigt (rechts)
                     if let detail, !detail.isEmpty {
-                        Text(detail)
+                        Text(LocalizedStringKey(detail))
                             .foregroundStyle(Theme.mutedText)
                             .font(.subheadline.weight(.semibold))
                     }

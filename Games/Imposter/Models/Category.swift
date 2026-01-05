@@ -53,7 +53,7 @@ struct Category: Identifiable, Codable, Hashable {
         try container.encode(contentRating, forKey: .contentRating)
     }
 
-    // Vordefinierte Kategorien (8x ~50 Wörter)
+    // Vordefinierte Kategorien (Optimiert für Release)
     static let defaultCategories: [Category] = [
         Category(
             name: "Tiere",
@@ -62,40 +62,42 @@ struct Category: Identifiable, Codable, Hashable {
                 "Nilpferd","Krokodil","Fuchs","Wolf","Bär","Eule","Papagei","Känguru","Koala","Faultier",
                 "Panda","Gorilla","Schimpanse","Otter","Robbe","Wal","Hai","Tintenfisch","Krake","Seepferdchen",
                 "Igel","Kaninchen","Meerschweinchen","Hamster","Pferd","Esel","Schaf","Ziege","Kuh","Huhn",
-                "Truthahn","Ente","Gans","Pfau","Flamingo","Storch","Dachs","Marder","Luchs","Elch"
+                "Truthahn","Ente","Gans","Pfau","Flamingo","Storch","Dachs","Fledermaus","Luchs","Elch"
             ],
             emoji: "🐾"
         ),
         Category(
             name: "Länder",
             words: [
-                "Deutschland","Frankreich","Italien","Spanien","Portugal","Niederlande","Belgien","Luxemburg","Österreich","Schweiz",
-                "Polen","Tschechien","Slowakei","Ungarn","Rumänien","Bulgarien","Griechenland","Türkei","Zypern","Dänemark",
-                "Schweden","Norwegen","Finnland","Estland","Lettland","Litauen","Irland","Vereinigtes Königreich","Island","Ukraine",
-                "Moldau","Georgien","Armenien","Aserbaidschan","USA","Kanada","Mexiko","Brasilien","Argentinien","Chile",
-                "Peru","Kolumbien","Australien","Neuseeland","China","Japan","Südkorea","Indien","Indonesien","Südafrika"
+                "Deutschland","Frankreich","Italien","Spanien","Portugal","Niederlande","Belgien","Österreich","Schweiz","Polen",
+                "Tschechien","Kroatien","Ungarn","Griechenland","Türkei","Dänemark","Schweden","Norwegen","Finnland","Irland",
+                "Großbritannien","Island","Ukraine","Russland","USA","Kanada","Mexiko","Brasilien","Argentinien","Chile",
+                "Peru","Kolumbien","Australien","Neuseeland","China","Japan","Südkorea","Thailand","Vietnam","Indien",
+                "Indonesien","Südafrika","Ägypten","Marokko","Kenia","Israel","Saudi-Arabien","Vereinigte Arabische Emirate","Singapur","Philippinen"
             ],
             emoji: "🌍"
         ),
         Category(
             name: "Berufe",
             words: [
-                "Arzt","Lehrkraft","Polizist","Koch","Pilot","Anwalt","Ingenieur","Künstler","Musiker","Schauspieler",
-                "Tänzer","Fotograf","Designer","Architekt","Programmierer","Datenanalyst","Produktmanager","Projektmanager","Verkäufer","Kassierer",
-                "Mechaniker","Elektriker","Installateur","Schreiner","Bäcker","Metzger","Friseur","Kellner","Barkeeper","Krankenpfleger",
-                "Physiotherapeut","Apotheker","Wissenschaftler","Forscher","Biologe","Chemiker","Physiker","Mathematiker","Journalist","Redakteur",
-                "Autor","Übersetzer","Dolmetscher","Landwirt","Gärtner","Fahrer","Lokführer","Zugbegleiter","Flugbegleiter","Buchhalter"
+                // Zusammengeführt aus "Berufe" und "Jobs" - Mix aus Klassikern und Moderne
+                "Arzt","Lehrer","Polizist","Feuerwehrmann","Pilot","Anwalt","Richter","Ingenieur","Architekt","Künstler",
+                "Schauspieler","Musiker","Astronaut","Detektiv","Bäcker","Metzger","Koch","Kellner","Friseur","Gärtner",
+                "Landwirt","Tierarzt","Mechaniker","Elektriker","Schreiner","Maler","Soldat","Journalist","Fotograf","Bibliothekar",
+                "Programmierer","Hacker","Influencer","YouTuber","Model","Designer","DJ","Barkeeper","Stewardess","Busfahrer",
+                "Taxifahrer","Immobilienmakler","Banker","Wissenschaftler","Forscher","Psychologe","Zahnarzt","Chirurg","Bestatter","Spion"
             ],
             emoji: "👔"
         ),
         Category(
             name: "Früchte",
             words: [
-                "Apfel","Banane","Orange","Zitrone","Limette","Grapefruit","Mandarine","Clementine","Erdbeere","Himbeere",
-                "Brombeere","Heidelbeere","Johannisbeere","Stachelbeere","Kirsche","Pfirsich","Nektarine","Aprikose","Pflaume","Zwetschge",
-                "Birne","Ananas","Mango","Papaya","Guave","Maracuja","Granatapfel","Kiwi","Traube","Wassermelone",
-                "Honigmelone","Cantaloupe","Feige","Dattel","Litschi","Rambutan","Drachenfrucht","Sternfrucht","Kokosnuss","Avocado",
-                "Physalis","Quitte","Kakifrucht","Persimone","Cranberry","Kumquat","Pomelo","Boysenbeere","Mirabelle","Mispel"
+                // Bereinigt um Verwechslungen (z.B. Clementine vs Mandarine entfernt)
+                "Apfel","Banane","Orange","Zitrone","Limette","Grapefruit","Mandarine","Erdbeere","Himbeere","Brombeere",
+                "Heidelbeere","Johannisbeere","Kirsche","Pfirsich","Aprikose","Pflaume","Birne","Ananas","Mango","Papaya",
+                "Wassermelone","Honigmelone","Kiwi","Weintraube","Feige","Dattel","Litschi","Drachenfrucht","Kokosnuss","Avocado",
+                "Granatapfel","Maracuja","Stachelbeere","Physalis","Quitte","Kaki","Pomelo","Olive","Limone","Cranberry",
+                "Hagebutte","Sanddorn","Holunder","Maulbeere","Sternfrucht","Rhabarber","Guave","Jackfrucht","Durian","Kumquat"
             ],
             emoji: "🍎"
         ),
@@ -103,80 +105,68 @@ struct Category: Identifiable, Codable, Hashable {
             name: "Gemüse",
             words: [
                 "Tomate","Gurke","Paprika","Karotte","Zwiebel","Knoblauch","Kartoffel","Süßkartoffel","Kürbis","Zucchini",
-                "Aubergine","Brokkoli","Blumenkohl","Rosenkohl","Spinat","Mangold","Grünkohl","Eisbergsalat","Rucola","Feldsalat",
-                "Kopfsalat","Sellerie","Staudensellerie","Lauch","Porree","Schnittlauch","Petersilie","Dill","Koriander","Basilikum",
-                "Oregano","Thymian","Rosmarin","Erbse","Bohne","Linsen","Kichererbse","Mais","Rote Bete","Rettich",
-                "Radieschen","Pastinake","Schwarzwurzel","Topinambur","Ingwer","Kurkuma","Chili","Jalapeño","Artischocke","Spargel"
+                "Aubergine","Brokkoli","Blumenkohl","Rosenkohl","Spinat","Grünkohl","Salat","Rucola","Sellerie","Lauch",
+                "Petersilie","Basilikum","Schnittlauch","Erbse","Bohne","Linse","Mais","Rote Bete","Radieschen","Spargel",
+                "Artischocke","Ingwer","Chili","Pilze","Champignon","Fenchel","Kohlrabi","Rotkohl","Weißkohl","Wirsing",
+                "Mangold","Rettich","Pastinake","Okra","Bambussprossen","Sojabohne","Kichererbse","Edamame","Meerrettich","Wasabi"
             ],
             emoji: "🥦"
         ),
         Category(
             name: "Städte",
             words: [
-                "Berlin","Hamburg","München","Köln","Frankfurt","Stuttgart","Düsseldorf","Leipzig","Dresden","Hannover",
-                "Bremen","Nürnberg","Essen","Dortmund","Bonn","Mannheim","Karlsruhe","Wiesbaden","Mainz","Augsburg",
-                "Wien","Zürich","Basel","Genf","Paris","Lyon","Marseille","London","Manchester","Birmingham",
-                "Dublin","Edinburgh","Rom","Mailand","Neapel","Barcelona","Madrid","Valencia","Lissabon","Porto",
-                "Amsterdam","Rotterdam","Brüssel","Kopenhagen","Stockholm","Oslo","Helsinki","Prag","Budapest","Warschau"
+                "Berlin","Hamburg","München","Köln","Frankfurt","Stuttgart","Düsseldorf","Leipzig","Dresden","Wien",
+                "Zürich","Genf","Paris","London","Madrid","Barcelona","Rom","Mailand","Venedig","Amsterdam",
+                "Brüssel","Kopenhagen","Stockholm","Oslo","Helsinki","Prag","Budapest","Warschau","Istanbul","Moskau",
+                "New York","Los Angeles","San Francisco","Las Vegas","Miami","Chicago","Toronto","Rio de Janeiro","Buenos Aires","Tokio",
+                "Peking","Shanghai","Hongkong","Singapur","Bangkok","Dubai","Kairo","Kapstadt","Sydney","Melbourne"
             ],
             emoji: "🏙️"
         ),
         Category(
             name: "Sportarten",
             words: [
-                "Fußball","Basketball","Handball","Volleyball","Tennis","Tischtennis","Badminton","Squash","Rugby","American Football",
-                "Baseball","Eishockey","Feldhockey","Leichtathletik","Schwimmen","Wasserspringen","Synchronschwimmen","Wasserball","Ringen","Judo",
-                "Karate","Taekwondo","Boxen","Kickboxen","Fechten","Gewichtheben","Turnen","Rhythmische Sportgymnastik","Radfahren","Mountainbike",
-                "BMX","Triathlon","Marathon","Halbmarathon","Skifahren","Snowboarden","Langlauf","Biathlon","Eiskunstlauf","Eisschnelllauf",
-                "Surfen","Windsurfen","Kitesurfen","Segeln","Rudern","Kanu","Kajak","Reiten","Golf","Schach"
+                "Fußball","Basketball","Handball","Volleyball","Tennis","Tischtennis","Badminton","Golf","American Football","Baseball",
+                "Eishockey","Formel 1","Schwimmen","Tauchen","Surfen","Segeln","Kanu","Rudern","Skifahren","Snowboarden",
+                "Biathlon","Eiskunstlauf","Boxen","Judo","Karate","Ringen","MMA","Fechten","Turnen","Tanzen",
+                "Ballett","Leichtathletik","Marathon","Triathlon","Radfahren","Mountainbiking","Skateboarden","Klettern","Bouldern","Wandern",
+                "Reiten","Schach","E-Sports","Dart","Billard","Bowling","Yoga","Pilates","Crossfit","Bodybuilding"
             ],
             emoji: "🏅"
         ),
         Category(
             name: "Fahrzeuge",
             words: [
-                "Auto","Motorrad","Roller","Moped","Fahrrad","E-Bike","Mountainbike","Rennrad","Skateboard","Longboard",
-                "Tretroller","Bus","Reisebus","LKW","Sattelzug","Traktor","Bagger","Radlader","Gabelstapler","Kran",
-                "Feuerwehrauto","Polizeiauto","Krankenwagen","Taxi","Limousine","Cabrio","Kombi","Coupé","SUV","Van",
-                "Minivan","Pickup","Geländewagen","Wohnmobil","Wohnwagen","Zug","Straßenbahn","U-Bahn","S-Bahn","Hochgeschwindigkeitszug",
-                "Schiff","Fähre","Segelboot","Motorboot","Yacht","U-Boot","Flugzeug","Hubschrauber","Heißluftballon","Seilbahn"
+                "Auto","Sportwagen","Cabrio","Limousine","SUV","Geländewagen","Pick-up","LKW","Bus","Schulbus",
+                "Motorrad","Roller","Moped","Fahrrad","E-Bike","Mountainbike","Einrad","Skateboard","Tretroller","Segway",
+                "Traktor","Bagger","Kran","Gabelstapler","Feuerwehrauto","Polizeiauto","Krankenwagen","Müllwagen","Panzer","Zug",
+                "Straßenbahn","U-Bahn","ICE","Dampflok","Flugzeug","Hubschrauber","Privatjet","Segelflugzeug","Heißluftballon","Drohne",
+                "Schiff","Kreuzfahrtschiff","Segelboot","Yacht","Schnellboot","U-Boot","Jetski","Fähre","Rakete","UFO"
             ],
             emoji: "🚗"
         ),
-    
 
         Category(
             name: "Berühmtheiten",
             words: [
-                "Michael Jackson","Elvis Presley","Madonna","Beyoncé","Rihanna","Taylor Swift","Ariana Grande","Billie Eilish","Drake","Eminem",
-                "Justin Bieber","Selena Gomez","Miley Cyrus","Shakira","Lady Gaga","Britney Spears","Ed Sheeran","The Weeknd","Kanye West","Jay-Z",
-                "Leonardo DiCaprio","Brad Pitt","Johnny Depp","Tom Cruise","Robert Downey Jr.","Chris Hemsworth","Dwayne Johnson","Will Smith","Ryan Reynolds","Keanu Reeves",
-                "Angelina Jolie","Scarlett Johansson","Zendaya","Jennifer Lawrence","Emma Watson","Kim Kardashian","Kylie Jenner","Cristiano Ronaldo","Lionel Messi","Neymar",
-                "Michael Jordan","LeBron James","Serena Williams","Usain Bolt","Oprah Winfrey","Elon Musk","Jeff Bezos","Donald Trump","Barack Obama","Taylor Lautner"
+                // Aktualisiert auf 2025 relevante Personen + All-Time Legends
+                "Michael Jackson","Elvis Presley","Marilyn Monroe","Albert Einstein","Beyoncé","Rihanna","Taylor Swift","Ariana Grande","Billie Eilish","Eminem",
+                "Justin Bieber","Harry Styles","Dua Lipa","Lady Gaga","Ed Sheeran","The Weeknd","Drake","Kanye West","Jay-Z","Dr. Dre",
+                "Leonardo DiCaprio","Brad Pitt","Johnny Depp","Tom Cruise","Will Smith","Dwayne Johnson","Kevin Hart","Zendaya","Tom Holland","Margot Robbie",
+                "Angelina Jolie","Kim Kardashian","Kylie Jenner","Elon Musk","Jeff Bezos","Mark Zuckerberg","Bill Gates","Steve Jobs",
+                "Cristiano Ronaldo","Lionel Messi","Michael Jordan","LeBron James","Serena Williams","Tiger Woods","Barack Obama","Donald Trump","Angela Merkel","Queen Elizabeth II"
             ],
             emoji: "🌟"
         ),
 
         Category(
-            name: "Jobs",
-            words: [
-                "Softwareentwickler","Produktdesigner","UX-Designer","Data Scientist","Marketing Manager","Social Media Manager","Videograf","Content Creator","Influencer","Eventmanager",
-                "Immobilienmakler","Bauleiter","Lagerist","Verwaltungsangestellter","Sekretär","Bankkaufmann","Versicherungskaufmann","Zollbeamter","Soldat","Polizist",
-                "Feuerwehrmann","Sanitäter","Pflegekraft","Hebamme","Tierarzt","Tierpfleger","Fahrlehrer","Busfahrer","Taxifahrer","Postbote",
-                "Hausmeister","Gärtner","Florist","Friseur","Kosmetikerin","Nageldesignerin","Barkeeper","Koch","Kellner","Reinigungskraft",
-                "Hauswirtschafter","Fotograf","Videograf","Journalist","Autor","Redakteur","Synchronsprecher","Schauspieler","Musiker","Tänzer"
-            ],
-            emoji: "💼"
-        ),
-
-        Category(
             name: "Marken",
             words: [
-                "Apple","Samsung","Sony","LG","Microsoft","Google","Amazon","Nike","Adidas","Puma",
-                "Under Armour","New Balance","Reebok","Vans","Converse","Balenciaga","Gucci","Prada","Louis Vuitton","Chanel",
-                "Dior","Hermès","Rolex","Cartier","Versace","Zara","H&M","Uniqlo","Shein","Bershka",
-                "Tesla","Ferrari","Lamborghini","Porsche","BMW","Mercedes","Audi","Volkswagen","IKEA","LEGO",
-                "Coca-Cola","Pepsi","Red Bull","Nescafé","McDonald's","Burger King","KFC","Subway","Netflix","Spotify"
+                "Apple","Samsung","Sony","Microsoft","Google","Amazon","Tesla","Mercedes","BMW","Audi",
+                "Porsche","Ferrari","Lamborghini","Volkswagen","Toyota","Nike","Adidas","Puma","Gucci","Louis Vuitton",
+                "Prada","Chanel","Rolex","Tiffany","Zara","H&M","IKEA","LEGO","PlayStation","Nintendo",
+                "Xbox","Coca-Cola","Pepsi","Red Bull","McDonald's","Burger King","KFC","Starbucks","Subway","Domino's",
+                "Netflix","Disney","Spotify","YouTube","TikTok","Instagram","Facebook","WhatsApp","Snapchat","Twitter/X"
             ],
             emoji: "🏷️"
         ),
@@ -184,11 +174,12 @@ struct Category: Identifiable, Codable, Hashable {
         Category(
             name: "FSK 18",
             words: [
-                "Tequila","Whiskey","Wodka","Rum","Gin","Sekt","Champagner","Cocktail","Bier","Wein",
-                "Zigarette","Zigarre","Casino","Poker","Roulette","Stripclub","One-Night-Stand","Hangover","Tattoo","Piercing",
-                "Verführung","Eifersucht","Affäre","Nachtclub","Party","Betrunken","Lügen","Verlangen","BDSM","Flirten",
-                "Kuss","Lippenstift","High Heels","Dessous","Verlobung","Beziehung","Herzschmerz","Eifersucht","Drama","Dating-App",
-                "Luxus","Verführung","Massage","Cocktailbar","Afterparty","Geheimnis","Verboten","Sünde","Wette","Alkohol"
+                // Themen: Party, Nightlife, Dating, Crime - keine langweiligen Begriffe
+                "Tequila","Whiskey","Wodka","Champagner","Cocktail","Bier","Kater","Zigarette","Joint","Shisha",
+                "Casino","Poker","Stripclub","Bordell","Nachtclub","Türsteher","Handschellen","Peitsche","Maske","Fesseln",
+                "One-Night-Stand","Affäre","Seitensprung","Ex-Freund","Ex-Freundin","Tinder","Date","Kuss","Zungenkuss","Knutschfleck",
+                "Liebe","Eifersucht","Fremdgehen","Scheidung","Beziehung","Kondom","Pille","Schwangerschaftstest","Porno","Erotik",
+                "Nacktbilder","Sexting","Drogen","Dealer","Gefängnis","Mord","Waffe","Blut","Leiche","Sünde"
             ],
             emoji: "🔞",
             contentRating: .mature18
@@ -197,11 +188,12 @@ struct Category: Identifiable, Codable, Hashable {
         Category(
             name: "Essen",
             words: [
-                "Pizza","Burger","Pasta","Lasagne","Hotdog","Sandwich","Wrap","Tacos","Burrito","Sushi",
-                "Ramen","Pad Thai","Curry","Kebab","Falafel","Kisir","Cigköfte","Pommes","Salat","Risotto",
-                "Gnocchi","Döner","Hähnchen","Steak","Fisch","Schnitzel","Spätzle","Maultaschen","Kartoffelsalat","Suppen",
-                "Eintopf","Tofu","Tempeh","Vegetarisch","Vegan","Omelett","Pfannkuchen","Waffel","Crêpe","Torte",
-                "Kuchen","Donut","Muffin","Brownie","Eis","Pudding","Joghurt","Smoothie","Shake","Müsli"
+                // Universelle Gerichte statt Nische
+                "Pizza","Burger","Pommes","Döner","Sushi","Pasta","Lasagne","Spaghetti","Ramen","Curry",
+                "Tacos","Burrito","Hotdog","Sandwich","Toast","Pfannkuchen","Waffel","Crepes","Rührei","Spiegelei",
+                "Omelett","Schnitzel","Steak","Bratwurst","Currywurst","Hähnchen","Fischstäbchen","Lachs","Forelle","Garnele",
+                "Hummer","Kaviar","Salat","Suppe","Eintopf","Brot","Brötchen","Croissant","Donut","Muffin",
+                "Kuchen","Torte","Keks","Schokolade","Chips","Popcorn","Eis","Joghurt","Käse","Wurst"
             ],
             emoji: "🍽️"
         ),
@@ -209,11 +201,12 @@ struct Category: Identifiable, Codable, Hashable {
         Category(
             name: "Superkräfte",
             words: [
+                // Bildlich und verständlich für jeden
                 "Fliegen","Unsichtbarkeit","Teleportation","Gedankenlesen","Zeitreise","Unsterblichkeit","Telekinese","Superstärke","Superschnelligkeit","Heilung",
-                "Wetterkontrolle","Feuerkontrolle","Eiskontrolle","Elektrizität","Formwandlung","Tarnung","Gedankensteuerung","Vorahnung","Tierkommunikation","Schwebefähigkeit",
-                "Größenveränderung","Superhörvermögen","Nachtsicht","Röntgenblick","Telepathie","Energieblitze","Laserblick","Schattenmanipulation","Klonen","Levitation",
-                "Traumwandeln","Magie","Gedächtnis löschen","Wände durchdringen","Karma-Kontrolle","Illusion","Lichtmanipulation","Gedankenübertragung","Realitätsveränderung","Zeit anhalten",
-                "Gedankenprojektion","Aura sehen","Hypnose","Schnellheilung","Supersinn","Mimikry","Seele trennen","Natur kontrollieren","Dimensionen wechseln","Telepathischer Ruf"
+                "Wetterkontrolle","Feuer spucken","Einfrieren","Blitze schleudern","Verwandlung","Tarnung","Gedankenkontrolle","Zukunft sehen","Mit Tieren sprechen","Schweben",
+                "Riesig werden","Winzig werden","Nachtsicht","Röntgenblick","Hitzeblick","Schutzschild","Wände klettern","Gummi-Körper","Kräfte klauen","Schallschrei",
+                "Unterwasser atmen","Magie","Gedächtnis löschen","Durch Wände gehen","Super-Glück","Illusionen","Licht erschaffen","Schatten steuern","Zeit anhalten","Klonen",
+                "Gift spucken","Säurehaut","Hypnose","Super-Gehör","Steinhaut","Laseraugen","Pflanzen steuern","Portale öffnen","Geister sehen","Magnetismus"
             ],
             emoji: "⚡️"
         ),
@@ -221,22 +214,22 @@ struct Category: Identifiable, Codable, Hashable {
         Category(
             name: "Körper & Gesundheit",
             words: [
-                "Herz","Lunge","Leber","Niere","Magen","Darm","Gehirn","Augen","Ohren","Zähne",
-                "Knochen","Muskeln","Blut","Haut","Haare","Nägel","Zunge","Lippen","Hände","Füße",
-                "Rücken","Wirbelsäule","Gelenke","Knie","Schultern","Bizeps","Trizeps","Bauch","Po","Brust",
-                "Atmung","Puls","Schlaf","Stress","Ernährung","Bewegung","Meditation","Yoga","Fitness","Krafttraining",
-                "Cardio","Erkältung","Grippe","Fieber","Kopfschmerz","Migräne","Allergie","Immunität","Heilung","Entspannung"
+                "Herz","Gehirn","Lunge","Magen","Darm","Leber","Niere","Knochen","Muskel","Blut",
+                "Haut","Zahn","Zunge","Auge","Ohr","Nase","Mund","Haare","Hand","Fuß",
+                "Finger","Zeh","Knie","Ellbogen","Schulter","Rücken","Bauch","Po","Hals","Stirn",
+                "Skelett","Schädel","Rippe","Wirbelsäule","Nerv","Ader","Pickel","Narbe","Tattoo","Muttermal",
+                "Fieber","Husten","Schnupfen","Kopfschmerzen","Bauchschmerzen","Grippe","Virus","Bakterie","Medizin","Pflaster"
             ],
             emoji: "🧠"
         ),
         Category(
             name: "Orte",
             words: [
-                "Kino","Schwimmbad","Garage","Bibliothek","Supermarkt","Bäckerei","Metzgerei","Apotheke","Krankenhaus","Arztpraxis",
-                "Zahnarzt","Schule","Universität","Kindergarten","Büro","Park","Spielplatz","Museum","Theater","Stadion",
-                "Bahnhof","Flughafen","Bushaltestelle","U-Bahn-Station","Tankstelle","Werkstatt","Post","Bank","Rathaus","Polizeistation",
-                "Feuerwache","Kirche","Moschee","Tempel","Synagoge","Friedhof","Hotel","Hostel","Restaurant","Café",
-                "Bar","Club","Zoo","Aquarium","Campingplatz","Strand","Hafen","Leuchtturm","Brücke","Tunnel"
+                "Zuhause","Schule","Universität","Büro","Krankenhaus","Polizeiwache","Gefängnis","Kirche","Friedhof","Supermarkt",
+                "Einkaufszentrum","Kino","Theater","Museum","Bibliothek","Fitnessstudio","Schwimmbad","Stadion","Zoo","Freizeitpark",
+                "Zirkus","Spielplatz","Park","Wald","Strand","Wüste","Berg","Insel","Höhle","Bauernhof",
+                "Bahnhof","Flughafen","Hafen","Tankstelle","Werkstatt","Restaurant","Café","Bar","Disko","Hotel",
+                "Campingplatz","Bank","Post","Friseur","Apotheke","Bäckerei","Metzgerei","Kiosk","Toilette","Balkon"
             ],
             emoji: "📍"
         )

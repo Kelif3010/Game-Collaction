@@ -128,7 +128,7 @@ struct QuestionsModeContainer: View {
             Spacer()
         }
         .overlay(
-            Text(engine.phase == .setup ? "Fragen — Setup" : "Finde den Lügner")
+            Text(LocalizedStringKey(engine.phase == .setup ? "Fragen — Setup" : "Finde den Lügner"))
                 .font(.headline.weight(.bold))
                 .foregroundColor(.white)
         )
@@ -248,7 +248,7 @@ extension QuestionsModeContainer {
             VStack(spacing: 20) {
                 Color.clear.frame(height: 80)
                 if let round = engine.round {
-                    Text(round.promptPair.citizenQuestion)
+                    Text(LocalizedStringKey(round.promptPair.citizenQuestion))
                         .font(.title3.weight(.bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -323,12 +323,12 @@ extension QuestionsModeContainer {
         }
         return true
     }
-    private var revealButtonTitle: String {
+    private var revealButtonTitle: LocalizedStringKey {
         if !isRevealVoteActive { return "Lügner aufdecken" }
         if revealEvaluation == nil { return "Aufdecken" }
         return "Runde abschließen"
     }
-    private var revealStatusMessage: String? {
+    private var revealStatusMessage: LocalizedStringKey? {
         if !isRevealVoteActive { return !answersInOrder.isEmpty ? "Markiere die verdächtigen Spieler, um sie aufzudecken." : nil }
         if let evaluation = revealEvaluation {
             if evaluation.citizensWon { return "Treffer! Alle Lügner wurden enttarnt." }
@@ -466,8 +466,8 @@ extension QuestionsModeContainer {
         let evaluation = lastRevealEvaluation
         let spies = appModel.players.filter { engine.currentSpyIDs.contains($0.id) }
         
-        let title = (evaluation?.citizensWon ?? false) ? "Bewohner haben gewonnen" : (evaluation != nil ? "Spione haben gewonnen" : "Runde beendet")
-        let subtitle = (evaluation?.citizensWon ?? false) ? "Alle Lügner wurden enttarnt." : (evaluation != nil ? "Die Lügner bleiben im Verborgenen." : "Starte eine neue Runde.")
+        let title: LocalizedStringKey = (evaluation?.citizensWon ?? false) ? "Bewohner haben gewonnen" : (evaluation != nil ? "Spione haben gewonnen" : "Runde beendet")
+        let subtitle: LocalizedStringKey = (evaluation?.citizensWon ?? false) ? "Alle Lügner wurden enttarnt." : (evaluation != nil ? "Die Lügner bleiben im Verborgenen." : "Starte eine neue Runde.")
         
         let spyQuestionText = engine.round?.promptPair.spyQuestion ?? "Unbekannt"
 
@@ -494,7 +494,7 @@ extension QuestionsModeContainer {
                         .textCase(.uppercase)
                         .foregroundStyle(.white.opacity(0.6))
                     
-                    Text(spyQuestionText)
+                    Text(LocalizedStringKey(spyQuestionText))
                         .font(.title3.weight(.bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -523,7 +523,7 @@ extension QuestionsModeContainer {
                                         .foregroundColor(.white)
                                         .frame(width: 30)
                                     
-                                    Text(p.name)
+                                    Text(LocalizedStringKey(p.name))
                                         .font(.title3.weight(.semibold))
                                         .foregroundColor(.white)
                                     

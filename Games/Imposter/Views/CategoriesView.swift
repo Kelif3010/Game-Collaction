@@ -13,11 +13,7 @@ struct CategoriesView: View {
     @State private var showingAddCategory = false
     
     // Theme
-    private let backgroundGradient = LinearGradient(
-        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    private let backgroundGradient = ImposterStyle.backgroundGradient
     
     var body: some View {
         NavigationStack {
@@ -51,9 +47,9 @@ struct CategoriesView: View {
                         } label: {
                             Image(systemName: "plus")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.green)
                                 .frame(width: 36, height: 36)
-                                .background(Color.blue)
+                                .background(Color.white.opacity(0.1))
                                 .clipShape(Circle())
                         }
                     }
@@ -70,7 +66,7 @@ struct CategoriesView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 20)
                         .padding(.bottom, 40)
                     }
                 }
@@ -89,45 +85,40 @@ private struct CategoryRow: View {
     let category: Category
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Icon / Emoji
             ZStack {
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [Color.orange.opacity(0.2), Color.red.opacity(0.1)],
+                            colors: [Color.orange.opacity(0.35), Color.red.opacity(0.15)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 50, height: 50)
+                    .frame(width: 44, height: 44)
                 
                 Text(category.emoji)
-                    .font(.title)
+                    .font(.system(size: 22))
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(category.name)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Text("\(category.words.count) Begriffe")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.6))
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.3))
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
         }
-        .padding()
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(18)
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        .imposterRowStyle()
     }
 }
 
@@ -144,11 +135,7 @@ struct ImposterAddCategoryView: View {
     @State private var alertMessage = ""
     
     // Theme
-    private let backgroundGradient = LinearGradient(
-        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    private let backgroundGradient = ImposterStyle.backgroundGradient
     
     var body: some View {
         NavigationView {
@@ -253,9 +240,7 @@ struct ImposterAddCategoryView: View {
                                                     .foregroundColor(.red.opacity(0.7))
                                             }
                                         }
-                                        .padding()
-                                        .background(Color.white.opacity(0.05))
-                                        .cornerRadius(12)
+                                        .imposterRowStyle()
                                     }
                                 }
                             }

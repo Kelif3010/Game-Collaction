@@ -66,7 +66,7 @@ struct GroupVoteCard: View {
 
             VStack {
                 Spacer()
-                Text(group.displayName)
+                Text(LocalizedStringKey(group.displayName))
                     .foregroundStyle(.white)
                     .font(.headline)
                     .padding(.bottom, 14)

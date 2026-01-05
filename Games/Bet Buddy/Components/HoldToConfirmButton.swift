@@ -25,7 +25,7 @@ struct HoldToConfirmButton: View {
             HStack {
                 Image(systemName: "hand.point.up.left.fill")
                     .foregroundStyle(disabled ? .white.opacity(0.3) : .white)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(disabled ? .white.opacity(0.3) : .white)
                 Spacer()

@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct BetBuddyLeaderboardView: View {
     @Environment(\.dismiss) private var dismiss
@@ -117,7 +118,7 @@ struct BetBuddyLeaderboardView: View {
                     if let win = appModel.highlights.maxWin {
                         HighlightCard(
                             title: "Höchster Sieg",
-                            value: "+\(win.value)",
+                            value: Text("+\(win.value)"),
                             teamName: win.teamName,
                             color: .green,
                             icon: "trophy.fill"
@@ -128,7 +129,7 @@ struct BetBuddyLeaderboardView: View {
                     if let most = appModel.highlights.mostWinsLeader, most.value > 0 {
                         HighlightCard(
                             title: "Dominanz",
-                            value: "\(most.value) Siege",
+                            value: Text("\(most.value) ") + Text("Siege"),
                             teamName: most.teamName,
                             color: .yellow,
                             icon: "crown.fill"
@@ -139,7 +140,7 @@ struct BetBuddyLeaderboardView: View {
                     if let fast = appModel.highlights.fastestWin {
                         HighlightCard(
                             title: "Blitzmerker",
-                            value: "\(fast.value)s",
+                            value: Text("\(fast.value)") + Text("s"),
                             subLabel: "Restzeit auf der Uhr",
                             teamName: fast.teamName,
                             color: .cyan,
@@ -151,7 +152,7 @@ struct BetBuddyLeaderboardView: View {
                     if let streak = appModel.highlights.bestStreak {
                         HighlightCard(
                             title: "Zocker-König",
-                            value: "\(streak.value)x",
+                            value: Text("\(streak.value)") + Text("x"),
                             subLabel: "in Folge gespielt",
                             teamName: streak.teamName,
                             color: .orange,
@@ -163,7 +164,7 @@ struct BetBuddyLeaderboardView: View {
                     if let loss = appModel.highlights.maxLoss {
                         HighlightCard(
                             title: "Pechvogel",
-                            value: "-\(loss.value)",
+                            value: Text("-\(loss.value)"),
                             teamName: loss.teamName,
                             color: .red,
                             icon: "hand.thumbsdown.fill"
@@ -179,11 +180,15 @@ struct BetBuddyLeaderboardView: View {
 // UI für die Highlight Karte
 private struct HighlightCard: View {
     var title: String
-    var value: String
+    var value: Text
     var subLabel: String? = nil
     var teamName: String
     var color: Color
     var icon: String
+
+    private var displayName: String {
+        NSLocalizedString(teamName, comment: "")
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -205,25 +210,25 @@ private struct HighlightCard: View {
             
             Spacer()
             
-            Text(value)
+            value
                 .font(.title2.bold())
                 .foregroundStyle(color)
                 .minimumScaleFactor(0.8)
                 .lineLimit(1)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(Theme.mutedText)
                     .textCase(.uppercase)
                 
-                Text(teamName)
+                Text(displayName)
                     .font(.headline)
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 
                 if let sub = subLabel {
-                    Text(sub)
+                    Text(LocalizedStringKey(sub))
                         .font(.caption2)
                         .foregroundStyle(Theme.mutedText)
                         .lineLimit(1)
@@ -259,6 +264,7 @@ private struct LeaderboardRow: View {
     let entry: HighlightRecord // JETZT: Verwendet den persistenten Record
     
     var body: some View {
+        let displayName = NSLocalizedString(entry.teamName, comment: "")
         HStack(spacing: 16) {
             Text("\(index + 1).")
                 .font(.title3.weight(.bold))
@@ -270,12 +276,12 @@ private struct LeaderboardRow: View {
                 .fill(Color(hex: entry.colorHex) ?? .gray)
                 .frame(width: 44, height: 44)
                 .overlay(
-                    Text(entry.teamName.prefix(1))
+                    Text(String(displayName.prefix(1)))
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                 )
 
-            Text(entry.teamName)
+            Text(displayName)
                 .foregroundStyle(.white)
                 .font(.headline)
             
@@ -333,4 +339,3 @@ extension Color {
         self.init(red: r, green: g, blue: b)
     }
 }
-

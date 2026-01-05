@@ -14,10 +14,10 @@ struct CategoryRowView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.title)
+                Text(LocalizedStringKey(category.title))
                     .foregroundStyle(.white)
                     .font(.headline)
-                Text(category.description)
+                Text(LocalizedStringKey(category.description))
                     .foregroundStyle(Theme.mutedText)
                     .font(.subheadline)
             }

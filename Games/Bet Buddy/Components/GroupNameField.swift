@@ -9,11 +9,11 @@ struct GroupNameField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Zeigt z.B. "Team Blau" als Label an
-            Text(group.color.fallbackName)
+            Text(LocalizedStringKey(group.color.fallbackName))
                 .foregroundStyle(group.color.accent)
                 .font(.subheadline.weight(.semibold))
 
-            TextField(group.color.fallbackName, text: binding)
+            TextField(LocalizedStringKey(group.color.fallbackName), text: binding)
                 .textInputAutocapitalization(.words)
                 .disableAutocorrection(true)
                 .padding()

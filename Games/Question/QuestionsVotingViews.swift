@@ -78,7 +78,7 @@ private struct QVPlayerCard: View {
                         .stroke(isSelected ? Color.accentColor : Color.gray.opacity(0.5), lineWidth: 2)
                 )
             
-            Text(player.name)
+            Text(LocalizedStringKey(player.name))
                 .font(.body)
                 .foregroundColor(disabled ? Color.gray : Color.primary)
                 .lineLimit(1)
@@ -103,7 +103,7 @@ struct QuestionsVotingResultsView: View {
     let evaluation: QuestionsVoteEvaluation
     let onClose: () -> Void
     
-    private var title: String {
+    private var title: LocalizedStringKey {
         switch evaluation.outcome {
         case .citizensWin:
             return "Bewohner haben gewonnen"
@@ -141,7 +141,7 @@ struct QuestionsVotingResultsView: View {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         ForEach(selectedPlayers, id: \.id) { player in
                             HStack {
-                                Text(player.name)
+                                Text(LocalizedStringKey(player.name))
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
                                     .foregroundColor(.primary)
@@ -170,7 +170,7 @@ struct QuestionsVotingResultsView: View {
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         ForEach(imposters, id: \.id) { player in
-                            Text(player.name)
+                            Text(LocalizedStringKey(player.name))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .padding(10)

@@ -7,7 +7,7 @@ struct PrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity)

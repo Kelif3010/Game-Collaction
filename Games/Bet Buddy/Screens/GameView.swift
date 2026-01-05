@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct GameView: View {
     @Environment(\.dismiss) private var dismiss
@@ -40,7 +41,7 @@ struct GameView: View {
     }
 
     private var winningName: String {
-        winningGroup?.displayName ?? "Dein Buddy"
+        NSLocalizedString(winningGroup?.displayName ?? "Dein Buddy", comment: "")
     }
 
     private var winningScore: Int {

@@ -28,32 +28,6 @@ extension ImposterGameMode {
     }
 }
 
-// MARK: - Shared Styles for Setup Screens
-private enum SetupStyle {
-    static let primaryGradient = LinearGradient(colors: [Color(red: 1.0, green: 0.41, blue: 0.23), Color(red: 0.94, green: 0.16, blue: 0.47)], startPoint: .topLeading, endPoint: .bottomTrailing)
-    static let darkCardFill = Color(white: 0.12)
-    static let cardStroke = Color.white.opacity(0.08)
-}
-
-private struct GradientPrimaryButton: View {
-    let title: String
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline.bold())
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(SetupStyle.primaryGradient)
-        )
-        .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
-    }
-}
-
 struct GameSetupView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
@@ -80,11 +54,7 @@ struct GameSetupView: View {
         NavigationStack {
             ZStack {
                 // Background
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                ImposterStyle.backgroundGradient
                 .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -97,7 +67,7 @@ struct GameSetupView: View {
                                 .font(.headline.bold())
                                 .foregroundStyle(.white)
                                 .frame(width: 36, height: 36)
-                                .background(Color.white.opacity(0.15))
+                                .background(Color.white.opacity(0.1))
                                 .clipShape(Circle())
                         }
 
@@ -112,7 +82,7 @@ struct GameSetupView: View {
                                     .font(.headline)
                                     .foregroundStyle(.yellow)
                                     .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.15))
+                                    .background(Color.white.opacity(0.1))
                                     .clipShape(Circle())
                             }
 
@@ -124,7 +94,7 @@ struct GameSetupView: View {
                                     .font(.headline)
                                     .foregroundStyle(.orange)
                                     .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.15))
+                                    .background(Color.white.opacity(0.1))
                                     .clipShape(Circle())
                             }
 
@@ -136,7 +106,7 @@ struct GameSetupView: View {
                                     .font(.headline)
                                     .foregroundStyle(.gray)
                                     .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.15))
+                                    .background(Color.white.opacity(0.1))
                                     .clipShape(Circle())
                             }
 
@@ -148,7 +118,7 @@ struct GameSetupView: View {
                                     .font(.headline.bold())
                                     .foregroundStyle(.white)
                                     .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.15))
+                                    .background(Color.white.opacity(0.1))
                                     .clipShape(Circle())
                             }
                         }
@@ -158,8 +128,7 @@ struct GameSetupView: View {
                     .padding(.bottom, 10)
 
                     ScrollView {
-                        VStack(spacing: 10) {
-
+                        VStack(spacing: 16) {
                             GroupedCard {
                                 // Spieler Row
                                 RowCell(icon: "person.3.fill", title: "Spieler", value: "\(gameSettings.players.count)")
@@ -168,13 +137,9 @@ struct GameSetupView: View {
                                         showingAddPlayersSheet = true
                                     }
 
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
-
                                 // Spione Row with Stepper-like controls
                                 HStack(spacing: 12) {
-                                    IconBadge(systemName: "eye.slash.fill", tint: .red)
+                                    ImposterIconBadge(systemName: "eye.slash.fill", tint: .red)
                                     Text("Spione")
                                         .font(.body)
                                         .fontWeight(.semibold)
@@ -187,8 +152,8 @@ struct GameSetupView: View {
                                             Image(systemName: "minus")
                                                 .font(.system(size: 16, weight: .semibold))
                                                 .frame(width: 30, height: 30)
-                                                .background(Color.secondary.opacity(0.15))
-                                                .foregroundColor(.primary)
+                                                .background(Color.white.opacity(0.12))
+                                                .foregroundColor(.white)
                                                 .clipShape(Circle())
                                         }
                                         .disabled(gameSettings.randomSpyCount)
@@ -206,36 +171,25 @@ struct GameSetupView: View {
                                             Image(systemName: "plus")
                                                 .font(.system(size: 16, weight: .semibold))
                                                 .frame(width: 30, height: 30)
-                                                .background(Color.secondary.opacity(0.15))
-                                                .foregroundColor(.primary)
+                                                .background(Color.white.opacity(0.12))
+                                                .foregroundColor(.white)
                                                 .clipShape(Circle())
                                         }
                                         .disabled(gameSettings.randomSpyCount)
                                     }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 14)
                                     .opacity(gameSettings.randomSpyCount ? 0.5 : 1.0)
                                 }
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 14)
-
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
+                                .imposterRowStyle()
 
                                 // Spion-Optionen Row
                                 RowCell(
                                     icon: "eye.fill",
-                                    title: "Spion-Optionen",
+                                    title: "Spionoptionen",
                                     value: "\(activeSpyOptionsCount) aktiv",
                                     tint: .red
                                 )
                                 .contentShape(Rectangle())
                                 .onTapGesture { showingSpyOptionsSheet = true }
-
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
 
                                 // Spielmodus Row
                                 RowCell(icon: "gamecontroller.fill", title: "Spielmodus", value: gameSettings.gameMode.localizedTitle, tint: .accentColor, showsChevron: true)
@@ -244,35 +198,32 @@ struct GameSetupView: View {
                                         showingGameModeSheet = true
                                     }
 
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
-
                                 // Kategorie Row (Selection for Game)
-                                RowCell(icon: "folder.fill", title: "Kategorie wählen", value: categoryDisplayName)
+                                RowCell(icon: "folder.fill", title: "Kategorie", value: categoryDisplayName)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         showingCategorySelectionSheet = true
                                     }
 
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
+                                VStack(spacing: 10) {
+                                    HStack(spacing: 12) {
+                                        ImposterIconBadge(systemName: "timer.circle.fill", tint: .green)
+                                        Text("Dauer")
+                                            .font(.body)
+                                            .fontWeight(.semibold)
+                                        Spacer()
+                                        Text(timeString(from: gameSettings.timeLimit))
+                                            .font(.callout)
+                                            .foregroundStyle(.secondary)
+                                    }
 
-                                // Dauer Row
-                                RowCell(icon: "timer.circle.fill", title: "Dauer", value: timeString(from: gameSettings.timeLimit), tint: .green, showsChevron: false)
-
-                                Divider()
-                                    .opacity(0.2)
-                                    .padding(.leading, 64)
-
-                                Slider(value: Binding(
-                                    get: { Double(gameSettings.timeLimit) },
-                                    set: { gameSettings.timeLimit = Int($0) }
-                                ), in: 60...1800, step: 60)
-                                .tint(.green)
-                                .padding(.horizontal, 14)
-                                .padding(.bottom, 14)
+                                    Slider(value: Binding(
+                                        get: { Double(gameSettings.timeLimit) },
+                                        set: { gameSettings.timeLimit = Int($0) }
+                                    ), in: 60...1800, step: 60)
+                                    .tint(.green)
+                                }
+                                .imposterRowStyle()
                             }
                         }
                         .padding(.horizontal, 20)
@@ -316,7 +267,7 @@ struct GameSetupView: View {
         .safeAreaInset(edge: .bottom) {
             if route == nil {
                 VStack(spacing: 10) {
-                    GradientPrimaryButton(title: "Spiel starten") {
+                    ImposterPrimaryButton(title: "Spiel starten") {
                         startGame()
                     }
                     .contentShape(Rectangle())
@@ -330,8 +281,7 @@ struct GameSetupView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial)
+                .padding(.bottom, 12)
             }
         }
         .sheet(isPresented: $showingAddPlayersSheet) {
@@ -350,17 +300,22 @@ struct GameSetupView: View {
             .presentationDetents([.fraction(0.7), .large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(28)
-            .presentationBackground(.regularMaterial)
+            .presentationBackground(.clear)
         }
         .sheet(isPresented: $showingCategorySelectionSheet) {
             CategorySelectionSheet(gameSettings: gameSettings)
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
             .presentationCornerRadius(28)
-            .presentationBackground(.regularMaterial)
+            .presentationBackground(.clear)
         }
         .sheet(isPresented: $showingSpyOptionsSheet) {
             SpyOptionsView()
                 .environmentObject(gameSettings)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
+                .presentationBackground(.clear)
         }
         // New Sheets for Top Bar Icons
         .sheet(isPresented: $showingCategoryManagementSheet) {
@@ -414,7 +369,7 @@ struct GameSetupView: View {
         }
         
         if !gameSettings.hasSelectedCategories {
-            missingItems.append("Kategorie wählen")
+            missingItems.append("Kategorie")
         }
         
         if gameSettings.numberOfImposters >= gameSettings.players.count && gameSettings.players.count > 0 {
@@ -483,11 +438,18 @@ private struct GroupedCard<Content: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             content
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: .black.opacity(0.06), radius: 12, y: 6)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: ImposterStyle.containerCornerRadius, style: .continuous)
+                .fill(ImposterStyle.containerBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: ImposterStyle.containerCornerRadius, style: .continuous)
+                .stroke(ImposterStyle.cardStroke, lineWidth: 1)
+        )
     }
 }
 
@@ -500,7 +462,7 @@ private struct RowCell: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            IconBadge(systemName: icon, tint: tint)
+            ImposterIconBadge(systemName: icon, tint: tint)
             Text(title)
                 .font(.body)
                 .fontWeight(.semibold)
@@ -514,24 +476,170 @@ private struct RowCell: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
+        .imposterRowStyle()
     }
 }
 
-private struct IconBadge: View {
-    let systemName: String
-    let tint: Color
+private struct SheetHeader: View {
+    let title: String
+    let onBack: () -> Void
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(tint.opacity(0.15))
-            Image(systemName: systemName)
-                .foregroundColor(tint)
-                .font(.system(size: 16, weight: .semibold))
+        HStack {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+
+            Spacer()
+
+            Text(title)
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+
+            Spacer()
+
+            Color.clear
+                .frame(width: 36, height: 36)
         }
-        .frame(width: 36, height: 36)
+        .padding(.top, 20)
+        .padding(.bottom, 8)
+    }
+}
+
+private struct SpyOptionRow: View {
+    let icon: String
+    let tint: Color
+    let title: String
+    let subtitle: String
+    var isDisabled: Bool = false
+    var isOn: Binding<Bool>
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ImposterIconBadge(systemName: icon, tint: tint)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(ImposterStyle.mutedText)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(.green)
+        }
+        .imposterRowStyle()
+        .opacity(isDisabled ? 0.5 : 1.0)
+        .disabled(isDisabled)
+    }
+}
+
+private struct CategorySelectionRow: View {
+    let name: String
+    let emoji: String
+    let detail: String
+    let isSelected: Bool
+    var isLocked: Bool = false
+    var isDisabled: Bool = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange.opacity(0.35), Color.red.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 44, height: 44)
+
+                Text(emoji)
+                    .font(.system(size: 20))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(name)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(ImposterStyle.mutedText)
+            }
+
+            Spacer()
+
+            if isLocked {
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(.orange)
+                    .font(.headline)
+            } else if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.headline)
+            } else {
+                Image(systemName: "circle")
+                    .foregroundStyle(.white.opacity(0.3))
+                    .font(.headline)
+            }
+        }
+        .imposterRowStyle()
+        .opacity(isDisabled ? 0.5 : 1.0)
+    }
+}
+
+private struct GameModeRow: View {
+    let mode: ImposterGameMode
+    let isSelected: Bool
+    var isDisabled: Bool = false
+
+    private var accent: Color {
+        isDisabled ? .gray : .orange
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ImposterIconBadge(systemName: mode.icon, tint: accent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(mode.localizedTitle)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text(mode.description)
+                    .font(.caption)
+                    .foregroundStyle(ImposterStyle.mutedText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            if isDisabled {
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(.orange)
+                    .font(.headline)
+            } else if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.headline)
+            } else {
+                Image(systemName: "circle")
+                    .foregroundStyle(.white.opacity(0.3))
+                    .font(.headline)
+            }
+        }
+        .imposterRowStyle()
+        .opacity(isDisabled ? 0.5 : 1.0)
     }
 }
 
@@ -639,96 +747,67 @@ private struct SpyOptionsView: View {
     @EnvironmentObject var gameSettings: GameSettings
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Header
-            VStack(spacing: 8) {
-                Image(systemName: "eye.slash.fill")
-                    .font(.system(size: 34))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Circle().fill(Color.white.opacity(0.15)))
-                Text("Spion-Optionen")
-                    .font(.largeTitle.bold())
-                Text("Passe die Regeln für Spione an")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        ZStack {
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    SheetHeader(title: "Spion-Optionen") {
+                        dismiss()
+                    }
+
+                    Text("Passe die Regeln für Spione an")
+                        .font(.subheadline)
+                        .foregroundStyle(ImposterStyle.mutedText)
+                        .multilineTextAlignment(.center)
+                        .padding(.bottom, 4)
+
+                    VStack(spacing: 12) {
+                        SpyOptionRow(
+                            icon: "folder.fill",
+                            tint: .orange,
+                            title: "Kategorie sichtbar",
+                            subtitle: "Spione sehen die gewählte Kategorie.",
+                            isOn: $gameSettings.spyCanSeeCategory
+                        )
+
+                        SpyOptionRow(
+                            icon: "person.2.fill",
+                            tint: .orange,
+                            title: "Spione sehen sich gegenseitig",
+                            subtitle: "Aktiv, wenn es mindestens zwei Spione gibt.",
+                            isDisabled: gameSettings.numberOfImposters < 2,
+                            isOn: Binding(
+                                get: { gameSettings.spiesCanSeeEachOther && gameSettings.numberOfImposters >= 2 },
+                                set: { newVal in gameSettings.spiesCanSeeEachOther = newVal }
+                            )
+                        )
+
+                        SpyOptionRow(
+                            icon: "dice.fill",
+                            tint: .orange,
+                            title: "Zahl der Spione zufällig",
+                            subtitle: "Die Anzahl kann pro Spiel variieren.",
+                            isOn: $gameSettings.randomSpyCount
+                        )
+
+                        SpyOptionRow(
+                            icon: "lightbulb.fill",
+                            tint: .orange,
+                            title: "Spion-Hinweise anzeigen",
+                            subtitle: "Zeigt dezente Tipps für Spione in der Runde.",
+                            isOn: $gameSettings.showSpyHints
+                        )
+                    }
+
+                    ImposterPrimaryButton(title: "Speichern") {
+                        dismiss()
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal, ImposterStyle.padding)
+                .padding(.bottom, 40)
             }
-            .padding(.top, 12)
-
-            // Content
-            VStack(spacing: 12) {
-                Toggle(isOn: $gameSettings.spyCanSeeCategory) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Kategorie sichtbar")
-                            .font(.headline)
-                        Text("Spione sehen die gewählte Kategorie.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .green))
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 16).fill(SetupStyle.darkCardFill))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(SetupStyle.cardStroke, lineWidth: 1))
-
-                Toggle(isOn: Binding(
-                    get: { gameSettings.spiesCanSeeEachOther && gameSettings.numberOfImposters >= 2 },
-                    set: { newVal in gameSettings.spiesCanSeeEachOther = newVal }
-                )) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Spione sehen sich gegenseitig")
-                            .font(.headline)
-                        Text("Aktiv, wenn es mindestens zwei Spione gibt.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .disabled(gameSettings.numberOfImposters < 2)
-                .opacity(gameSettings.numberOfImposters < 2 ? 0.5 : 1)
-                .toggleStyle(SwitchToggleStyle(tint: .green))
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 16).fill(SetupStyle.darkCardFill))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(SetupStyle.cardStroke, lineWidth: 1))
-
-                Toggle(isOn: $gameSettings.randomSpyCount) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Zahl der Spione zufällig")
-                            .font(.headline)
-                        Text("Die Anzahl kann pro Spiel variieren.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .green))
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 16).fill(SetupStyle.darkCardFill))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(SetupStyle.cardStroke, lineWidth: 1))
-
-                Toggle(isOn: $gameSettings.showSpyHints) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Spion‑Hinweise anzeigen")
-                            .font(.headline)
-                        Text("Zeigt dezente Tipps für Spione in der Runde.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .green))
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 16).fill(SetupStyle.darkCardFill))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(SetupStyle.cardStroke, lineWidth: 1))
-            }
-            .padding(.horizontal)
-
-            // Bottom actions
-            HStack(spacing: 16) {
-                Spacer()
-                GradientPrimaryButton(title: "Speichern") {
-                    dismiss()
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 16)
         }
         .presentationDragIndicator(.visible)
     }
@@ -738,10 +817,12 @@ private struct CategorySelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var gameSettings: GameSettings
 
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
-
     private var isRolesLocked: Bool {
         gameSettings.gameMode == .roles
+    }
+
+    private var hasMultipleSelections: Bool {
+        gameSettings.selectedCategoryIds.count > 1
     }
 
     private func toggleMixSelection() {
@@ -779,6 +860,13 @@ private struct CategorySelectionSheet: View {
         enforceRolesRuleIfNeeded()
     }
 
+    private func clearSelectedCategories() {
+        gameSettings.selectedCategoryIds.removeAll()
+        gameSettings.selectedCategory = nil
+        gameSettings.isMixAllCategories = false
+        enforceRolesRuleIfNeeded()
+    }
+
     private func updateSelectedCategoryReference() {
         if gameSettings.selectedCategoryIds.count == 1, let id = gameSettings.selectedCategoryIds.first,
            let category = gameSettings.categories.first(where: { $0.id == id }) {
@@ -795,114 +883,84 @@ private struct CategorySelectionSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .center) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .padding(8)
-                        .background(
-                            Circle().fill(Color.secondary.opacity(0.15))
-                        )
-                        .accessibilityLabel("Zurück")
-                }
-
-                Spacer()
-
-                Text("Kategorien")
-                    .font(.largeTitle.bold())
-                    .lineLimit(1)
-
-                Spacer()
-
-                Color.clear
-                    .frame(width: 44, height: 44)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-            .background(
-                .ultraThinMaterial,
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .padding(.horizontal)
+        ZStack {
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
 
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    Button {
-                        toggleMixSelection()
-                    } label: {
-                        CategoryCardView(
-                            name: "Mix",
-                            emoji: "🔀",
-                            isSelected: gameSettings.isMixAllCategories,
-                            isDisabled: isRolesLocked
-                        )
+                VStack(spacing: 16) {
+                    SheetHeader(title: "Kategorien") {
+                        dismiss()
                     }
-                    .buttonStyle(.plain)
-                    .disabled(isRolesLocked)
 
-                    ForEach(gameSettings.categories) { category in
-                        let isRolesCategory = category.name.lowercased() == "orte"
-                        let isDisabled = isRolesLocked && !isRolesCategory
+                    if isRolesLocked {
+                        HStack(spacing: 12) {
+                            ImposterIconBadge(systemName: "lock.fill", tint: .orange)
+                            Text("Rollen-Modus erlaubt nur die Kategorie \"Orte\".")
+                                .font(.subheadline)
+                                .foregroundStyle(ImposterStyle.mutedText)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer()
+                        }
+                        .imposterRowStyle()
+                    }
+
+                    if hasMultipleSelections {
                         Button {
-                            toggleCategory(category)
+                            clearSelectedCategories()
                         } label: {
-                            CategoryCardView(
-                                name: category.name,
-                                emoji: category.emoji,
-                                isSelected: gameSettings.selectedCategoryIds.contains(category.id),
-                                isDisabled: isDisabled
+                            HStack(spacing: 12) {
+                                ImposterIconBadge(systemName: "xmark.circle.fill", tint: .red)
+                                Text("Alles abwählen")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                            }
+                            .imposterRowStyle()
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    VStack(spacing: 12) {
+                        Button {
+                            toggleMixSelection()
+                        } label: {
+                            CategorySelectionRow(
+                                name: "Mix",
+                                emoji: "🔀",
+                                detail: "Alle Kategorien",
+                                isSelected: gameSettings.isMixAllCategories,
+                                isLocked: isRolesLocked,
+                                isDisabled: isRolesLocked
                             )
                         }
                         .buttonStyle(.plain)
-                        .disabled(isDisabled)
+                        .disabled(isRolesLocked)
+
+                        ForEach(gameSettings.categories) { category in
+                            let isRolesCategory = category.name.lowercased() == "orte"
+                            let isDisabled = isRolesLocked && !isRolesCategory
+                            Button {
+                                toggleCategory(category)
+                            } label: {
+                                CategorySelectionRow(
+                                    name: category.name,
+                                    emoji: category.emoji,
+                                    detail: "\(category.words.count) Begriffe",
+                                    isSelected: gameSettings.selectedCategoryIds.contains(category.id),
+                                    isLocked: isDisabled,
+                                    isDisabled: isDisabled
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isDisabled)
+                        }
                     }
+
+                    ImposterPrimaryButton(title: "Fertig", action: { dismiss() }, isDisabled: !gameSettings.hasSelectedCategories)
+                        .padding(.top, 8)
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, ImposterStyle.padding)
                 .padding(.bottom, 40)
-            }
-        }
-    }
-}
-
-private struct CategoryCardView: View {
-    let name: String
-    let emoji: String
-    let isSelected: Bool
-    var isDisabled: Bool = false
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 12) {
-                Text(emoji)
-                    .font(.system(size: 48))
-                Text(name)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(LinearGradient(colors: [Color.orange.opacity(0.15), Color.red.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 3)
-            )
-            .opacity(isDisabled ? 0.4 : 1.0)
-
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundColor(Color.orange)
-                    .padding(8)
             }
         }
     }
@@ -928,150 +986,61 @@ private struct GameModeSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Spielmodus")
-                .font(.largeTitle)
-                .bold()
-                .padding(.top, 20)
-            
-            if current == .roles && !canUseRolesMode {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text("Rollen-Modus ist nur mit der Kategorie 'Orte' verfügbar")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(8)
-            }
+        ZStack {
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 16) {
-                    // Filter out questions mode completely
-                    ForEach(ImposterGameMode.allCases.filter { $0 != .questions }, id: \.self) { mode in
-                        Button {
-                            if mode == .roles && !canUseRolesMode {
-                                return
-                            }
-                            current = mode
-                        } label: {
-                            GameModeCardView(
-                                mode: mode,
-                                isSelected: current == mode,
-                                isDisabled: mode == .roles && !canUseRolesMode
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .disabled(mode == .roles && !canUseRolesMode)
+                    SheetHeader(title: "Spielmodus") {
+                        dismiss()
                     }
-                }
-                .padding(.horizontal)
-            }
 
-            HStack {
-                Spacer()
-                GradientPrimaryButton(title: "Speichern") {
-                    onSelect(current)
-                    dismiss()
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
-        }
-    }
-}
+                    if !canUseRolesMode {
+                        HStack(spacing: 12) {
+                            ImposterIconBadge(systemName: "lock.fill", tint: .orange)
+                            Text("Rollen-Modus ist nur mit der Kategorie \"Orte\" verfügbar.")
+                                .font(.subheadline)
+                                .foregroundStyle(ImposterStyle.mutedText)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer()
+                        }
+                        .imposterRowStyle()
+                    }
 
-private struct GameModeCardView: View {
-    let mode: ImposterGameMode
-    let isSelected: Bool
-    var isDisabled: Bool = false
-    
-    private var features: [String] {
-        switch mode {
-        case .classic:
-            return [
-                "Ein oder mehrere Spione befinden sich unter euch. Ihr habt ein gemeinsames geheimes Wort, das nur die Eingeweihten kennen. Durch Diskussion und Deduktion versucht ihr herauszufinden, wer zur Gruppe gehört – und wer die Spione sind.",
-            ]
-        case .twoWords:
-            return [
-                "Zwei geheime Wörter",
-                "Teams erhalten unterschiedliche Hinweise",
-                "Mehr Bluff und Verwirrung"
-            ]
-        case .roles:
-            return [
-                "Jeder Spieler erhält eine passende Rolle",
-                "KI-generierte Rollen basierend auf dem Ort",
-                "Nur mit Kategorie 'Orte' verfügbar"
-            ]
-        default:
-            return [
-                "Modus: \(mode.localizedTitle)",
-                "Standard-Regeln für diesen Modus",
-                "Ideal für flexible Runden"
-            ]
-        }
-    }
+                    VStack(spacing: 12) {
+                        ForEach(ImposterGameMode.allCases.filter { $0 != .questions }, id: \.self) { mode in
+                            let isDisabled = mode == .roles && !canUseRolesMode
+                            Button {
+                                if isDisabled {
+                                    return
+                                }
+                                current = mode
+                            } label: {
+                                GameModeRow(
+                                    mode: mode,
+                                    isSelected: current == mode,
+                                    isDisabled: isDisabled
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isDisabled)
+                        }
+                    }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: mode.icon)
-                    .font(.title2)
-                Text(mode.localizedTitle)
-                    .font(.title3)
-                    .bold()
-                Spacer()
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(features, id: \.self) { line in
-                    Text("- \(line)")
-                        .fixedSize(horizontal: false, vertical: true)
+                    ImposterPrimaryButton(
+                        title: "Speichern",
+                        action: {
+                            onSelect(current)
+                            dismiss()
+                        },
+                        isDisabled: current == .roles && !canUseRolesMode
+                    )
+                    .padding(.top, 8)
                 }
-            }
-            .font(.callout)
-            .foregroundColor(isDisabled ? .secondary.opacity(0.5) : .secondary)
-            
-            if isDisabled {
-                HStack {
-                    Image(systemName: "lock.fill")
-                        .font(.caption)
-                    Text("Nur mit Kategorie 'Orte' verfügbar")
-                        .font(.caption)
-                }
-                .foregroundColor(.orange)
-                .padding(.top, 4)
-            }
-
-            if isSelected {
-                HStack {
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.orange)
-                }
+                .padding(.horizontal, ImposterStyle.padding)
+                .padding(.bottom, 40)
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(LinearGradient(
-                    colors: isDisabled
-                        ? [Color.gray.opacity(0.1), Color.gray.opacity(0.1)]
-                        : [Color.orange.opacity(0.15), Color.red.opacity(0.15)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-        )
-        .opacity(isDisabled ? 0.6 : 1.0)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 3)
-        )
     }
 }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import StoreKit
+import Foundation
 
 struct ResultView: View {
     let result: GameResult
@@ -148,6 +149,7 @@ struct ResultView: View {
         VStack(alignment: .leading, spacing: 10) {
             ForEach(Array(animatedLeaderboard.enumerated()), id: \.element.id) { index, entry in
                 let currentScore = currentScores[entry.id, default: 0]
+                let displayName = NSLocalizedString(entry.name, comment: "")
                 
                 HStack(spacing: 16) {
                     Text("\(index + 1).")
@@ -160,18 +162,18 @@ struct ResultView: View {
                         .fill(entry.color.gradient)
                         .frame(width: 40, height: 40)
                         .overlay(
-                            Text(entry.name.prefix(1))
+                            Text(String(displayName.prefix(1)))
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
                         )
 
-                    Text(entry.name)
+                    Text(displayName)
                         .foregroundStyle(.white)
                         .font(.subheadline.weight(.semibold))
                     
                     Spacer()
                     
-                    Text("\(currentScore) Pkt")
+                    (Text("\(currentScore) ") + Text("Pkt"))
                         .foregroundStyle(Theme.mutedText)
                         .font(.subheadline.weight(.medium))
                         .contentTransition(.numericText())

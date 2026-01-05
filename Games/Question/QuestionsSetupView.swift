@@ -99,10 +99,10 @@ struct QuestionsSetupView: View {
                             glassCard {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Kategorie")
+                                        Text(LocalizedStringKey("Kategorie"))
                                             .font(.headline)
                                             .foregroundColor(.white.opacity(0.7))
-                                        Text(selectedCategory?.name ?? "Bitte wählen")
+                                        Text(LocalizedStringKey(selectedCategory?.name ?? "Bitte wählen"))
                                             .font(.title3.bold())
                                             .foregroundColor(.white)
                                     }
@@ -124,7 +124,7 @@ struct QuestionsSetupView: View {
                                 VStack(spacing: 20) {
                                     // Spione Stepper
                                     HStack {
-                                        Label("Anzahl Spione", systemImage: "eye.slash.fill")
+                                        Label(LocalizedStringKey("Anzahl Spione"), systemImage: "eye.slash.fill")
                                             .font(.headline)
                                             .foregroundColor(.white)
                                         Spacer()
@@ -164,7 +164,7 @@ struct QuestionsSetupView: View {
                                         Button(action: addPlayer) {
                                             HStack {
                                                 Image(systemName: "plus")
-                                                Text("Hinzufügen")
+                                                Text(LocalizedStringKey("Hinzufügen"))
                                             }
                                             .font(.subheadline.bold())
                                             .padding(.horizontal, 12)
@@ -178,7 +178,7 @@ struct QuestionsSetupView: View {
                                     // Spieler Liste
                                     VStack(spacing: 12) {
                                         if appModel.players.isEmpty {
-                                            Text("Keine Spieler. Füge mindestens 3 hinzu.")
+                                            Text(LocalizedStringKey("Keine Spieler. Füge mindestens 3 hinzu."))
                                                 .font(.caption)
                                                 .foregroundColor(.white.opacity(0.5))
                                                 .padding()
@@ -190,7 +190,7 @@ struct QuestionsSetupView: View {
                                                         .foregroundColor(.white.opacity(0.5))
                                                         .frame(width: 24)
                                                     
-                                                    TextField("Name", text: $appModel.players[index].name)
+                                                    TextField(LocalizedStringKey("Name"), text: $appModel.players[index].name)
                                                         .font(.body.weight(.medium))
                                                         .foregroundColor(.white)
                                                     
@@ -214,7 +214,7 @@ struct QuestionsSetupView: View {
                             
                             // 3. Start Button (Floating Bottom Style)
                             Button(action: onStartGame) {
-                                Text("Spiel starten")
+                                Text(LocalizedStringKey("Spiel starten"))
                                     .font(.title3.bold())
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
@@ -264,7 +264,7 @@ struct QuestionsSetupView: View {
     private func addPlayer() {
         let newNumber = appModel.players.count + 1
         withAnimation {
-            appModel.players.append(Player(name: "Spieler \(newNumber)"))
+            appModel.players.append(Player(name: appModel.defaultPlayerName(for: newNumber)))
             if numberOfSpies > maxSpies { numberOfSpies = max(1, maxSpies) }
         }
     }
@@ -275,7 +275,7 @@ struct QuestionsSetupView: View {
         if numberOfSpies > maxSpies { numberOfSpies = max(1, maxSpies) }
     }
     
-    private var validationMessage: String {
+    private var validationMessage: LocalizedStringKey {
         if playerCount < 3 { return "Mindestens 3 Spieler benötigt." }
         if selectedCategory == nil { return "Bitte eine Kategorie wählen." }
         return ""
@@ -305,7 +305,7 @@ struct QuestionsCategorySheet: View {
             QuestionsTheme.gradient.ignoresSafeArea()
             
             VStack(spacing: 20) {
-                Text("Kategorie wählen")
+                Text(LocalizedStringKey("Kategorie wählen"))
                     .font(.title2.bold())
                     .foregroundColor(.white)
                     .padding(.top, 20)
@@ -319,7 +319,7 @@ struct QuestionsCategorySheet: View {
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading) {
-                                        Text(category.name)
+                                        Text(LocalizedStringKey(category.name))
                                             .font(.headline)
                                             .foregroundColor(.white)
                                         Text("\(category.promptPairs.count) Fragenpaare")
@@ -357,13 +357,13 @@ struct QuestionsSettingsSheet: View {
         ZStack {
             QuestionsTheme.gradient.ignoresSafeArea()
             VStack {
-                Text("Einstellungen")
+                Text(LocalizedStringKey("Einstellungen"))
                     .font(.title2.bold())
                     .foregroundColor(.white)
                     .padding(.top, 20)
                 
                 Spacer()
-                Text("Hier könnten Spieleinstellungen sein.")
+                Text(LocalizedStringKey("Hier könnten Spieleinstellungen sein."))
                     .foregroundColor(.gray)
                 Spacer()
             }
@@ -385,13 +385,13 @@ struct QuestionsPlaceholderSheet: View {
                     .foregroundColor(.white.opacity(0.2))
                     .padding(.top, 40)
                 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
                 
                 Spacer()
                 
-                Button("Schließen") { dismiss() }
+                Button(LocalizedStringKey("Schließen")) { dismiss() }
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.bottom, 20)
             }

@@ -19,196 +19,183 @@ struct ImposterCategoryDetailView: View {
     @State private var wordToDelete: String?
     
     // Theme
-    private let backgroundGradient = LinearGradient(
-        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    private let backgroundGradient = ImposterStyle.backgroundGradient
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                backgroundGradient.ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Button { dismiss() } label: {
-                            Image(systemName: "chevron.left")
+        ZStack {
+            backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    Spacer()
+                    Text("Details")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+                    Spacer()
+                    
+                    if category.isCustom {
+                        Button { showingEditSheet = true } label: {
+                            Image(systemName: "pencil")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
+                                .background(Color.blue)
                                 .clipShape(Circle())
                         }
-                        Spacer()
-                        Text("Details")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                        Spacer()
-                        
-                        if category.isCustom {
-                            Button { showingEditSheet = true } label: {
-                                Image(systemName: "pencil")
-                                    .font(.title2.bold())
-                                    .foregroundColor(.white)
-                                    .frame(width: 44, height: 44)
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
-                            }
-                        } else {
-                            Color.clear.frame(width: 44, height: 44)
-                        }
+                    } else {
+                        Color.clear.frame(width: 44, height: 44)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-                    .padding(.bottom, 20)
-                    
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // Info Card
-                            VStack(spacing: 10) {
-                                Text(category.emoji)
-                                    .font(.system(size: 80))
-                                    .shadow(color: .purple.opacity(0.5), radius: 20)
-                                
-                                Text(category.name)
-                                    .font(.largeTitle.bold())
-                                    .foregroundColor(.white)
-                                
-                                if !category.isCustom {
-                                    HStack {
-                                        Image(systemName: "lock.fill")
-                                        Text("Standard-Kategorie")
-                                    }
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
-                                }
-                            }
-                            .padding(.bottom, 10)
+                }
+                .padding(.horizontal)
+                .padding(.top, 10)
+                .padding(.bottom, 20)
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Info Card
+                        VStack(spacing: 10) {
+                            Text(category.emoji)
+                                .font(.system(size: 80))
+                                .shadow(color: .purple.opacity(0.5), radius: 20)
                             
-                            // Add Word (if custom)
-                            if category.isCustom {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Neuer Begriff")
-                                        .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .padding(.leading, 4)
-                                    
-                                    HStack(spacing: 12) {
-                                        TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundColor(.gray))
-                                            .padding()
-                                            .background(Color.white.opacity(0.08))
-                                            .cornerRadius(12)
-                                            .foregroundColor(.white)
-                                            .onSubmit { addWord() }
-                                        
-                                        Button(action: addWord) {
-                                            Image(systemName: "plus")
-                                                .font(.title2.bold())
-                                                .foregroundColor(.white)
-                                                .frame(width: 50, height: 50)
-                                                .background(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.green)
-                                                .clipShape(Circle())
-                                        }
-                                        .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
+                            Text(category.name)
+                                .font(.largeTitle.bold())
+                                .foregroundColor(.white)
                             
-                            // Word List
-                            VStack(alignment: .leading, spacing: 12) {
+                            if !category.isCustom {
                                 HStack {
-                                    Text("Alle Begriffe")
-                                        .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Spacer()
-                                    Text("\(category.words.count)")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.6))
+                                    Image(systemName: "lock.fill")
+                                    Text("Standard-Kategorie")
                                 }
-                                .padding(.horizontal)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
+                        .padding(.bottom, 10)
+                        
+                        // Add Word (if custom)
+                        if category.isCustom {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Neuer Begriff")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.leading, 4)
                                 
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                                    ForEach(category.words, id: \.self) { word in
-                                        HStack {
-                                            Text(word)
-                                                .font(.subheadline.bold())
-                                                .foregroundColor(.white)
-                                                .lineLimit(1)
-                                            
-                                            Spacer()
-                                            
-                                            if category.isCustom {
-                                                Button {
-                                                    wordToDelete = word
-                                                    showingWordAlert = true
-                                                } label: {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .foregroundColor(.red.opacity(0.7))
-                                                }
-                                            }
-                                        }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 10)
+                                HStack(spacing: 12) {
+                                    TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundColor(.gray))
+                                        .padding()
                                         .background(Color.white.opacity(0.08))
                                         .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.white.opacity(0.05), lineWidth: 1)
-                                        )
+                                        .foregroundColor(.white)
+                                        .onSubmit { addWord() }
+                                    
+                                    Button(action: addWord) {
+                                        Image(systemName: "plus")
+                                            .font(.title2.bold())
+                                            .foregroundColor(.white)
+                                            .frame(width: 50, height: 50)
+                                            .background(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.green)
+                                            .clipShape(Circle())
                                     }
+                                    .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                 }
-                                .padding(.horizontal)
                             }
-                            
-                            // Delete Category Button
-                            if category.isCustom {
-                                Button(action: { showingDeleteAlert = true }) {
-                                    HStack {
-                                        Image(systemName: "trash")
-                                        Text("Kategorie löschen")
-                                    }
-                                    .font(.headline)
-                                    .foregroundColor(.red)
-                                    .padding()
-                                    .background(Color.red.opacity(0.1))
-                                    .cornerRadius(12)
-                                }
-                                .padding(.top, 20)
-                            }
+                            .padding(.horizontal)
                         }
-                        .padding(.bottom, 40)
+                        
+                        // Word List
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Alle Begriffe")
+                                    .font(.headline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                Spacer()
+                                Text("\(category.words.count)")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.horizontal)
+                            
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                                ForEach(category.words, id: \.self) { word in
+                                    HStack {
+                                        Text(word)
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.white)
+                                            .lineLimit(1)
+                                        
+                                        Spacer()
+                                        
+                                        if category.isCustom {
+                                            Button {
+                                                wordToDelete = word
+                                                showingWordAlert = true
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.red.opacity(0.7))
+                                            }
+                                        }
+                                    }
+                                    .imposterRowStyle()
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        // Delete Category Button
+                        if category.isCustom {
+                            Button(action: { showingDeleteAlert = true }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Kategorie löschen")
+                                }
+                                .font(.headline)
+                                .foregroundColor(.red)
+                                .padding()
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(12)
+                            }
+                            .padding(.top, 20)
+                        }
                     }
+                    .padding(.bottom, 40)
                 }
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingEditSheet) {
-                EditCategoryView(category: $category)
-                    .environmentObject(gameSettings)
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showingEditSheet) {
+            EditCategoryView(category: $category)
+                .environmentObject(gameSettings)
+        }
+        .alert("Kategorie löschen", isPresented: $showingDeleteAlert) {
+            Button("Abbrechen", role: .cancel) { }
+            Button("Löschen", role: .destructive) {
+                gameSettings.removeCategory(category)
+                dismiss()
             }
-            .alert("Kategorie löschen", isPresented: $showingDeleteAlert) {
-                Button("Abbrechen", role: .cancel) { }
-                Button("Löschen", role: .destructive) {
-                    gameSettings.removeCategory(category)
-                    dismiss()
-                }
-            } message: {
-                Text("Willst du diese Kategorie wirklich unwiderruflich löschen?")
-            }
-            .alert("Begriff löschen", isPresented: $showingWordAlert) {
-                Button("Abbrechen", role: .cancel) { wordToDelete = nil }
-                Button("Löschen", role: .destructive) {
-                    if let word = wordToDelete {
-                        removeWord(word)
-                    }
-                    wordToDelete = nil
-                }
-            } message: {
+        } message: {
+            Text("Willst du diese Kategorie wirklich unwiderruflich löschen?")
+        }
+        .alert("Begriff löschen", isPresented: $showingWordAlert) {
+            Button("Abbrechen", role: .cancel) { wordToDelete = nil }
+            Button("Löschen", role: .destructive) {
                 if let word = wordToDelete {
-                    Text("Soll der Begriff '\(word)' gelöscht werden?")
+                    removeWord(word)
                 }
+                wordToDelete = nil
+            }
+        } message: {
+            if let word = wordToDelete {
+                Text("Soll der Begriff '\(word)' gelöscht werden?")
             }
         }
     }
@@ -247,11 +234,7 @@ struct EditCategoryView: View {
         self._categoryEmoji = State(initialValue: category.wrappedValue.emoji)
     }
     
-    private let backgroundGradient = LinearGradient(
-        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    private let backgroundGradient = ImposterStyle.backgroundGradient
     
     var body: some View {
         NavigationView {
@@ -341,6 +324,8 @@ struct EditCategoryView: View {
 }
 
 #Preview {
-    ImposterCategoryDetailView(category: Category.defaultCategories[0])
-        .environmentObject(GameSettings())
+    NavigationStack {
+        ImposterCategoryDetailView(category: Category.defaultCategories[0])
+            .environmentObject(GameSettings())
+    }
 }

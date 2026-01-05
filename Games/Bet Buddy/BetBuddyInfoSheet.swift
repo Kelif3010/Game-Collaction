@@ -122,7 +122,10 @@ struct BetBuddyInfoSheet: View {
                             }
                         }
                     } label: {
-                        Text(currentPage == pageCount - 1 ? "Alles klar, los geht's!" : "Weiter")
+                        let actionTitle: LocalizedStringKey = currentPage == pageCount - 1
+                            ? "Alles klar, los geht's!"
+                            : "Weiter"
+                        Text(actionTitle)
                             .font(.headline)
                             .foregroundStyle(.black)
                             .frame(maxWidth: .infinity)
@@ -172,7 +175,7 @@ struct InfoPage<Content: View>: View {
                 }
                 .padding(.top, 24)
 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.title2.bold())
                     .foregroundStyle(.white)
 
@@ -197,7 +200,7 @@ struct BulletPoint: View {
                 .font(.body)
                 .frame(width: 24)
                 .padding(.top, 2)
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .foregroundStyle(Theme.mutedText)
                 .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
@@ -220,7 +223,7 @@ struct StepRow: View {
                 .background(Color.white)
                 .clipShape(Circle())
             
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.body)
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -240,11 +243,11 @@ struct ScoreRow: View {
 
     var body: some View {
         HStack {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .foregroundStyle(.white)
                 .font(.body)
             Spacer()
-            Text(value)
+            Text(LocalizedStringKey(value))
                 .font(.headline.bold())
                 .foregroundStyle(color)
         }

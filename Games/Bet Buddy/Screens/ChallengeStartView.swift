@@ -28,7 +28,7 @@ struct ChallengeStartView: View {
                             .foregroundStyle(Theme.mutedText)
                             .textCase(.uppercase)
                         
-                        Text(appModel.currentChallenge.category.title)
+                        Text(LocalizedStringKey(appModel.currentChallenge.category.title))
                             .font(.headline)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)

@@ -26,7 +26,7 @@ struct ScreenHeader: View {
 
             Spacer()
 
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.title3.bold())
                 .foregroundStyle(.white)
 

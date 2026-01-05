@@ -58,7 +58,7 @@ struct QuestionsPromptBoard: View {
             .frame(height: 220)
             .overlay(
                 VStack(spacing: 20) {
-                    Text(question)
+                    Text(LocalizedStringKey(question))
                         .font(.title2.weight(.bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -100,7 +100,7 @@ struct QuestionsAnswerBoard: View {
                     }
                 }
             if text.isEmpty {
-                Text("Tippe deine Antwort…")
+                Text(LocalizedStringKey("Tippe deine Antwort…"))
                     .foregroundColor(.white.opacity(0.35))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -173,7 +173,7 @@ struct QuestionsAnswerRevealCard: View {
                 .overlay(
                     VStack(spacing: 10) {
                         HStack(spacing: 8) {
-                            Text(playerName)
+                            Text(LocalizedStringKey(playerName))
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
@@ -188,7 +188,7 @@ struct QuestionsAnswerRevealCard: View {
                         .frame(maxWidth: .infinity, alignment: .center)
 
                         if let spyQuestion {
-                            Text(spyQuestion)
+                            Text(LocalizedStringKey(spyQuestion))
                                 .font(.callout.weight(.medium))
                                 .foregroundColor(.white.opacity(0.9))
                                 .multilineTextAlignment(.center)

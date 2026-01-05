@@ -121,6 +121,7 @@ private struct LanguageSelectionView: View {
             if !useSystemLanguage {
                 Section(header: Text(LocalizedStringKey("Wähle eine Sprache"))) {
                     Button {
+                        useSystemLanguage = false
                         selectedLanguageCode = "de"
                     } label: {
                         HStack {
@@ -134,6 +135,7 @@ private struct LanguageSelectionView: View {
                     .foregroundColor(.primary)
                     
                     Button {
+                        useSystemLanguage = false
                         selectedLanguageCode = "en"
                     } label: {
                         HStack {
