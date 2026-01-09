@@ -39,6 +39,7 @@ class GameSettings: ObservableObject {
     @Published var spiesCanSeeEachOther: Bool = false
     @Published var randomSpyCount: Bool = false  // Zufällige Spion-Anzahl ab 5 Spielern
     @Published var showSpyHints: Bool = false    // Hinweise für Imposter anzeigen
+    @Published var activeRoles: Set<RoleType> = []
     
     // Spielzustand
     @Published var currentPlayerIndex: Int = 0
@@ -60,7 +61,7 @@ class GameSettings: ObservableObject {
             return customCategory
         }
         customCategories = storedCustomCategories
-        categories = Category.defaultCategories + storedCustomCategories
+        rebuildCategories()
     }
 
     var selectedCategories: [Category] {
@@ -93,10 +94,10 @@ class GameSettings: ObservableObject {
         guard !isMixAllCategories else { return false }
         if selectedCategoryIds.count == 1, let id = selectedCategoryIds.first,
            let category = categories.first(where: { $0.id == id }) {
-            return category.name.lowercased() == "orte"
+            return (category.sourceName ?? category.name).lowercased() == "orte"
         }
         if selectedCategoryIds.isEmpty, let selectedCategory {
-            return selectedCategory.name.lowercased() == "orte"
+            return (selectedCategory.sourceName ?? selectedCategory.name).lowercased() == "orte"
         }
         return false
     }
@@ -144,26 +145,29 @@ class GameSettings: ObservableObject {
     
     func removeCategory(_ category: Category) {
         guard category.isCustom else { return }
-        customCategories.removeAll { $0.id == category.id }
+        let sourceName = category.sourceName
+        customCategories.removeAll {
+            $0.id == category.id || (sourceName != nil && $0.sourceName == sourceName)
+        }
         persistCustomCategories()
-        categories.removeAll { $0.id == category.id }
-        selectedCategoryIds.remove(category.id)
-        if selectedCategory?.id == category.id {
-            selectedCategory = nil
-        }
-        if roundCategory?.id == category.id {
-            roundCategory = nil
-        }
     }
     
     func updateCategory(_ category: Category) {
-        guard category.isCustom else { return }
-        if let index = customCategories.firstIndex(where: { $0.id == category.id }) {
-            var updated = category
+        var updated = category
+        if !updated.isCustom {
             updated.isCustom = true
-            customCategories[index] = updated
-            persistCustomCategories()
+            updated.sourceName = updated.sourceName ?? updated.name
         }
+
+        if let index = customCategories.firstIndex(where: { $0.id == updated.id }) {
+            customCategories[index] = updated
+        } else if let sourceName = updated.sourceName,
+                  let index = customCategories.firstIndex(where: { $0.sourceName == sourceName }) {
+            customCategories[index] = updated
+        } else {
+            customCategories.append(updated)
+        }
+        persistCustomCategories()
     }
     
     func resetGame() {
@@ -200,7 +204,7 @@ class GameSettings: ObservableObject {
         if currentSelectionIds.isEmpty, let selectedCategory {
             currentSelectionIds.insert(selectedCategory.id)
         }
-        categories = Category.defaultCategories + customCategories
+        rebuildCategories()
         let validIds = Set(categories.map { $0.id })
         selectedCategoryIds = currentSelectionIds.intersection(validIds)
         if selectedCategoryIds.count == 1, let selection = selectedCategoryIds.first {
@@ -211,6 +215,15 @@ class GameSettings: ObservableObject {
         if let roundCategory, !validIds.contains(roundCategory.id) {
             self.roundCategory = nil
         }
+    }
+
+    private func rebuildCategories() {
+        let overrides = Set(customCategories.compactMap { $0.sourceName })
+        let filteredDefaults = Category.defaultCategories.filter { category in
+            let key = category.sourceName ?? category.name
+            return !overrides.contains(key)
+        }
+        categories = filteredDefaults + customCategories
     }
     
     /// Prüft, ob Spione die Kategorie sehen sollen

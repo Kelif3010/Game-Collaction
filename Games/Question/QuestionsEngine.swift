@@ -113,12 +113,12 @@ final class QuestionsEngine: ObservableObject {
 
     // Player submits an answer; returns true if accepted
     @discardableResult
-    func submitAnswer(text: String) -> Bool {
+    func submitAnswer(text: String, timeTaken: TimeInterval = 0) -> Bool {
         guard var r = round else { return false }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         guard players.indices.contains(r.currentPlayerIndex) else { return false }
         let player = players[r.currentPlayerIndex]
-        let answer = QuestionsAnswer(playerID: player.id, role: role(for: player.id), text: text)
+        let answer = QuestionsAnswer(playerID: player.id, role: role(for: player.id), text: text, timeTaken: timeTaken)
         r.answers[player.id] = answer
         r.currentPlayerIndex += 1
         round = r

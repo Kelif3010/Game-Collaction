@@ -39,6 +39,11 @@ class VotingManager: ObservableObject {
     @Published var foundSpies: Set<UUID> = []  // Bereits gefundene Spione
     @Published var gameEnded = false
     @Published var playersWon = false
+    @Published var lastRescueMessage: String? // Für Leibwächter-Rettung
+    
+    // Shootout (Geheimagenten-Jagd)
+    @Published var isSpyShootoutActive = false
+    @Published var shooter: Player?
     
     private let gameSettings: GameSettings
     private var wasTimerPausedBefore = false
@@ -62,7 +67,10 @@ class VotingManager: ObservableObject {
         selectedPlayers.removeAll()
         isVotingActive = true
         showResults = false
+        isSpyShootoutActive = false
+        shooter = nil
         lastRoundResult = nil
+        lastRescueMessage = nil
     }
     
     /// Wählt einen Spieler aus/ab
@@ -115,30 +123,71 @@ class VotingManager: ObservableObject {
         
         var correctGuesses: [UUID] = []
         var incorrectGuesses: [UUID] = []
+        var rescuedPlayers: [String] = []
         
         // Prüfen welche Auswahl korrekt war
         for playerID in selectedPlayers {
             if let index = gameSettings.players.firstIndex(where: { $0.id == playerID }) {
                 let player = gameSettings.players[index]
                 if player.isImposter && !foundSpies.contains(playerID) {
+                    // Spion gefunden (Leibwächter schützt Spione NICHT vor dem Voting)
                     correctGuesses.append(playerID)
                     foundSpies.insert(playerID)
-                    // Mark the spy as eliminated so they won't appear in future voting rounds
                     gameSettings.players[index].isEliminated = true
                 } else {
-                    incorrectGuesses.append(playerID)
+                    // Falscher Verdacht (Bürger/Narr/Pechvogel)
+                    // PRÜFUNG: Hat der Leibwächter ihn geschützt?
+                    if player.isProtected {
+                        // GERETTET!
+                        rescuedPlayers.append(player.name)
+                        // Er zählt NICHT als incorrectGuess für das Spielende, aber er wurde auch nicht eliminiert.
+                    } else {
+                        // Nicht gerettet -> Fehler -> Spione gewinnen
+                        incorrectGuesses.append(playerID)
+                    }
                 }
             }
         }
         
         // Spiel-Ende-Logik
-        // Regel (klassisch): Spiel endet, wenn mindestens ein falscher Tipp abgegeben wurde ODER alle Spione gefunden wurden.
-        // Bewohner gewinnen nur, wenn alle Spione gefunden wurden und kein falscher Tipp dabei war.
+        // Spiel endet, wenn ein Ungeschützter falsch gevotet wurde ODER alle Spione gefunden sind.
         let gameEnded = !incorrectGuesses.isEmpty || foundSpies.count == totalSpies
         let playersWon = incorrectGuesses.isEmpty && foundSpies.count == totalSpies
         
         self.gameEnded = gameEnded
         self.playersWon = playersWon
+        
+        // Leibwächter-Nachricht setzen
+        if !rescuedPlayers.isEmpty {
+            let names = rescuedPlayers.joined(separator: ", ")
+            lastRescueMessage = "Der Leibwächter hat \(names) vor dem Ausscheiden bewahrt!"
+        }
+        
+        // --- Shootout Check ---
+        // Wenn die Bürger gewinnen UND ein Geheimagent im Spiel ist, startet der Shootout.
+        if playersWon && gameSettings.activeRoles.contains(.secretAgent) {
+            // Finde den Spion, der gerade eliminiert wurde (oder einen der Spione)
+            if let shooterID = correctGuesses.last ?? foundSpies.first,
+               let shooterPlayer = gameSettings.players.first(where: { $0.id == shooterID }) {
+                startShootout(shooter: shooterPlayer)
+            }
+        } else if gameEnded {
+            // --- Stats Integration (Nur wenn kein Shootout, sonst passiert das dort) ---
+            Task { @MainActor in
+                let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
+                let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
+                
+                if playersWon {
+                    let isFast = (Double(gameSettings.timeRemaining) > (Double(gameSettings.timeLimit) / 2.0)) || votingRound == 1
+                    StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: isFast)
+                    StatsService.shared.recordLoss(playerNames: spyNames, asImposter: true)
+                } else {
+                    StatsService.shared.recordSpyWinByWrongVoting(spyNames: spyNames)
+                    StatsService.shared.recordLoss(playerNames: citizenNames, asImposter: false)
+                }
+            }
+        }
+        // -------------------------
         
         let result = VotingRoundResult(
             selectedPlayers: Array(selectedPlayers),
@@ -151,12 +200,20 @@ class VotingManager: ObservableObject {
         return result
     }
     
+    func startShootout(shooter: Player) {
+        self.shooter = shooter
+        self.isSpyShootoutActive = true
+    }
+    
     /// Beendet die Abstimmung und zeigt Ergebnisse
     func finishVoting() {
         isVotingActive = false
-        showResults = true
-        if gameEnded {
-            gameSettings.markRoundCompleted()
+        // Wenn Shootout aktiv ist, zeigen wir NICHT die normalen Results, sondern gehen in den Shootout Screen
+        if !isSpyShootoutActive {
+            showResults = true
+            if gameEnded {
+                gameSettings.markRoundCompleted()
+            }
         }
     }
     

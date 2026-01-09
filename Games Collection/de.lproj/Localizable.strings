@@ -292,3 +292,15 @@
 "Imposter haben gewonnen" = "Imposter haben gewonnen";
 "Tippe deine Antwort…" = "Tippe deine Antwort…";
 "Spieler %d" = "Spieler %d";
+
+/* Questions - Voting & Timer */
+"Diskussion" = "Diskussion";
+"Unbegrenzt" = "Unbegrenzt";
+"%d Min" = "%d Min";
+"Vergebt noch %lld Stimmen (%lld/%lld)." = "Vergebt noch %lld Stimmen (%lld/%lld).";
+"Hauptverdächtiger: %@" = "Hauptverdächtiger: %@";
+"Gleichstand zwischen %d Spielern." = "Gleichstand zwischen %d Spielern.";
+"Übergabe an" = "Übergabe an";
+"Scan läuft..." = "Scan läuft...";
+"Gedrückt halten zum Entsperren" = "Gedrückt halten zum Entsperren";
+"Zeit: %.1fs" = "Zeit: %.1fs";

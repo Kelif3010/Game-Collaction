@@ -12,7 +12,6 @@ struct WordGuessingView: View {
     @StateObject private var wordGuessingManager: WordGuessingManager
     @EnvironmentObject var gameLogic: GameLogic
     @Environment(\.dismiss) var dismiss
-    @Environment(\.colorScheme) var colorScheme
     private let startWithImmediateWinFlag: Bool
     
     init(gameSettings: GameSettings, startWithImmediateWin: Bool = false) {
@@ -23,421 +22,322 @@ struct WordGuessingView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Hintergrund
-                LinearGradient(
-                    colors: [Color.orange.opacity(0.15), Color.yellow.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                if let result = wordGuessingManager.guessResult {
-                    WordGuessResultView(
-                        result: result,
-                        spies: gameSettings.players.filter { $0.isImposter },
-                        canStartNewMission: gameSettings.gamePhase == .finished || result.gameEnded,
-                        onNewGame: {
-                            // Option A: Starte direkt eine neue Runde und schließe diese Ansicht
-                            Task { @MainActor in
-                                await gameLogic.restartGame()
-                            }
-                        },
-                        onExitToMain: {
-                            // Signalisiere der GamePlayView, dass bis ins Hauptmenü navigiert werden soll
-                            gameSettings.requestExitToMain = true
-                        }
-                    )
-                } else {
-                    WordGuessingActiveView(wordGuessingManager: wordGuessingManager, gameSettings: gameSettings)
+        ZStack {
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
+            
+            // Subtle Grid Background
+            VStack(spacing: 0) {
+                ForEach(0..<20) { _ in
+                    Rectangle()
+                        .fill(Color.white.opacity(0.02))
+                        .frame(height: 1)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
                 }
             }
-            .navigationTitle("💡 Wort erraten")
-            .navigationBarTitleDisplayMode(.large)
-            .navigationBarBackButtonHidden(true)
+            .ignoresSafeArea()
+            
+            if let result = wordGuessingManager.guessResult {
+                WordGuessResultView(
+                    result: result,
+                    spies: gameSettings.players.filter { $0.isImposter },
+                    onNewGame: {
+                        Task { @MainActor in
+                            await gameLogic.restartGame()
+                        }
+                    },
+                    onExitToMain: {
+                        gameSettings.requestExitToMain = true
+                    }
+                )
+            } else {
+                WordGuessingActiveView(wordGuessingManager: wordGuessingManager)
+            }
         }
         .task {
-            // Sicherstellen, dass das Ergebnis gesetzt wird, wenn sofortiger Sieg bestätigt wurde
             if startWithImmediateWinFlag && wordGuessingManager.guessResult == nil {
-                await MainActor.run {
-                    print("[WordGuessingView] startWithImmediateWinFlag true, setting guessResult")
-                    _ = wordGuessingManager.confirmCorrectGuess()
-                }
+                _ = wordGuessingManager.confirmCorrectGuess()
             }
-        }
-        .onDisappear {
-            print("[WordGuessingView] disappeared. guessResult=\(wordGuessingManager.guessResult != nil), gamePhase=\(gameSettings.gamePhase), requestExitToMain=\(gameSettings.requestExitToMain)")
         }
     }
 }
 
+// MARK: - Aktive Eingabe ("Terminal" Style)
+struct WordGuessingActiveView: View {
+    @ObservedObject var wordGuessingManager: WordGuessingManager
+    @Environment(\.dismiss) var dismiss
+    @State private var showContent = false
+    @State private var scanLineY: CGFloat = -100
 
+    var body: some View {
+        VStack(spacing: 0) {
+            // Terminal Header
+            HStack {
+                Text("TERMINAL_ACCESS // ID: \(Int.random(in: 1000...9999))")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundColor(.orange.opacity(0.8))
+                Spacer()
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 8, height: 8)
+                    .opacity(showContent ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.5).repeatForever(), value: showContent)
+            }
+            .padding(.horizontal, 25)
+            .padding(.top, 20)
+            
+            Spacer()
+            
+            // Scanner Animation
+            ZStack {
+                Circle()
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                    .frame(width: 220, height: 220)
+                
+                Circle()
+                    .stroke(Color.orange.opacity(0.1), style: StrokeStyle(lineWidth: 10, dash: [5, 10]))
+                    .frame(width: 180, height: 180)
+                    .rotationEffect(.degrees(showContent ? 360 : 0))
+                    .animation(.linear(duration: 20).repeatForever(autoreverses: false), value: showContent)
+                
+                Image(systemName: "touchid")
+                    .font(.system(size: 80, weight: .thin))
+                    .foregroundColor(.orange)
+                    .opacity(0.8)
+                
+                // Scan Line
+                Rectangle()
+                    .fill(
+                        LinearGradient(colors: [.clear, .orange.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom)
+                    )
+                    .frame(width: 200, height: 4)
+                    .offset(y: scanLineY)
+            }
+            .frame(height: 250)
+            
+            VStack(spacing: 20) {
+                Text("VERIFIZIERUNG ERFORDERLICH")
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .foregroundColor(.orange)
+                    .tracking(2)
+                
+                Text("Hat der Spion das korrekte Passwort genannt?")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundColor(.yellow)
+                        Text("WARNUNG")
+                            .font(.caption.bold())
+                            .foregroundColor(.yellow)
+                    }
+                    Text("Eine Bestätigung beendet die Mission sofort.")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .padding(.horizontal, 40)
+            }
+            .offset(y: showContent ? 0 : 20)
+            .opacity(showContent ? 1 : 0)
+            
+            Spacer()
+            
+            // Actions
+            VStack(spacing: 16) {
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    _ = wordGuessingManager.confirmCorrectGuess()
+                }) {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("ZUGRIFF BESTÄTIGEN")
+                    }
+                    .font(.headline.bold())
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color.orange)
+                    .cornerRadius(12)
+                    .shadow(color: .orange.opacity(0.4), radius: 10, x: 0, y: 5)
+                }
+                
+                Button("ABBRECHEN") {
+                    dismiss()
+                }
+                .font(.subheadline.bold())
+                .foregroundColor(.white.opacity(0.4))
+                .padding(.top, 5)
+            }
+            .padding(.horizontal, 25)
+            .padding(.bottom, 40)
+            .offset(y: showContent ? 0 : 30)
+            .opacity(showContent ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                showContent = true
+            }
+            withAnimation(.linear(duration: 2).repeatForever(autoreverses: true)) {
+                scanLineY = 100
+            }
+        }
+    }
+}
 
-// MARK: - Ergebnis-Anzeige
+// MARK: - Ergebnis Anzeige
 struct WordGuessResultView: View {
     let result: WordGuessResult
     let spies: [Player]
-    let canStartNewMission: Bool
     let onNewGame: () -> Void
     let onExitToMain: () -> Void
+    
     @State private var showContent = false
-    @State private var laserOffset: CGFloat = -100
-    @State private var fogOpacity: Double = 0
-    @State private var pulseScale: CGFloat = 1.0
-    @State private var textGlow: Double = 0
+    @State private var revealedText: String = ""
+    @State private var glitchEffect = false
+    @State private var showPoints = false // Animation State for Points
     
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                // Düsterer Hintergrund mit Nebel-Effekt
-                LinearGradient(
-                    colors: [
-                        Color.black,
-                        Color.red.opacity(0.1),
-                        Color.black
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        VStack(spacing: 30) {
+            Spacer()
+            
+            // Status Header
+            VStack(spacing: 8) {
+                Text("MISSION STATUS")
+                    .font(.caption.bold())
+                    .tracking(4)
+                    .foregroundColor(.white.opacity(0.5))
                 
-                // Roter Laser-Effekt
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.clear,
-                                Color.red.opacity(0.8),
-                                Color.red.opacity(0.3),
-                                Color.clear
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(height: 2)
-                    .offset(x: laserOffset)
-                    .animation(
-                        Animation.linear(duration: 2.0)
-                            .repeatForever(autoreverses: false),
-                        value: laserOffset
-                    )
-                
-                // Nebel-Effekt
-                ForEach(0..<5, id: \.self) { index in
-                    Circle()
-                        .fill(Color.red.opacity(0.05))
-                        .frame(width: CGFloat.random(in: 100...300))
-                        .position(
-                            x: CGFloat.random(in: 0...proxy.size.width),
-                            y: CGFloat.random(in: 0...proxy.size.height)
-                        )
-                        .opacity(fogOpacity)
-                        .animation(
-                            Animation.easeInOut(duration: Double.random(in: 3...6))
-                                .repeatForever(autoreverses: true),
-                            value: fogOpacity
-                        )
-                }
-                
-                ScrollView {
-                    VStack(spacing: 30) {
-                        // Spion-Symbol mit Animation
-                        ZStack {
-                            // Pulsierender Ring
-                            Circle()
-                                .stroke(
-                                    Color.red.opacity(0.6),
-                                    lineWidth: 3
-                                )
-                                .frame(width: 140, height: 140)
-                                .scaleEffect(pulseScale)
-                                .animation(
-                                    Animation.easeInOut(duration: 1.5)
-                                        .repeatForever(autoreverses: true),
-                                    value: pulseScale
-                                )
-                            
-                            // Spion-Symbol
-                            Image(systemName: "eye.trianglebadge.exclamationmark.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(.red)
-                                .shadow(color: .red.opacity(0.8), radius: 10)
-                        }
-                        .opacity(showContent ? 1 : 0)
-                        .offset(y: showContent ? 0 : -50)
-                        .animation(.easeOut(duration: 0.8), value: showContent)
-                        
-                        // Titel mit Glow-Effekt
-                        VStack(spacing: 8) {
-                            Text("MISSION ACCOMPLISHED")
-                                .font(.title)
-                                .fontWeight(.black)
-                                .foregroundColor(.red)
-                                .shadow(color: .red.opacity(textGlow), radius: 20)
-                                .opacity(showContent ? 1 : 0)
-                                .animation(.easeOut(duration: 0.8).delay(0.2), value: showContent)
-                            
-                            Text("Der Spion hat das Wort erraten")
-                                .font(.headline)
-                                .foregroundColor(.white.opacity(0.8))
-                                .opacity(showContent ? 1 : 0)
-                                .animation(.easeOut(duration: 0.8).delay(0.4), value: showContent)
-                        }
-                        
-                        // Wort-Enthüllung mit dramatischem Effekt
-                        VStack(spacing: 15) {
-                            Text("Das geheime Wort war:")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.7))
-                                .opacity(showContent ? 1 : 0)
-                                .animation(.easeOut(duration: 0.8).delay(0.6), value: showContent)
-                            
-                            Text(result.correctWord)
-                                .font(.system(size: 36, weight: .black, design: .rounded))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 15)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.black.opacity(0.7))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .stroke(Color.red, lineWidth: 2)
-                                        )
-                                        .shadow(color: .red.opacity(0.5), radius: 10)
-                                )
-                                .scaleEffect(showContent ? 1 : 0.5)
-                                .opacity(showContent ? 1 : 0)
-                                .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.8), value: showContent)
-                        }
-                        
-                        if !spies.isEmpty {
-                            VStack(spacing: 8) {
-                                Text("Die Spione waren:")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .opacity(showContent ? 1 : 0)
-                                    .animation(.easeOut(duration: 0.8).delay(0.9), value: showContent)
-                                
-                                ForEach(spies, id: \.id) { spy in
-                                    Text(spy.name)
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(.white.opacity(0.08))
-                                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                        .opacity(showContent ? 1 : 0)
-                                        .animation(.easeOut(duration: 0.8).delay(1.0), value: showContent)
-                                }
-                            }
-                            .padding(.top, 4)
-                        }
-                        
-                        // Action Buttons mit Hover-Effekt
-                        VStack(spacing: 15) {
-                            if canStartNewMission {
-                                Button(action: onNewGame) {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "arrow.clockwise")
-                                            .font(.title2)
-                                        Text("Neue Mission")
-                                            .font(.headline)
-                                            .fontWeight(.bold)
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 30)
-                                    .padding(.vertical, 15)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Color.red, Color.red.opacity(0.8)],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                            .shadow(color: .red.opacity(0.5), radius: 10)
-                                    )
-                                }
-                                .scaleEffect(showContent ? 1 : 0.8)
-                                .opacity(showContent ? 1 : 0)
-                                .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(1.0), value: showContent)
-                            } else {
-                                Text("Die aktuelle Runde läuft noch. Abschließen, um eine neue Mission zu starten.")
-                                    .font(.footnote)
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 20)
-                                    .scaleEffect(showContent ? 1 : 0.95)
-                                    .opacity(showContent ? 1 : 0)
-                                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(1.0), value: showContent)
-                            }
-                            
-                            Button(action: onExitToMain) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "xmark")
-                                        .font(.title2)
-                                    Text("Mission beenden")
-                                        .font(.headline)
-                                        .fontWeight(.bold)
-                                }
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 30)
-                                .padding(.vertical, 15)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.black.opacity(0.6))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 25)
-                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                        )
-                                )
-                            }
-                            .scaleEffect(showContent ? 1 : 0.8)
-                            .opacity(showContent ? 1 : 0)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(1.2), value: showContent)
-                        }
-                        .padding(.top, 20)
-                    }
+                Text("KOMPROMITTIERT")
+                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .foregroundColor(.red)
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 40)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.red.opacity(0.3), lineWidth: 1))
+            }
+            .scaleEffect(showContent ? 1 : 0.9)
+            .opacity(showContent ? 1 : 0)
+            
+            // Spy Icon
+            ZStack {
+                Circle()
+                    .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                    .frame(width: 140, height: 140)
+                
+                Image(systemName: "eye.trianglebadge.exclamationmark")
+                    .font(.system(size: 60))
+                    .foregroundColor(.red)
+                    .shadow(color: .red, radius: 15)
+                    .offset(x: glitchEffect ? 5 : 0, y: glitchEffect ? -2 : 0)
+                
+                // XP Animation
+                if showPoints {
+                    VStack(spacing: 0) {
+                        Text("+15 XP") // Basis Punkte
+                            .font(.system(size: 24, weight: .black))
+                            .foregroundColor(.yellow)
+                            .shadow(color: .orange, radius: 2)
+                        
+                        // Optional: Bonus anzeigen, wir lassen es simpel bei der Basis oder addieren es gedanklich.
+                        // Für genaues Feedback müssten wir den "Fast" Status hier reinreichen.
+                        // Wir nehmen einfach an, dass der Spieler sich über die Punkte freut.
+                    }
+                    .offset(y: -80)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .background(
-                Color.clear
-                    .onAppear {
-                        // Animationen starten
-                        withAnimation {
-                            showContent = true
-                            laserOffset = proxy.size.width + 100
-                            fogOpacity = 0.3
-                            pulseScale = 1.2
-                        }
-                        withAnimation(
-                            Animation.easeInOut(duration: 2.0)
-                                .repeatForever(autoreverses: true)
-                        ) {
-                            textGlow = 1.0
-                        }
-                    }
-            )
-        }
-    }
-}
-
-// MARK: - Aktive Wort-Raten Ansicht
-struct WordGuessingActiveView: View {
-    @ObservedObject var wordGuessingManager: WordGuessingManager
-    @ObservedObject var gameSettings: GameSettings
-    @Environment(\.dismiss) var dismiss
-
-    var body: some View {
-        ZStack {
-            // Hintergrund ähnlich wie in der Ergebnis-Ansicht, aber neutraler
-            LinearGradient(
-                colors: [
-                    Color.black,
-                    Color.orange.opacity(0.1),
-                    Color.black
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 24) {
-                // Header/Icon
-                VStack(spacing: 12) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.yellow)
-                        .shadow(color: .yellow.opacity(0.6), radius: 10)
-
-                    Text("WORT RATEN")
-                        .font(.title)
-                        .fontWeight(.black)
+            
+            // Revealed Word Box
+            VStack(spacing: 12) {
+                Text("GEHEIMWORT ENTSCHLÜSSELT")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.red)
+                
+                HStack(spacing: 0) {
+                    Text(revealedText)
+                        .font(.system(size: 40, weight: .black, design: .monospaced))
                         .foregroundColor(.white)
+                        .transition(.opacity)
+                    
+                    // Blinking cursor
+                    Rectangle()
+                        .fill(Color.red)
+                        .frame(width: 12, height: 40)
+                        .opacity(revealedText == result.correctWord ? 0 : 1)
+                        .animation(.easeInOut(duration: 0.5).repeatForever(), value: revealedText)
                 }
-
-                Text("Bestätige hier, wenn der Spion das richtige Wort genannt hat. Oder brich ab, um zur Diskussion zurückzukehren.")
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-
-                // Aktionen
-                VStack(spacing: 12) {
-                    Button(action: {
-                        _ = wordGuessingManager.confirmCorrectGuess()
-                    }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.title2)
-                            Text("Richtiges Wort bestätigt")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.green, Color.green.opacity(0.85)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .shadow(color: .green.opacity(0.4), radius: 10, y: 5)
-                        )
-                    }
-
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                            Text("Abbrechen")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(Color.black.opacity(0.6))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 22)
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                    }
+                .frame(maxWidth: .infinity)
+                .frame(height: 100)
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(16)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .padding(.horizontal, 25)
+            }
+            .offset(y: showContent ? 0 : 20)
+            .opacity(showContent ? 1 : 0)
+            
+            Spacer()
+            
+            // Actions
+            VStack(spacing: 16) {
+                ImposterPrimaryButton(title: "NEUE MISSION") {
+                    onNewGame()
+                }
+                
+                Button("ZUM HAUPTMENÜ") {
+                    onExitToMain()
+                }
+                .font(.caption.bold())
+                .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(.horizontal, 25)
+            .padding(.bottom, 30)
+            .opacity(showContent ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
+                showContent = true
+            }
+            
+            // Reveal text animation
+            revealText(target: result.correctWord)
+            
+            // Glitch effect loop
+            Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
+                withAnimation(.spring(response: 0.1, dampingFraction: 0.1)) {
+                    glitchEffect = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    glitchEffect = false
                 }
             }
-            .padding(.vertical, 40)
+            
+            // XP Animation Delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                    showPoints = true
+                }
+            }
         }
     }
-}
-
-
-#Preview {
-    let gameSettings = GameSettings()
-    gameSettings.players = [
-        Player(name: "Max"),
-        Player(name: "Anna"),
-        Player(name: "Tom")
-    ]
-    gameSettings.players[0].isImposter = true
-    gameSettings.players[1].word = "Hund"
-    gameSettings.players[2].word = "Hund"
-    gameSettings.selectedCategory = Category.defaultCategories[0]
-
-    return WordGuessingView(gameSettings: gameSettings)
-        .environmentObject(GameLogic(gameSettings: gameSettings))
+    
+    private func revealText(target: String) {
+        let chars = Array(target)
+        var currentIndex = 0
+        
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            if currentIndex < chars.count {
+                revealedText += String(chars[currentIndex])
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                currentIndex += 1
+            } else {
+                timer.invalidate()
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            }
+        }
+    }
 }

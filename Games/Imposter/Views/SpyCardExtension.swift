@@ -45,43 +45,39 @@ struct SpyCardView: View {
                     axis: (x: 0, y: 1, z: 0)
                 )
         }
-        .frame(width: 350, height: 500)
+        .frame(width: 320, height: 480)
         .offset(offset)
         .scaleEffect(isMovingOut ? 0.8 : 1.0)
-        .opacity(isMovingOut ? 0.3 : 1.0)
+        .opacity(isMovingOut ? 0.0 : 1.0)
         .onTapGesture {
             handleCardTap()
         }
-        .animation(.spring(response: 0.8, dampingFraction: 0.8), value: rotationAngle)
-        .animation(.easeInOut(duration: 0.6), value: offset)
-        .animation(.easeInOut(duration: 0.6), value: isMovingOut)
+        .animation(.spring(response: 0.6, dampingFraction: 0.7), value: rotationAngle)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: offset)
+        .animation(.easeIn(duration: 0.4), value: isMovingOut)
     }
     
     private func handleCardTap() {
         if !isFlipped {
-            // Erste Berührung: Karte umdrehen
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             flipCard()
             onCardTap()
         } else if !isMovingOut {
-            // Zweite Berührung: Karte wegbewegen
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             moveCardOut()
         }
     }
     
     private func flipCard() {
-        withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
-            rotationAngle += 180
-            isFlipped = true
-        }
+        rotationAngle += 180
+        isFlipped = true
     }
     
     private func moveCardOut() {
-        withAnimation(.easeInOut(duration: 0.6)) {
-            offset = CGSize(width: -400, height: -50)
-            isMovingOut = true
-        }
+        offset = CGSize(width: -400, height: 0)
+        isMovingOut = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             onCardDismissed()
         }
     }
@@ -91,67 +87,55 @@ struct SpyCardView: View {
 struct CardBackView: View {
     let playerName: String
     
-    private let cornerRadius: CGFloat = 28
-    
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [
-                            Color(red: 0.16, green: 0.18, blue: 0.24),
-                            Color(red: 0.09, green: 0.1, blue: 0.15)
-                        ],
+                        colors: [Color(white: 0.15), Color(white: 0.05)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
+                .shadow(color: .black.opacity(0.4), radius: 15, y: 10)
             
-            VStack(spacing: 28) {
-                VStack(spacing: 8) {
-                    Text("Nächster Spieler")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.white.opacity(0.7))
-                    Text(playerName)
-                        .font(.title.weight(.bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                }
+            VStack(spacing: 30) {
+                Text("DEINE ROLLE")
+                    .font(.caption.bold())
+                    .tracking(2)
+                    .foregroundColor(.white.opacity(0.5))
                 
-                VStack(spacing: 10) {
+                ZStack {
                     Circle()
-                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-                        .background(Circle().fill(Color.white.opacity(0.07)))
-                        .frame(width: 110, height: 110)
-                        .overlay(
-                            Image(systemName: "eye")
-                                .font(.system(size: 44, weight: .bold))
-                                .foregroundColor(.white)
+                        .strokeBorder(
+                            LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 3
                         )
+                        .frame(width: 120, height: 120)
                     
-                    Text("Karte verdeckt halten")
-                        .font(.footnote)
-                        .foregroundColor(.white.opacity(0.65))
-                }
-                
-                VStack(spacing: 6) {
-                    Text("Bereit zum Aufdecken")
-                        .font(.headline)
+                    Image(systemName: "person.fill.questionmark")
+                        .font(.system(size: 50))
                         .foregroundColor(.white)
-                    Text("Tippe einmal, um deine Rolle zu sehen,\nund danach noch einmal zum Weitergeben.")
-                        .font(.footnote)
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
                 }
-                .padding(.horizontal, 16)
+                .shadow(color: .orange.opacity(0.3), radius: 10)
+                
+                VStack(spacing: 8) {
+                    Text(playerName)
+                        .font(.title.bold())
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("Tippen zum Umdrehen")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.6))
+                }
             }
-            .padding(32)
+            .padding(30)
         }
-        .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
     }
 }
 
@@ -159,220 +143,316 @@ struct CardBackView: View {
 struct SpyCardFrontView: View {
     let card: GameCard
     let gameSettings: GameSettings
-    @Environment(\.colorScheme) var colorScheme
     
-    private struct SpyInfo {
+    struct SpyInfo {
         var categoryEmoji: String?
         var categoryName: String?
         var hint: String?
         var otherSpies: [String] = []
     }
     
-    private var hasStructuredSpyInfo: Bool {
-        parsedSpyInfo.categoryEmoji != nil || parsedSpyInfo.hint != nil || !parsedSpyInfo.otherSpies.isEmpty
-    }
-    
     private var parsedSpyInfo: SpyInfo {
-        guard card.isImposter else { return SpyInfo() }
-        let lines = card.displayWord
-            .split(separator: "\n")
-            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        // Erweiterte Parsing-Logik für alle Rollen
         var info = SpyInfo()
-        var i = 0
-        while i < lines.count {
-            let line = lines[i]
-            if line.hasPrefix("Hinweis:") {
-                info.hint = line.replacingOccurrences(of: "Hinweis:", with: "").trimmingCharacters(in: .whitespaces)
-            } else if line.hasPrefix("Mitspione:") {
-                var names: [String] = []
-                var j = i + 1
-                while j < lines.count {
-                    let nline = lines[j]
-                    if nline.lowercased().hasPrefix("du bist der spion") { break }
-                    let parts = nline.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
-                    names.append(contentsOf: parts.filter { !$0.isEmpty })
-                    j += 1
-                }
-                info.otherSpies = names
-            } else if line.count >= 2, let first = line.first, first.isEmojiLike {
-                let comps = line.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
-                if comps.count == 2 {
-                    info.categoryEmoji = String(comps[0])
-                    info.categoryName = String(comps[1]).trimmingCharacters(in: .whitespaces)
+        
+        // 1. Kategorie extrahieren (wird vom HintsManager oder GameLogic gesetzt)
+        info.categoryEmoji = card.category.emoji
+        info.categoryName = card.category.name
+        
+        // 2. Text analysieren
+        let parts = card.displayWord.components(separatedBy: "\n\n")
+        
+        // Teil 1 ist meist das Wort (oder Fake-Wort)
+        // Teil 2+ sind Zusatzinfos
+        
+        if parts.count > 1 {
+            // Wir haben Zusatzinfos!
+            for part in parts.dropFirst() {
+                if part.contains("Verdächtige") || part.contains("Zwilling") || part.contains("Sicherer") || part.contains("Der Spion") {
+                    info.hint = part // Wir nutzen das 'hint' Feld für generische Rollen-Infos
+                } else if part.hasPrefix("Mitspione:") {
+                    // Legacy Support für alte Logik
+                    let names = part.replacingOccurrences(of: "Mitspione:", with: "").components(separatedBy: ",")
+                    info.otherSpies = names.map { $0.trimmingCharacters(in: .whitespaces) }
+                } else if part.hasPrefix("Hinweis:") {
+                    info.hint = part.replacingOccurrences(of: "Hinweis:", with: "").trimmingCharacters(in: .whitespaces)
                 }
             }
-            i += 1
         }
+        
         return info
     }
     
-    private var backgroundGradient: LinearGradient {
-        let colors: [Color] = card.isImposter
-        ? [Color(red: 0.33, green: 0.07, blue: 0.15), Color(red: 0.12, green: 0.02, blue: 0.07)]
-        : [Color(red: 0.08, green: 0.14, blue: 0.28), Color(red: 0.03, green: 0.06, blue: 0.14)]
-        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    private var cardBackground: LinearGradient {
+        // Mapping von Farbnamen zu echten Farben
+        let colorName = card.cardColorName
+        let baseColor: Color
+        
+        switch colorName {
+        case "darkRed": baseColor = Color(red: 0.5, green: 0.1, blue: 0.1)
+        case "darkBlue": baseColor = Color(red: 0.1, green: 0.2, blue: 0.4)
+        case "darkPurple": baseColor = Color(red: 0.3, green: 0.1, blue: 0.4)
+        default: baseColor = Color(red: 0.1, green: 0.2, blue: 0.4)
+        }
+        
+        return LinearGradient(
+            colors: [baseColor, Color.black],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(backgroundGradient)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
+                .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
             
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    headerSection
-                    
-                    if card.isImposter {
-                        spyContent
-                    } else {
-                        citizenContent
-                    }
-                    
-                    Text("Tippe erneut, um die Karte weiterzugeben")
-                        .font(.footnote.weight(.medium))
-                        .foregroundColor(.white.opacity(0.65))
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 8)
+            VStack(spacing: 25) {
+                // HEADER
+                HStack {
+                    Image(systemName: card.cardIcon)
+                    Text(card.cardTitle)
                 }
-        .frame(maxWidth: .infinity, alignment: .center)
-                .padding(28)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
-    }
-    
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            Image(systemName: card.isImposter ? "eye.slash.fill" : "checkmark.seal.fill")
-                .font(.title2)
-                .foregroundColor(card.isImposter ? .red : .blue)
-            Text(card.isImposter ? "IMPOSTER" : "DEINE KARTE")
-                .font(.headline.weight(.bold))
+                .font(.headline.bold())
                 .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.4))
+                .clipShape(Capsule())
+                
+                Spacer()
+                
+                // CONTENT
+                if card.roleType != nil {
+                    // Neue Rollen-Logik
+                    RoleCardContent(card: card, parsedInfo: parsedSpyInfo, gameSettings: gameSettings)
+                } else if card.isImposter {
+                    // Klassischer Spion (Fallback/Standard)
+                    spyContent
+                } else {
+                    // Klassischer Bürger (Fallback/Standard)
+                    citizenContent
+                }
+                
+                Spacer()
+                
+                Text("Tippe erneut zum Schließen")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .padding(30)
         }
     }
     
     @ViewBuilder
     private var spyContent: some View {
-        if let categoryEmoji = parsedSpyInfo.categoryEmoji,
-           let categoryName = parsedSpyInfo.categoryName {
-            InfoTile(title: "Kategorie", icon: "folder.fill", alignment: .center) {
-                Text("\(categoryEmoji) \(categoryName)")
-                    .font(.title3.weight(.semibold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-            }
-        }
-        
-        if let hint = parsedSpyInfo.hint, !hint.isEmpty {
-            InfoTile(title: "Hinweis", icon: "lightbulb.fill", alignment: .center) {
-                Text(hint)
-                    .font(.body.weight(.medium))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        
-        if !parsedSpyInfo.otherSpies.isEmpty {
-            InfoTile(title: "Mitspione", icon: "person.2.fill", alignment: .center) {
-                if #available(iOS 16.0, *) {
-                    WrapHStack(items: parsedSpyInfo.otherSpies, spacing: 8, runSpacing: 8) { spyName in
-                        spyChip(named: spyName)
-                    }
-                } else {
-                    ForEach(parsedSpyInfo.otherSpies, id: \.self) { spyName in
-                        spyChip(named: spyName)
-                    }
+        // ... (Der bestehende Spy-Content Code bleibt hier als Fallback, falls roleType nil ist)
+        VStack(spacing: 20) {
+            if let emoji = parsedSpyInfo.categoryEmoji, let name = parsedSpyInfo.categoryName {
+                VStack(spacing: 8) {
+                    Text("KATEGORIE")
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.6))
+                    Text("\(emoji) \(name)")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
                 }
-            }
-        }
-        
-        if !hasStructuredSpyInfo {
-            InfoTile(title: "Mission", icon: "target", alignment: .center) {
-                let fallback = card.displayWord.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(fallback.isEmpty ? "Bleib undercover und finde das geheime Wort." : fallback)
-                    .font(.body.weight(.medium))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-    
-    private func spyChip(named name: String) -> some View {
-        Text(name)
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.white.opacity(0.08))
-            )
-    }
-    
-    private var citizenContent: some View {
-        VStack(spacing: 16) {
-            InfoTile(title: "Kategorie", icon: "folder.fill") {
-                Text("\(card.category.emoji) \(card.category.name)")
-                    .font(.title3.weight(.semibold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
             }
             
-            InfoTile(title: "Dein Wort") {
+            // ... Rest vom alten Code für SpyContent
+            if let hint = parsedSpyInfo.hint {
+                VStack(spacing: 8) {
+                    Label("HINWEIS", systemImage: "lightbulb.fill")
+                        .font(.caption.bold())
+                        .foregroundColor(.yellow)
+                    Text(hint)
+                        .font(.body.italic())
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(12)
+                }
+            }
+            
+            if !parsedSpyInfo.otherSpies.isEmpty {
+                VStack(spacing: 8) {
+                    Text("MITSPIONE")
+                        .font(.caption.bold())
+                        .foregroundColor(.red)
+                    
+                    if #available(iOS 16.0, *) {
+                        WrapHStack(items: parsedSpyInfo.otherSpies) { name in
+                            Text(name)
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.red.opacity(0.2))
+                                .cornerRadius(8)
+                                .foregroundColor(.white)
+                        }
+                    } else {
+                        HStack {
+                            ForEach(parsedSpyInfo.otherSpies, id: \.self) { name in
+                                Text(name)
+                                    .font(.caption.bold())
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if !hasStructuredSpyInfo {
+                Text(card.shortInstruction) // Nutze die neue Property
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var citizenContent: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 4) {
+                Text("KATEGORIE")
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.6))
+                Text("\(card.category.emoji) \(card.category.name)")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            
+            Divider().background(Color.white.opacity(0.2))
+            
+            VStack(spacing: 10) {
+                Text("DEIN WORT")
+                    .font(.caption.bold())
+                    .foregroundColor(.blue)
+                
                 Text(card.displayWord)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .lineLimit(5)
+                    .lineLimit(3)
                     .minimumScaleFactor(0.5)
             }
+            
+            Spacer()
+            Text(card.shortInstruction)
+                .font(.footnote)
+                .foregroundColor(.white.opacity(0.6))
         }
+    }
+    
+    private var hasStructuredSpyInfo: Bool {
+        parsedSpyInfo.categoryEmoji != nil || parsedSpyInfo.hint != nil || !parsedSpyInfo.otherSpies.isEmpty
     }
 }
 
-private struct InfoTile<Content: View>: View {
-    let title: String
-    var icon: String?
-    var alignment: HorizontalAlignment = .center
-    @ViewBuilder var content: () -> Content
+// MARK: - Role Card Content (Neu für Rollen-Modus)
+struct RoleCardContent: View {
+    let card: GameCard
+    let parsedInfo: SpyCardFrontView.SpyInfo
+    let gameSettings: GameSettings
     
     var body: some View {
-        VStack(alignment: alignment, spacing: 10) {
-            HStack(spacing: 6) {
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.white.opacity(0.8))
+        VStack(spacing: 10) { // Reduziertes Spacing (war 20)
+            // 1. Kategorie
+            if let emoji = parsedInfo.categoryEmoji, let name = parsedInfo.categoryName {
+                VStack(spacing: 4) { // Kompakter
+                    Text("KATEGORIE")
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.6))
+                    Text("\(emoji) \(name)")
+                        .font(.title3.bold()) // Etwas kleiner (war title2)
+                        .foregroundColor(.white)
                 }
-                Text(title.uppercased())
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.white.opacity(0.6))
+                .padding(.top, 0) // Ganz nach oben
             }
-            .frame(maxWidth: .infinity, alignment: .center)
-            content()
-                .frame(maxWidth: .infinity, alignment: .center)
+            
+            Divider().background(Color.white.opacity(0.2))
+            
+            // 2. Interaktive Rollen (Hacker & Leibwächter)
+            if let role = card.roleType, (role == .hacker || role == .bodyguard) {
+                RoleActionView(
+                    role: role,
+                    players: gameSettings.players,
+                    currentPlayer: card.player
+                ) { target in
+                    // Aktion ausführen
+                    if let index = gameSettings.players.firstIndex(where: { $0.id == target.id }) {
+                        if role == .bodyguard {
+                            gameSettings.players[index].isProtected = true
+                        }
+                    }
+                }
+                // KEIN Spacer und KEIN shortInstruction hier, um Platz zu sparen
+            } else {
+                // Standard Anzeige für andere Rollen
+                
+                // 3. Das Wort (oder Pseudo-Wort)
+                let hasExtraInfo = parsedInfo.hint != nil || !parsedInfo.otherSpies.isEmpty
+                
+                VStack(spacing: 10) {
+                    Text("DEIN WORT")
+                        .font(.caption.bold())
+                        .foregroundColor(.blue)
+                    
+                    let mainText = getMainText()
+                    Text(mainText)
+                        .font(.system(size: hasExtraInfo ? 28 : 36, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.5)
+                }
+                
+                // 4. Zusatzinfos (Verdächtige, Partner etc.)
+                if let infoText = parsedInfo.hint {
+                    VStack(spacing: 8) {
+                        Label("INFO", systemImage: "info.circle.fill")
+                            .font(.caption.bold())
+                            .foregroundColor(.yellow)
+                        Text(infoText)
+                            .font(.body.bold())
+                            .foregroundColor(.white.opacity(0.95))
+                            .multilineTextAlignment(.center)
+                            .padding()
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                    }
+                }
+                
+                // 5. Mission / Kurzanweisung (nur für nicht-interaktive Rollen)
+                Spacer()
+                Text(card.shortInstruction)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.05))
-        )
+    }
+    
+    private func getMainText() -> String {
+        // Extrahiere das Wort aus dem Gesamttext.
+        let parts = card.displayWord.components(separatedBy: "\n\n")
+        if let first = parts.first {
+            return first
+        }
+        return "???"
     }
 }
 
-
-// MARK: - WrapHStack (Flow layout for chips)
-@available(iOS 16.0, macOS 13.0, *)
+// MARK: - WrapHStack Implementation
+@available(iOS 16.0, macOS 13.0, *) 
 struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.Element: Hashable {
     let items: Data
     var spacing: CGFloat = 8
@@ -382,14 +462,14 @@ struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.
     var body: some View {
         FlowRowsLayout(spacing: spacing, runSpacing: runSpacing) {
             ForEach(Array(items), id: \.self) {
-                item in
+                item in 
                 content(item)
             }
         }
     }
 }
 
-@available(iOS 16.0, macOS 13.0, *)
+@available(iOS 16.0, macOS 13.0, *) 
 private struct FlowRowsLayout: Layout {
     var spacing: CGFloat = 8
     var runSpacing: CGFloat = 8
@@ -479,25 +559,15 @@ private struct FlowRowsLayout: Layout {
 }
 
 #Preview {
-    let samplePlayer = Player(name: "Max Mustermann")
-    let sampleCategory = Category.defaultCategories[0]
-    let sampleCard = GameCard(player: samplePlayer, category: sampleCategory)
-    let gameSettings = GameSettings()
-    gameSettings.spyCanSeeCategory = true
-    gameSettings.spiesCanSeeEachOther = true
-    
-    return SpyCardView(
-        card: sampleCard,
-        gameSettings: gameSettings,
-        onCardTap: { },
-        onCardDismissed: { }
+    let settings = GameSettings()
+    let player = Player(name: "Max")
+    // Wir setzen die View hier als letztes Statement, ohne 'return'
+    SpyCardView(
+        card: GameCard(player: player, category: Category.defaultCategories[0]),
+        gameSettings: settings,
+        onCardTap: {},
+        onCardDismissed: {}
     )
     .padding()
-    .background(
-        LinearGradient(
-            colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    )
+    .background(Color.black)
 }

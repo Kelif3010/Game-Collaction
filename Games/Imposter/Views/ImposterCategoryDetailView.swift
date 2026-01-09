@@ -42,17 +42,13 @@ struct ImposterCategoryDetailView: View {
                         .foregroundColor(.white)
                     Spacer()
                     
-                    if category.isCustom {
-                        Button { showingEditSheet = true } label: {
-                            Image(systemName: "pencil")
-                                .font(.title2.bold())
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.blue)
-                                .clipShape(Circle())
-                        }
-                    } else {
-                        Color.clear.frame(width: 44, height: 44)
+                    Button { showingEditSheet = true } label: {
+                        Image(systemName: "pencil")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.blue)
+                            .clipShape(Circle())
                     }
                 }
                 .padding(.horizontal)
@@ -72,45 +68,40 @@ struct ImposterCategoryDetailView: View {
                                 .foregroundColor(.white)
                             
                             if !category.isCustom {
-                                HStack {
-                                    Image(systemName: "lock.fill")
-                                    Text("Standard-Kategorie")
-                                }
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.6))
+                                Text("Standard-Kategorie")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
                             }
                         }
                         .padding(.bottom, 10)
                         
-                        // Add Word (if custom)
-                        if category.isCustom {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Neuer Begriff")
-                                    .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.leading, 4)
+                        // Add Word
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Neuer Begriff")
+                                .font(.headline)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 4)
+                            
+                            HStack(spacing: 12) {
+                                TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundColor(.gray))
+                                    .padding()
+                                    .background(Color.white.opacity(0.08))
+                                    .cornerRadius(12)
+                                    .foregroundColor(.white)
+                                    .onSubmit { addWord() }
                                 
-                                HStack(spacing: 12) {
-                                    TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundColor(.gray))
-                                        .padding()
-                                        .background(Color.white.opacity(0.08))
-                                        .cornerRadius(12)
+                                Button(action: addWord) {
+                                    Image(systemName: "plus")
+                                        .font(.title2.bold())
                                         .foregroundColor(.white)
-                                        .onSubmit { addWord() }
-                                    
-                                    Button(action: addWord) {
-                                        Image(systemName: "plus")
-                                            .font(.title2.bold())
-                                            .foregroundColor(.white)
-                                            .frame(width: 50, height: 50)
-                                            .background(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.green)
-                                            .clipShape(Circle())
-                                    }
-                                    .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                        .frame(width: 50, height: 50)
+                                        .background(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.green)
+                                        .clipShape(Circle())
                                 }
+                                .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
-                            .padding(.horizontal)
                         }
+                        .padding(.horizontal)
                         
                         // Word List
                         VStack(alignment: .leading, spacing: 12) {
@@ -135,14 +126,12 @@ struct ImposterCategoryDetailView: View {
                                         
                                         Spacer()
                                         
-                                        if category.isCustom {
-                                            Button {
-                                                wordToDelete = word
-                                                showingWordAlert = true
-                                            } label: {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.red.opacity(0.7))
-                                            }
+                                        Button {
+                                            wordToDelete = word
+                                            showingWordAlert = true
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.red.opacity(0.7))
                                         }
                                     }
                                     .imposterRowStyle()
@@ -155,8 +144,8 @@ struct ImposterCategoryDetailView: View {
                         if category.isCustom {
                             Button(action: { showingDeleteAlert = true }) {
                                 HStack {
-                                    Image(systemName: "trash")
-                                    Text("Kategorie löschen")
+                                    Image(systemName: "arrow.counterclockwise")
+                                    Text("Kategorie zurücksetzen")
                                 }
                                 .font(.headline)
                                 .foregroundColor(.red)
@@ -176,14 +165,14 @@ struct ImposterCategoryDetailView: View {
             EditCategoryView(category: $category)
                 .environmentObject(gameSettings)
         }
-        .alert("Kategorie löschen", isPresented: $showingDeleteAlert) {
+        .alert("Kategorie zurücksetzen", isPresented: $showingDeleteAlert) {
             Button("Abbrechen", role: .cancel) { }
-            Button("Löschen", role: .destructive) {
+            Button("Zurücksetzen", role: .destructive) {
                 gameSettings.removeCategory(category)
                 dismiss()
             }
         } message: {
-            Text("Willst du diese Kategorie wirklich unwiderruflich löschen?")
+            Text("Willst du diese Kategorie wirklich zurücksetzen?")
         }
         .alert("Begriff löschen", isPresented: $showingWordAlert) {
             Button("Abbrechen", role: .cancel) { wordToDelete = nil }
@@ -203,7 +192,8 @@ struct ImposterCategoryDetailView: View {
     // Logic
     private func addWord() {
         let word = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
-        if category.isCustom, !word.isEmpty, !category.words.contains(word) {
+        if !word.isEmpty, !category.words.contains(word) {
+            promoteToCustomIfNeeded()
             category.addWord(word)
             gameSettings.updateCategory(category)
             newWord = ""
@@ -211,9 +201,17 @@ struct ImposterCategoryDetailView: View {
     }
     
     private func removeWord(_ word: String) {
-        guard category.isCustom else { return }
+        promoteToCustomIfNeeded()
         category.removeWord(word)
         gameSettings.updateCategory(category)
+    }
+
+    private func promoteToCustomIfNeeded() {
+        guard !category.isCustom else { return }
+        category.isCustom = true
+        if category.sourceName == nil {
+            category.sourceName = category.name
+        }
     }
 }
 
@@ -316,8 +314,14 @@ struct EditCategoryView: View {
             return
         }
         
+        let wasCustom = category.isCustom
+        let originalSourceName = category.sourceName ?? category.name
         category.name = name
         category.emoji = emoji
+        if !wasCustom {
+            category.isCustom = true
+            category.sourceName = originalSourceName
+        }
         gameSettings.updateCategory(category)
         dismiss()
     }

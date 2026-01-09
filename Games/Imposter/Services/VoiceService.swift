@@ -48,14 +48,28 @@ class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     
     /// Spricht einen Hinweis vor
     func speakHint(_ hint: GameHint) async {
-        let hintText = "Hinweis: \(hint.content)"
-        await speak(hintText, withAI: true)
+        // Direkte Ausgabe ohne KI-Rewrite, um Latenz zu vermeiden und Originaltext zu bewahren
+        let intro: String
+        switch hint.type {
+        case .challenge:
+            intro = "Achtung, eine Challenge"
+        case .fake:
+            // Tarnung: Gleiches Intro wie bei echten Hinweisen!
+            intro = "Hinweis"
+        default:
+            intro = "Hinweis"
+        }
+        
+        // Punkt sorgt für natürliche Pause ohne "Komma" zu sagen
+        let textToSpeak = "\(intro). \(hint.content)"
+        speakWithSystemVoice(textToSpeak)
     }
     
     /// Spricht eine Mission-Beschreibung vor
     func speakMission(_ mission: String) async {
         let missionText = "Mission: \(mission)"
-        await speak(missionText, withAI: true)
+        // Hier lassen wir KI-Rewrite zu, falls gewünscht, aber meist ist der Text schon gut
+        speakWithSystemVoice(missionText)
     }
     
     /// Stoppt das Sprechen
@@ -89,31 +103,22 @@ class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         return voiceSettings.selectedVoice?.identifier
     }
     
+    /// Aktualisiert die Sprachparameter (Rate, Pitch)
+    func updateSettings(rate: Float, pitch: Float) {
+        voiceSettings.speechRate = rate
+        voiceSettings.pitchMultiplier = pitch
+    }
+    
+    /// Gibt die aktuellen Sprachparameter zurück
+    func getCurrentSettings() -> (rate: Float, pitch: Float) {
+        return (voiceSettings.speechRate, voiceSettings.pitchMultiplier)
+    }
+    
     // MARK: - Private Methods
     
     private func speakWithAI(_ text: String) async {
-        #if canImport(FoundationModels)
-        do {
-            // KI generiert eine natürlichere Version des Textes
-            let prompt = """
-            Formuliere diesen Text für eine Spion-Spiel-Moderatorin um. 
-            Verwende einen geheimnisvollen, spannenden Ton. Maximal 2 Sätze.
-            
-            Original: \(text)
-            """
-            if let response = try await aiService.session?.respond(to: prompt) {
-                let content = response.content
-                speakWithSystemVoice(content)
-            } else {
-                speakWithSystemVoice(text)
-            }
-        } catch {
-            print("🎤 KI-Voice-Fehler: \(error)")
-            speakWithSystemVoice(text)
-        }
-        #else
+        // Legacy Methode, wird aktuell kaum genutzt um Latenz zu sparen.
         speakWithSystemVoice(text)
-        #endif
     }
     
     private func speakWithSystemVoice(_ text: String) {
@@ -121,12 +126,15 @@ class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = voiceSettings.selectedVoice
-        // Natürlichere Parameter: etwas langsamer, leichte Prosodie
-        utterance.rate = max(0.42, min(0.52, voiceSettings.speechRate))
-        utterance.pitchMultiplier = max(0.95, min(1.1, voiceSettings.pitchMultiplier))
+        
+        // Werte direkt übernehmen
+        utterance.rate = voiceSettings.speechRate
+        utterance.pitchMultiplier = voiceSettings.pitchMultiplier
         utterance.volume = voiceSettings.volume
-        utterance.preUtteranceDelay = 0.05
-        utterance.postUtteranceDelay = 0.03
+        
+        // Pausen für flüssigeren Fluss minimiert
+        utterance.preUtteranceDelay = 0.02
+        utterance.postUtteranceDelay = 0.02
         
         synthesizer.speak(utterance)
     }
@@ -157,11 +165,19 @@ class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             let id = v.identifier.lowercased()
             let name = v.name.lowercased()
             var s = 0
-            if id.contains("siri") || name.contains("siri") { s += 100 }
-            if id.contains("premium") || name.contains("premium") { s += 80 }
-            if id.contains("enhanced") || name.contains("enhanced") { s += 60 }
-            // Prefer female voices for a moderator vibe (heuristic, may vary by device)
-            if name.contains("anna") || name.contains("marlene") || name.contains("helena") { s += 20 }
+            
+            // Priorisiere Siri Stimmen (klingen oft am besten)
+            if id.contains("siri") { s += 200 }
+            if name.contains("siri") { s += 200 }
+            
+            // Priorisiere Premium/Enhanced
+            if v.quality == .premium { s += 100 }
+            if v.quality == .enhanced { s += 80 }
+            
+            // Bekannte gute deutsche Stimmen
+            if name.contains("viktor") { s += 50 } // Oft sehr natürlich
+            if name.contains("anna") { s += 40 }
+            
             return s
         }
 

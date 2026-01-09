@@ -65,6 +65,37 @@ struct ImposterPrimaryButton: View {
     }
 }
 
+struct ImposterSheetHeader: View {
+    let title: String
+    let onBack: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+
+            Spacer()
+
+            Text(title)
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+
+            Spacer()
+
+            Color.clear
+                .frame(width: 36, height: 36)
+        }
+        .padding(.top, 20)
+        .padding(.bottom, 8)
+    }
+}
+
 struct ImposterIconBadge: View {
     let systemName: String
     let tint: Color

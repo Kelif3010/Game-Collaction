@@ -685,7 +685,20 @@
 "Gedanke" = "Thought";
 "Illegal" = "Illegal";
 
-/* Questions - Prompts */
+/* Questions - Voting & Timer */
+"Diskussion" = "Discussion";
+"Unbegrenzt" = "Unlimited";
+"%d Min" = "%d min";
+"Vergebt noch %lld Stimmen (%lld/%lld)." = "Cast %lld more votes (%lld/%lld).";
+"Hauptverdächtiger: %@" = "Prime suspect: %@";
+"Gleichstand zwischen %d Spielern." = "Tie between %d players.";
+"Übergabe an" = "Hand over to";
+"Scan läuft..." = "Scanning...";
+"Gedrückt halten zum Entsperren" = "Hold to unlock";
+"Zeit: %.1fs" = "Time: %.1fs";
+
+
+/* Questions - Prompts */  
 "Wie viele Gläser Wasser trinkst du am Tag?" = "How many glasses of water do you drink per day?";
 "Wann klingelt dein Wecker unter der Woche?" = "When does your alarm go off on weekdays?";
 "Wie lange brauchst du morgens zur Arbeit/Uni?" = "How long does it take you to get to work/university in the morning?";

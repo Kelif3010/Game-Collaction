@@ -11,6 +11,7 @@ struct Category: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
     var words: [String]
+    var sourceName: String?
     var isCustom: Bool
     var emoji: String
     var contentRating: ContentRating
@@ -20,17 +21,22 @@ struct Category: Identifiable, Codable, Hashable {
         case mature18
     }
 
-    init(name: String, words: [String], emoji: String = "📁", isCustom: Bool = false, contentRating: ContentRating = .general) {
+    init(name: String, words: [String], emoji: String = "📁", isCustom: Bool = false, contentRating: ContentRating = .general, sourceName: String? = nil) {
         self.id = UUID()
         self.name = name
         self.words = words
+        if isCustom {
+            self.sourceName = sourceName
+        } else {
+            self.sourceName = sourceName ?? name
+        }
         self.emoji = emoji
         self.isCustom = isCustom
         self.contentRating = contentRating
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, words, isCustom, emoji, contentRating
+        case id, name, words, sourceName, isCustom, emoji, contentRating
     }
 
     init(from decoder: Decoder) throws {
@@ -38,9 +44,13 @@ struct Category: Identifiable, Codable, Hashable {
         self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         self.name = try container.decode(String.self, forKey: .name)
         self.words = try container.decode([String].self, forKey: .words)
+        self.sourceName = try container.decodeIfPresent(String.self, forKey: .sourceName)
         self.isCustom = try container.decodeIfPresent(Bool.self, forKey: .isCustom) ?? false
         self.emoji = try container.decodeIfPresent(String.self, forKey: .emoji) ?? "📁"
         self.contentRating = try container.decodeIfPresent(ContentRating.self, forKey: .contentRating) ?? .general
+        if !self.isCustom && self.sourceName == nil {
+            self.sourceName = self.name
+        }
     }
 
     func encode(to encoder: Encoder) throws {
@@ -48,6 +58,7 @@ struct Category: Identifiable, Codable, Hashable {
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
         try container.encode(words, forKey: .words)
+        try container.encode(sourceName, forKey: .sourceName)
         try container.encode(isCustom, forKey: .isCustom)
         try container.encode(emoji, forKey: .emoji)
         try container.encode(contentRating, forKey: .contentRating)

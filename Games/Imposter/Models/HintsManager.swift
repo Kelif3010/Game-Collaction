@@ -143,30 +143,96 @@ class HintsManager: ObservableObject {
         return (wordsWithHints.count, totalHints)
     }
     
-    /// Erstellt eine Vorschau der verfügbaren Hinweise für eine Kategorie
-    /// - Parameter categoryName: Name der Kategorie
-    /// - Returns: String mit Beispiel-Hinweisen
-    static func getHintsPreview(for categoryName: String) -> String {
-        let wordsWithHints = CategoryHints.getWordsWithHints(for: categoryName)
+    /// Erstellt den Text für eine spezielle Rollenkarte
+    /// - Parameters:
+    ///   - role: Die Rolle des Spielers
+    ///   - word: Das echte Wort der Runde
+    ///   - category: Die Kategorie der Runde
+    ///   - allPlayers: Alle Spieler (um Informationen über andere Rollen zu finden)
+    ///   - currentPlayer: Der Spieler, für den die Karte erstellt wird
+    /// - Returns: Formatierter Text für die Karte
+    static func createRoleCardText(
+        role: RoleType,
+        word: String,
+        category: Category,
+        allPlayers: [Player],
+        currentPlayer: Player
+    ) -> String {
+        var components: [String] = []
         
-        if wordsWithHints.isEmpty {
-            return "Keine Hinweise verfügbar für diese Kategorie"
+        // 1. Das Wort (oder ein falsches Wort für Pechvogel)
+        if role == .confused {
+            // Pechvogel bekommt ein zufälliges anderes Wort aus der Kategorie
+            var otherWords = category.words.filter { $0 != word }
+            if otherWords.isEmpty {
+                // Fallback: Sollte nicht passieren, aber sicher ist sicher
+                components.append(word)
+            } else {
+                let fakeWord = otherWords.randomElement()!
+                components.append(fakeWord)
+            }
+        } else {
+            // Alle anderen sehen das echte Wort
+            components.append(word)
         }
         
-        // Nimm die ersten 2 Begriffe als Beispiel
-        let exampleWords: [String] = Array(wordsWithHints.prefix(2))
-        let examples: [String] = exampleWords.compactMap { (word: String) -> String? in
-            let hints: [String] = CategoryHints.getHints(for: word, in: categoryName)
-            let firstTwoHints: [String] = Array(hints.prefix(2))
-            if firstTwoHints.isEmpty { return nil }
-            return "\(word): \(firstTwoHints.joined(separator: ", "))"
+        // 2. Rollen-Spezifische Zusatzinfos
+        switch role {
+        case .secretAgent:
+            // Sieht den Spion (und Saboteur/Maulwurf/Hacker als "Böse")
+            let badGuys = allPlayers.filter { $0.isImposter || $0.roleType == .saboteur || $0.roleType == .mole || $0.roleType == .hacker }
+                .filter { $0.id != currentPlayer.id } // Sich selbst nicht anzeigen
+                .map { $0.name }
+            
+            if !badGuys.isEmpty {
+                if badGuys.count == 1 {
+                    components.append("Verdächtige Person: \(badGuys[0])")
+                } else {
+                    components.append("Verdächtige Personen: \(badGuys.joined(separator: ", "))")
+                }
+            } else {
+                components.append("Keine Verdächtigen gefunden.")
+            }
+            
+        case .twins:
+            // Sieht den anderen Zwilling
+            let otherTwin = allPlayers.first { $0.roleType == .twins && $0.id != currentPlayer.id }
+            if let twin = otherTwin {
+                components.append("Dein Zwilling: \(twin.name)")
+            }
+            
+        case .saboteur:
+            // Sieht den Spion
+            let spies = allPlayers.filter { $0.isImposter }.map { $0.name }
+            if !spies.isEmpty {
+                components.append("Der Spion: \(spies.joined(separator: ", "))")
+            }
+            
+        case .hacker:
+            // Hacker hat interaktive Auswahl, braucht hier keine statische Zusatzinfo
+            break
+            
+        case .mole:
+            // Maulwurf kennt das Wort, erscheint aber böse für den Agenten
+            // Keine Zusatzinfo, nur das Wort
+            break
+            
+        case .fool:
+            // Narr will rausfliegen
+            // Keine Zusatzinfo, nur das Wort
+            break
+            
+        case .bodyguard:
+            // Leibwächter schützt den Agenten
+            // Keine Zusatzinfo, nur das Wort
+            break
+            
+        case .confused:
+            // Pechvogel hat schon sein falsches Wort oben bekommen
+            break
         }
         
-        if examples.isEmpty {
-            return "Keine Hinweise verfügbar"
-        }
-        
-        return "Beispiele:\n" + examples.joined(separator: "\n")
+        return components.joined(separator: "\n\n")
     }
 }
 

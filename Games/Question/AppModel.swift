@@ -10,6 +10,9 @@ class AppModel: ObservableObject {
     // WICHTIG: Hier speichern wir den Fairness-Zustand
     @Published var fairnessState = FairnessState()
     
+    // Scoreboard
+    @Published var scores: [UUID: Int] = [:]
+    
     // HIER WAR DAS PROBLEM: Wir müssen die Regeln explizit setzen!
     @Published var fairnessPolicy = FairnessPolicy(
         maxConsecutive: 2,                    // Max 2x hintereinander Spion
@@ -62,5 +65,20 @@ class AppModel: ObservableObject {
     
     func pickFairSpies() -> Set<UUID> {
         return []
+    }
+    
+    // MARK: - Scoring
+    func addPoints(to playerIDs: Set<UUID>, amount: Int) {
+        for id in playerIDs {
+            scores[id, default: 0] += amount
+        }
+    }
+    
+    func resetScores() {
+        scores.removeAll()
+    }
+    
+    func getScore(for playerID: UUID) -> Int {
+        scores[playerID] ?? 0
     }
 }

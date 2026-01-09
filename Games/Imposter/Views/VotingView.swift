@@ -29,7 +29,39 @@ struct VotingView: View {
                 )
                 .ignoresSafeArea()
                 
-                if votingManager.showResults {
+                if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
+                    SpyShootoutView(
+                        shooter: shooter,
+                        gameSettings: gameSettings,
+                        onHit: { target in
+                            // Spion trifft Geheimagent -> Spione gewinnen
+                            Task { @MainActor in
+                                StatsService.shared.recordSpyWinWordGuess(spyName: shooter.name, isFast: false) // Zählt als "besonderer" Sieg
+                                let citizenNames = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team == .citizen }.map { $0.name }
+                                StatsService.shared.recordLoss(playerNames: citizenNames, asImposter: false)
+                            }
+                            votingManager.isSpyShootoutActive = false
+                            votingManager.playersWon = false // Spione haben gestohlen!
+                            votingManager.gameEnded = true
+                            votingManager.showResults = true
+                            gameSettings.markRoundCompleted()
+                        },
+                        onMiss: { target in
+                            // Spion verfehlt -> Bürger gewinnen (Bestätigung)
+                            Task { @MainActor in
+                                let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
+                                let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
+                                StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: false)
+                                StatsService.shared.recordLoss(playerNames: spyNames, asImposter: true)
+                            }
+                            votingManager.isSpyShootoutActive = false
+                            votingManager.playersWon = true
+                            votingManager.gameEnded = true
+                            votingManager.showResults = true
+                            gameSettings.markRoundCompleted()
+                        }
+                    )
+                } else if votingManager.showResults {
                     VotingResultsView(
                         votingManager: votingManager,
                         gameSettings: gameSettings,

@@ -39,13 +39,15 @@ public struct QuestionsAnswer: Identifiable, Hashable, Codable {
     public let role: QuestionsRole
     public var text: String
     public var timestamp: Date
+    public var timeTaken: TimeInterval
 
-    public init(id: UUID = UUID(), playerID: UUID, role: QuestionsRole, text: String, timestamp: Date = Date()) {
+    public init(id: UUID = UUID(), playerID: UUID, role: QuestionsRole, text: String, timestamp: Date = Date(), timeTaken: TimeInterval = 0) {
         self.id = id
         self.playerID = playerID
         self.role = role
         self.text = text
         self.timestamp = timestamp
+        self.timeTaken = timeTaken
     }
 }
 
@@ -61,10 +63,12 @@ public enum QuestionsPhase: String, Codable, Hashable {
 public struct QuestionsConfig: Hashable, Codable {
     public var numberOfSpies: Int
     public var selectedCategory: QuestionsCategory?
+    public var discussionTime: TimeInterval // 0 = Unlimited
 
-    public init(numberOfSpies: Int = 1, selectedCategory: QuestionsCategory? = nil) {
+    public init(numberOfSpies: Int = 1, selectedCategory: QuestionsCategory? = nil, discussionTime: TimeInterval = 180) {
         self.numberOfSpies = numberOfSpies
         self.selectedCategory = selectedCategory
+        self.discussionTime = discussionTime
     }
 }
 

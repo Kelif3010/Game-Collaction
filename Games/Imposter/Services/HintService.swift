@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-/// Intelligentes Hinweise-System mit echten und falschen Hinweisen
+/// Intelligentes Hinweise-System mit echten und falschen Hinweisen sowie Challenges
 @MainActor
 class HintService: ObservableObject {
     static let shared = HintService()
@@ -23,27 +23,29 @@ class HintService: ObservableObject {
     
     // Hinweis-Konfiguration
     private let hintInterval: TimeInterval = 45.0 // Hinweise alle 45 Sekunden
-    private let hintProbability: Double = 0.4 // 40% Chance pro Intervall
-    private let trueHintProbability: Double = 0.6 // 60% echte Hinweise, 40% falsche
+    private let hintProbability: Double = 0.5 // 50% Chance pro Intervall
     
     private var hintTimer: Timer?
     private var currentWord: String = ""
     private var currentCategory: Category?
+    private var currentPlayers: [String] = []
     
     private init() {}
     
     // MARK: - Public Methods
     
     /// Startet das Hinweise-System für ein Wort
-    func startHints(for word: String, category: Category) {
+    func startHints(for word: String, category: Category, players: [Player]) {
         currentWord = word
         currentCategory = category
+        // Nur aktive (nicht eliminierte) Spieler berücksichtigen
+        currentPlayers = players.filter { !$0.isEliminated }.map { $0.name }
         
         guard settings.enableHints else {
             return
         }
         
-        // Ersten Hinweis sofort generieren
+        // Ersten Hinweis sofort generieren (Start-Bonus)
         Task {
             await generateHint()
         }
@@ -59,6 +61,7 @@ class HintService: ObservableObject {
         activeHints.removeAll()
         currentWord = ""
         currentCategory = nil
+        currentPlayers = []
     }
 
     /// Vollständiger Reset nach einem Spiel
@@ -98,157 +101,143 @@ class HintService: ObservableObject {
               !currentWord.isEmpty,
               let category = currentCategory else { return }
         
-        let isTrueHint = Double.random(in: 0...1) < trueHintProbability
-        
         do {
-            let hint = try await createHint(
-                word: currentWord,
-                category: category,
-                isTrue: isTrueHint
-            )
-            
+            let hint = try await createHint(word: currentWord, category: category)
             await activateHint(hint)
             
             // Moderator-Log
             moderatorLog.logDebug(
-                "Hinweis generiert",
+                "Game-Content generiert",
                 metadata: [
                     "word": currentWord,
-                    "isTrue": String(isTrueHint),
-                    "type": hint.type.rawValue
+                    "type": hint.type.rawValue,
+                    "content": hint.content
                 ]
             )
             
         } catch {
-            // Error ignored
+            print("Error generating hint: \(error)")
         }
     }
     
-    private func createHint(word: String, category: Category, isTrue: Bool) async throws -> GameHint {
+    private func createHint(word: String, category: Category) async throws -> GameHint {
         if aiService.isAvailable {
-            if let hint = await aiService.generateAIHint(word: word, category: category, mustBeTrue: isTrue) {
-                return hint
+            // Nutze die neue, vielseitige KI-Methode
+            if let content = await aiService.generateGameContent(word: word, category: category) {
+                // Sicherheitscheck: Wort darf nicht im Hinweis vorkommen!
+                let safeContent = sanitizeContent(content.content, forbiddenWord: word)
+                let safeGameContent = GameContent(type: content.type, content: safeContent, category: content.category, isTrue: content.isTrue)
+                return mapGameContentToHint(safeGameContent, word: word, category: category)
             }
         }
-        return createFallbackHint(word: word, category: category, isTrue: isTrue)
+        // Fallback wenn KI nicht verfügbar
+        return createFallbackContent(word: word, category: category)
     }
     
-    private func createFallbackHint(word: String, category: Category, isTrue: Bool) -> GameHint {
-        let fallbackHints = isTrue ? getTrueFallbackHints(for: word, category: category) : getFalseFallbackHints(for: word, category: category)
-        let randomHint = fallbackHints.randomElement() ?? "Das Wort beginnt mit einem Buchstaben."
+    private func sanitizeContent(_ text: String, forbiddenWord: String) -> String {
+        let pattern = "\\b\(NSRegularExpression.escapedPattern(for: forbiddenWord))\\b"
+        // Ersetze das Wort (case-insensitive) durch "Es" oder "Das Gesuchte"
+        // Einfache Variante: Wir ersetzen es durch "Es"
+        // Um Groß/Kleinschreibung zu beachten, nutzen wir Regex
+        if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+            let range = NSRange(location: 0, length: text.utf16.count)
+            return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "Es")
+        }
+        return text.replacingOccurrences(of: forbiddenWord, with: "Es", options: .caseInsensitive)
+    }
+    
+    private func mapGameContentToHint(_ content: GameContent, word: String, category: Category) -> GameHint {
+        var hintType: HintType
+        var finalContent = content.content
+        
+        switch content.type {
+        case .hint: 
+            hintType = .general
+        case .fakeHint: 
+            hintType = .fake
+        case .challenge: 
+            hintType = .challenge
+            // Spielername voranstellen für Challenges
+            if let randomPlayer = currentPlayers.randomElement() {
+                // Punkt statt Komma für saubere Sprachausgabe
+                finalContent = "\(randomPlayer). \(finalContent.prefix(1).lowercased() + finalContent.dropFirst())"
+            }
+        }
         
         return GameHint(
-            content: randomHint,
-            type: .general,
-            isTrue: isTrue,
+            content: finalContent,
+            type: hintType,
+            isTrue: content.isTrue,
             word: word,
             category: category
         )
     }
     
+    private func createFallbackContent(word: String, category: Category) -> GameHint {
+        let rand = Int.random(in: 1...100)
+        
+        if rand <= 40 { // 40% Challenge (Interaktivität)
+            var challenge = getFallbackChallenge(category: category)
+            // Spielername voranstellen
+            if let randomPlayer = currentPlayers.randomElement() {
+                // "Challenge: " Prefix entfernen falls vorhanden, um sauber zu formatieren
+                challenge = challenge.replacingOccurrences(of: "Challenge: ", with: "")
+                // Punkt für Sprachausgabe
+                challenge = "\(randomPlayer). \(challenge.prefix(1).lowercased() + challenge.dropFirst())"
+            }
+            return GameHint(content: challenge, type: .challenge, isTrue: true, word: word, category: category)
+        } else if rand <= 70 { // 30% Fake Hint
+            let fake = getFalseFallbackHints(for: word, category: category).randomElement() ?? "Es ist sehr schwer."
+            // Auch Fallbacks müssen gesäubert werden (zur Sicherheit)
+            let safeFake = sanitizeContent(fake, forbiddenWord: word)
+            return GameHint(content: safeFake, type: .fake, isTrue: false, word: word, category: category)
+        } else { // 30% True Hint
+            let hint = getTrueFallbackHints(for: word, category: category).randomElement() ?? "Es passt zur Kategorie."
+            let safeHint = sanitizeContent(hint, forbiddenWord: word)
+            return GameHint(content: safeHint, type: .general, isTrue: true, word: word, category: category)
+        }
+    }
+    
+    private func getFallbackChallenge(category: Category) -> String {
+        let cat = category.name.lowercased()
+        let questions: [String]
+        
+        if cat.contains("essen") {
+            questions = ["Nenne eine Zutat davon!", "Isst man es warm oder kalt?", "Ist es süß oder salzig?", "Wann isst man es typischerweise?"]
+        } else if cat.contains("ort") {
+            questions = ["Ist es drinnen oder draußen?", "Was zieht man dort an?", "Wie kommt man dorthin?", "Ist es dort laut oder leise?"]
+        } else if cat.contains("tier") {
+            questions = ["Welche Farbe hat es?", "Was frisst es?", "Wo lebt es?", "Ist es gefährlich?"]
+        } else {
+            questions = ["Beschreibe die Form!", "Welche Farbe hat es?", "Wie schwer ist es etwa?", "Wofür benutzt man es?"]
+        }
+        
+        return "Challenge: " + (questions.randomElement() ?? "Beschreibe es mit einem Wort!")
+    }
+    
+    // --- Legacy Fallback Logic (übernommen und gekürzt) ---
     private func getTrueFallbackHints(for word: String, category: Category) -> [String] {
         let firstLetter = String(word.prefix(1)).uppercased()
-        let wordLength = word.count
-        let cat = category.name.lowercased()
-        
-        switch cat {
-        case "tier", "tiere":
-            return [
-                "Beginnt mit '\(firstLetter)'",
-                "Hat \(wordLength) Buchstaben",
-                "Lebt nicht im Wasser",
-                "Ist meist langsam unterwegs",
-                "Gilt als eher eklig",
-                "Ist oft nachtaktiv"
-            ]
-        case "beruf", "berufe":
-            return [
-                "Beginnt mit '\(firstLetter)'",
-                "Hat \(wordLength) Buchstaben",
-                "Arbeitet oft mit Hitze",
-                "Nutzt viele Geräte gleichzeitig",
-                "Der Arbeitsplatz kann hektisch sein",
-                "Bereitet anderen etwas zu"
-            ]
-        case "gegenstand", "objekt", "objekte":
-            return [
-                "Beginnt mit '\(firstLetter)'",
-                "Hat \(wordLength) Buchstaben",
-                "Wird häufig im Alltag benutzt",
-                "Besteht oft aus mehreren Teilen",
-                "Kann in der Küche vorkommen",
-                "Ist leicht zu reinigen"
-            ]
-        case "ort", "orte":
-            return [
-                "Beginnt mit '\(firstLetter)'",
-                "Hat \(wordLength) Buchstaben",
-                "Dort sind oft viele Menschen",
-                "Man hört dort häufig Geräusche",
-                "Hat feste Öffnungszeiten",
-                "Man kann dort etwas kaufen oder erledigen"
-            ]
-        default:
-            return [
-                "Beginnt mit '\(firstLetter)'",
-                "Hat \(wordLength) Buchstaben",
-                "Passt zur Kategorie \(category.name)",
-                "Reimt sich auf '\(generateRhyme(word))'",
-                "Enthält den Buchstaben '\(getRandomLetter(from: word))'",
-                "Ist im Alltag bekannt"
-            ]
-        }
+        return [
+            "Es beginnt mit '\(firstLetter)'",
+            "Es hat \(word.count) Buchstaben",
+            "Es ist ein typisches Beispiel für \(category.name)",
+            "Man kennt es aus dem Alltag",
+            "Der Name klingt deutsch"
+        ]
     }
     
     private func getFalseFallbackHints(for word: String, category: Category) -> [String] {
         let cat = category.name.lowercased()
-        switch cat {
-        case "tier", "tiere":
-            return [
-                "Ist sehr schnell",
-                "Ist groß und kann fliegen",
-                "Lebt nur im Wasser",
-                "Jagt in Rudeln",
-                "Hat ein dickes Fell",
-                "Ist ein gefährlicher Räuber"
-            ]
-        case "beruf", "berufe":
-            return [
-                "Erfordert ein langes Studium",
-                "Rettet regelmäßig Menschenleben",
-                "Arbeitet ausschließlich im Freien",
-                "Trägt immer Uniform",
-                "Bedient schwere Baumaschinen",
-                "Fliegt ein Verkehrsflugzeug"
-            ]
-        case "gegenstand", "objekt", "objekte":
-            return [
-                "Ist mehrere Meter groß",
-                "Wird nur einmal im Jahr benutzt",
-                "Besteht aus purem Gold",
-                "Ist extrem selten",
-                "Kann von selbst laufen",
-                "Ist ausschließlich unter Wasser nutzbar"
-            ]
-        case "ort", "orte":
-            return [
-                "Liegt unter der Erde",
-                "Ist nur per Flugzeug erreichbar",
-                "Darf nur nachts betreten werden",
-                "Ist streng geheim",
-                "Wechselt jeden Tag den Standort",
-                "Existiert nur im Winter"
-            ]
-        default:
-            return [
-                "Ist extrem selten",
-                "Ist riesig und kann fliegen",
-                "Besteht komplett aus Eis",
-                "Nur mit Genehmigung betretbar",
-                "Nur im Labor zu finden",
-                "Wird ausschließlich von Robotern verwendet"
-            ]
+        // PLAUSIBLE LÜGEN STATT UNSINN
+        if cat.contains("essen") {
+            return ["Es schmeckt sehr metallisch", "Man isst es nur gefroren", "Es ist giftig wenn roh", "Es ist blau", "Es ist flüssig wie Wasser"]
+        } else if cat.contains("ort") {
+            return ["Es liegt immer unter Wasser", "Man braucht einen Raumanzug", "Es ist dort -50 Grad kalt", "Es gibt dort keinen Sauerstoff"]
+        } else if cat.contains("tier") {
+            return ["Es hat sechs Beine", "Es kann Feuer speien", "Es lebt 1000 Jahre", "Es ist durchsichtig"]
         }
+        return ["Es ist unsichtbar", "Es wiegt 10 Tonnen", "Es leuchtet im Dunkeln", "Es besteht aus Glas"]
     }
     
     private func activateHint(_ hint: GameHint) async {
@@ -260,26 +249,15 @@ class HintService: ObservableObject {
         // Hinweis vorlesen
         await voiceService.speakHint(hint)
         
-        // Hinweis nach 30 Sekunden entfernen
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+        // Hinweis nach 45 Sekunden entfernen (etwas länger sichtbar lassen)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
             self.activeHints.removeAll { $0.id == hint.id }
         }
     }
-    
-    // MARK: - Helper Methods
-    
-    private func generateRhyme(_ word: String) -> String {
-        let endings = ["-at", "-en", "-er", "-ig", "-lich"]
-        return word + endings.randomElement()!
-    }
-    
-    private func getRandomLetter(from word: String? = nil) -> String {
-        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        return String(letters.randomElement()!)
-    }
 }
 
-// MARK: - Game Hint Model (Rest bleibt gleich)
+// MARK: - Game Hint Model
+
 struct GameHint: Identifiable, Codable {
     let id: UUID
     let content: String
@@ -298,36 +276,13 @@ struct GameHint: Identifiable, Codable {
         self.category = category
         self.timestamp = Date()
     }
-
-    private enum CodingKeys: String, CodingKey {
-        case id, content, type, isTrue, word, category, timestamp
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
-        self.content = try container.decode(String.self, forKey: .content)
-        self.type = try container.decode(HintType.self, forKey: .type)
-        self.isTrue = try container.decode(Bool.self, forKey: .isTrue)
-        self.word = try container.decode(String.self, forKey: .word)
-        self.category = try container.decode(Category.self, forKey: .category)
-        self.timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(content, forKey: .content)
-        try container.encode(type, forKey: .type)
-        try container.encode(isTrue, forKey: .isTrue)
-        try container.encode(word, forKey: .word)
-        try container.encode(category, forKey: .category)
-        try container.encode(timestamp, forKey: .timestamp)
-    }
 }
 
 enum HintType: String, CaseIterable, Codable {
     case general = "general"
+    case fake = "fake"
+    case challenge = "challenge"
+    // Legacy / Specific types (optional, mapped to general usually)
     case letter = "letter"
     case length = "length"
     case category = "category"
@@ -336,7 +291,9 @@ enum HintType: String, CaseIterable, Codable {
     
     var displayName: String {
         switch self {
-        case .general: return "Allgemein"
+        case .general: return "Hinweis"
+        case .fake: return "Hinweis" // Tarnung: Muss aussehen wie ein echter Hinweis!
+        case .challenge: return "Challenge"
         case .letter: return "Buchstabe"
         case .length: return "Länge"
         case .category: return "Kategorie"
@@ -348,6 +305,8 @@ enum HintType: String, CaseIterable, Codable {
     var icon: String {
         switch self {
         case .general: return "lightbulb.fill"
+        case .fake: return "lightbulb.fill" // Tarnung: Gleiches Icon wie echt!
+        case .challenge: return "star.circle.fill"
         case .letter: return "textformat.abc"
         case .length: return "ruler"
         case .category: return "folder.fill"

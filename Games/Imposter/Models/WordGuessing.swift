@@ -34,6 +34,23 @@ class WordGuessingManager: ObservableObject {
             gameEnded: true
         )
         
+        // --- Stats Integration ---
+        // Finde den Namen des Spions (der aktuelle Spieler, oder einer der Spione)
+        // Annahme: Derjenige, der das Handy hält und "raten" drückt, ist der Spion.
+        // Wir nehmen den ersten gefundenen Spion als Stellvertreter oder alle Spione, falls Team.
+        // Im aktuellen UI-Flow gibt es keine explizite Auswahl "WER" rät. Wir vergeben Punkte an alle Spione.
+        let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
+        let isFast = Double(gameSettings.timeRemaining) > (Double(gameSettings.timeLimit) / 2.0)
+        
+        for name in spyNames {
+            StatsService.shared.recordSpyWinWordGuess(spyName: name, isFast: isFast)
+        }
+        
+        // Verlierer (Bürger) registrieren
+        let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
+        StatsService.shared.recordLoss(playerNames: citizenNames, asImposter: false)
+        // -------------------------
+        
         guessResult = result
         return result
     }
