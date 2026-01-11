@@ -7,6 +7,7 @@ struct MainSettingsView: View {
     @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
     @AppStorage("useSystemLanguage") private var useSystemLanguage = true
     
+    // Globaler Spieler-Manager
     @StateObject private var playerManager = GlobalPlayerManager.shared
     @State private var newPlayerName = ""
     @State private var showResetAlert = false
@@ -29,7 +30,7 @@ struct MainSettingsView: View {
                     }
                 }
                 
-                // MARK: - Spieler
+                // MARK: - Spieler (NEU)
                 Section(header: Text(LocalizedStringKey("Meine Freunde"))) {
                     ForEach(playerManager.players, id: \.id) { player in
                         HStack {
@@ -124,7 +125,7 @@ struct MainSettingsView: View {
                     .listRowBackground(Color.clear)
                 }
                 
-                // MARK: - Erweitert (Reset)
+                // MARK: - Erweitert / Reset (NEU)
                 Section(header: Text(LocalizedStringKey("Erweitert"))) {
                     Button(role: .destructive) {
                         showResetAlert = true
@@ -154,8 +155,6 @@ struct MainSettingsView: View {
         }
         .presentationDetents([.medium, .large])
     }
-    
-    @State private var showResetAlert = false
     
     private var currentLanguageName: LocalizedStringKey {
         if useSystemLanguage {
