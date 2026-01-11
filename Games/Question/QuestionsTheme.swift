@@ -509,7 +509,7 @@ struct QuestionsSecureRevealButton: View {
     @State private var timer: Timer?
     @State private var showSuccess = false
     
-    private let holdDuration: TimeInterval = 1.5
+    private let holdDuration: TimeInterval = 0.6
     
     var body: some View {
         VStack(spacing: 30) {

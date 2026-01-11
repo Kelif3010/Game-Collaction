@@ -2,7 +2,7 @@ import Foundation
 
 /// Central configuration for fairness-aware imposter selection.
 /// Encapsulates hard constraints and soft weighting parameters.
-struct FairnessPolicy {
+struct FairnessPolicy: Codable {
     // MARK: - Hard constraints
     /// Maximum times a player can be imposter in a row.
     var maxConsecutive: Int = 2

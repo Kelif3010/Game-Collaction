@@ -10,13 +10,23 @@ import Combine
 
 class GameSettings: ObservableObject {
     @Published var players: [Player] = []
-    @Published var numberOfImposters: Int = 1
+    @Published var numberOfImposters: Int {
+        didSet { UserDefaults.standard.set(numberOfImposters, forKey: "imposter.numberOfImposters") }
+    }
     @Published var selectedCategory: Category?
     @Published var selectedCategoryIds: Set<UUID> = []
     @Published var isMixAllCategories: Bool = false
     @Published private(set) var roundCategory: Category?
-    @Published var timeLimit: Int = 300 // 5 Minuten in Sekunden
-    @Published var gameMode: ImposterGameMode = .classic
+    @Published var timeLimit: Int {
+        didSet { UserDefaults.standard.set(timeLimit, forKey: "imposter.timeLimit") }
+    }
+    @Published var gameMode: ImposterGameMode {
+        didSet {
+            if let data = try? JSONEncoder().encode(gameMode) {
+                UserDefaults.standard.set(data, forKey: "imposter.gameMode")
+            }
+        }
+    }
     @Published var categories: [Category] = Category.defaultCategories
     
     @Published var fairnessPolicy: FairnessPolicy = FairnessPolicy(
@@ -35,10 +45,18 @@ class GameSettings: ObservableObject {
     @Published var savedPlayersManager = SavedPlayersManager()
     
     // Spiel-Optionen für Imposter/Spione
-    @Published var spyCanSeeCategory: Bool = false
-    @Published var spiesCanSeeEachOther: Bool = false
-    @Published var randomSpyCount: Bool = false  // Zufällige Spion-Anzahl ab 5 Spielern
-    @Published var showSpyHints: Bool = false    // Hinweise für Imposter anzeigen
+    @Published var spyCanSeeCategory: Bool {
+        didSet { UserDefaults.standard.set(spyCanSeeCategory, forKey: "imposter.spyCanSeeCategory") }
+    }
+    @Published var spiesCanSeeEachOther: Bool {
+        didSet { UserDefaults.standard.set(spiesCanSeeEachOther, forKey: "imposter.spiesCanSeeEachOther") }
+    }
+    @Published var randomSpyCount: Bool {
+        didSet { UserDefaults.standard.set(randomSpyCount, forKey: "imposter.randomSpyCount") }
+    }
+    @Published var showSpyHints: Bool {
+        didSet { UserDefaults.standard.set(showSpyHints, forKey: "imposter.showSpyHints") }
+    }
     @Published var activeRoles: Set<RoleType> = []
     
     // Spielzustand
@@ -55,6 +73,24 @@ class GameSettings: ObservableObject {
     private var hasRecordedRoundCompletion = false
 
     init() {
+        let defaults = UserDefaults.standard
+        
+        // Load Settings
+        self.numberOfImposters = defaults.integer(forKey: "imposter.numberOfImposters") > 0 ? defaults.integer(forKey: "imposter.numberOfImposters") : 1
+        self.timeLimit = defaults.integer(forKey: "imposter.timeLimit") > 0 ? defaults.integer(forKey: "imposter.timeLimit") : 300
+        
+        if let data = defaults.data(forKey: "imposter.gameMode"),
+           let mode = try? JSONDecoder().decode(ImposterGameMode.self, from: data) {
+            self.gameMode = mode
+        } else {
+            self.gameMode = .classic
+        }
+        
+        self.spyCanSeeCategory = defaults.bool(forKey: "imposter.spyCanSeeCategory")
+        self.spiesCanSeeEachOther = defaults.bool(forKey: "imposter.spiesCanSeeEachOther")
+        self.randomSpyCount = defaults.bool(forKey: "imposter.randomSpyCount")
+        self.showSpyHints = defaults.bool(forKey: "imposter.showSpyHints")
+
         let storedCustomCategories = customCategoryStore.loadCategories().map { category in
             var customCategory = category
             customCategory.isCustom = true
@@ -62,6 +98,21 @@ class GameSettings: ObservableObject {
         }
         customCategories = storedCustomCategories
         rebuildCategories()
+        
+        // Factory Reset Listener
+        NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
+            self?.resetSettingsToDefaults()
+        }
+    }
+    
+    private func resetSettingsToDefaults() {
+        numberOfImposters = 1
+        timeLimit = 300
+        gameMode = .classic
+        spyCanSeeCategory = false
+        spiesCanSeeEachOther = false
+        randomSpyCount = false
+        showSpyHints = false
     }
 
     var selectedCategories: [Category] {

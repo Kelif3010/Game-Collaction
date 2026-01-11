@@ -30,7 +30,7 @@ struct VotingResultsView: View {
     
     private var eliminatedSpies: [Player] {
         let selected = votingManager.selectedPlayers
-        return gameSettings.players.filter { selected.contains($0.id) && $0.isImposter }
+        return gameSettings.players.filter { selected.contains($0.id) && ($0.isImposter || $0.roleType?.team == .imposter) }
     }
 
     var body: some View {
@@ -321,7 +321,7 @@ struct ImposterResultCard: View {
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
-                Text("IMPOSTER")
+                Text(player.roleType?.rawValue.uppercased() ?? "IMPOSTER")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(isVictory ? .green : .red)
                     .padding(.horizontal, 6)

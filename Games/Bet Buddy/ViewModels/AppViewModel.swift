@@ -37,21 +37,45 @@ final class AppViewModel: ObservableObject {
 
     // MARK: - Properties
     @Published var selectedGroupCount: Int {
-        didSet { syncGroups(to: selectedGroupCount) }
+        didSet {
+            syncGroups(to: selectedGroupCount)
+            UserDefaults.standard.set(selectedGroupCount, forKey: "betbuddy.groupCount")
+        }
     }
 
     @Published private(set) var groups: [GroupInfo]
     @Published private(set) var selectedCategories: Set<CategoryType> {
-        didSet { refreshChallenge() }
+        didSet {
+            refreshChallenge()
+            if let data = try? JSONEncoder().encode(selectedCategories) {
+                UserDefaults.standard.set(data, forKey: "betbuddy.selectedCategories")
+            }
+        }
     }
     @Published private(set) var currentChallenge: Challenge
     
-    @Published var timerSelection: Int
-    @Published var isTimerEnabled: Bool
-    @Published var isHintsEnabled: Bool = false
-    @Published var isPartyMode: Bool = false
-    @Published var isPenaltyEnabled: Bool = false
-    @Published var penaltyLevel: PenaltyLevel = .normal
+    @Published var timerSelection: Int {
+        didSet { UserDefaults.standard.set(timerSelection, forKey: "betbuddy.timerSelection") }
+    }
+    @Published var isTimerEnabled: Bool {
+        didSet { UserDefaults.standard.set(isTimerEnabled, forKey: "betbuddy.isTimerEnabled") }
+    }
+    @Published var isHintsEnabled: Bool {
+        didSet { UserDefaults.standard.set(isHintsEnabled, forKey: "betbuddy.isHintsEnabled") }
+    }
+    @Published var isPartyMode: Bool {
+        didSet { UserDefaults.standard.set(isPartyMode, forKey: "betbuddy.isPartyMode") }
+    }
+    @Published var isPenaltyEnabled: Bool {
+        didSet { UserDefaults.standard.set(isPenaltyEnabled, forKey: "betbuddy.isPenaltyEnabled") }
+    }
+    @Published var penaltyLevel: PenaltyLevel {
+        didSet {
+            if let data = try? JSONEncoder().encode(penaltyLevel) {
+                UserDefaults.standard.set(data, forKey: "betbuddy.penaltyLevel")
+            }
+        }
+    }
 
     @Published var timerRemaining: Int = 0
     @Published var votesLocked: Bool = false
@@ -74,19 +98,41 @@ final class AppViewModel: ObservableObject {
 
     // MARK: - Init
     init() {
-        let initialGroupCount = 2
-        let initialCategories: Set<CategoryType> = [.classic]
-        let initialTimer = 60
+        let defaults = UserDefaults.standard
+        
+        // Load Settings or use Defaults
+        let initialGroupCount = defaults.integer(forKey: "betbuddy.groupCount") > 0 ? defaults.integer(forKey: "betbuddy.groupCount") : 2
+        
+        var initialCategories: Set<CategoryType> = [.classic]
+        if let data = defaults.data(forKey: "betbuddy.selectedCategories"),
+           let decoded = try? JSONDecoder().decode(Set<CategoryType>.self, from: data),
+           !decoded.isEmpty {
+            initialCategories = decoded
+        }
+
+        let initialTimer = defaults.integer(forKey: "betbuddy.timerSelection") > 0 ? defaults.integer(forKey: "betbuddy.timerSelection") : 60
+        let initialTimerEnabled = defaults.object(forKey: "betbuddy.isTimerEnabled") != nil ? defaults.bool(forKey: "betbuddy.isTimerEnabled") : true
+        let initialHints = defaults.bool(forKey: "betbuddy.isHintsEnabled")
+        let initialParty = defaults.bool(forKey: "betbuddy.isPartyMode")
+        let initialPenalty = defaults.bool(forKey: "betbuddy.isPenaltyEnabled")
+        
+        var initialPenaltyLevel: PenaltyLevel = .normal
+        if let pData = defaults.data(forKey: "betbuddy.penaltyLevel"),
+           let pDecoded = try? JSONDecoder().decode(PenaltyLevel.self, from: pData) {
+            initialPenaltyLevel = pDecoded
+        }
+
         let store = GroupNamePersistence()
 
         selectedGroupCount = initialGroupCount
         selectedCategories = initialCategories
         timerSelection = initialTimer
-        isTimerEnabled = true
-        isHintsEnabled = false
-        isPartyMode = false
-        isPenaltyEnabled = false
-        penaltyLevel = .normal
+        isTimerEnabled = initialTimerEnabled
+        isHintsEnabled = initialHints
+        isPartyMode = initialParty
+        isPenaltyEnabled = initialPenalty
+        penaltyLevel = initialPenaltyLevel
+        
         playedChallengeIDs = []
 
         let colors = Array(GroupColor.allCases.prefix(initialGroupCount))
@@ -104,6 +150,28 @@ final class AppViewModel: ObservableObject {
         scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
         
         loadStats()
+        
+        // Listen for Factory Reset
+        NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
+            self?.resetToDefaults()
+        }
+    }
+    
+    private func resetToDefaults() {
+        // Hard Reset Logic called by AppLifecycleManager (via Notification or similar if needed)
+        // For now, AppLifecycleManager clears UserDefaults, so restarting the app handles it.
+        // But if we want live update:
+        selectedGroupCount = 2
+        selectedCategories = [.classic]
+        timerSelection = 60
+        isTimerEnabled = true
+        isHintsEnabled = false
+        isPartyMode = false
+        isPenaltyEnabled = false
+        penaltyLevel = .normal
+        // Reset Scores
+        resetGlobalStats()
+        resetSessionScores()
     }
 
     var activeGroups: [GroupInfo] { Array(groups.prefix(selectedGroupCount)) }

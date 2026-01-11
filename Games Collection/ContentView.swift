@@ -11,6 +11,7 @@ struct ContentView: View {
     
     // Steuerung für Einstellungen
     @State private var showSettings = false
+    @State private var showRecommender = false
     
     var body: some View {
         NavigationStack {
@@ -49,10 +50,16 @@ struct ContentView: View {
                         
                         Spacer()
                         
-                        // Unsichtbarer Platzhalter für Symmetrie
-                        Image(systemName: "gearshape.fill")
-                            .font(.title2)
-                            .opacity(0)
+                        // Magic Recommender Button
+                        Button {
+                            showRecommender = true
+                        } label: {
+                            Image(systemName: "wand.and.stars")
+                                .font(.title2)
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(10)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -128,6 +135,9 @@ struct ContentView: View {
         // MODALS
         .sheet(isPresented: $showSettings) {
             MainSettingsView()
+        }
+        .sheet(isPresented: $showRecommender) {
+            GameRecommenderView()
         }
         .fullScreenCover(isPresented: $isBetBuddyPresented) { BetBuddyWrapper() }
         .fullScreenCover(isPresented: $isQuestionGamePresented) { QuestionGameWrapper() }

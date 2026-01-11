@@ -288,6 +288,8 @@ private struct SavedPlayersTab: View {
     private var savedPlayers: [String] {
         gameSettings.savedPlayersManager.savedPlayerNames
     }
+    
+    private let globalManager = GlobalPlayerManager.shared
 
     private var applyTitle: String {
         selectedPlayers.isEmpty ? "Auswahl übernehmen" : "\(selectedPlayers.count) Spieler übernehmen"
@@ -295,6 +297,25 @@ private struct SavedPlayersTab: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            // GLOBAL IMPORT BUTTON
+            ImposterCard {
+                Button {
+                    importGlobalPlayers()
+                } label: {
+                    HStack(spacing: 12) {
+                        ImposterIconBadge(systemName: "globe", tint: .blue)
+                        Text("Aus globaler Liste laden")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
+                    .imposterRowStyle()
+                }
+            }
+            
             ImposterCard {
                 HStack(spacing: 12) {
                     ImposterIconBadge(systemName: "tray.full", tint: .orange)
@@ -343,6 +364,15 @@ private struct SavedPlayersTab: View {
                 },
                 isDisabled: selectedPlayers.isEmpty
             )
+        }
+    }
+
+    private func importGlobalPlayers() {
+        let globalNames = globalManager.getAllNames()
+        for name in globalNames {
+            if !gameSettings.savedPlayersManager.playerExists(name) {
+                gameSettings.savedPlayersManager.addPlayer(name)
+            }
         }
     }
 

@@ -23,7 +23,14 @@ class GameManager: ObservableObject {
             timer?.invalidate()
         }
     }
-    @Published var gameState = GameState()
+    @Published var gameState = GameState() {
+        didSet {
+            // Save Settings on change
+            if let data = try? JSONEncoder().encode(gameState.settings) {
+                UserDefaults.standard.set(data, forKey: "timesup.settings")
+            }
+        }
+    }
     @Published var scoreRevealSnapshots: [UUID: ScoreRevealSnapshot] = [:]
     @Published var awardedPerks: [AwardedPerk] = []
     @Published private var visualEffects: [UUID: VisualEffectState] = [:]
@@ -187,6 +194,17 @@ class GameManager: ObservableObject {
     
     init(categoryManager: CategoryManager? = nil) {
         self.categoryManager = categoryManager ?? CategoryManager()
+        
+        // Load Settings
+        if let data = UserDefaults.standard.data(forKey: "timesup.settings"),
+           let settings = try? JSONDecoder().decode(TimesUpGameSettings.self, from: data) {
+            self.gameState.settings = settings
+        }
+        
+        // Listener for Factory Reset
+        NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
+            self?.gameState.settings = TimesUpGameSettings()
+        }
     }
     
     deinit {

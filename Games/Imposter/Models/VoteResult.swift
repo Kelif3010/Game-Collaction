@@ -55,7 +55,7 @@ class VotingManager: ObservableObject {
     /// Startet die Abstimmungsphase
     func startVoting() {
         // Sync VM state from truth in gameSettings: rebuild foundSpies from eliminated imposters
-        let eliminatedImposters = gameSettings.players.filter { $0.isImposter && $0.isEliminated }.map { $0.id }
+        let eliminatedImposters = gameSettings.players.filter { ($0.isImposter || $0.roleType?.team == .imposter) && $0.isEliminated }.map { $0.id }
         let eliminatedSet = Set(eliminatedImposters)
         foundSpies = eliminatedSet
         // Ensure no eliminated player remains in selection
@@ -129,7 +129,7 @@ class VotingManager: ObservableObject {
         for playerID in selectedPlayers {
             if let index = gameSettings.players.firstIndex(where: { $0.id == playerID }) {
                 let player = gameSettings.players[index]
-                if player.isImposter && !foundSpies.contains(playerID) {
+                if (player.isImposter || player.roleType?.team == .imposter) && !foundSpies.contains(playerID) {
                     // Spion gefunden (Leibwächter schützt Spione NICHT vor dem Voting)
                     correctGuesses.append(playerID)
                     foundSpies.insert(playerID)
@@ -174,8 +174,8 @@ class VotingManager: ObservableObject {
         } else if gameEnded {
             // --- Stats Integration (Nur wenn kein Shootout, sonst passiert das dort) ---
             Task { @MainActor in
-                let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
-                let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
+                let spyNames = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }.map { $0.name }
+                let citizenNames = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }.map { $0.name }
                 
                 if playersWon {
                     let isFast = (Double(gameSettings.timeRemaining) > (Double(gameSettings.timeLimit) / 2.0)) || votingRound == 1
@@ -247,7 +247,7 @@ class VotingManager: ObservableObject {
     
     /// Gesamtanzahl der Spione
     var totalSpies: Int {
-        return gameSettings.players.filter { $0.isImposter }.count
+        return gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }.count
     }
     
     /// Verbleibende Spione

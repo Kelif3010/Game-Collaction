@@ -355,8 +355,8 @@ class GameLogic: ObservableObject {
                 self.stopGameTimer()
                 
                 Task { @MainActor in
-                    let spies = self.gameSettings.players.filter { $0.isImposter }
-                    let citizens = self.gameSettings.players.filter { !$0.isImposter }
+                    let spies = self.gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+                    let citizens = self.gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
                     
                     for spy in spies {
                         StatsService.shared.recordSpyWinTimeOut(spyName: spy.name)

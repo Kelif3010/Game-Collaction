@@ -14,6 +14,7 @@ struct QuestionsSetupView: View {
     @State private var showSettingsSheet = false
     @State private var showLeaderboardSheet = false
     @State private var showInfoSheet = false
+    @State private var showTimerSheet = false
     
     // Validierung
     private var playerCount: Int { appModel.players.count }
@@ -149,7 +150,7 @@ struct QuestionsSetupView: View {
                                 
                                 // Timer Row
                                 Button {
-                                    toggleTime()
+                                    showTimerSheet = true
                                 } label: {
                                     QuestionsRowCell(
                                         icon: "timer",
@@ -231,16 +232,13 @@ struct QuestionsSetupView: View {
                     .presentationCornerRadius(28)
                     .presentationBackground(.clear)
             }
-        }
-    }
-    
-    private func toggleTime() {
-        let options: [TimeInterval] = [120, 180, 300, 0]
-        if let currentIndex = options.firstIndex(of: discussionTime) {
-            let nextIndex = (currentIndex + 1) % options.count
-            discussionTime = options[nextIndex]
-        } else {
-            discussionTime = 180
+            .sheet(isPresented: $showTimerSheet) {
+                QuestionsTimerSheet(discussionTime: $discussionTime)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(28)
+                    .presentationBackground(.clear)
+            }
         }
     }
     
@@ -248,8 +246,13 @@ struct QuestionsSetupView: View {
         if discussionTime == 0 {
             return NSLocalizedString("Unbegrenzt", comment: "")
         } else {
-            let minutes = Int(discussionTime / 60)
-            return "\(minutes) Min"
+            let minutes = Int(discussionTime) / 60
+            let seconds = Int(discussionTime) % 60
+            if seconds == 0 {
+                return "\(minutes) Min"
+            } else {
+                return "\(minutes):\(String(format: "%02d", seconds)) Min"
+            }
         }
     }
     
@@ -257,6 +260,66 @@ struct QuestionsSetupView: View {
         if playerCount < 3 { return "Mindestens 3 Spieler benötigt." }
         if selectedCategory == nil { return "Bitte eine Kategorie wählen." }
         return ""
+    }
+}
+
+struct QuestionsTimerSheet: View {
+    @Binding var discussionTime: TimeInterval
+    @Environment(\.dismiss) var dismiss
+    
+    private let timeOptions: [TimeInterval] = [
+        0, 30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480, 540, 600
+    ]
+    
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                QuestionsSheetHeader(title: "Zeitlimit wählen") {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(timeOptions, id: \.self) { time in
+                            Button {
+                                discussionTime = time
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    QuestionsIconBadge(systemName: "timer", tint: .green)
+                                    
+                                    Text(time == 0 ? "Unbegrenzt" : formatTime(time))
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                    
+                                    Spacer()
+                                    
+                                    if discussionTime == time {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                                .questionsRowStyle()
+                            }
+                        }
+                    }
+                    .padding(QuestionsStyle.padding)
+                }
+            }
+        }
+    }
+    
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        if seconds == 0 {
+            return "\(minutes) Minuten"
+        } else {
+            return "\(minutes) Min \(seconds) Sek"
+        }
     }
 }
 

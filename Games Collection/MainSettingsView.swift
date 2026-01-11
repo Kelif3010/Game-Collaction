@@ -7,6 +7,10 @@ struct MainSettingsView: View {
     @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
     @AppStorage("useSystemLanguage") private var useSystemLanguage = true
     
+    @StateObject private var playerManager = GlobalPlayerManager.shared
+    @State private var newPlayerName = ""
+    @State private var showResetAlert = false
+    
     var body: some View {
         NavigationStack {
             List {
@@ -22,6 +26,39 @@ struct MainSettingsView: View {
                     }
                     NavigationLink(destination: Text("App Icons hier")) {
                         Label(LocalizedStringKey("App Icon"), systemImage: "app.badge")
+                    }
+                }
+                
+                // MARK: - Spieler
+                Section(header: Text(LocalizedStringKey("Meine Freunde"))) {
+                    ForEach(playerManager.players, id: \.id) { player in
+                        HStack {
+                            Circle()
+                                .fill(Color(hex: player.avatarColorHex))
+                                .frame(width: 24, height: 24)
+                                .overlay(Text(String(player.name.prefix(1))).font(.caption2).foregroundColor(.white))
+                            Text(player.name)
+                        }
+                    }
+                    .onDelete { indexSet in
+                        for index in indexSet {
+                            let player = playerManager.players[index]
+                            playerManager.removePlayer(id: player.id)
+                        }
+                    }
+                    
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.green)
+                        TextField(LocalizedStringKey("Neuen Spieler hinzufügen"), text: $newPlayerName)
+                            .onSubmit {
+                                addPlayer()
+                            }
+                        if !newPlayerName.isEmpty {
+                            Button(LocalizedStringKey("Hinzufügen")) {
+                                addPlayer()
+                            }
+                        }
                     }
                 }
                 
@@ -86,6 +123,15 @@ struct MainSettingsView: View {
                     .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
                 }
+                
+                // MARK: - Erweitert (Reset)
+                Section(header: Text(LocalizedStringKey("Erweitert"))) {
+                    Button(role: .destructive) {
+                        showResetAlert = true
+                    } label: {
+                        Label(LocalizedStringKey("Alle Einstellungen zurücksetzen"), systemImage: "trash")
+                    }
+                }
             }
             .navigationTitle(LocalizedStringKey("Einstellungen"))
             .navigationBarTitleDisplayMode(.inline)
@@ -96,15 +142,34 @@ struct MainSettingsView: View {
                     }
                 }
             }
+            .alert(LocalizedStringKey("Einstellungen zurücksetzen?"), isPresented: $showResetAlert) {
+                Button(LocalizedStringKey("Abbrechen"), role: .cancel) { }
+                Button(LocalizedStringKey("Zurücksetzen"), role: .destructive) {
+                    AppLifecycleManager.shared.factoryReset()
+                    dismiss()
+                }
+            } message: {
+                Text(LocalizedStringKey("Dies löscht alle gespeicherten Daten (Spieler, Highscores, Einstellungen). Diese Aktion kann nicht rückgängig gemacht werden."))
+            }
         }
         .presentationDetents([.medium, .large])
     }
+    
+    @State private var showResetAlert = false
     
     private var currentLanguageName: LocalizedStringKey {
         if useSystemLanguage {
             return LocalizedStringKey("System")
         }
         return selectedLanguageCode == "de" ? LocalizedStringKey("Deutsch") : LocalizedStringKey("English")
+    }
+    
+    private func addPlayer() {
+        guard !newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        withAnimation {
+            playerManager.addPlayer(name: newPlayerName)
+            newPlayerName = ""
+        }
     }
 }
 
@@ -152,6 +217,34 @@ private struct LanguageSelectionView: View {
         }
         .navigationTitle(LocalizedStringKey("Sprache"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// Helper for Hex Color
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
 

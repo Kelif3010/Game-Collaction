@@ -41,6 +41,12 @@ struct QuestionsModeContainer: View {
     // Input Timer State
     @State private var inputStartTime: Date? = nil
     
+    // Header Sheet States
+    @State private var showLeaderboardSheet = false
+    @State private var showCategorySheet = false
+    @State private var showSettingsSheet = false
+    @State private var showInfoSheet = false
+    
     // Reveal Animation State
     @State private var revealStage: Int = 0
     
@@ -170,6 +176,31 @@ struct QuestionsModeContainer: View {
                 timeRemaining -= 1
             }
         }
+        .sheet(isPresented: $showLeaderboardSheet) {
+            ZStack {
+                QuestionsStyle.backgroundGradient.ignoresSafeArea()
+                VStack {
+                    QuestionsSheetHeader(title: "Rangliste") { showLeaderboardSheet = false }
+                        .padding(.horizontal, QuestionsStyle.padding)
+                    ScrollView {
+                        QuestionsScoreboardView(appModel: appModel)
+                            .padding(.top)
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+            .presentationBackground(.clear)
+        }
+        .sheet(isPresented: $showCategorySheet) {
+            QuestionsCategorySheet(selectedCategory: $selectedCategory)
+                .presentationDetents([.large]) // Or medium if just viewing
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
+                .presentationBackground(.clear)
+                .disabled(engine.phase != .setup) // Disable changing during game? Or allow peek? Allow peek but maybe disable selection logic if needed. For now just show.
+        }
     }
     
     // MARK: - Logic Helpers
@@ -214,19 +245,47 @@ struct QuestionsModeContainer: View {
         HStack {
             Button(action: { showAbortConfirmation = true }) {
                 Image(systemName: "chevron.left")
-                    .font(.title3.weight(.bold))
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(Color.black.opacity(0.3))
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.1))
                     .clipShape(Circle())
             }
+            
             Spacer()
+            
+            // Phase Title (optional, or remove if too crowded)
+            if engine.phase != .setup {
+                Text("Finde den Lügner")
+                    .font(.headline.weight(.bold))
+                    .foregroundColor(.white)
+                    .opacity(0.8)
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 8) {
+                // Trophäe
+                Button { showLeaderboardSheet = true } label: {
+                    Image(systemName: "trophy.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.yellow)
+                        .frame(width: 32, height: 32)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                
+                // Ordner (Kategorie - Read Only im Spiel)
+                Button { showCategorySheet = true } label: {
+                    Image(systemName: "folder.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                        .frame(width: 32, height: 32)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+            }
         }
-        .overlay(
-            Text(LocalizedStringKey(engine.phase == .setup ? "Fragen — Setup" : "Finde den Lügner"))
-                .font(.headline.weight(.bold))
-                .foregroundColor(.white)
-        )
         .padding(.horizontal, 16)
         .padding(.top, 50)
     }
@@ -824,8 +883,7 @@ extension QuestionsModeContainer {
                         .padding(.horizontal, 24)
                     }
                     
-                    // Scoreboard
-                    QuestionsScoreboardView(appModel: appModel)
+                    // Scoreboard removed from here - moved to header sheet
                     
                     Spacer()
                     
