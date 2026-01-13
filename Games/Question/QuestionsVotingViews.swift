@@ -201,5 +201,25 @@ struct QuestionsVotingResultsView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
+        .onAppear {
+            recordStats()
+        }
+    }
+    
+    private func recordStats() {
+        let imposterIds = evaluation.imposters
+        let winners: [Player]
+        let losers: [Player]
+        
+        if evaluation.outcome == .citizensWin {
+            winners = players.filter { !imposterIds.contains($0.id) }
+            losers = players.filter { imposterIds.contains($0.id) }
+        } else {
+            winners = players.filter { imposterIds.contains($0.id) }
+            losers = players.filter { !imposterIds.contains($0.id) }
+        }
+        
+        for p in winners { GlobalStatsManager.shared.recordWin(for: p.name) }
+        for p in losers { GlobalStatsManager.shared.recordLoss(for: p.name) }
     }
 }

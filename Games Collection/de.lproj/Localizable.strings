@@ -5,6 +5,9 @@
 "Wer blufft?" = "Wer blufft?";
 "Finde den Spion" = "Finde den Spion";
 "Lügner" = "Lügner";
+"King of the Session" = "König der Sitzung";
+"Sieg" = "Sieg";
+"Siege" = "Siege";
 
 /* MainSettingsView */
 "Allgemein" = "Allgemein";
@@ -304,3 +307,43 @@
 "Scan läuft..." = "Scan läuft...";
 "Gedrückt halten zum Entsperren" = "Gedrückt halten zum Entsperren";
 "Zeit: %.1fs" = "Zeit: %.1fs";
+
+
+/* Imposter Draft Room */
+"The Draft Room" = "The Draft Room";
+"Aktives Squad" = "Aktives Squad";
+"Neuer Rekrut" = "Neuer Rekrut";
+"Namen eingeben..." = "Namen eingeben...";
+"Die Bank" = "Die Bank";
+"Keine weiteren Spieler verfügbar." = "Keine weiteren Spieler verfügbar.";
+"Das Squad ist leer" = "Das Squad ist leer";
+"Wähle Spieler aus der Bank oder erstelle neue." = "Wähle Spieler aus der Bank oder erstelle neue.";
+"SPIEL BEENDEN" = "SPIEL BEENDEN";
+"NEUE MISSION" = "NEUE MISSION";
+"VERIFIZIERUNG ERFORDERLICH" = "VERIFIZIERUNG ERFORDERLICH";
+"Hat der Spion das korrekte Passwort genannt?" = "Hat der Spion das korrekte Passwort genannt?";
+"WARNUNG" = "WARNUNG";
+"Eine Bestätigung beendet die Mission sofort." = "Eine Bestätigung beendet die Mission sofort.";
+"ZUGRIFF BESTÄTIGEN" = "ZUGRIFF BESTÄTIGEN";
+"ABBRECHEN" = "ABBRECHEN";
+"MISSION STATUS" = "MISSION STATUS";
+"KOMPROMITTIERT" = "KOMPROMITTIERT";
+"GEHEIMWORT ENTSCHLÜSSELT" = "GEHEIMWORT ENTSCHLÜSSELT";
+
+/* Imposter Spy Options */
+"Passe die Regeln für Spione an" = "Passe die Regeln für Spione an";
+"Kategorie sichtbar" = "Kategorie sichtbar";
+"Spione sehen die gewählte Kategorie." = "Spione sehen die gewählte Kategorie.";
+"Spione sehen sich gegenseitig" = "Spione sehen sich gegenseitig";
+"Aktiv, wenn es mindestens zwei Spione gibt." = "Aktiv, wenn es mindestens zwei Spione gibt.";
+"Zahl der Spione zufällig" = "Zahl der Spione zufällig";
+"Die Anzahl kann pro Spiel variieren." = "Die Anzahl kann pro Spiel variieren.";
+"Spion-Hinweise anzeigen" = "Spion-Hinweise anzeigen";
+"Zeigt dezente Tipps für Spione in der Runde." = "Zeigt dezente Tipps für Spione in der Runde.";
+"Rollen & Regeln" = "Rollen & Regeln";
+"Spion" = "Spion";
+"Rollen" = "Rollen";
+"Spezialrollen ersetzen normale Spieler" = "Spezialrollen ersetzen normale Spieler";
+"Team Bürger" = "Team Bürger";
+"Team Spion" = "Team Spion";
+"Team Chaos" = "Team Chaos";

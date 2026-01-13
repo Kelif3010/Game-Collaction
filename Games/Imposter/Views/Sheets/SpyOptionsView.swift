@@ -28,7 +28,7 @@ struct SpyOptionsView: View {
 
                     Spacer()
 
-                    Text("Rollen & Regeln")
+                    Text(NSLocalizedString("Rollen & Regeln", comment: ""))
                         .font(.title3.bold())
                         .foregroundStyle(.white)
 
@@ -50,7 +50,7 @@ struct SpyOptionsView: View {
                 .padding(.horizontal, ImposterStyle.padding)
 
                 ImposterSegmentedControl(
-                    titles: ["Spion", "Rollen"],
+                    titles: [NSLocalizedString("Spion", comment: ""), NSLocalizedString("Rollen", comment: "")],
                     selectedIndex: $selectedTab
                 )
                 .padding(.horizontal, ImposterStyle.padding)
@@ -65,7 +65,7 @@ struct SpyOptionsView: View {
                     // Tab 1: Spion Optionen
                     ScrollView {
                         VStack(spacing: 16) {
-                            Text("Passe die Regeln für Spione an")
+                            Text(NSLocalizedString("Passe die Regeln für Spione an", comment: ""))
                                 .font(.subheadline)
                                 .foregroundStyle(ImposterStyle.mutedText)
                                 .multilineTextAlignment(.center)
@@ -75,16 +75,16 @@ struct SpyOptionsView: View {
                                 SpyOptionRow(
                                     icon: "folder.fill",
                                     tint: .orange,
-                                    title: "Kategorie sichtbar",
-                                    subtitle: "Spione sehen die gewählte Kategorie.",
+                                    title: NSLocalizedString("Kategorie sichtbar", comment: ""),
+                                    subtitle: NSLocalizedString("Spione sehen die gewählte Kategorie.", comment: ""),
                                     isOn: $gameSettings.spyCanSeeCategory
                                 )
 
                                 SpyOptionRow(
                                     icon: "person.2.fill",
                                     tint: .orange,
-                                    title: "Spione sehen sich gegenseitig",
-                                    subtitle: "Aktiv, wenn es mindestens zwei Spione gibt.",
+                                    title: NSLocalizedString("Spione sehen sich gegenseitig", comment: ""),
+                                    subtitle: NSLocalizedString("Aktiv, wenn es mindestens zwei Spione gibt.", comment: ""),
                                     isDisabled: gameSettings.numberOfImposters < 2,
                                     isOn: Binding(
                                         get: { gameSettings.spiesCanSeeEachOther && gameSettings.numberOfImposters >= 2 },
@@ -95,16 +95,17 @@ struct SpyOptionsView: View {
                                 SpyOptionRow(
                                     icon: "dice.fill",
                                     tint: .orange,
-                                    title: "Zahl der Spione zufällig",
-                                    subtitle: "Die Anzahl kann pro Spiel variieren.",
+                                    title: NSLocalizedString("Zahl der Spione zufällig", comment: ""),
+                                    subtitle: NSLocalizedString("Die Anzahl kann pro Spiel variieren.", comment: ""),
                                     isOn: $gameSettings.randomSpyCount
                                 )
 
                                 SpyOptionRow(
                                     icon: "lightbulb.fill",
                                     tint: .orange,
-                                    title: "Spion-Hinweise anzeigen",
-                                    subtitle: "Zeigt dezente Tipps für Spione in der Runde.",
+                                    title: NSLocalizedString("Spion-Hinweise anzeigen", comment: ""),
+                                    subtitle: NSLocalizedString("Zeigt dezente Tipps für Spione in der Runde.", comment: ""),
+                                    badgeText: NSLocalizedString("Beta", comment: ""),
                                     isOn: $gameSettings.showSpyHints
                                 )
                             }
@@ -117,23 +118,23 @@ struct SpyOptionsView: View {
                     // Tab 2: Sonderrollen
                     ScrollView {
                         VStack(spacing: 24) {
-                            Text("Spezialrollen ersetzen normale Spieler")
+                            Text(NSLocalizedString("Spezialrollen ersetzen normale Spieler", comment: ""))
                                 .font(.subheadline)
                                 .foregroundStyle(ImposterStyle.mutedText)
                                 .multilineTextAlignment(.center)
                             
                             // Team Bürger
-                            RoleGroupView(teamName: "Team Bürger", teamColor: .blue, roles: [.secretAgent, .twins, .bodyguard], settings: gameSettings) { role in
+                            RoleGroupView(teamName: NSLocalizedString("Team Bürger", comment: ""), teamColor: .blue, roles: [.secretAgent, .twins, .bodyguard], settings: gameSettings) { role in
                                 roleToExplain = role
                             }
                             
                             // Team Spion
-                            RoleGroupView(teamName: "Team Spion", teamColor: .red, roles: [.saboteur, .mole, .hacker], settings: gameSettings) { role in
+                            RoleGroupView(teamName: NSLocalizedString("Team Spion", comment: ""), teamColor: .red, roles: [.saboteur, .mole, .hacker], settings: gameSettings) { role in
                                 roleToExplain = role
                             }
                             
                             // Team Chaos
-                            RoleGroupView(teamName: "Team Chaos", teamColor: .purple, roles: [.fool, .confused], settings: gameSettings) { role in
+                            RoleGroupView(teamName: NSLocalizedString("Team Chaos", comment: ""), teamColor: .purple, roles: [.fool, .confused], settings: gameSettings) { role in
                                 roleToExplain = role
                             }
                         }
@@ -144,7 +145,7 @@ struct SpyOptionsView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 
-                ImposterPrimaryButton(title: "Fertig") {
+                ImposterPrimaryButton(title: NSLocalizedString("Fertig", comment: "")) {
                     dismiss()
                 }
                 .padding(.horizontal, ImposterStyle.padding)

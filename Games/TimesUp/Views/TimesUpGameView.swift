@@ -1118,6 +1118,24 @@ struct GameEndView: View {
             .padding(.horizontal, 40)
         }
         .padding()
+        .onAppear {
+            recordStats()
+        }
+    }
+    
+    private func recordStats() {
+        let sorted = gameManager.gameState.settings.teams.sorted { $0.score > $1.score }
+        guard let topScore = sorted.first?.score, topScore > 0 else { return }
+        
+        let winners = sorted.filter { $0.score == topScore }
+        let others = sorted.filter { $0.score < topScore }
+        
+        for winner in winners {
+            GlobalStatsManager.shared.recordWin(for: winner.name)
+        }
+        for team in others {
+            GlobalStatsManager.shared.recordParticipation(for: team.name)
+        }
     }
 }
 

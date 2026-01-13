@@ -66,6 +66,7 @@ struct SpyOptionRow: View {
     let title: String
     let subtitle: String
     var isDisabled: Bool = false
+    var badgeText: String? = nil
     var isOn: Binding<Bool>
 
     var body: some View {
@@ -76,6 +77,7 @@ struct SpyOptionRow: View {
                 Text(title)
                     .font(.headline)
                     .foregroundStyle(.white)
+                
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(ImposterStyle.mutedText)
@@ -88,6 +90,19 @@ struct SpyOptionRow: View {
                 .tint(.green)
         }
         .imposterRowStyle()
+        .overlay(alignment: .topTrailing) {
+            if let badge = badgeText {
+                Text(badge)
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundStyle(.orange)
+                    .clipShape(Capsule())
+                    .padding(.top, 6)
+                    .padding(.trailing, 8)
+            }
+        }
         .opacity(isDisabled ? 0.5 : 1.0)
         .disabled(isDisabled)
     }

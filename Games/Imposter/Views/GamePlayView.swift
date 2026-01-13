@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MultipeerConnectivity
 
 struct GamePlayView: View {
     @EnvironmentObject var gameSettings: GameSettings
@@ -13,14 +14,22 @@ struct GamePlayView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var currentCard: GameCard?
-    // Steuert den Sicherheits-Screen für die Weitergabe
-    @State private var isShowingHandover = true
+    @State private var hasRevealedOwnCard = false
     
     @State private var showStartingPlayerAnnouncement = false
     @State private var startingPlayer: Player?
     
     // KI-Services
     @StateObject private var hintService = HintService.shared
+
+    private var isMultiplayerActive: Bool {
+        MultipeerManager.shared.role != .unknown
+    }
+
+    private var isHostOrLocal: Bool {
+        let role = MultipeerManager.shared.role
+        return role == .host || role == .unknown
+    }
     
     var body: some View {
         ZStack {
@@ -33,17 +42,7 @@ struct GamePlayView: View {
                 ImposterGameHeaderView()
                     .padding(.bottom, 10)
                 
-                if gameSettings.gamePhase == .cardReveal {
-                    // PHASE 1: KARTEN VERTEILEN
-                    cardRevealContent
-                } else if gameSettings.gamePhase == .playing {
-                    // PHASE 2: SPIEL LÄUFT
-                    playingContent
-                } else if gameSettings.gamePhase == .finished {
-                    // PHASE 3: ZEIT ABGELAUFEN (Spione gewinnen)
-                    TimeOutResultView()
-                        .transition(.opacity)
-                }
+                mainContent
                 
                 Spacer()
                 
@@ -52,6 +51,9 @@ struct GamePlayView: View {
             }
         }
         .onAppear {
+            if isMultiplayerActive {
+                hasRevealedOwnCard = false
+            }
             startGame()
         }
         .onDisappear {
@@ -63,13 +65,80 @@ struct GamePlayView: View {
                 dismiss()
             }
         }
+        .onChange(of: gameSettings.requestExitToSetup) { _, newValue in
+            if newValue {
+                gameSettings.requestExitToSetup = false
+                dismiss()
+            }
+        }
+        .onChange(of: gameSettings.startingPlayerName) { _, newName in
+            if let newName = newName {
+                startingPlayer = gameSettings.players.first(where: { $0.name == newName })
+            }
+        }
         .onChange(of: gameSettings.gamePhase) { _, newPhase in
             if newPhase == .finished {
                 gameLogic.stopGameTimer()
-            } else if newPhase == .cardReveal {
+            } else if newPhase == .cardReveal && !isMultiplayerActive {
                 showStartingPlayerAnnouncement = false
                 gameSettings.isTimerPaused = true
                 prepareNextCard()
+            }
+        }
+        .onChange(of: gameSettings.players) { oldPlayers, newPlayers in
+            guard isMultiplayerActive else { return }
+            guard !hasRevealedOwnCard else { return }
+            let myName = MultipeerManager.shared.myPeerId.displayName
+            let oldSelf = oldPlayers.first(where: { $0.name == myName })
+            let newSelf = newPlayers.first(where: { $0.name == myName })
+            let shouldRefresh = currentCard == nil
+                || oldSelf?.word != newSelf?.word
+                || oldSelf?.isImposter != newSelf?.isImposter
+                || oldSelf?.roleType != newSelf?.roleType
+                || oldSelf?.role != newSelf?.role
+            if shouldRefresh {
+                currentCard = nil
+            }
+            prepareMultiplayerCardIfNeeded()
+        }
+        .onChange(of: gameSettings.roundCategory) { _, _ in
+            if isMultiplayerActive {
+                prepareMultiplayerCardIfNeeded()
+            }
+        }
+        .onChange(of: gameSettings.currentPlayerIndex) { _, _ in
+            if isMultiplayerActive && !hasRevealedOwnCard {
+                currentCard = nil
+                prepareMultiplayerCardIfNeeded()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        ZStack {
+            if isMultiplayerActive {
+                if gameSettings.gamePhase == .finished {
+                    TimeOutResultView()
+                        .transition(.opacity)
+                } else if !hasRevealedOwnCard {
+                    cardRevealContent
+                        .transition(.opacity)
+                } else {
+                    playingContent
+                }
+            } else {
+                switch gameSettings.gamePhase {
+                case .cardReveal:
+                    cardRevealContent
+                case .playing:
+                    playingContent
+                case .finished:
+                    TimeOutResultView()
+                        .transition(.opacity)
+                default:
+                    EmptyView()
+                }
             }
         }
     }
@@ -78,26 +147,18 @@ struct GamePlayView: View {
     
     @ViewBuilder
     private var cardRevealContent: some View {
-        if isShowingHandover {
-            // SICHERHEITS-SCREEN: Handy weitergeben
-            SecureHandoverView(
-                playerName: gameLogic.currentPlayer?.name ?? "Spieler",
-                onReady: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        isShowingHandover = false
-                    }
-                }
-            )
-            .transition(.opacity)
-        } else if let card = currentCard {
-            // DIE EIGENTLICHE KARTE (Wird erst angezeigt, wenn Handover bestätigt)
+        if let card = currentCard {
+            // DIE EIGENTLICHE KARTE
+            // Die Sicherheit (Halten zum Enthüllen) ist jetzt in SpyCardView integriert
             VStack {
                 Spacer()
                 SpyCardView(
                     card: card,
                     gameSettings: gameSettings,
                     onCardTap: {
-                        gameLogic.markCurrentPlayerCardSeen()
+                        if !isMultiplayerActive {
+                            gameLogic.markCurrentPlayerCardSeen()
+                        }
                     },
                     onCardDismissed: {
                         handleCardDismissed()
@@ -145,7 +206,12 @@ struct GamePlayView: View {
     
     private func startGame() {
         gameLogic.stopGameTimer()
-        
+
+        if isMultiplayerActive {
+            prepareMultiplayerCardIfNeeded()
+            return
+        }
+
         if gameSettings.gamePhase == .setup {
             Task { @MainActor in
                 await gameLogic.startGame()
@@ -155,6 +221,37 @@ struct GamePlayView: View {
             prepareNextCard()
         }
     }
+
+    private func prepareMultiplayerCardIfNeeded() {
+        guard !hasRevealedOwnCard else { return }
+        guard let player = gameLogic.currentPlayer else { return }
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        guard player.name == myName else { return }
+        if currentCard?.player.name != player.name {
+            currentCard = nil
+        }
+        if currentCard == nil {
+            prepareNextCard()
+        }
+    }
+
+    private func markMultiplayerCardSeen() {
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        if let myIndex = gameSettings.players.firstIndex(where: { $0.name == myName }) {
+            gameSettings.players[myIndex].hasSeenCard = true
+        }
+        if MultipeerManager.shared.role == .peer {
+            let payload = ImposterCardSeenPayload(playerName: myName)
+            MultipeerManager.shared.sendToAll(event: MPCEventType.imposterCardSeen, object: payload)
+        }
+    }
+
+    private func maybeStartMultiplayerTimer() {
+        guard MultipeerManager.shared.role == .host else { return }
+        if gameSettings.players.allSatisfy({ $0.hasSeenCard }) {
+            gameLogic.startMultiplayerTimerIfNeeded()
+        }
+    }
     
     private func prepareNextCard() {
         guard let player = gameLogic.currentPlayer,
@@ -162,25 +259,46 @@ struct GamePlayView: View {
             return
         }
         
-        // Karte laden, aber erst den Handover-Screen zeigen
+        // Karte laden
         currentCard = GameCard(player: player, category: category)
-        isShowingHandover = true
     }
     
     private func handleCardDismissed() {
+        if isMultiplayerActive {
+            hasRevealedOwnCard = true
+            markMultiplayerCardSeen()
+            maybeStartMultiplayerTimer()
+            return
+        }
+
+        // PRE-CHECK: Ist das der letzte Spieler?
+        // Wenn ja, bereiten wir die Announcement-View VOR dem Phasenwechsel vor.
+        // Das verhindert, dass kurz der Timer aufblitzt.
+        let isLastPlayer = gameSettings.currentPlayerIndex >= gameSettings.players.count - 1
+        
+        if isLastPlayer {
+            // 1. Logik für Startspieler jetzt schon ausführen
+            if MultipeerManager.shared.role == .host || MultipeerManager.shared.role == .unknown {
+                let picked = gameSettings.players.randomElement()
+                startingPlayer = picked
+                gameSettings.startingPlayerName = picked?.name
+                gameLogic.broadcastGameState()
+            }
+            
+            // 2. View-Status setzen
+            gameSettings.isTimerPaused = true
+            showStartingPlayerAnnouncement = true
+        }
+
+        // 3. Phase weiterschalten (Das ändert gamePhase auf .playing)
         gameLogic.nextPlayer()
         
         if gameSettings.gamePhase == .cardReveal {
             // Nächster Spieler ist dran -> Handover Screen wieder aktivieren
             prepareNextCard()
-        } else {
-            // Alle fertig -> Startspieler wählen
-            startingPlayer = gameSettings.players.randomElement()
-            gameSettings.isTimerPaused = true
-            withAnimation {
-                showStartingPlayerAnnouncement = true
-            }
-        }
+        } 
+        // Der Else-Block ist jetzt leerer, da die Logik schon oben passiert ist.
+        // Das ist beabsichtigt.
     }
     
     private func beginRoundAfterAnnouncement() {
@@ -191,121 +309,81 @@ struct GamePlayView: View {
     }
 }
 
-// MARK: - Secure Handover View (Der neue Sicherheits-Screen)
-struct SecureHandoverView: View {
-    let playerName: String
-    let onReady: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            // Großes animiertes Icon
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.05))
-                    .frame(width: 180, height: 180)
-                
-                Circle()
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    .frame(width: 180, height: 180)
-                
-                Image(systemName: "iphone.gen3")
-                    .font(.system(size: 70))
-                    .foregroundColor(.white)
-                    .shadow(color: .white.opacity(0.5), radius: 20)
-                
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(.orange)
-                    .offset(x: 50, y: 0)
-            }
-            
-            VStack(spacing: 12) {
-                Text(LocalizedStringKey("Gib das Handy an"))
-                    .font(.title3)
-                    .foregroundColor(.white.opacity(0.7))
-                
-                Text(playerName)
-                    .font(.system(size: 42, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                    .shadow(color: .black.opacity(0.5), radius: 10)
-            }
-            
-            Spacer()
-            
-            ImposterPrimaryButton(title: "Ich bin \(playerName)") {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                onReady()
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial) // Weichzeichner über dem Hintergrund
-    }
-}
-
-// MARK: - Game Header View
+// MARK: - Game Header View (Modern HUD)
 struct ImposterGameHeaderView: View {
     @EnvironmentObject var gameSettings: GameSettings
+
+    private var isMultiplayerActive: Bool {
+        MultipeerManager.shared.role != .unknown
+    }
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Oberste Zeile: Spione Info & Fortschritt
-            HStack {
-                if !gameSettings.randomSpyCount {
-                    HStack(spacing: 6) {
+        HStack {
+            // Links: Bedrohungs-Level (Spione)
+            if !gameSettings.randomSpyCount {
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.2))
+                            .frame(width: 32, height: 32)
                         Image(systemName: "eye.slash.fill")
-                            .font(.subheadline)
+                            .font(.caption.bold())
                             .foregroundColor(.red)
-                        Text("\(gameSettings.numberOfImposters) \(gameSettings.numberOfImposters == 1 ? "Spion" : "Spione")")
-                            .font(.subheadline.bold())
-                            .foregroundColor(.white.opacity(0.9))
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.red.opacity(0.15))
-                    .clipShape(Capsule())
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(gameSettings.numberOfImposters)")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(.white)
+                        Text(gameSettings.numberOfImposters == 1 ? "SPION" : "SPIONE")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
                 }
-                
-                Spacer()
-                
-                // Rundenstatus (wenn Karten verteilt werden)
-                if gameSettings.gamePhase == .cardReveal {
-                    Text("\(gameSettings.currentPlayerIndex + 1) / \(gameSettings.players.count)")
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Capsule())
-                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
             
-            // Progress Bar (nur beim Verteilen)
-            if gameSettings.gamePhase == .cardReveal {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 4)
+            Spacer()
+            
+            // Rechts: Fortschritt (Runde)
+            if gameSettings.gamePhase == .cardReveal && !isMultiplayerActive {
+                HStack(spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("\(gameSettings.currentPlayerIndex + 1)/\(gameSettings.players.count)")
+                            .font(.system(size: 14, weight: .black, design: .monospaced))
+                            .foregroundColor(.white)
+                        Text("VERTEILT")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.1), lineWidth: 3)
+                            .frame(width: 24, height: 24)
                         
-                        let progress = Double(gameSettings.currentPlayerIndex) / Double(max(1, gameSettings.players.count))
-                        Capsule()
-                            .fill(ImposterStyle.primaryGradient)
-                            .frame(width: geo.size.width * progress, height: 4)
+                        let progress = Double(gameSettings.currentPlayerIndex + 1) / Double(max(1, gameSettings.players.count))
+                        Circle()
+                            .trim(from: 0, to: progress)
+                            .stroke(Color.blue, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: 24, height: 24)
+                            .rotationEffect(.degrees(-90))
                             .animation(.spring(), value: progress)
                     }
                 }
-                .frame(height: 4)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
     }
 }
 
@@ -369,84 +447,90 @@ struct GameTimerView: View {
     @State private var showWordGuessConfirm = false
     @State private var startWordGuessImmediateWin = false
     @State private var wasTimerPausedBeforeWordGuess = false
+
+    private var isHostOrLocal: Bool {
+        let role = MultipeerManager.shared.role
+        return role == .host || role == .unknown
+    }
     
     var body: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 40) {
             
-            // Timer Display
-            VStack(spacing: 15) {
-                Text(timeString)
-                    .font(.system(size: 80, weight: .bold, design: .monospaced))
-                    .foregroundColor(gameSettings.timeRemaining <= 60 ? .red : .white)
-                    .shadow(color: gameSettings.timeRemaining <= 60 ? .red.opacity(0.5) : .blue.opacity(0.3), radius: 20)
-                    .contentTransition(.numericText())
-                
-                // Status Badge
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(gameSettings.isTimerPaused ? Color.orange : Color.green)
-                        .frame(width: 8, height: 8)
+            Spacer()
+            
+            // 1. TIMER & PAUSE CONTROL (Zentrales Element)
+            VStack(spacing: 20) {
+                // Timer Circle mit Pause-Indikator
+                ZStack {
+                    // Pulsierender Ring wenn aktiv
+                    if !gameSettings.isTimerPaused {
+                        Circle()
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .frame(width: 260, height: 260)
+                            .scaleEffect(1.1)
+                            .opacity(0.5)
+                            .animation(.easeInOut(duration: 1).repeatForever(), value: gameSettings.isTimerPaused)
+                    }
                     
-                    Text(gameSettings.isTimerPaused ? LocalizedStringKey("Pausiert") : LocalizedStringKey("Diskussion läuft"))
-                        .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.8))
-                        .textCase(.uppercase)
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 240, height: 240)
+                        .shadow(color: .black.opacity(0.3), radius: 20)
+                    
+                    VStack(spacing: 4) {
+                        Text(timeString)
+                            .font(.system(size: 70, weight: .heavy, design: .monospaced))
+                            .foregroundStyle(gameSettings.timeRemaining <= 60 ? .red : .white)
+                            .contentTransition(.numericText())
+                        
+                        Text(gameSettings.isTimerPaused ? "PAUSIERT" : "LÄUFT")
+                            .font(.caption.bold())
+                            .tracking(2)
+                            .foregroundStyle(gameSettings.isTimerPaused ? .orange : .green)
+                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.white.opacity(0.1))
-                .clipShape(Capsule())
-            }
-            .padding(.top, 40)
-            .onTapGesture {
-                withAnimation {
-                    gameSettings.isTimerPaused.toggle()
+                .onTapGesture {
+                    togglePause()
                 }
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                
+                // Kleiner Hinweis
+                if isHostOrLocal {
+                    Text("Tippen zum Pausieren")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
             }
             
             Spacer()
             
-            // Action Grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                
-                // 1. Abstimmen
-                GameActionButton(
-                    title: "Abstimmen",
+            // 2. ACTION BUTTONS (Vertikal statt Grid)
+            VStack(spacing: 16) {
+                // Abstimmen Button
+                GameControlBtn(
+                    title: "Jetzt Abstimmen",
+                    subtitle: "Verdächtigen wählen",
                     icon: "hand.point.up.left.fill",
-                    isEnabled: true
-                )
-                .onTapGesture { showVotingView = true }
-                
-                // 2. Wort erraten (für Imposter)
-                GameActionButton(
-                    title: "Wort lösen",
-                    icon: "lightbulb.max.fill",
-                    isEnabled: true
-                )
-                .onTapGesture { showWordGuessConfirm = true }
-                
-                // 3. Pause/Play (Groß über beide Spalten)
-                Button {
-                    withAnimation { gameSettings.isTimerPaused.toggle() }
-                } label: {
-                    HStack {
-                        Image(systemName: gameSettings.isTimerPaused ? "play.fill" : "pause.fill")
-                        Text(gameSettings.isTimerPaused ? LocalizedStringKey("Fortsetzen") : LocalizedStringKey("Pausieren"))
+                    color: Color.blue,
+                    isEnabled: isHostOrLocal,
+                    action: {
+                        if isHostOrLocal { showVotingView = true }
                     }
-                    .font(.headline.weight(.bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.15))
-                    )
-                }
-                .gridCellColumns(2) // Spannt über 2 Spalten
+                )
+                
+                // Wort lösen Button
+                GameControlBtn(
+                    title: "Wort lösen",
+                    subtitle: "Nur für Spione",
+                    icon: "lightbulb.max.fill",
+                    color: Color.orange,
+                    isEnabled: isHostOrLocal,
+                    action: {
+                        if isHostOrLocal { showWordGuessConfirm = true }
+                    }
+                )
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 40)
         }
         // Modals
         .sheet(isPresented: $showVotingView) {
@@ -477,6 +561,17 @@ struct GameTimerView: View {
         }
     }
     
+    private func togglePause() {
+        guard isHostOrLocal else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        withAnimation {
+            gameSettings.isTimerPaused.toggle()
+            if MultipeerManager.shared.role == .host {
+                gameLogic.broadcastGameState()
+            }
+        }
+    }
+    
     private var timeString: String {
         let minutes = gameSettings.timeRemaining / 60
         let seconds = gameSettings.timeRemaining % 60
@@ -484,7 +579,59 @@ struct GameTimerView: View {
     }
 }
 
-// MARK: - Game Footer View
+// Helper Button Component (Umbenannt um Konflikte zu vermeiden)
+struct GameControlBtn: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let isEnabled: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundStyle(color)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(LocalizedStringKey(title))
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                    
+                    if !subtitle.isEmpty {
+                        Text(LocalizedStringKey(subtitle))
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .padding(16)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(.white.opacity(0.1), lineWidth: 1)
+            )
+        }
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.6)
+    }
+}
+
+// MARK: - Game Footer View (Redesigned Exit Button)
 struct GameFooterView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
@@ -494,12 +641,23 @@ struct GameFooterView: View {
         Button {
             showExitConfirmation = true
         } label: {
-            Text(LocalizedStringKey("Spiel beenden"))
-                .font(.caption.bold())
-                .foregroundColor(.red.opacity(0.8))
-                .padding(10)
+            HStack(spacing: 8) {
+                Image(systemName: "xmark")
+                    .font(.caption.bold())
+                Text(LocalizedStringKey("Spiel verlassen"))
+                    .font(.callout.weight(.medium))
+            }
+            .foregroundColor(.white.opacity(0.7))
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.3))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
         }
-        .padding(.bottom, 10)
+        .padding(.bottom, 20)
         .confirmationDialog(
             "Spiel wirklich beenden?",
             isPresented: $showExitConfirmation,

@@ -10,127 +10,155 @@ struct MainSettingsView: View {
     // Globaler Spieler-Manager
     @StateObject private var playerManager = GlobalPlayerManager.shared
     @State private var newPlayerName = ""
+    @State private var isAddingPlayer = false
     @State private var showResetAlert = false
+    @State private var showStats = false
+    
+    // Eigener Name (NEU)
+    @AppStorage("myPlayerName") private var myPlayerName = ""
+    
+    // Grid Layout Definition
+    let columns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
     
     var body: some View {
         NavigationStack {
-            List {
-                // MARK: - Allgemein
-                Section(header: Text(LocalizedStringKey("Allgemein"))) {
-                    NavigationLink(destination: LanguageSelectionView()) {
-                        HStack {
-                            Label(LocalizedStringKey("Sprache"), systemImage: "globe")
-                            Spacer()
-                            Text(currentLanguageName)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    NavigationLink(destination: Text("App Icons hier")) {
-                        Label(LocalizedStringKey("App Icon"), systemImage: "app.badge")
-                    }
-                }
+            ZStack {
+                // 1. Background (Consistent with GameRecommender)
+                LinearGradient(
+                    colors: [Color.black, Color.indigo.opacity(0.5), Color.purple.opacity(0.4)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
-                // MARK: - Spieler (NEU)
-                Section(header: Text(LocalizedStringKey("Meine Freunde"))) {
-                    ForEach(playerManager.players, id: \.id) { player in
-                        HStack {
-                            Circle()
-                                .fill(Color(hex: player.avatarColorHex))
-                                .frame(width: 24, height: 24)
-                                .overlay(Text(String(player.name.prefix(1))).font(.caption2).foregroundColor(.white))
-                            Text(player.name)
-                        }
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let player = playerManager.players[index]
-                            playerManager.removePlayer(id: player.id)
-                        }
-                    }
-                    
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.green)
-                        TextField(LocalizedStringKey("Neuen Spieler hinzufügen"), text: $newPlayerName)
-                            .onSubmit {
-                                addPlayer()
-                            }
-                        if !newPlayerName.isEmpty {
-                            Button(LocalizedStringKey("Hinzufügen")) {
-                                addPlayer()
-                            }
-                        }
-                    }
-                }
-                
-                // MARK: - Community
-                Section(header: Text(LocalizedStringKey("Community"))) {
-                    // YouTube Link
-                    Link(destination: URL(string: "https://www.youtube.com/@elfiandken")!) {
-                        Label {
-                            Text(LocalizedStringKey("Elfiandken"))
-                                .foregroundStyle(.primary)
-                        } icon: {
-                            Image("Youtube")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)  // YouTube Rot
-                        }
-                    }
-                    
-                    // Instagram Link
-                    Link(destination: URL(string: "https://www.instagram.com/elfiandken/")!) {
-                        Label {
-                            Text(LocalizedStringKey("Elfiandken"))
-                                .foregroundStyle(.primary)
-                        } icon: {
-                            Image("Instagram")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24) // Insta Purple
-                        }
-                    }
-                }
-                
-                // MARK: - Support & Info
-                Section(header: Text(LocalizedStringKey("Support & Info"))) {
-                    NavigationLink(destination: Text(LocalizedStringKey("Über uns Text"))) {
-                        Label(LocalizedStringKey("Über uns"), systemImage: "info.circle")
-                    }
-                    
-                    Link(destination: URL(string: "mailto:elfiandken@icloud.com")!) {
-                        Label(LocalizedStringKey("Feedback senden"), systemImage: "envelope")
-                            .foregroundStyle(.primary)
-                    }
-                    
-                    Toggle(LocalizedStringKey("Benachrichtigungen"), isOn: .constant(true))
-                }
-                
-                // MARK: - Branding Footer
-                Section {
-                    VStack(alignment: .center, spacing: 6) {
-                        Text("Made with ❤️ by KELIF")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 24) {
                         
-                        Text("KELIF Studios")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        // MARK: - Header / ID Card
+                        GamerIDCard(name: $myPlayerName)
+                            .padding(.top)
                         
-                        Text("Version 1.0.0")
+                        // MARK: - Crew Carousel
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(LocalizedStringKey("Deine Crew"))
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(.horizontal)
+                            
+                            CrewCarousel(
+                                players: playerManager.players,
+                                newName: $newPlayerName,
+                                isAdding: $isAddingPlayer,
+                                onAdd: addPlayer,
+                                onDelete: deletePlayer
+                            )
+                        }
+                        
+                        // MARK: - Bento Grid (Settings & Links)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(LocalizedStringKey("Dashboard"))
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(.horizontal)
+                            
+                            LazyVGrid(columns: columns, spacing: 16) {
+                                // 1. Stats (Wide)
+                                Button {
+                                    showStats = true
+                                } label: {
+                                    DashboardCard(
+                                        icon: "chart.bar.xaxis",
+                                        title: LocalizedStringKey("Statistik & Recap"),
+                                        subtitle: LocalizedStringKey("Deine Highlights"),
+                                        color: .blue
+                                    )
+                                }
+                                .gridCellColumns(2) // Spans full width
+                                
+                                // 2. Language
+                                NavigationLink(destination: LanguageSelectionView()) {
+                                    DashboardCard(
+                                        icon: "globe",
+                                        title: LocalizedStringKey("Sprache"),
+                                        subtitle: currentLanguageName,
+                                        color: .orange
+                                    )
+                                }
+                                
+                                // 3. App Icon (Placeholder)
+                                NavigationLink(destination: Text("App Icons Coming Soon")) {
+                                    DashboardCard(
+                                        icon: "app.badge",
+                                        title: LocalizedStringKey("App Icon"),
+                                        subtitle: LocalizedStringKey("Customize"),
+                                        color: .purple
+                                    )
+                                }
+                                
+                                // 4. Community (YouTube)
+                                Link(destination: URL(string: "https://www.youtube.com/@elfiandken")!) {
+                                    DashboardCard(
+                                        imageName: "Youtube",
+                                        title: LocalizedStringKey("YouTube"),
+                                        subtitle: LocalizedStringKey("@elfiandken"),
+                                        color: .red
+                                    )
+                                }
+                                
+                                // 5. Community (Insta)
+                                Link(destination: URL(string: "https://www.instagram.com/elfiandken/")!) {
+                                    DashboardCard(
+                                        imageName: "Instagram",
+                                        title: LocalizedStringKey("Instagram"),
+                                        subtitle: LocalizedStringKey("Follow us"),
+                                        color: .pink
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        // MARK: - Support & Danger Zone
+                        VStack(spacing: 16) {
+                            // Support Link
+                            Link(destination: URL(string: "mailto:elfiandken@icloud.com")!) {
+                                HStack {
+                                    Image(systemName: "envelope.fill")
+                                    Text(LocalizedStringKey("Feedback senden"))
+                                }
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(12)
+                            }
+                            
+                            // Reset
+                            Button(role: .destructive) {
+                                showResetAlert = true
+                            } label: {
+                                Text(LocalizedStringKey("Alle Daten löschen"))
+                                    .font(.caption)
+                                    .foregroundColor(.red.opacity(0.8))
+                            }
+                            .padding(.top, 8)
+                            
+                            // Footer Info
+                            VStack(spacing: 4) {
+                                Text("Made with ❤️ by KELIF")
+                                Text("Version 1.0.0")
+                            }
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear)
-                }
-                
-                // MARK: - Erweitert / Reset (NEU)
-                Section(header: Text(LocalizedStringKey("Erweitert"))) {
-                    Button(role: .destructive) {
-                        showResetAlert = true
-                    } label: {
-                        Label(LocalizedStringKey("Alle Einstellungen zurücksetzen"), systemImage: "trash")
+                            .foregroundStyle(.white.opacity(0.3))
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                        
+                        Spacer(minLength: 50)
                     }
                 }
             }
@@ -141,6 +169,7 @@ struct MainSettingsView: View {
                     Button(LocalizedStringKey("Fertig")) {
                         dismiss()
                     }
+                    .foregroundStyle(.white)
                 }
             }
             .alert(LocalizedStringKey("Einstellungen zurücksetzen?"), isPresented: $showResetAlert) {
@@ -152,9 +181,13 @@ struct MainSettingsView: View {
             } message: {
                 Text(LocalizedStringKey("Dies löscht alle gespeicherten Daten (Spieler, Highscores, Einstellungen). Diese Aktion kann nicht rückgängig gemacht werden."))
             }
+            .sheet(isPresented: $showStats) {
+                GlobalRecapView()
+            }
         }
-        .presentationDetents([.medium, .large])
     }
+    
+    // MARK: - Logic
     
     private var currentLanguageName: LocalizedStringKey {
         if useSystemLanguage {
@@ -164,86 +197,249 @@ struct MainSettingsView: View {
     }
     
     private func addPlayer() {
-        guard !newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard !newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            isAddingPlayer = false
+            return
+        }
         withAnimation {
             playerManager.addPlayer(name: newPlayerName)
             newPlayerName = ""
+            isAddingPlayer = false
+        }
+    }
+    
+    private func deletePlayer(id: UUID) {
+        withAnimation {
+            playerManager.removePlayer(id: id)
         }
     }
 }
+
+// MARK: - Subviews
+
+struct GamerIDCard: View {
+    @Binding var name: String
+    
+    var body: some View {
+        HStack(spacing: 20) {
+            // Avatar Placeholder
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 70, height: 70)
+                    .shadow(color: .blue.opacity(0.5), radius: 10)
+                
+                Image(systemName: "person.fill")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(LocalizedStringKey("HALLO"))
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white.opacity(0.6))
+                
+                TextField("Dein Name", text: $name)
+                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .accentColor(.cyan)
+                    .submitLabel(.done)
+                
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(height: 1)
+            }
+        }
+        .padding(24)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(24)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+        .padding(.horizontal)
+    }
+}
+
+struct CrewCarousel: View {
+    let players: [GlobalPlayer]
+    @Binding var newName: String
+    @Binding var isAdding: Bool
+    let onAdd: () -> Void
+    let onDelete: (UUID) -> Void
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 15) {
+                // Existing Players
+                ForEach(players) { player in
+                    Menu {
+                        Button(role: .destructive) {
+                            onDelete(player.id)
+                        } label: {
+                            Label(LocalizedStringKey("Löschen"), systemImage: "trash")
+                        }
+                    } label: {
+                        VStack {
+                            Circle()
+                                .fill(Color(hex: player.avatarColorHex) ?? .gray)
+                                .frame(width: 60, height: 60)
+                                .overlay(
+                                    Text(String(player.name.prefix(1)))
+                                        .font(.title3.bold())
+                                        .foregroundColor(.white)
+                                )
+                                .shadow(radius: 3)
+                            
+                            Text(player.name)
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .frame(width: 70)
+                        }
+                    }
+                }
+                
+                // Add Button
+                VStack {
+                    if isAdding {
+                        VStack {
+                            TextField("", text: $newName)
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(.black) // Input color
+                                .padding(8)
+                                .background(Color.white)
+                                .clipShape(Circle())
+                                .frame(width: 60, height: 60)
+                                .onSubmit { onAdd() }
+                            
+                            Text(LocalizedStringKey("Enter..."))
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    } else {
+                        Button {
+                            withAnimation { isAdding = true }
+                        } label: {
+                            VStack {
+                                Circle()
+                                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .frame(width: 60, height: 60)
+                                    .overlay(
+                                        Image(systemName: "plus")
+                                            .font(.title2)
+                                            .foregroundColor(.white.opacity(0.5))
+                                    )
+                                
+                                Text(LocalizedStringKey("Neu"))
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+}
+
+struct DashboardCard: View {
+    var icon: String? = nil
+    var imageName: String? = nil
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let color: Color
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                if let imageName = imageName {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                } else if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundStyle(color)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            Spacer()
+        }
+        .padding()
+        .frame(height: 110)
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Helper Views
 
 private struct LanguageSelectionView: View {
     @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
     @AppStorage("useSystemLanguage") private var useSystemLanguage = true
     
     var body: some View {
-        List {
-            Section {
-                Toggle(LocalizedStringKey("Systemsprache verwenden"), isOn: $useSystemLanguage)
-            }
+        ZStack {
+            Color.black.ignoresSafeArea()
             
-            if !useSystemLanguage {
-                Section(header: Text(LocalizedStringKey("Wähle eine Sprache"))) {
-                    Button {
-                        useSystemLanguage = false
-                        selectedLanguageCode = "de"
-                    } label: {
-                        HStack {
-                            Text(LocalizedStringKey("Deutsch"))
-                            Spacer()
-                            if selectedLanguageCode == "de" {
-                                Image(systemName: "checkmark").foregroundColor(.blue)
+            List {
+                Section {
+                    Toggle(LocalizedStringKey("Systemsprache verwenden"), isOn: $useSystemLanguage)
+                }
+                
+                if !useSystemLanguage {
+                    Section(header: Text(LocalizedStringKey("Wähle eine Sprache"))) {
+                        Button {
+                            useSystemLanguage = false
+                            selectedLanguageCode = "de"
+                        } label: {
+                            HStack {
+                                Text(LocalizedStringKey("Deutsch"))
+                                Spacer()
+                                if selectedLanguageCode == "de" {
+                                    Image(systemName: "checkmark").foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        
+                        Button {
+                            useSystemLanguage = false
+                            selectedLanguageCode = "en"
+                        } label: {
+                            HStack {
+                                Text(LocalizedStringKey("English"))
+                                Spacer()
+                                if selectedLanguageCode == "en" {
+                                    Image(systemName: "checkmark").foregroundColor(.blue)
+                                }
                             }
                         }
                     }
-                    .foregroundColor(.primary)
-                    
-                    Button {
-                        useSystemLanguage = false
-                        selectedLanguageCode = "en"
-                    } label: {
-                        HStack {
-                            Text(LocalizedStringKey("English"))
-                            Spacer()
-                            if selectedLanguageCode == "en" {
-                                Image(systemName: "checkmark").foregroundColor(.blue)
-                            }
-                        }
-                    }
-                    .foregroundColor(.primary)
                 }
             }
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle(LocalizedStringKey("Sprache"))
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-// Helper for Hex Color
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
     }
 }
 

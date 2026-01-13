@@ -17,6 +17,7 @@ struct ImposterCategoryDetailView: View {
     @State private var newWord: String = ""
     @State private var showingWordAlert = false
     @State private var wordToDelete: String?
+    @State private var showingShareSheet = false // NEU
     
     // Theme
     private let backgroundGradient = ImposterStyle.backgroundGradient
@@ -50,12 +51,23 @@ struct ImposterCategoryDetailView: View {
                             .background(Color.blue)
                             .clipShape(Circle())
                     }
+                    
+                    // Share Button (QR Code)
+                    Button { showingShareSheet = true } label: {
+                        Image(systemName: "qrcode")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.purple)
+                            .clipShape(Circle())
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 10)
                 .padding(.bottom, 20)
                 
                 ScrollView {
+                    // ... (Content unchanged)
                     VStack(spacing: 24) {
                         // Info Card
                         VStack(spacing: 10) {
@@ -165,6 +177,10 @@ struct ImposterCategoryDetailView: View {
             EditCategoryView(category: $category)
                 .environmentObject(gameSettings)
         }
+        .sheet(isPresented: $showingShareSheet) { // NEU: Share Sheet
+            QRCodeSheetView(category: category)
+                .presentationDetents([.medium])
+        }
         .alert("Kategorie zurücksetzen", isPresented: $showingDeleteAlert) {
             Button("Abbrechen", role: .cancel) { }
             Button("Zurücksetzen", role: .destructive) {
@@ -189,7 +205,7 @@ struct ImposterCategoryDetailView: View {
         }
     }
     
-    // Logic
+    // Logic (unchanged)
     private func addWord() {
         let word = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
         if !word.isEmpty, !category.words.contains(word) {
@@ -212,6 +228,61 @@ struct ImposterCategoryDetailView: View {
         if category.sourceName == nil {
             category.sourceName = category.name
         }
+    }
+}
+
+// MARK: - QR Code Sheet View (NEU)
+struct QRCodeSheetView: View {
+    let category: Category
+    @Environment(\.dismiss) var dismiss
+    
+    private var qrCodeImage: UIImage? {
+        // Wir kodieren nur die essenziellen Daten, um den QR-Code klein zu halten
+        struct ShareableCategory: Codable {
+            let n: String // Name
+            let e: String // Emoji
+            let w: [String] // Words
+        }
+        let shareable = ShareableCategory(n: category.name, e: category.emoji, w: category.words)
+        guard let jsonString = QRCodeService.shared.encodeForSharing(shareable) else { return nil }
+        // Prefix hinzufügen, damit der Scanner weiß, was es ist
+        let payload = "impcat:" + jsonString
+        return QRCodeService.shared.generateQRCode(from: payload)
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Teile diese Kategorie")
+                .font(.headline)
+                .padding(.top, 20)
+            
+            if let image = qrCodeImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: 200, height: 200)
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(16)
+            } else {
+                Text("Fehler beim Erstellen des QR-Codes")
+                    .foregroundColor(.red)
+            }
+            
+            Text("Lasse einen Freund diesen Code in der App scannen.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button("Fertig") {
+                dismiss()
+            }
+            .font(.headline)
+            .padding()
+        }
+        .presentationDetents([.medium])
     }
 }
 

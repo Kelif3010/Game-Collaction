@@ -10,6 +10,16 @@ import Combine
 
 /// Manager-Klasse für die Verwaltung von Spion-Hinweisen
 class HintsManager: ObservableObject {
+    private static var hintRotation: [String: Int] = [:]
+
+    private static func pickHint(from hints: [String], key: String, word: String) -> String? {
+        let loweredWord = word.lowercased()
+        let filtered = hints.filter { !$0.lowercased().contains(loweredWord) }
+        guard !filtered.isEmpty else { return nil }
+        let index = hintRotation[key, default: 0] % filtered.count
+        hintRotation[key] = index + 1
+        return filtered[index]
+    }
     
     /// Erstellt einen formatierten Hinweis-Text für Spione basierend auf der Skizze
     /// - Parameters:
@@ -29,6 +39,7 @@ class HintsManager: ObservableObject {
         otherSpyNames: [String] = []
     ) -> String {
         var components: [String] = []
+        let hintKey = "\(categoryName.lowercased())|\(word.lowercased())"
         
         // 1. Titel (wie in Skizze)
         // components.append("Du bist der Spion") // removed as per instruction
@@ -41,8 +52,7 @@ class HintsManager: ObservableObject {
         // 3. Hinweis (wenn aktiviert und verfügbar)
         if showHints {
             let hints = CategoryHints.getHints(for: word, in: categoryName)
-            if !hints.isEmpty {
-                let singleHint = hints[0]
+            if let singleHint = HintsManager.pickHint(from: hints, key: hintKey, word: word) {
                 components.append("Hinweis: \(singleHint)")
             }
         }
@@ -82,6 +92,7 @@ class HintsManager: ObservableObject {
         otherSpyNames: [String] = []
     ) async -> String {
         var components: [String] = []
+        let hintKey = "\(categoryName.lowercased())|\(word.lowercased())"
         
         // 1. Kategorie mit Emoji (wenn aktiviert)
         if showCategory {
@@ -91,8 +102,7 @@ class HintsManager: ObservableObject {
         // 2. Hinweis (wenn aktiviert und verfügbar) - mit KI-Unterstützung
         if showHints {
             let hints = await CategoryHints.getHintsWithAI(for: word, in: categoryName, category: category)
-            if !hints.isEmpty {
-                let singleHint = hints[0]
+            if let singleHint = HintsManager.pickHint(from: hints, key: hintKey, word: word) {
                 components.append("Hinweis: \(singleHint)")
             }
         }
@@ -235,4 +245,3 @@ class HintsManager: ObservableObject {
         return components.joined(separator: "\n\n")
     }
 }
-

@@ -5,6 +5,9 @@
 "Wer blufft?" = "Who is bluffing?";
 "Finde den Spion" = "Find the spy";
 "Lügner" = "Liar";
+"King of the Session" = "King of the Session";
+"Sieg" = "Win";
+"Siege" = "Wins";
 
 /* MainSettingsView */
 "Allgemein" = "General";
@@ -965,3 +968,43 @@
 "Was ist dein größtes Laster?" = "What is your biggest vice?";
 "Was ist ein Gedanke, den du niemandem erzählst?" = "What is a thought you don't tell anyone?";
 "Hast du schon mal etwas Verbotenes konsumiert?" = "Have you ever consumed something forbidden?";
+
+
+/* Imposter Draft Room */
+"The Draft Room" = "The Draft Room";
+"Aktives Squad" = "Active Squad";
+"Neuer Rekrut" = "New Recruit";
+"Namen eingeben..." = "Enter name...";
+"Die Bank" = "The Bank";
+"Keine weiteren Spieler verfügbar." = "No other players available.";
+"Das Squad ist leer" = "The squad is empty";
+"Wähle Spieler aus der Bank oder erstelle neue." = "Choose players from the bank or create new ones.";
+"SPIEL BEENDEN" = "QUIT GAME";
+"NEUE MISSION" = "NEW MISSION";
+"VERIFIZIERUNG ERFORDERLICH" = "VERIFICATION REQUIRED";
+"Hat der Spion das korrekte Passwort genannt?" = "Has the spy called the correct password?";
+"WARNUNG" = "WARNING";
+"Eine Bestätigung beendet die Mission sofort." = "Confirmation ends the mission immediately.";
+"ZUGRIFF BESTÄTIGEN" = "CONFIRM ACCESS";
+"ABBRECHEN" = "CANCEL";
+"MISSION STATUS" = "MISSION STATUS";
+"KOMPROMITTIERT" = "COMPROMISED";
+"GEHEIMWORT ENTSCHLÜSSELT" = "SECRET WORD DECRYPTED";
+
+/* Imposter Spy Options */
+"Passe die Regeln für Spione an" = "Adjust the rules for spies";
+"Kategorie sichtbar" = "Category visible";
+"Spione sehen die gewählte Kategorie." = "Spies see the chosen category.";
+"Spione sehen sich gegenseitig" = "Spies see each other";
+"Aktiv, wenn es mindestens zwei Spione gibt." = "Active when there are at least two spies.";
+"Zahl der Spione zufällig" = "Random number of spies";
+"Die Anzahl kann pro Spiel variieren." = "The number can vary per game.";
+"Spion-Hinweise anzeigen" = "Show spy hints";
+"Zeigt dezente Tipps für Spione in der Runde." = "Shows subtle tips for spies during the round.";
+"Rollen & Regeln" = "Roles & Rules";
+"Spion" = "Spy";
+"Rollen" = "Roles";
+"Spezialrollen ersetzen normale Spieler" = "Special roles replace normal players";
+"Team Bürger" = "Team Citizens";
+"Team Spion" = "Team Spies";
+"Team Chaos" = "Team Chaos";

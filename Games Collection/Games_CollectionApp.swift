@@ -15,6 +15,7 @@ struct Games_CollectionApp: App {
     
     // Lifecycle Manager State
     @StateObject private var lifecycleManager = AppLifecycleManager.shared
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     private var activeLocale: Locale {
         if useSystemLanguage {
@@ -29,28 +30,27 @@ struct Games_CollectionApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.locale, activeLocale)
-                .alert(isPresented: $lifecycleManager.didCrashLastTime) {
-                    Alert(
-                        title: Text("Upps!"),
-                        message: Text("Die App wurde unerwartet beendet. Möchtest du alle Einstellungen zurücksetzen, um Fehler zu beheben?"),
-                        primaryButton: .destructive(Text("Einstellungen zurücksetzen")) {
-                            lifecycleManager.factoryReset()
-                        },
-                        secondaryButton: .cancel(Text("Nein, behalten"))
-                    )
+            ZStack {
+                ContentView()
+                
+                if !hasSeenOnboarding {
+                    OnboardingView()
+                        .transition(.opacity)
+                        .zIndex(1)
                 }
-                .onAppear {
-                    lifecycleManager.onAppLaunch()
+            }
+            .environment(\.locale, activeLocale)
+            .animation(.easeInOut, value: hasSeenOnboarding)
+            .onAppear {
+                lifecycleManager.onAppLaunch()
+            }
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .background || newPhase == .inactive {
+                    lifecycleManager.onAppBackgroundOrExit()
+                } else if newPhase == .active {
+                    lifecycleManager.onAppForeground()
                 }
-                .onChange(of: scenePhase) { newPhase in
-                    if newPhase == .background || newPhase == .inactive {
-                        lifecycleManager.onAppBackgroundOrExit()
-                    } else if newPhase == .active {
-                        lifecycleManager.onAppLaunch()
-                    }
-                }
+            }
         }
     }
 }

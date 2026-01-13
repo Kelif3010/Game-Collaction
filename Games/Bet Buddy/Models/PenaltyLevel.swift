@@ -1,6 +1,6 @@
 import Foundation
 
-enum PenaltyLevel: String, CaseIterable, Identifiable {
+enum PenaltyLevel: String, CaseIterable, Identifiable, Codable {
     case normal
     case medium
     case hardcore

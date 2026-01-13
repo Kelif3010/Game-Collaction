@@ -98,14 +98,16 @@ struct VotingView: View {
                 }
                 
                 // MARK: - Punkt 1: Schließen Button (X) oben rechts
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(.gray)
-                            .font(.title2)
+                if !votingManager.showResults {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.gray)
+                                .font(.title2)
+                        }
                     }
                 }
             }
@@ -311,6 +313,9 @@ struct VotingPlayerCard: View {
     var body: some View {
         Button(action: {
             if canBeSelected {
+                // Schweres haptisches Feedback für die "schwerwiegende" Entscheidung
+                ImposterHapticsManager.shared.playHeavyThud()
+                
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                     votingManager.togglePlayerSelection(player.id)
                 }

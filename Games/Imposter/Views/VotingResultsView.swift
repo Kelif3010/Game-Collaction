@@ -19,18 +19,57 @@ struct VotingResultsView: View {
     @State private var showStamp = false
     @State private var radarRotation = 0.0
     @State private var showPoints = false // Animation State for Points
-    
-    private var isVictory: Bool {
-        votingManager.playersWon
-    }
+    @State private var displayedIdentifiedSpies: [Player] = []
     
     private var isRescue: Bool {
         return votingManager.lastRescueMessage != nil
+    }
+
+    private var isRoundContinue: Bool {
+        return !votingManager.gameEnded && !isRescue
+    }
+    
+    private var isVictory: Bool {
+        return votingManager.playersWon || isRoundContinue
+    }
+    
+    private var statusTitle: String {
+        if isRoundContinue {
+            return "Spion entlarvt"
+        }
+        return isVictory ? "Bedrohung Neutralisiert" : "Sicherheitsbruch"
+    }
+    
+    private var statusSubtitle: String {
+        if isRoundContinue {
+            return "Guter Treffer. Weitere Spione sind noch aktiv."
+        }
+        return isVictory
+            ? "Hervorragende Arbeit. Die Spione wurden identifiziert und aus dem System entfernt."
+            : "Die Spione haben unsere Reihen infiltriert. Mission abgebrochen."
+    }
+    
+    private var stampText: String {
+        if isRoundContinue {
+            return "TREFFER"
+        }
+        return isVictory ? "ERFOLG" : "FEHLSCHLAG"
     }
     
     private var eliminatedSpies: [Player] {
         let selected = votingManager.selectedPlayers
         return gameSettings.players.filter { selected.contains($0.id) && ($0.isImposter || $0.roleType?.team == .imposter) }
+    }
+
+    private var identifiedSpies: [Player] {
+        if votingManager.gameEnded {
+            return gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+        }
+        return eliminatedSpies
+    }
+    
+    private var frozenIdentifiedSpies: [Player] {
+        displayedIdentifiedSpies.isEmpty ? identifiedSpies : displayedIdentifiedSpies
     }
 
     var body: some View {
@@ -115,7 +154,7 @@ struct VotingResultsView: View {
                             .scaleEffect(showContent ? 1 : 0.8)
                         
                         if showStamp {
-                            Text(isVictory ? "ERFOLG" : "FEHLSCHLAG")
+                            Text(stampText)
                                 .font(.system(size: 42, weight: .black, design: .rounded))
                                 .foregroundColor(isVictory ? .green : .red)
                                 .padding(.horizontal, 24)
@@ -138,7 +177,7 @@ struct VotingResultsView: View {
                     }
                     
                     // XP Animation
-                    if showPoints && !isRescue { // Keine Punkte bei Rettung, Spiel geht weiter
+                    if showPoints && !isRescue && votingManager.gameEnded { // Keine Punkte bei Rettung, nur bei Spielende
                         VStack(spacing: 0) {
                             Text("+10 XP") 
                                 .font(.system(size: 24, weight: .black))
@@ -172,12 +211,12 @@ struct VotingResultsView: View {
                             .lineSpacing(4)
                             .padding(.horizontal, 40)
                     } else {
-                        Text(isVictory ? "Bedrohung Neutralisiert" : "Sicherheitsbruch")
+                        Text(statusTitle)
                             .font(.title2.bold())
                             .foregroundColor(.white)
                             .tracking(1)
                         
-                        Text(isVictory ? "Hervorragende Arbeit. Die Spione wurden identifiziert und aus dem System entfernt." : "Die Spione haben unsere Reihen infiltriert. Mission abgebrochen.")
+                        Text(statusSubtitle)
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
@@ -190,8 +229,8 @@ struct VotingResultsView: View {
                 
                 Spacer()
                 
-                // Identified Agents Section (Only show if game ended, not on rescue)
-                if !isRescue {
+                // Identified Agents Section (eliminated spies per round, all spies at game end)
+                if !isRescue && !frozenIdentifiedSpies.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Image(systemName: "person.crop.circle.badge.exclamationmark")
@@ -204,7 +243,7 @@ struct VotingResultsView: View {
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
-                                ForEach(gameSettings.players.filter { $0.isImposter }) { player in
+                                ForEach(frozenIdentifiedSpies) { player in
                                     ImposterResultCard(player: player, isRevealed: true, isVictory: isVictory)
                                         .frame(width: 150)
                                 }
@@ -241,25 +280,27 @@ struct VotingResultsView: View {
                             }
                         }
                         
-                        ImposterPrimaryButton(title: "NEUES SPIEL") {
-                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                            Task { @MainActor in
-                                await gameLogic.restartGame()
-                                onNewGame()
+                        if votingManager.gameEnded {
+                            ImposterPrimaryButton(title: "NEUES SPIEL") {
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                Task { @MainActor in
+                                    await gameLogic.restartGame()
+                                    onNewGame()
+                                }
                             }
-                        }
-                        
-                        Button {
-                            gameSettings.requestExitToMain = true
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: "chevron.left")
-                                Text("HAUPTMENÜ")
+                            
+                            Button {
+                                gameSettings.requestExitToMain = true
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "chevron.left")
+                                    Text("HAUPTMENÜ")
+                                }
+                                .font(.caption.bold())
+                                .foregroundColor(.white.opacity(0.5))
+                                .padding(10)
                             }
-                            .font(.caption.bold())
-                            .foregroundColor(.white.opacity(0.5))
-                            .padding(10)
                         }
                     }
                 }
@@ -269,6 +310,9 @@ struct VotingResultsView: View {
             }
         }
         .onAppear {
+            if displayedIdentifiedSpies.isEmpty {
+                displayedIdentifiedSpies = identifiedSpies
+            }
             withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
                 radarRotation = 360
             }
@@ -285,6 +329,22 @@ struct VotingResultsView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                     showPoints = true
+                }
+            }
+            
+            // GLOBAL STATS TRACKING
+            if votingManager.gameEnded && !isRescue {
+                let imposters = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+                let citizens = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
+                
+                if isVictory {
+                    // Bürger gewinnen
+                    for citizen in citizens { GlobalStatsManager.shared.recordWin(for: citizen.name) }
+                    for imposter in imposters { GlobalStatsManager.shared.recordLoss(for: imposter.name) }
+                } else {
+                    // Spione gewinnen
+                    for imposter in imposters { GlobalStatsManager.shared.recordWin(for: imposter.name) }
+                    for citizen in citizens { GlobalStatsManager.shared.recordLoss(for: citizen.name) }
                 }
             }
         }

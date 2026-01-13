@@ -120,9 +120,26 @@ struct ResultView: View {
         }
         .onAppear {
             startRaceAnimation()
+            recordStats()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 requestReview()
             }
+        }
+    }
+
+    private func recordStats() {
+        // Wir nehmen das führende Team (oder die führenden Teams bei Gleichstand)
+        let sorted = result.leaderboard.sorted { $0.score > $1.score }
+        guard let topScore = sorted.first?.score, topScore > 0 else { return }
+        
+        let winners = sorted.filter { $0.score == topScore }
+        let others = sorted.filter { $0.score < topScore }
+        
+        for winner in winners {
+            GlobalStatsManager.shared.recordWin(for: winner.name)
+        }
+        for player in others {
+            GlobalStatsManager.shared.recordParticipation(for: player.name)
         }
     }
 

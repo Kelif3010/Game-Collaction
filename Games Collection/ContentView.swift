@@ -3,6 +3,8 @@ import Combine
 
 // MARK: - Hauptansicht
 struct ContentView: View {
+    @StateObject private var statsManager = GlobalStatsManager.shared
+    
     // Steuerung für die Spiele
     @State private var isBetBuddyPresented = false
     @State private var isTimesUpPresented = false
@@ -67,16 +69,18 @@ struct ContentView: View {
                     
                     ScrollView {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(LocalizedStringKey("Deine Bibliothek"))
-                                .font(.headline)
-                                .foregroundStyle(.white.opacity(0.7))
-                                .padding(.horizontal)
-                                .padding(.top, 20)
+                            
+                            // --- LIVE TICKER ---
+                            InfoTickerView()
+                                .padding(.vertical, 10)
                             
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
                                 
                                 // --- SPIEL 1: BET BUDDY ---
-                                Button { isBetBuddyPresented = true } label: {
+                                Button { 
+                                    statsManager.markGameAsPlayed("BetBuddy")
+                                    isBetBuddyPresented = true 
+                                } label: {
                                     MenuGameCard(
                                         title: "Bet Buddy",
                                         subtitle: "Wetten & Lachen",
@@ -86,7 +90,10 @@ struct ContentView: View {
                                 }
                                 
                                 // --- SPIEL 2: TIME'S UP ---
-                                Button { isTimesUpPresented = true } label: {
+                                Button { 
+                                    statsManager.markGameAsPlayed("TimesUp")
+                                    isTimesUpPresented = true 
+                                } label: {
                                     MenuGameCard(
                                         title: "Time's Up",
                                         subtitle: "Erklären & Raten",
@@ -96,7 +103,10 @@ struct ContentView: View {
                                 }
                                 
                                 // --- SPIEL 3: FINDE DEN LÜGNER ---
-                                Button { isQuestionGamePresented = true } label: {
+                                Button { 
+                                    statsManager.markGameAsPlayed("Question")
+                                    isQuestionGamePresented = true 
+                                } label: {
                                     MenuGameCard(
                                         title: "Lügner",
                                         subtitle: "Wer blufft?",
@@ -106,7 +116,10 @@ struct ContentView: View {
                                 }
                                 
                                 // --- SPIEL 4: IMPOSTER ---
-                                Button { isImposterPresented = true } label: {
+                                Button { 
+                                    statsManager.markGameAsPlayed("Imposter")
+                                    isImposterPresented = true 
+                                } label: {
                                     MenuGameCard(
                                         title: "Imposter",
                                         subtitle: "Finde den Spion",
@@ -251,6 +264,56 @@ struct SnowParticle: Identifiable {
     var size: Double
     var speed: Double
     var opacity: Double
+}
+
+struct SessionKingCard: View {
+    let name: String
+    let wins: Int
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: "crown.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+            }
+            .shadow(color: .orange.opacity(0.3), radius: 5)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey("King of the Session"))
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+                    .textCase(.uppercase)
+                
+                Text(name)
+                    .font(.title3.bold())
+                    .foregroundStyle(.white)
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(wins)")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Text(wins == 1 ? LocalizedStringKey("Sieg") : LocalizedStringKey("Siege"))
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .padding()
+        .background(.white.opacity(0.08))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(LinearGradient(colors: [.yellow.opacity(0.5), .clear], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
+        )
+    }
 }
 
 #Preview {

@@ -66,7 +66,7 @@ struct ImposterPrimaryButton: View {
 }
 
 struct ImposterSheetHeader: View {
-    let title: String
+    let title: LocalizedStringKey
     let onBack: () -> Void
 
     var body: some View {

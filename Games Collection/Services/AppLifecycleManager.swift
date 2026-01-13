@@ -7,6 +7,10 @@ final class AppLifecycleManager: ObservableObject {
     
     @AppStorage("app.isRunning") private var isRunning: Bool = false
     @AppStorage("app.didCrashLastTime") var didCrashLastTime: Bool = false
+    @AppStorage("app.lastResetTime") private var lastResetTime: Double = 0
+
+    private let resetCooldown: TimeInterval = 60 * 60 * 12
+    private var hasHandledLaunch = false
     
     // Publish subject to notify when a reset happens
     let resetPublisher = PassthroughSubject<Void, Never>()
@@ -15,13 +19,21 @@ final class AppLifecycleManager: ObservableObject {
 
     /// Rufe dies beim Start der App (in `App.init` oder `.onAppear` der RootView) auf.
     func onAppLaunch() {
+        guard !hasHandledLaunch else { return }
+        hasHandledLaunch = true
+
         if isRunning {
             // App war "running", wurde also nicht sauber beendet -> Absturz oder Kill
             didCrashLastTime = true
             print("⚠️ AppLifecycleManager: Möglicher Absturz erkannt!")
+            handleCrashIfNeeded()
         } else {
             didCrashLastTime = false
         }
+        isRunning = true
+    }
+
+    func onAppForeground() {
         isRunning = true
     }
 
@@ -29,12 +41,26 @@ final class AppLifecycleManager: ObservableObject {
     func onAppBackgroundOrExit() {
         isRunning = false
     }
+
+    private func handleCrashIfNeeded() {
+        let now = Date().timeIntervalSince1970
+        if now - lastResetTime < resetCooldown {
+            didCrashLastTime = false
+            return
+        }
+        factoryReset()
+    }
     
     /// Löscht ALLE UserDefaults der App (Rettungsanker).
     func factoryReset() {
-        let domain = Bundle.main.bundleIdentifier!
+        guard let domain = Bundle.main.bundleIdentifier else {
+            didCrashLastTime = false
+            isRunning = true
+            return
+        }
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
+        lastResetTime = Date().timeIntervalSince1970
         
         print("🚨 AppLifecycleManager: Factory Reset durchgeführt.")
         

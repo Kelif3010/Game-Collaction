@@ -314,6 +314,10 @@ class GameLogic: ObservableObject {
         if gameSettings.currentPlayerIndex < gameSettings.players.count {
             gameSettings.players[gameSettings.currentPlayerIndex].hasSeenCard = true
         }
+        
+        if MultipeerManager.shared.role == .host {
+            broadcastGameState()
+        }
     }
     
     /// Geht zum nächsten Spieler über
@@ -322,23 +326,21 @@ class GameLogic: ObservableObject {
             gameSettings.currentPlayerIndex += 1
         } else {
             gameSettings.gamePhase = .playing
-            startTimer()
-        }
-    }
-    
-    /// Startet den Timer
-    private func startTimer() {
-        if allPlayersSeenCards {
+            // Timer initialisieren, aber PAUSIERT starten, damit der "Startspieler"-Screen angezeigt werden kann
+            gameSettings.isTimerPaused = true
             startGameTimer()
-            gameSettings.isTimerPaused = false
             
+            // Falls wir im "Klassisch"-Modus sind, können wir Hinweise vorbereiten, aber noch nicht abspielen
             if gameSettings.gameMode != .twoWords,
                let category = gameSettings.roundCategory,
                let normalPlayer = gameSettings.players.first(where: { !$0.isImposter }) {
-                HintService.shared.startHints(for: normalPlayer.word, category: category, players: gameSettings.players)
+                // Hinweise laden, aber erst starten, wenn Timer läuft (wird in gameTimer Logik oder unpause geregelt)
+                // Hier machen wir nichts, HintService horcht oft auf Timer.
             }
-        } else {
-            gameSettings.isTimerPaused = true
+        }
+        
+        if MultipeerManager.shared.role == .host {
+            broadcastGameState()
         }
     }
 
@@ -346,13 +348,28 @@ class GameLogic: ObservableObject {
         guard gameTimer == nil else { return }
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
+            
             if !self.gameSettings.isTimerPaused && self.gameSettings.timeRemaining > 0 {
                 self.gameSettings.timeRemaining -= 1
+                
+                // Progressives haptisches Feedback für den Timer
+                ImposterHapticsManager.shared.playTimerTick(secondsRemaining: self.gameSettings.timeRemaining)
+                
+                // Sync wenn Multiplayer aktiv (nur alle 5 Sekunden um Traffic zu sparen, oder bei kritischen Marken)
+                if MultipeerManager.shared.role != .unknown && (self.gameSettings.timeRemaining % 5 == 0 || self.gameSettings.timeRemaining <= 5) {
+                    self.syncTimerToPeers()
+                }
             }
             if self.gameSettings.timeRemaining <= 0 {
                 self.gameSettings.gamePhase = .finished
                 self.gameSettings.markRoundCompleted()
                 self.stopGameTimer()
+                
+                // MPC Sync Final
+                if MultipeerManager.shared.role == .host {
+                    self.broadcastGameState()
+                    MultipeerManager.shared.sendToAll(event: MPCEventType.imposterGameOver)
+                }
                 
                 Task { @MainActor in
                     let spies = self.gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
@@ -360,7 +377,14 @@ class GameLogic: ObservableObject {
                     
                     for spy in spies {
                         StatsService.shared.recordSpyWinTimeOut(spyName: spy.name)
+                        GlobalStatsManager.shared.recordWin(for: spy.name) // NEU: Global Stats
                     }
+                    
+                    // Bürger verlieren bei Timeout
+                    for citizen in citizens {
+                        GlobalStatsManager.shared.recordLoss(for: citizen.name) // NEU: Global Stats
+                    }
+                    
                     StatsService.shared.recordLoss(playerNames: citizens.map { $0.name }, asImposter: false)
                 }
             }
@@ -372,6 +396,39 @@ class GameLogic: ObservableObject {
         gameTimer = nil
         HintService.shared.stopHints()
         VoiceService.shared.stopSpeaking()
+    }
+
+    func startMultiplayerTimerIfNeeded() {
+        guard MultipeerManager.shared.role == .host else { return }
+        if gameSettings.timeRemaining <= 0 {
+            gameSettings.timeRemaining = gameSettings.timeLimit
+        }
+        gameSettings.gamePhase = .playing
+        gameSettings.isTimerPaused = false
+        if gameTimer == nil {
+            startGameTimer()
+        }
+        broadcastGameState()
+    }
+    
+    // MARK: - MPC Broadcast
+    
+    private func syncTimerToPeers() {
+        broadcastGameState()
+    }
+    
+    func broadcastGameState() {
+        guard MultipeerManager.shared.role == .host else { return }
+        
+        let sync = ImposterGameStateSync(
+            timeRemaining: gameSettings.timeRemaining,
+            isTimerPaused: gameSettings.isTimerPaused,
+            gamePhase: gameSettings.gamePhase,
+            currentPlayerIndex: gameSettings.currentPlayerIndex,
+            startingPlayerName: gameSettings.startingPlayerName
+        )
+        
+        MultipeerManager.shared.sendToAll(event: MPCEventType.imposterTimerSync, object: sync)
     }
     
     var currentPlayer: Player? {

@@ -1,13 +1,32 @@
 import SwiftUI
 
 extension GameSetupView {
+    private var minimumPlayersRequired: Int {
+        switch MultipeerManager.shared.role {
+        case .host:
+            return 2
+        case .peer:
+            return 2
+        case .unknown:
+            return 4
+        }
+    }
+
     var canStartGame: Bool {
-        return gameSettings.players.count >= 4 && gameSettings.hasSelectedCategories && gameSettings.numberOfImposters < gameSettings.players.count
+        if MultipeerManager.shared.role == .peer {
+            return false
+        }
+        return gameSettings.players.count >= minimumPlayersRequired
+            && gameSettings.hasSelectedCategories
+            && gameSettings.numberOfImposters < gameSettings.players.count
     }
 
     var startButtonHintText: String {
+        if MultipeerManager.shared.role == .peer {
+            return "Warte auf den Host, der das Spiel startet."
+        }
         var missingItems: [String] = []
-        let minPlayers = 4
+        let minPlayers = minimumPlayersRequired
         if gameSettings.players.count < minPlayers {
             let needed = minPlayers - gameSettings.players.count
             missingItems.append("Noch \(needed) Spieler benötigt")
@@ -24,17 +43,33 @@ extension GameSetupView {
     }
 
     func startGame() {
-        guard canStartGame else {
-            alertMessage = "Bitte stelle sicher, dass mindestens 4 Spieler vorhanden sind und eine Kategorie ausgewählt wurde."
-            showingAlert = true
-            return
-        }
+        if MultipeerManager.shared.role == .host {
+             // MPC Host Start
+             guard gameSettings.gameMode == .classic else {
+                 alertMessage = "Multiplayer unterstützt aktuell nur den klassischen Modus."
+                 showingAlert = true
+                 return
+             }
+             guard MultipeerManager.shared.lobbyPeers.count >= 2 else {
+                 alertMessage = "Mindestens 2 Spieler werden für Multiplayer benötigt."
+                 showingAlert = true
+                 return
+             }
+             startMPCGame()
+        } else {
+             // Local Game Start
+             guard canStartGame else {
+                 alertMessage = "Bitte stelle sicher, dass mindestens 4 Spieler vorhanden sind und eine Kategorie ausgewählt wurde."
+                 showingAlert = true
+                 return
+             }
 
-        gameLogic.gameSettings = gameSettings
-        
-        Task { @MainActor in
-            await gameLogic.startGame()
-            route = .game
+             gameLogic.gameSettings = gameSettings
+             
+             Task { @MainActor in
+                 await gameLogic.startGame()
+                 route = .game
+             }
         }
     }
 

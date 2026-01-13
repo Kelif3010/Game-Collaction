@@ -16,9 +16,19 @@ final class GlobalPlayerManager: ObservableObject {
     @Published private(set) var players: [GlobalPlayer] = []
     
     private let storageKey = "GlobalPlayers_V1"
+    private let iCloudStore = NSUbiquitousKeyValueStore.default
     
     private init() {
         loadPlayers()
+        
+        // iCloud Sync Setup
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudDataDidUpdate),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: iCloudStore
+        )
+        iCloudStore.synchronize()
     }
     
     // MARK: - Actions
@@ -48,10 +58,6 @@ final class GlobalPlayerManager: ObservableObject {
             if let index = players.firstIndex(where: { $0.name.lowercased() == name.lowercased() }) {
                 players[index].lastPlayed = Date()
                 changed = true
-            } else {
-                // Auto-Add new names? Optional. Let's do it for convenience.
-                // addPlayer(name: name) 
-                // Nein, lieber explizit hinzufügen lassen, sonst müllt die Liste zu.
             }
         }
         if changed {
@@ -60,26 +66,55 @@ final class GlobalPlayerManager: ObservableObject {
     }
     
     func getAllNames() -> [String] {
-        // Sortiert: Zuletzt gespielt zuerst
         return players
             .sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
             .map { $0.name }
     }
     
-    // MARK: - Persistence
+    // MARK: - Persistence & Sync
     
     private func savePlayers() {
+        // 1. Save Local
         if let data = try? JSONEncoder().encode(players) {
             UserDefaults.standard.set(data, forKey: storageKey)
+            
+            // 2. Save to iCloud
+            iCloudStore.set(data, forKey: storageKey)
+            iCloudStore.synchronize()
         }
     }
     
     private func loadPlayers() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode([GlobalPlayer].self, from: data) else {
-            return
+        // 1. Try iCloud first (it's the master)
+        if let data = iCloudStore.data(forKey: storageKey),
+           let decoded = try? JSONDecoder().decode([GlobalPlayer].self, from: data) {
+            self.players = decoded
+            // Sync back to local to keep them in sync
+            UserDefaults.standard.set(data, forKey: storageKey)
+        } 
+        // 2. Fallback to Local
+        else if let data = UserDefaults.standard.data(forKey: storageKey),
+                let decoded = try? JSONDecoder().decode([GlobalPlayer].self, from: data) {
+            self.players = decoded
         }
-        self.players = decoded
+    }
+    
+    @objc private func iCloudDataDidUpdate(notification: NSNotification) {
+        // Called when data changes on another device
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            // Reload from iCloud
+            if let data = self.iCloudStore.data(forKey: self.storageKey),
+               let decoded = try? JSONDecoder().decode([GlobalPlayer].self, from: data) {
+                
+                // Merge Logic: We simply take the cloud version as truth for simplicity in V1.
+                // In a complex app, we would merge arrays by ID.
+                self.players = decoded
+                
+                // Update local storage
+                UserDefaults.standard.set(data, forKey: self.storageKey)
+            }
+        }
     }
     
     // MARK: - Helpers

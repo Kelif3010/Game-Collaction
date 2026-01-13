@@ -16,7 +16,7 @@ class GameSettings: ObservableObject {
     @Published var selectedCategory: Category?
     @Published var selectedCategoryIds: Set<UUID> = []
     @Published var isMixAllCategories: Bool = false
-    @Published private(set) var roundCategory: Category?
+    @Published var roundCategory: Category?
     @Published var timeLimit: Int {
         didSet { UserDefaults.standard.set(timeLimit, forKey: "imposter.timeLimit") }
     }
@@ -64,9 +64,13 @@ class GameSettings: ObservableObject {
     @Published var gamePhase: ImposterGamePhase = .setup
     @Published var timeRemaining: Int = 300
     @Published var isTimerPaused: Bool = false
+    @Published var startingPlayerName: String? = nil
     
     /// Signal an übergeordnete Views, bis ins Hauptmenü zurückzunavigieren
     @Published var requestExitToMain: Bool = false
+    
+    /// Signal an übergeordnete Views, das laufende Spiel zu beenden und zum Setup zurückzukehren
+    @Published var requestExitToSetup: Bool = false
     
     private let customCategoryStore = CustomCategoryStore.shared
     private var customCategories: [Category] = []
@@ -295,7 +299,8 @@ class GameSettings: ObservableObject {
     /// Maximale erlaubte Zahl an Spionen nach Regelwerk (<= 50%, Sonderfall 4 Spieler -> 1)
     var maxAllowedImpostersCap: Int {
         let n = players.count
-        if n <= 1 { return 0 }
+        if n < 2 { return 0 } // Mindestens 2 Spieler
+        if n == 2 { return 1 } // TEST: Bei 2 Spielern 1 Spion erlauben
         if n == 4 { return 1 }
         let half = max(1, n / 2) // floor(n/2)
         return min(half, max(1, n - 1))
@@ -303,6 +308,33 @@ class GameSettings: ObservableObject {
     
     func clampNumberOfImpostersToCap() {
         numberOfImposters = min(max(1, numberOfImposters), maxAllowedImpostersCap)
+    }
+    
+    // MARK: - MPC Helpers
+    func toMPCConfig() -> ImposterGameConfig {
+        return ImposterGameConfig(
+            numberOfImposters: numberOfImposters,
+            timeLimit: timeLimit,
+            gameMode: gameMode,
+            spyCanSeeCategory: spyCanSeeCategory,
+            spiesCanSeeEachOther: spiesCanSeeEachOther,
+            randomSpyCount: randomSpyCount,
+            showSpyHints: showSpyHints,
+            selectedCategoryIds: selectedCategoryIds,
+            isMixAllCategories: isMixAllCategories
+        )
+    }
+    
+    func applyMPCConfig(_ config: ImposterGameConfig) {
+        self.numberOfImposters = config.numberOfImposters
+        self.timeLimit = config.timeLimit
+        self.gameMode = config.gameMode
+        self.spyCanSeeCategory = config.spyCanSeeCategory
+        self.spiesCanSeeEachOther = config.spiesCanSeeEachOther
+        self.randomSpyCount = config.randomSpyCount
+        self.showSpyHints = config.showSpyHints
+        self.selectedCategoryIds = config.selectedCategoryIds
+        self.isMixAllCategories = config.isMixAllCategories
     }
 }
 
@@ -361,7 +393,7 @@ final class CustomCategoryStore {
     }
 }
 
-enum ImposterGamePhase {
+enum ImposterGamePhase: String, Codable {
     case setup
     case cardReveal
     case playing

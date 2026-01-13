@@ -3,6 +3,7 @@
 //  Imposter
 //
 //  Created by Ken on 22.09.25.
+//  Refactored for Premium UI & Biometric Card Back on 2026-01-12
 //
 
 import SwiftUI
@@ -13,7 +14,7 @@ private extension Character {
     }
 }
 
-// MARK: - Spy Card mit zusätzlichen Informationen
+// MARK: - Spy Card (Container)
 struct SpyCardView: View {
     let card: GameCard
     let gameSettings: GameSettings
@@ -29,15 +30,19 @@ struct SpyCardView: View {
     
     var body: some View {
         ZStack {
-            // Kartenrückseite
-            CardBackView(playerName: card.player.name)
-                .opacity(isFlipped ? 0 : 1)
-                .rotation3DEffect(
-                    .degrees(rotationAngle),
-                    axis: (x: 0, y: 1, z: 0)
-                )
+            // Kartenrückseite mit integriertem Scanner
+            CardBackView(playerName: card.player.name, isImposter: card.isImposter) {
+                // Wird aufgerufen, wenn Scan abgeschlossen ist
+                flipCard()
+                onCardTap()
+            }
+            .opacity(isFlipped ? 0 : 1)
+            .rotation3DEffect(
+                .degrees(rotationAngle),
+                axis: (x: 0, y: 1, z: 0)
+            )
             
-            // Kartenvorderseite mit Spy-Features
+            // Kartenvorderseite
             SpyCardFrontView(card: card, gameSettings: gameSettings)
                 .opacity(isFlipped ? 1 : 0)
                 .rotation3DEffect(
@@ -45,101 +50,247 @@ struct SpyCardView: View {
                     axis: (x: 0, y: 1, z: 0)
                 )
         }
-        .frame(width: 320, height: 480)
+        .frame(width: 320, height: 500)
         .offset(offset)
         .scaleEffect(isMovingOut ? 0.8 : 1.0)
         .opacity(isMovingOut ? 0.0 : 1.0)
         .onTapGesture {
-            handleCardTap()
+            // Nur das Schließen der Karte geht per Tap, 
+            // das Umdrehen wird jetzt vom Scanner in CardBackView gesteuert.
+            if isFlipped && !isMovingOut {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                moveCardOut()
+            }
         }
-        .animation(.spring(response: 0.6, dampingFraction: 0.7), value: rotationAngle)
-        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: offset)
-        .animation(.easeIn(duration: 0.4), value: isMovingOut)
-    }
-    
-    private func handleCardTap() {
-        if !isFlipped {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            flipCard()
-            onCardTap()
-        } else if !isMovingOut {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            moveCardOut()
-        }
+        .animation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0), value: rotationAngle)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: offset)
+        .animation(.easeIn(duration: 0.3), value: isMovingOut)
     }
     
     private func flipCard() {
-        rotationAngle += 180
-        isFlipped = true
+        withAnimation {
+            rotationAngle += 180
+            isFlipped = true
+        }
     }
     
     private func moveCardOut() {
-        offset = CGSize(width: -400, height: 0)
+        offset = CGSize(width: -450, height: 0)
         isMovingOut = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             onCardDismissed()
         }
     }
 }
 
-// MARK: - Card Back View
+// MARK: - Premium Card Back (mit Biometrischem Scanner)
 struct CardBackView: View {
     let playerName: String
+    let isImposter: Bool
+    let onUnlocked: () -> Void
+    
+    // Scanner State
+    @State private var progress: CGFloat = 0.0
+    @State private var isScanning = false
+    @State private var scanTimer: Timer?
+    @State private var showSuccess = false
+    
+    // Haptik
+    private let impactGenerator = UIImpactFeedbackGenerator(style: .light)
+    private let successGenerator = UINotificationFeedbackGenerator()
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            // 1. Edler Hintergrund
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.15), Color(white: 0.05)],
+                        colors: [
+                            Color(red: 0.1, green: 0.1, blue: 0.12),
+                            Color(red: 0.05, green: 0.05, blue: 0.06)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    Image(systemName: "circle.grid.2x2.fill")
+                        .resizable()
+                        .tileImage()
+                        .opacity(0.03)
                 )
-                .shadow(color: .black.opacity(0.4), radius: 15, y: 10)
-            
-            VStack(spacing: 30) {
-                Text("DEINE ROLLE")
-                    .font(.caption.bold())
-                    .tracking(2)
-                    .foregroundColor(.white.opacity(0.5))
-                
-                ZStack {
-                    Circle()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .strokeBorder(
-                            LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing),
-                            lineWidth: 3
+                            LinearGradient(
+                                colors: [.white.opacity(0.3), .white.opacity(0.05)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
                         )
-                        .frame(width: 120, height: 120)
-                    
-                    Image(systemName: "person.fill.questionmark")
-                        .font(.system(size: 50))
-                        .foregroundColor(.white)
-                }
-                .shadow(color: .orange.opacity(0.3), radius: 10)
-                
+                )
+                .shadow(color: .black.opacity(0.6), radius: 25, y: 15)
+            
+            // 2. Scan-Inhalt
+            VStack(spacing: 30) {
+                // Top Label
                 VStack(spacing: 8) {
-                    Text(playerName)
-                        .font(.title.bold())
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
+                    Text("IDENTITÄTS-CHECK")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(4)
+                        .foregroundStyle(isScanning ? .cyan : .white.opacity(0.4))
                     
-                    Text("Tippen zum Umdrehen")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.6))
+                    Text(playerName.uppercased())
+                        .font(.system(size: 24, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
                 }
+                .padding(.top, 20)
+                
+                Spacer()
+                
+                // Der Scanner (Zentral)
+                ZStack {
+                    // Pulsierende Aura
+                    if isScanning {
+                        Circle()
+                            .stroke(Color.cyan.opacity(0.5), lineWidth: 2)
+                            .frame(width: 130, height: 130)
+                            .scaleEffect(1.4)
+                            .opacity(0)
+                            .animation(.easeOut(duration: 1.2).repeatForever(autoreverses: false), value: isScanning)
+                    }
+                    
+                    // Hintergrund Kreis
+                    Circle()
+                        .fill(Color.black.opacity(0.3))
+                        .frame(width: 140, height: 140)
+                        .overlay(Circle().stroke(.white.opacity(0.1), lineWidth: 1))
+                    
+                    // Fortschritts-Ring
+                    Circle()
+                        .trim(from: 0, to: progress)
+                        .stroke(
+                            LinearGradient(colors: [.cyan, .blue, .purple], startPoint: .top, endPoint: .bottom),
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        )
+                        .frame(width: 140, height: 140)
+                        .rotationEffect(.degrees(-90))
+                    
+                    // Fingerprint Icon
+                    Image(systemName: showSuccess ? "checkmark" : "touchid")
+                        .font(.system(size: 50))
+                        .foregroundStyle(showSuccess ? .green : (isScanning ? .cyan : .white.opacity(0.6)))
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .scaleEffect(isScanning ? 1.05 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isScanning)
+                // GESTE direkt auf dem Scanner-Zentrum
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in
+                            if !isScanning && !showSuccess { startScan() }
+                        }
+                        .onEnded { _ in
+                            stopScan()
+                        }
+                )
+                
+                Spacer()
+                
+                // Info Text unten
+                VStack(spacing: 8) {
+                    Text(showSuccess ? "ZUGRIFF GEWÄHRT" : (isScanning ? "SCANNT..." : "HALTEN ZUM ENTHÜLLEN"))
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(isScanning ? .cyan : .white.opacity(0.5))
+                    
+                    if !isScanning && !showSuccess {
+                        Image(systemName: "chevron.compact.down")
+                            .foregroundStyle(.white.opacity(0.3))
+                    }
+                }
+                .padding(.bottom, 30)
             }
             .padding(30)
+        }
+        .onAppear {
+            impactGenerator.prepare()
+        }
+    }
+    
+    private func startScan() {
+        isScanning = true
+        // Start-Tick
+        ImposterHapticsManager.shared.playScanTick(progress: 0.0)
+        
+        progress = 0.0
+        let totalSteps = 40
+        let interval = 1.2 / Double(totalSteps) // 1.2 Sekunden Scanzeit
+        var tickCounter = 0
+        
+        scanTimer?.invalidate()
+        scanTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            if self.progress < 1.0 {
+                self.progress += (1.0 / CGFloat(totalSteps))
+                
+                tickCounter += 1
+                // Haptisches Ticken ca. alle 0.1s (jeder 3. Frame)
+                if tickCounter % 3 == 0 {
+                    ImposterHapticsManager.shared.playScanTick(progress: Float(self.progress))
+                }
+            } else {
+                self.completeScan()
+            }
+        }
+    }
+    
+    private func stopScan() {
+        guard !showSuccess else { return }
+        isScanning = false
+        scanTimer?.invalidate()
+        scanTimer = nil
+        // Kein Herzschlag mehr zu stoppen
+        
+        withAnimation(.easeOut(duration: 0.3)) {
+            progress = 0.0
+        }
+    }
+    
+    private func completeScan() {
+        scanTimer?.invalidate()
+        scanTimer = nil
+        // Kein Herzschlag mehr zu stoppen
+        
+        isScanning = false
+        progress = 1.0
+        showSuccess = true
+        
+        // Finaler Bestätigungs-Effekt
+        successGenerator.notificationOccurred(.success)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            onUnlocked()
         }
     }
 }
 
-// MARK: - Spy Card Front View
+// Hilfs-Extension für Kacheln
+extension Image {
+    func tileImage() -> some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+            self
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size.width, height: size.height)
+                .clipped()
+        }
+    }
+}
+
+// MARK: - Premium Card Front
 struct SpyCardFrontView: View {
     let card: GameCard
     let gameSettings: GameSettings
@@ -152,306 +303,300 @@ struct SpyCardFrontView: View {
     }
     
     private var parsedSpyInfo: SpyInfo {
-        // Erweiterte Parsing-Logik für alle Rollen
         var info = SpyInfo()
-        
-        // 1. Kategorie extrahieren (wird vom HintsManager oder GameLogic gesetzt)
         info.categoryEmoji = card.category.emoji
         info.categoryName = card.category.name
         
-        // 2. Text analysieren
         let parts = card.displayWord.components(separatedBy: "\n\n")
         
-        // Teil 1 ist meist das Wort (oder Fake-Wort)
-        // Teil 2+ sind Zusatzinfos
+        // Helper um den Kategorie-String zu bauen, damit wir ihn filtern können
+        let categoryString = "\(card.category.emoji) \(card.category.name)"
         
-        if parts.count > 1 {
-            // Wir haben Zusatzinfos!
-            for part in parts.dropFirst() {
-                if part.contains("Verdächtige") || part.contains("Zwilling") || part.contains("Sicherer") || part.contains("Der Spion") {
-                    info.hint = part // Wir nutzen das 'hint' Feld für generische Rollen-Infos
-                } else if part.hasPrefix("Mitspione:") {
-                    // Legacy Support für alte Logik
-                    let names = part.replacingOccurrences(of: "Mitspione:", with: "").components(separatedBy: ",")
-                    info.otherSpies = names.map { $0.trimmingCharacters(in: .whitespaces) }
-                } else if part.hasPrefix("Hinweis:") {
-                    info.hint = part.replacingOccurrences(of: "Hinweis:", with: "").trimmingCharacters(in: .whitespaces)
-                }
+        var i = 0
+        while i < parts.count {
+            let part = parts[i]
+            
+            // 1. Kategorie-Check (Verhindert Dopplung)
+            // Wenn der Part genau der Kategorie entspricht, ignorieren wir ihn hier,
+            // da er oben im Hero-Badge angezeigt wird.
+            if part == categoryString {
+                i += 1
+                continue
             }
+            
+            // 2. Mitspione Parsing
+            if part.hasPrefix("Mitspione:") {
+                // Fall A: "Mitspione: A, B" (Alles in einer Zeile)
+                let content = part.replacingOccurrences(of: "Mitspione:", with: "").trimmingCharacters(in: .whitespaces)
+                if !content.isEmpty {
+                    let names = content.components(separatedBy: ",")
+                    info.otherSpies = names.map { $0.trimmingCharacters(in: .whitespaces) }
+                } else {
+                    // Fall B: "Mitspione:" \n\n "A, B" (Namen im nächsten Part)
+                    if i + 1 < parts.count {
+                        let nextPart = parts[i+1]
+                        let names = nextPart.components(separatedBy: ",")
+                        info.otherSpies = names.map { $0.trimmingCharacters(in: .whitespaces) }
+                        i += 1 // Den nächsten Part überspringen, da wir ihn verarbeitet haben
+                    }
+                }
+            } 
+            // 3. Andere Hinweise
+            else if part.contains("Verdächtige") || part.contains("Zwilling") || part.contains("Sicherer") || part.contains("Der Spion") {
+                info.hint = part
+            } else if part.hasPrefix("Hinweis:") {
+                info.hint = part.replacingOccurrences(of: "Hinweis:", with: "").trimmingCharacters(in: .whitespaces)
+            }
+            
+            i += 1
         }
         
         return info
     }
     
     private var cardBackground: LinearGradient {
-        // Mapping von Farbnamen zu echten Farben
         let colorName = card.cardColorName
-        let baseColor: Color
+        let c1, c2: Color
         
         switch colorName {
-        case "darkRed": baseColor = Color(red: 0.5, green: 0.1, blue: 0.1)
-        case "darkBlue": baseColor = Color(red: 0.1, green: 0.2, blue: 0.4)
-        case "darkPurple": baseColor = Color(red: 0.3, green: 0.1, blue: 0.4)
-        default: baseColor = Color(red: 0.1, green: 0.2, blue: 0.4)
+        case "darkRed":
+            c1 = Color(red: 0.6, green: 0.1, blue: 0.15)
+            c2 = Color(red: 0.2, green: 0.05, blue: 0.05)
+        case "darkBlue":
+            c1 = Color(red: 0.1, green: 0.3, blue: 0.6)
+            c2 = Color(red: 0.05, green: 0.1, blue: 0.2)
+        case "darkPurple":
+            c1 = Color(red: 0.4, green: 0.1, blue: 0.6)
+            c2 = Color(red: 0.1, green: 0.05, blue: 0.2)
+        default:
+            c1 = Color(red: 0.2, green: 0.2, blue: 0.2)
+            c2 = .black
         }
         
-        return LinearGradient(
-            colors: [baseColor, Color.black],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        return LinearGradient(colors: [c1, c2], startPoint: .top, endPoint: .bottom)
     }
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(
+                            RadialGradient(
+                                colors: [.white.opacity(0.15), .clear],
+                                center: .topTrailing,
+                                startRadius: 20,
+                                endRadius: 250
+                            )
+                        )
                 )
-                .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.5), radius: 25, y: 15)
             
-            VStack(spacing: 25) {
-                // HEADER
+            VStack(spacing: 0) {
                 HStack {
                     Image(systemName: card.cardIcon)
-                    Text(card.cardTitle)
+                    Text(card.cardTitle.uppercased())
+                        .font(.system(size: 14, weight: .bold))
+                        .tracking(1)
                 }
-                .font(.headline.bold())
-                .foregroundColor(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color.black.opacity(0.4))
+                .background(.ultraThinMaterial)
                 .clipShape(Capsule())
+                .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+                .padding(.top, 30)
+                .foregroundColor(.white)
                 
-                Spacer()
-                
-                // CONTENT
-                if card.roleType != nil {
-                    // Neue Rollen-Logik
-                    RoleCardContent(card: card, parsedInfo: parsedSpyInfo, gameSettings: gameSettings)
-                } else if card.isImposter {
-                    // Klassischer Spion (Fallback/Standard)
-                    spyContent
-                } else {
-                    // Klassischer Bürger (Fallback/Standard)
-                    citizenContent
-                }
-                
-                Spacer()
-                
-                Text("Tippe erneut zum Schließen")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
-            }
-            .padding(30)
-        }
-    }
-    
-    @ViewBuilder
-    private var spyContent: some View {
-        // ... (Der bestehende Spy-Content Code bleibt hier als Fallback, falls roleType nil ist)
-        VStack(spacing: 20) {
-            if let emoji = parsedSpyInfo.categoryEmoji, let name = parsedSpyInfo.categoryName {
-                VStack(spacing: 8) {
-                    Text("KATEGORIE")
-                        .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.6))
-                    Text("\(emoji) \(name)")
-                        .font(.title2.bold())
-                        .foregroundColor(.white)
-                }
-            }
-            
-            // ... Rest vom alten Code für SpyContent
-            if let hint = parsedSpyInfo.hint {
-                VStack(spacing: 8) {
-                    Label("HINWEIS", systemImage: "lightbulb.fill")
-                        .font(.caption.bold())
-                        .foregroundColor(.yellow)
-                    Text(hint)
-                        .font(.body.italic())
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                }
-            }
-            
-            if !parsedSpyInfo.otherSpies.isEmpty {
-                VStack(spacing: 8) {
-                    Text("MITSPIONE")
-                        .font(.caption.bold())
-                        .foregroundColor(.red)
-                    
-                    if #available(iOS 16.0, *) {
-                        WrapHStack(items: parsedSpyInfo.otherSpies) { name in
-                            Text(name)
-                                .font(.caption.bold())
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color.red.opacity(0.2))
-                                .cornerRadius(8)
-                                .foregroundColor(.white)
-                        }
-                    } else {
-                        HStack {
-                            ForEach(parsedSpyInfo.otherSpies, id: \.self) { name in
-                                Text(name)
-                                    .font(.caption.bold())
-                                    .foregroundColor(.white)
-                            }
-                        }
+                // KATEGORIE HERO BADGE (Neu positioniert: Direkt unter Header)
+                // Nur anzeigen, wenn kein Spion ODER wenn Spione die Kategorie sehen dürfen
+                if (!card.isImposter || gameSettings.shouldSpySeeCategory),
+                   let emoji = parsedSpyInfo.categoryEmoji, 
+                   let name = parsedSpyInfo.categoryName {
+                    HStack(spacing: 12) {
+                        Text("KATEGORIE")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundStyle(.white.opacity(0.6))
+                        
+                        Rectangle()
+                            .fill(.white.opacity(0.3))
+                            .frame(width: 1, height: 12)
+                        
+                        Text("\(emoji) \(name.uppercased())")
+                            .font(.system(size: 14, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Capsule())
+                    .padding(.top, 16)
+                }
+                
+                Spacer()
+                
+                RoleCardContent(card: card, parsedInfo: parsedSpyInfo, gameSettings: gameSettings)
+                
+                Spacer()
+                
+                if !card.shortInstruction.isEmpty {
+                    Text(card.shortInstruction)
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.bottom, 30)
+                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
                 }
             }
-            
-            if !hasStructuredSpyInfo {
-                Text(card.shortInstruction) // Nutze die neue Property
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-            }
         }
-    }
-    
-    @ViewBuilder
-    private var citizenContent: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 4) {
-                Text("KATEGORIE")
-                    .font(.caption.bold())
-                    .foregroundColor(.white.opacity(0.6))
-                Text("\(card.category.emoji) \(card.category.name)")
-                    .font(.headline)
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            
-            Divider().background(Color.white.opacity(0.2))
-            
-            VStack(spacing: 10) {
-                Text("DEIN WORT")
-                    .font(.caption.bold())
-                    .foregroundColor(.blue)
-                
-                Text(card.displayWord)
-                    .font(.system(size: 32, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.5)
-            }
-            
-            Spacer()
-            Text(card.shortInstruction)
-                .font(.footnote)
-                .foregroundColor(.white.opacity(0.6))
-        }
-    }
-    
-    private var hasStructuredSpyInfo: Bool {
-        parsedSpyInfo.categoryEmoji != nil || parsedSpyInfo.hint != nil || !parsedSpyInfo.otherSpies.isEmpty
     }
 }
 
-// MARK: - Role Card Content (Neu für Rollen-Modus)
+// MARK: - Role Card Content
 struct RoleCardContent: View {
     let card: GameCard
     let parsedInfo: SpyCardFrontView.SpyInfo
     let gameSettings: GameSettings
     
     var body: some View {
-        VStack(spacing: 10) { // Reduziertes Spacing (war 20)
-            // 1. Kategorie
-            if let emoji = parsedInfo.categoryEmoji, let name = parsedInfo.categoryName {
-                VStack(spacing: 4) { // Kompakter
-                    Text("KATEGORIE")
-                        .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.6))
-                    Text("\(emoji) \(name)")
-                        .font(.title3.bold()) // Etwas kleiner (war title2)
-                        .foregroundColor(.white)
-                }
-                .padding(.top, 0) // Ganz nach oben
-            }
-            
-            Divider().background(Color.white.opacity(0.2))
-            
-            // 2. Interaktive Rollen (Hacker & Leibwächter)
+        VStack(spacing: 25) {
             if let role = card.roleType, (role == .hacker || role == .bodyguard) {
                 RoleActionView(
                     role: role,
                     players: gameSettings.players,
                     currentPlayer: card.player
                 ) { target in
-                    // Aktion ausführen
                     if let index = gameSettings.players.firstIndex(where: { $0.id == target.id }) {
                         if role == .bodyguard {
                             gameSettings.players[index].isProtected = true
                         }
                     }
                 }
-                // KEIN Spacer und KEIN shortInstruction hier, um Platz zu sparen
             } else {
-                // Standard Anzeige für andere Rollen
+                // --- HAUPTBEREICH (Wort oder Rolle) ---
                 
-                // 3. Das Wort (oder Pseudo-Wort)
-                let hasExtraInfo = parsedInfo.hint != nil || !parsedInfo.otherSpies.isEmpty
-                
-                VStack(spacing: 10) {
-                    Text("DEIN WORT")
-                        .font(.caption.bold())
-                        .foregroundColor(.blue)
+                if card.isImposter {
+                    // SPION: Schlichtes Design (User Wunsch)
+                    // Kein Icon, kein Text in der Mitte.
+                    // Der Header sagt bereits "SPION".
+                    // Wir nutzen einen Spacer, damit Hints/Partner schön mittig/unten landen oder
+                    // einfach leerer Raum entsteht, der "geheimnisvoll" wirkt.
+                    Spacer()
+                        .frame(minHeight: 20)
                     
+                } else {
+                    // BÜRGER: Hat ein echtes Wort
                     let mainText = getMainText()
-                    Text(mainText)
-                        .font(.system(size: hasExtraInfo ? 28 : 36, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.5)
-                }
-                
-                // 4. Zusatzinfos (Verdächtige, Partner etc.)
-                if let infoText = parsedInfo.hint {
-                    VStack(spacing: 8) {
-                        Label("INFO", systemImage: "info.circle.fill")
-                            .font(.caption.bold())
-                            .foregroundColor(.yellow)
-                        Text(infoText)
-                            .font(.body.bold())
-                            .foregroundColor(.white.opacity(0.95))
+                    let isLongText = mainText.count > 15
+                    
+                    ZStack {
+                        // Glow Effect
+                        Text(mainText)
+                            .font(.system(size: isLongText ? 32 : 44, weight: .heavy, design: .rounded))
+                            .foregroundColor(.blue.opacity(0.4))
+                            .blur(radius: 10)
+                        
+                        Text(mainText)
+                            .font(.system(size: isLongText ? 32 : 44, weight: .heavy, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.white, .white.opacity(0.9)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
                             .multilineTextAlignment(.center)
-                            .padding()
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal)
                 }
                 
-                // 5. Mission / Kurzanweisung (nur für nicht-interaktive Rollen)
-                Spacer()
-                Text(card.shortInstruction)
-                    .font(.footnote)
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                // --- ZUSATZINFOS (Unter dem Hauptbereich) ---
+                
+                // 1. Hinweis Box (z.B. für KI Hints oder Sonderrollen)
+                if let hint = parsedInfo.hint {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Image(systemName: "lightbulb.max.fill")
+                            .foregroundStyle(.yellow)
+                            .font(.title3)
+                        
+                        Text(hint)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                
+                // 2. Mitspione Box (Kompakter & Zentriert)
+                if !parsedInfo.otherSpies.isEmpty {
+                    VStack(spacing: 12) {
+                        // Header zentriert
+                        HStack {
+                            Spacer()
+                            Image(systemName: "person.2.fill")
+                                .foregroundStyle(.red)
+                            Text("DEINE PARTNER")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.red.opacity(0.9))
+                                .tracking(1.5)
+                            Spacer()
+                        }
+                        
+                        if #available(iOS 16.0, *) {
+                            WrapHStack(items: parsedInfo.otherSpies) { name in
+                                Text(name)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.red.opacity(0.15))
+                                    .cornerRadius(8)
+                                    .foregroundColor(.white)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                                    )
+                            }
+                        } else {
+                            // Fallback
+                            HStack {
+                                ForEach(parsedInfo.otherSpies, id: \.self) { name in
+                                    Text(name).foregroundStyle(.white)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(20)
+                    .padding(.horizontal, 30) // Macht die Box schmaler
+                }
             }
         }
     }
     
     private func getMainText() -> String {
-        // Extrahiere das Wort aus dem Gesamttext.
         let parts = card.displayWord.components(separatedBy: "\n\n")
-        if let first = parts.first {
-            return first
-        }
-        return "???"
+        return parts.first ?? "???"
     }
 }
 
-// MARK: - WrapHStack Implementation
+// MARK: - Helpers (WrapStack)
 @available(iOS 16.0, macOS 13.0, *) 
 struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.Element: Hashable {
     let items: Data
@@ -461,10 +606,7 @@ struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.
 
     var body: some View {
         FlowRowsLayout(spacing: spacing, runSpacing: runSpacing) {
-            ForEach(Array(items), id: \.self) {
-                item in 
-                content(item)
-            }
+            ForEach(Array(items), id: \.self) { item in content(item) }
         }
     }
 }
@@ -500,9 +642,7 @@ private struct FlowRowsLayout: Layout {
             let height = size.height
             let proposedWidth = currentItems.isEmpty ? width : currentWidth + spacing + width
             
-            if proposedWidth > maxWidth && !currentItems.isEmpty {
-                commit()
-            }
+            if proposedWidth > maxWidth && !currentItems.isEmpty { commit() }
             
             if currentItems.isEmpty {
                 currentItems.append((idx, size))
@@ -523,11 +663,7 @@ private struct FlowRowsLayout: Layout {
         let rows = buildRows(for: subviews, maxWidth: maxWidth)
         let height = rows.enumerated().reduce(CGFloat(0)) { partial, element in
             let rowHeight = element.element.height
-            if element.offset == 0 {
-                return partial + rowHeight
-            } else {
-                return partial + runSpacing + rowHeight
-            }
+            return partial + (element.offset == 0 ? 0 : runSpacing) + rowHeight
         }
         let widest = rows.map(\.width).max() ?? 0
         return CGSize(width: proposal.width ?? widest, height: height)
@@ -547,27 +683,9 @@ private struct FlowRowsLayout: Layout {
                     proposal: ProposedViewSize(width: size.width, height: size.height)
                 )
                 x += size.width
-                if idx != row.items.last?.index {
-                    x += spacing
-                }
+                if idx != row.items.last?.index { x += spacing }
             }
-            if rowIndex < rows.count - 1 {
-                currentY += row.height + runSpacing
-            }
+            if rowIndex < rows.count - 1 { currentY += row.height + runSpacing }
         }
     }
-}
-
-#Preview {
-    let settings = GameSettings()
-    let player = Player(name: "Max")
-    // Wir setzen die View hier als letztes Statement, ohne 'return'
-    SpyCardView(
-        card: GameCard(player: player, category: Category.defaultCategories[0]),
-        gameSettings: settings,
-        onCardTap: {},
-        onCardDismissed: {}
-    )
-    .padding()
-    .background(Color.black)
 }

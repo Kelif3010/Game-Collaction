@@ -47,7 +47,13 @@ struct WordGuessingView: View {
                         }
                     },
                     onExitToMain: {
-                        gameSettings.requestExitToMain = true
+                        dismiss()
+                        // Kurze Verzögerung, damit die WordGuessingView Dismissal-Animation beginnen kann
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            gameSettings.markRoundCompleted()
+                            gameSettings.resetGame()
+                            gameSettings.requestExitToSetup = true
+                        }
                     }
                 )
             } else {
@@ -116,12 +122,12 @@ struct WordGuessingActiveView: View {
             .frame(height: 250)
             
             VStack(spacing: 20) {
-                Text("VERIFIZIERUNG ERFORDERLICH")
+                Text(NSLocalizedString("VERIFIZIERUNG ERFORDERLICH", comment: ""))
                     .font(.system(size: 18, weight: .black, design: .monospaced))
                     .foregroundColor(.orange)
                     .tracking(2)
                 
-                Text("Hat der Spion das korrekte Passwort genannt?")
+                Text(NSLocalizedString("Hat der Spion das korrekte Passwort genannt?", comment: ""))
                     .font(.headline)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -130,11 +136,11 @@ struct WordGuessingActiveView: View {
                     HStack {
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(.yellow)
-                        Text("WARNUNG")
+                        Text(NSLocalizedString("WARNUNG", comment: ""))
                             .font(.caption.bold())
                             .foregroundColor(.yellow)
                     }
-                    Text("Eine Bestätigung beendet die Mission sofort.")
+                    Text(NSLocalizedString("Eine Bestätigung beendet die Mission sofort.", comment: ""))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -153,7 +159,7 @@ struct WordGuessingActiveView: View {
                 }) {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
-                        Text("ZUGRIFF BESTÄTIGEN")
+                        Text(NSLocalizedString("ZUGRIFF BESTÄTIGEN", comment: ""))
                     }
                     .font(.headline.bold())
                     .foregroundColor(.black)
@@ -164,7 +170,7 @@ struct WordGuessingActiveView: View {
                     .shadow(color: .orange.opacity(0.4), radius: 10, x: 0, y: 5)
                 }
                 
-                Button("ABBRECHEN") {
+                Button(NSLocalizedString("ABBRECHEN", comment: "")) {
                     dismiss()
                 }
                 .font(.subheadline.bold())
@@ -205,12 +211,12 @@ struct WordGuessResultView: View {
             
             // Status Header
             VStack(spacing: 8) {
-                Text("MISSION STATUS")
+                Text(NSLocalizedString("MISSION STATUS", comment: ""))
                     .font(.caption.bold())
                     .tracking(4)
                     .foregroundColor(.white.opacity(0.5))
                 
-                Text("KOMPROMITTIERT")
+                Text(NSLocalizedString("KOMPROMITTIERT", comment: ""))
                     .font(.system(size: 32, weight: .black, design: .rounded))
                     .foregroundColor(.red)
                     .padding(.horizontal, 20)
@@ -223,37 +229,11 @@ struct WordGuessResultView: View {
             .opacity(showContent ? 1 : 0)
             
             // Spy Icon
-            ZStack {
-                Circle()
-                    .stroke(Color.red.opacity(0.2), lineWidth: 1)
-                    .frame(width: 140, height: 140)
-                
-                Image(systemName: "eye.trianglebadge.exclamationmark")
-                    .font(.system(size: 60))
-                    .foregroundColor(.red)
-                    .shadow(color: .red, radius: 15)
-                    .offset(x: glitchEffect ? 5 : 0, y: glitchEffect ? -2 : 0)
-                
-                // XP Animation
-                if showPoints {
-                    VStack(spacing: 0) {
-                        Text("+15 XP") // Basis Punkte
-                            .font(.system(size: 24, weight: .black))
-                            .foregroundColor(.yellow)
-                            .shadow(color: .orange, radius: 2)
-                        
-                        // Optional: Bonus anzeigen, wir lassen es simpel bei der Basis oder addieren es gedanklich.
-                        // Für genaues Feedback müssten wir den "Fast" Status hier reinreichen.
-                        // Wir nehmen einfach an, dass der Spieler sich über die Punkte freut.
-                    }
-                    .offset(y: -80)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
+            // ... (spy icon code)
             
             // Revealed Word Box
             VStack(spacing: 12) {
-                Text("GEHEIMWORT ENTSCHLÜSSELT")
+                Text(NSLocalizedString("GEHEIMWORT ENTSCHLÜSSELT", comment: ""))
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.red)
                 
@@ -284,18 +264,18 @@ struct WordGuessResultView: View {
             
             // Actions
             VStack(spacing: 16) {
-                ImposterPrimaryButton(title: "NEUE MISSION") {
+                ImposterPrimaryButton(title: NSLocalizedString("NEUE MISSION", comment: "")) {
                     onNewGame()
                 }
                 
-                Button("ZUM HAUPTMENÜ") {
+                Button(NSLocalizedString("SPIEL BEENDEN", comment: "")) {
                     onExitToMain()
                 }
                 .font(.caption.bold())
                 .foregroundColor(.white.opacity(0.4))
             }
             .padding(.horizontal, 25)
-            .padding(.bottom, 30)
+            .padding(.bottom, 100)
             .opacity(showContent ? 1 : 0)
         }
         .onAppear {

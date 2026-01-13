@@ -1,431 +1,319 @@
 import SwiftUI
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct PlayerManagementSheet: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedTab = 0
     @State private var newPlayerName = ""
-    @State private var selectedPlayers: Set<String> = []
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
-
-    let onRequestExpand: (() -> Void)?
-
-    init(onRequestExpand: (() -> Void)? = nil) {
-        self.onRequestExpand = onRequestExpand
+    @FocusState private var isInputFocused: Bool
+    
+    // Combined list of all known players (Saved + Global) excluding those already in game
+    private var availablePlayers: [String] {
+        let activeNames = Set(gameSettings.players.map { $0.name })
+        let savedNames = Set(gameSettings.savedPlayersManager.savedPlayerNames)
+        let globalNames = Set(GlobalPlayerManager.shared.getAllNames())
+        
+        let allCandidates = savedNames.union(globalNames)
+        return allCandidates.subtracting(activeNames).sorted()
     }
 
     var body: some View {
         ZStack {
             ImposterStyle.backgroundGradient.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 16) {
-                    ImposterSheetHeader(title: "Spieler verwalten") {
-                        dismiss()
-                    }
-
-                    ImposterSegmentedControl(
-                        titles: ["Hinzufügen", "Gespeicherte"],
-                        selectedIndex: $selectedTab
-                    ) { index in
-                        if index == 1 {
-                            onRequestExpand?()
-                        }
-                    }
-
-                    if selectedTab == 0 {
-                        AddPlayersTab(
-                            newPlayerName: $newPlayerName,
-                            onAddPlayer: addPlayer
-                        )
-                        .environmentObject(gameSettings)
-                    } else {
-                        SavedPlayersTab(
-                            selectedPlayers: $selectedPlayers,
-                            onApplySelected: applySelectedPlayers,
-                            onRequestExpand: onRequestExpand,
-                            onSwitchBack: { selectedTab = 0 }
-                        )
-                        .environmentObject(gameSettings)
-                    }
+            VStack(spacing: 0) {
+                // Header
+                ImposterSheetHeader(title: "The Draft Room") {
+                    dismiss()
                 }
                 .padding(.horizontal, ImposterStyle.padding)
-                .padding(.bottom, 40)
-            }
-        }
-        .onAppear {
-            loadCurrentPlayers()
-        }
-        .alert("Fehler", isPresented: $showingAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(alertMessage)
-        }
-    }
+                .padding(.top, 16)
+                .padding(.bottom, 20)
 
-    // MARK: - Helper Functions
-
-    private func addPlayer() {
-        let name = newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !name.isEmpty else {
-            alertMessage = "Bitte geben Sie einen Namen ein."
-            showingAlert = true
-            return
-        }
-
-        if gameSettings.players.contains(where: { $0.name == name }) {
-            alertMessage = "Ein Spieler mit diesem Namen ist bereits im Spiel."
-            showingAlert = true
-            return
-        }
-
-        gameSettings.addPlayer(name: name)
-
-        if !gameSettings.savedPlayersManager.playerExists(name) {
-            gameSettings.savedPlayersManager.addPlayer(name)
-        }
-
-        newPlayerName = ""
-    }
-
-    private func applySelectedPlayers() {
-        gameSettings.players.removeAll()
-
-        for playerName in selectedPlayers.sorted() {
-            gameSettings.addPlayer(name: playerName)
-        }
-    }
-
-    private func loadCurrentPlayers() {
-        selectedPlayers = Set(gameSettings.players.map { $0.name })
-    }
-}
-
-private struct ImposterCard<Content: View>: View {
-    let content: Content
-
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(spacing: 12) {
-            content
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: ImposterStyle.containerCornerRadius, style: .continuous)
-                .fill(ImposterStyle.containerBackground)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: ImposterStyle.containerCornerRadius, style: .continuous)
-                .stroke(ImposterStyle.cardStroke, lineWidth: 1)
-        )
-    }
-}
-
-private struct AddPlayersTab: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @Binding var newPlayerName: String
-    let onAddPlayer: () -> Void
-    @FocusState private var nameFieldFocused: Bool
-
-    private var trimmedName: String {
-        newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var canAddPlayer: Bool {
-        !trimmedName.isEmpty
-    }
-
-    private var playerCount: Int {
-        gameSettings.players.count
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            ImposterCard {
-                HStack(spacing: 12) {
-                    ImposterIconBadge(systemName: "person.badge.plus", tint: .orange)
-                    Text("Spieler hinzufügen")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Spacer()
-                }
-
-                HStack(spacing: 12) {
-                    TextField("Name eingeben", text: $newPlayerName)
-                        .textFieldStyle(.plain)
-                        .foregroundStyle(.white)
-                        .disableAutocorrection(true)
-                        .textInputAutocapitalization(.words)
-                        .submitLabel(.done)
-                        .focused($nameFieldFocused)
-                        .onSubmit {
-                            addAndRefocus()
-                        }
-
-                    Button(action: addAndRefocus) {
-                        ImposterIconBadge(systemName: "plus", tint: .green)
-                    }
-                    .disabled(!canAddPlayer)
-                    .opacity(canAddPlayer ? 1.0 : 0.5)
-                }
-                .imposterRowStyle()
-
-                Text("Enter drücken oder + zum Hinzufügen")
-                    .font(.caption)
-                    .foregroundStyle(ImposterStyle.mutedText)
-            }
-
-            ImposterCard {
-                HStack(spacing: 12) {
-                    ImposterIconBadge(systemName: "person.3.fill", tint: .orange)
-                    Text("Spieler im Spiel")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    statusView
-                }
-
-                if gameSettings.players.isEmpty {
-                    HStack(spacing: 12) {
-                        ImposterIconBadge(systemName: "person.3.sequence", tint: .gray)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Noch keine Spieler hinzugefügt")
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                            Text("Mindestens 4 Spieler erforderlich")
-                                .font(.caption)
-                                .foregroundStyle(ImposterStyle.mutedText)
-                        }
-                        Spacer()
-                    }
-                    .imposterRowStyle()
-                } else {
-                    ForEach(Array(gameSettings.players.enumerated()), id: \.element.id) { index, player in
-                        HStack(spacing: 12) {
-                            Text("\(index + 1)")
-                                .font(.headline)
-                                .foregroundStyle(ImposterStyle.mutedText)
-                                .frame(width: 24, alignment: .leading)
-                            Text(player.name)
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                            Spacer()
-                            Button {
-                                gameSettings.removePlayer(at: index)
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.red)
-                                    .font(.headline)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .imposterRowStyle()
-                    }
-
-                    if gameSettings.players.count > 1 {
-                        Button {
-                            gameSettings.players.removeAll()
-                        } label: {
-                            HStack(spacing: 12) {
-                                ImposterIconBadge(systemName: "trash", tint: .red)
-                                Text("Alle entfernen")
+                ScrollView {
+                    VStack(spacing: 24) {
+                        
+                        // 1. ACTIVE SQUAD (Roster)
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Aktives Squad")
                                     .font(.headline)
                                     .foregroundStyle(.white)
                                 Spacer()
+                                Text("\(gameSettings.players.count)")
+                                    .font(.caption.weight(.bold))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Capsule().fill(ImposterStyle.primaryGradient))
+                                    .foregroundStyle(.black)
                             }
-                            .imposterRowStyle()
+                            .padding(.horizontal, ImposterStyle.padding)
+
+                            if gameSettings.players.isEmpty {
+                                EmptySquadPlaceholder()
+                                    .padding(.horizontal, ImposterStyle.padding)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(gameSettings.players) { player in
+                                            SquadAvatar(name: player.name) {
+                                                removePlayer(player)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, ImposterStyle.padding)
+                                    .padding(.vertical, 8) // Space for shadow/scale
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
 
-    @ViewBuilder
-    private var statusView: some View {
-        if playerCount >= 4 {
-            HStack(spacing: 4) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                Text("Bereit")
-                    .foregroundStyle(.green)
-            }
-            .font(.caption.weight(.semibold))
-        } else {
-            HStack(spacing: 4) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                Text("Noch \(max(0, 4 - playerCount)) benötigt")
-                    .foregroundStyle(.orange)
-            }
-            .font(.caption.weight(.semibold))
-        }
-    }
-
-    private func addAndRefocus() {
-        onAddPlayer()
-        DispatchQueue.main.async {
-            nameFieldFocused = true
-        }
-    }
-}
-
-private struct SavedPlayersTab: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @Binding var selectedPlayers: Set<String>
-    let onApplySelected: () -> Void
-    let onRequestExpand: (() -> Void)?
-    let onSwitchBack: () -> Void
-
-    private var savedPlayers: [String] {
-        gameSettings.savedPlayersManager.savedPlayerNames
-    }
-    
-    private let globalManager = GlobalPlayerManager.shared
-
-    private var applyTitle: String {
-        selectedPlayers.isEmpty ? "Auswahl übernehmen" : "\(selectedPlayers.count) Spieler übernehmen"
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            
-            // GLOBAL IMPORT BUTTON
-            ImposterCard {
-                Button {
-                    importGlobalPlayers()
-                } label: {
-                    HStack(spacing: 12) {
-                        ImposterIconBadge(systemName: "globe", tint: .blue)
-                        Text("Aus globaler Liste laden")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Image(systemName: "arrow.down.circle.fill")
-                            .foregroundStyle(.blue)
-                    }
-                    .imposterRowStyle()
-                }
-            }
-            
-            ImposterCard {
-                HStack(spacing: 12) {
-                    ImposterIconBadge(systemName: "tray.full", tint: .orange)
-                    Text("Gespeicherte Spieler")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Text("\(savedPlayers.count)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(ImposterStyle.mutedText)
-                }
-
-                if savedPlayers.isEmpty {
-                    HStack(spacing: 12) {
-                        ImposterIconBadge(systemName: "person.crop.circle.badge.xmark", tint: .gray)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Keine gespeicherten Spieler")
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                            Text("Füge zuerst Spieler hinzu.")
-                                .font(.caption)
+                        // 2. SMART INPUT
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Neuer Rekrut")
+                                .font(.subheadline)
                                 .foregroundStyle(ImposterStyle.mutedText)
+                                .padding(.horizontal, ImposterStyle.padding)
+
+                            HStack(spacing: 12) {
+                                TextField("Namen eingeben...", text: $newPlayerName)
+                                    .textFieldStyle(.plain)
+                                    .font(.body)
+                                    .foregroundStyle(.white)
+                                    .padding(16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(ImposterStyle.containerBackground)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(ImposterStyle.cardStroke, lineWidth: 1)
+                                            )
+                                    )
+                                    .submitLabel(.done)
+                                    .focused($isInputFocused)
+                                    .onSubmit {
+                                        addNewPlayer()
+                                    }
+
+                                Button(action: addNewPlayer) {
+                                    Image(systemName: "plus")
+                                        .font(.title3.bold())
+                                        .foregroundStyle(.black)
+                                        .frame(width: 52, height: 52)
+                                        .background(
+                                            Circle()
+                                                .fill(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty ? AnyShapeStyle(Color.gray) : AnyShapeStyle(ImposterStyle.primaryGradient))
+                                        )
+                                }
+                                .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
+                            }
+                            .padding(.horizontal, ImposterStyle.padding)
                         }
-                        Spacer()
-                    }
-                    .imposterRowStyle()
-                } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(savedPlayers, id: \.self) { playerName in
-                            SavedPlayerRow(
-                                name: playerName,
-                                isSelected: selectedPlayers.contains(playerName),
-                                onToggle: { togglePlayerSelection(playerName) },
-                                onDelete: { removePlayer(playerName) }
-                            )
+
+                        // 3. THE BANK (Quick Pick)
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Die Bank")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                if !availablePlayers.isEmpty {
+                                    Image(systemName: "archivebox.fill")
+                                        .foregroundStyle(ImposterStyle.mutedText)
+                                }
+                            }
+                            .padding(.horizontal, ImposterStyle.padding)
+
+                            if availablePlayers.isEmpty {
+                                Text("Keine weiteren Spieler verfügbar.")
+                                    .font(.caption)
+                                    .foregroundStyle(ImposterStyle.mutedText)
+                                    .padding(.horizontal, ImposterStyle.padding)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            } else {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 12)], spacing: 12) {
+                                    ForEach(availablePlayers, id: \.self) { name in
+                                        BankChip(name: name) {
+                                            addExistingPlayer(name: name)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, ImposterStyle.padding)
+                            }
                         }
                     }
+                    .padding(.bottom, 40)
                 }
             }
-
-            ImposterPrimaryButton(
-                title: applyTitle,
-                action: {
-                    onApplySelected()
-                    onSwitchBack()
-                },
-                isDisabled: selectedPlayers.isEmpty
-            )
         }
     }
 
-    private func importGlobalPlayers() {
-        let globalNames = globalManager.getAllNames()
-        for name in globalNames {
-            if !gameSettings.savedPlayersManager.playerExists(name) {
-                gameSettings.savedPlayersManager.addPlayer(name)
+    // MARK: - Logic
+
+    private func playHaptic() {
+        #if canImport(UIKit)
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        #endif
+    }
+
+    private func addNewPlayer() {
+        let trimmed = newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        // Prevent duplicates
+        if !gameSettings.players.contains(where: { $0.name == trimmed }) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                gameSettings.addPlayer(name: trimmed)
+            }
+            playHaptic()
+            
+            // Auto-save to persistence
+            if !gameSettings.savedPlayersManager.playerExists(trimmed) {
+                gameSettings.savedPlayersManager.addPlayer(trimmed)
             }
         }
+        
+        newPlayerName = ""
+        isInputFocused = true
     }
 
-    private func togglePlayerSelection(_ playerName: String) {
-        if selectedPlayers.contains(playerName) {
-            selectedPlayers.remove(playerName)
-        } else {
-            selectedPlayers.insert(playerName)
-            onRequestExpand?()
+    private func addExistingPlayer(name: String) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            gameSettings.addPlayer(name: name)
         }
+        playHaptic()
     }
 
-    private func removePlayer(_ playerName: String) {
-        withAnimation {
-            selectedPlayers.remove(playerName)
-            gameSettings.savedPlayersManager.removePlayer(playerName)
-            gameSettings.objectWillChange.send()
+    private func removePlayer(_ player: Player) {
+        if let index = gameSettings.players.firstIndex(where: { $0.id == player.id }) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                gameSettings.removePlayer(at: index)
+            }
+            playHaptic()
         }
     }
 }
 
-private struct SavedPlayerRow: View {
+// MARK: - Components
+
+private struct SquadAvatar: View {
     let name: String
-    let isSelected: Bool
-    let onToggle: () -> Void
-    let onDelete: () -> Void
+    let onTap: () -> Void
+
+    var initials: String {
+        let components = name.components(separatedBy: " ")
+        if let first = components.first?.prefix(1), let last = components.last?.prefix(1), components.count > 1 {
+            return "\(first)\(last)"
+        }
+        return String(name.prefix(2)).uppercased()
+    }
+
+    // Random pastel-ish color based on name hash
+    var avatarColor: Color {
+        let colors: [Color] = [.orange, .blue, .green, .purple, .pink, .teal, .indigo]
+        let index = abs(name.hashValue) % colors.count
+        return colors[index]
+    }
 
     var body: some View {
-        HStack(spacing: 12) {
-            ImposterIconBadge(systemName: "person.fill", tint: .orange)
-            Text(name)
-                .font(.headline)
-                .foregroundStyle(.white)
-                .lineLimit(1)
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(avatarColor.gradient)
+                        .shadow(color: avatarColor.opacity(0.5), radius: 5, x: 0, y: 3)
+                    
+                    Text(initials)
+                        .font(.title3.bold())
+                        .foregroundStyle(.white)
+                    
+                    // X Badge on Hover/State (Visual hint that tapping removes)
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .background(Circle().fill(.red))
+                        .offset(x: 20, y: -20)
+                }
+                .frame(width: 64, height: 64)
 
-            Spacer()
-
-            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.headline)
-                .foregroundStyle(isSelected ? .green : .white.opacity(0.3))
-
-            Button(action: onDelete) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.red)
-                    .font(.headline)
+                Text(name)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .frame(width: 70)
             }
-            .buttonStyle(.plain)
         }
-        .imposterRowStyle()
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onToggle()
+        .buttonStyle(.plain)
+    }
+}
+
+private struct BankChip: View {
+    let name: String
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.caption.bold())
+                Text(name)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(ImposterStyle.containerBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(ImposterStyle.cardStroke, lineWidth: 1)
+            )
+            .foregroundStyle(.white)
         }
+        .buttonStyle(ScaleButtonStyle())
+    }
+}
+
+private struct EmptySquadPlaceholder: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: "person.3.sequence.fill")
+                .font(.largeTitle)
+                .foregroundStyle(ImposterStyle.mutedText.opacity(0.5))
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Das Squad ist leer")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text("Wähle Spieler aus der Bank oder erstelle neue.")
+                    .font(.caption)
+                    .foregroundStyle(ImposterStyle.mutedText)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                .foregroundStyle(ImposterStyle.mutedText.opacity(0.3))
+        )
+    }
+}
+
+// Simple button style for scaling effect
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -433,11 +321,12 @@ private struct SavedPlayerRow: View {
     let settings = GameSettings()
     settings.players = [
         Player(name: "Alice"),
-        Player(name: "Bob")
+        Player(name: "Bob"),
+        Player(name: "Charlie")
     ]
     settings.savedPlayersManager.addPlayer("Max")
     settings.savedPlayersManager.addPlayer("Anna")
-
+    
     return PlayerManagementSheet()
         .environmentObject(settings)
 }
