@@ -65,6 +65,9 @@ class GameSettings: ObservableObject {
     @Published var timeRemaining: Int = 300
     @Published var isTimerPaused: Bool = false
     @Published var startingPlayerName: String? = nil
+    @Published var multiplayerStartAtHostUptime: TimeInterval? = nil
+    @Published var hostClockOffset: TimeInterval = 0
+    var hostClockOffsetRTT: TimeInterval = .greatestFiniteMagnitude
     
     // Multiplayer Sync State
     @Published var revealProgress: (ready: Int, total: Int)? = nil
@@ -235,6 +238,9 @@ class GameSettings: ObservableObject {
         timeRemaining = timeLimit
         isTimerPaused = false
         roundCategory = nil
+        multiplayerStartAtHostUptime = nil
+        hostClockOffset = 0
+        hostClockOffsetRTT = .greatestFiniteMagnitude
         hasRecordedRoundCompletion = false
         
         // Reset player states

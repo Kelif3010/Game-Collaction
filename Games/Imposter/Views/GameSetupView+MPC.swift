@@ -1,5 +1,6 @@
 import SwiftUI
 import MultipeerConnectivity
+import Foundation
 
 extension GameSetupView {
 
@@ -100,8 +101,9 @@ extension GameSetupView {
         let config = gameSettings.toMPCConfig()
         mpc.sendToAll(event: MPCEventType.imposterSyncConfig, object: config)
         
-        // 3. Navigate Host (BUT DO NOT START GAME YET)
+        // 3. Start Reveal Phase for everyone (BUT DO NOT START GAME YET)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            mpc.sendToAll(event: MPCEventType.imposterRevealStart)
             self.route = .game
         }
     }
@@ -155,19 +157,46 @@ extension GameSetupView {
                             }
                         }
                         
-                        // Navigate to Game View
+                    }
+                    
+                case MPCEventType.imposterRevealStart:
+                    gameSettings.gamePhase = .cardReveal
+                    gameSettings.isTimerPaused = true
+                    gameSettings.timeRemaining = gameSettings.timeLimit
+                    gameSettings.isWaitingForOtherPlayers = false
+                    gameSettings.multiplayerStartAtHostUptime = nil
+                    if gameSettings.revealProgress == nil {
+                        gameSettings.revealProgress = (0, max(1, gameSettings.players.count))
+                    }
+                    if route.wrappedValue != .game {
                         route.wrappedValue = .game
                     }
                     
                 case MPCEventType.gameStart:
                     print("MPC Client: Game Start Signal")
-                    gameSettings.gamePhase = .playing
-                    gameSettings.isTimerPaused = true
-                    gameSettings.timeRemaining = gameSettings.timeLimit
-                    gameSettings.isWaitingForOtherPlayers = false // Stop waiting
-                    // Route should already be set, but ensure it
-                    if route.wrappedValue != .game {
-                        route.wrappedValue = .game
+                    if let data = payload,
+                       let startPayload = try? JSONDecoder().decode(ImposterGameStartPayload.self, from: data) {
+                        gameSettings.gamePhase = .playing
+                        gameSettings.isTimerPaused = true
+                        gameSettings.timeRemaining = gameSettings.timeLimit
+                        gameSettings.isWaitingForOtherPlayers = false // Stop waiting
+                        gameSettings.startingPlayerName = startPayload.startingPlayerName
+                        gameSettings.multiplayerStartAtHostUptime = startPayload.startAtHostUptime
+                        gameLogic.scheduleMultiplayerStart(startAtHostUptime: startPayload.startAtHostUptime)
+                        // Route should already be set, but ensure it
+                        if route.wrappedValue != .game {
+                            route.wrappedValue = .game
+                        }
+                    } else {
+                        gameSettings.gamePhase = .playing
+                        gameSettings.isTimerPaused = true
+                        gameSettings.timeRemaining = gameSettings.timeLimit
+                        gameSettings.isWaitingForOtherPlayers = false
+                        gameSettings.multiplayerStartAtHostUptime = nil
+                        gameLogic.scheduleMultiplayerStart(startAtHostUptime: ProcessInfo.processInfo.systemUptime)
+                        if route.wrappedValue != .game {
+                            route.wrappedValue = .game
+                        }
                     }
                     
                 case MPCEventType.imposterRevealProgress:
@@ -180,19 +209,51 @@ extension GameSetupView {
                     if let data = payload,
                        let sync = try? JSONDecoder().decode(ImposterGameStateSync.self, from: data) {
                         // Apply sync
-                        gameSettings.timeRemaining = sync.timeRemaining
                         gameSettings.isTimerPaused = sync.isTimerPaused
                         gameSettings.gamePhase = sync.gamePhase
                         if mpc.role != .peer {
                             gameSettings.currentPlayerIndex = sync.currentPlayerIndex
                         }
                         gameSettings.startingPlayerName = sync.startingPlayerName
+                        gameLogic.applyRemoteTimerSync(sync, hostClockOffset: gameSettings.hostClockOffset)
                     }
 
                 case MPCEventType.imposterHostActivity:
                     if let data = payload,
                        let info = try? JSONDecoder().decode(ImposterHostActivityPayload.self, from: data) {
                         mpc.hostActivity = info.message
+                    }
+
+                case MPCEventType.imposterTimeSyncPing:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let ping = try? JSONDecoder().decode(ImposterTimeSyncPingPayload.self, from: data) {
+                        let hostReceiveUptime = ProcessInfo.processInfo.systemUptime
+                        let pong = ImposterTimeSyncPongPayload(
+                            clientName: ping.clientName,
+                            pingId: ping.pingId,
+                            clientSendUptime: ping.clientSendUptime,
+                            hostReceiveUptime: hostReceiveUptime,
+                            hostSendUptime: ProcessInfo.processInfo.systemUptime
+                        )
+                        mpc.sendToAll(event: MPCEventType.imposterTimeSyncPong, object: pong)
+                    }
+
+                case MPCEventType.imposterTimeSyncPong:
+                    if let data = payload,
+                       let pong = try? JSONDecoder().decode(ImposterTimeSyncPongPayload.self, from: data) {
+                        let myName = mpc.myPeerId.displayName
+                        guard pong.clientName == myName else { break }
+                        let receiveUptime = ProcessInfo.processInfo.systemUptime
+                        let outbound = pong.clientSendUptime
+                        let inbound = receiveUptime
+                        let hostDelta = pong.hostSendUptime - pong.hostReceiveUptime
+                        let rtt = max(0, (inbound - outbound) - hostDelta)
+                        let offset = ((pong.hostReceiveUptime - outbound) + (pong.hostSendUptime - inbound)) / 2
+                        if rtt < gameSettings.hostClockOffsetRTT {
+                            gameSettings.hostClockOffsetRTT = rtt
+                            gameSettings.hostClockOffset = offset
+                        }
                     }
                     
                 case "PLAYER_READY_UPDATE":
@@ -239,13 +300,25 @@ extension GameSetupView {
                         
                         // 4. Check Start Condition
                         // IMPORTANT: Host Logic to start game when everyone is ready
-                        if readyCount == totalCount {
+                        if readyCount == totalCount, gameSettings.multiplayerStartAtHostUptime == nil {
                             // Delay slightly to let everyone see "5/5"
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                mpc.sendToAll(event: MPCEventType.gameStart)
+                                let countdownSeconds = 3
+                                let startAtHostUptime = ProcessInfo.processInfo.systemUptime + Double(countdownSeconds)
+                                let startingPlayer = gameSettings.players.randomElement()
+                                gameSettings.startingPlayerName = startingPlayer?.name
+                                gameSettings.multiplayerStartAtHostUptime = startAtHostUptime
                                 gameSettings.gamePhase = .playing
                                 gameSettings.isTimerPaused = true
+                                gameSettings.timeRemaining = gameSettings.timeLimit
+                                let startPayload = ImposterGameStartPayload(
+                                    startingPlayerName: startingPlayer?.name,
+                                    startAtHostUptime: startAtHostUptime,
+                                    countdownSeconds: countdownSeconds
+                                )
+                                mpc.sendToAll(event: MPCEventType.gameStart, object: startPayload)
                                 gameSettings.isWaitingForOtherPlayers = false
+                                self.gameLogic.scheduleMultiplayerStart(startAtHostUptime: startAtHostUptime)
                             }
                         }
                     }

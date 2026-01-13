@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MultipeerConnectivity
+import Foundation
 
 struct GamePlayView: View {
     @EnvironmentObject var gameSettings: GameSettings
@@ -18,6 +19,7 @@ struct GamePlayView: View {
     
     @State private var showStartingPlayerAnnouncement = false
     @State private var startingPlayer: Player?
+    @State private var didRequestTimeSync = false
     
     // KI-Services
     @StateObject private var hintService = HintService.shared
@@ -38,26 +40,22 @@ struct GamePlayView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header (nur anzeigen wenn nicht im Vollbild-Lademodus)
-                if !gameSettings.isWaitingForOtherPlayers {
-                    ImposterGameHeaderView()
-                        .padding(.bottom, 10)
-                }
+                // Header
+                ImposterGameHeaderView()
+                    .padding(.bottom, 10)
                 
                 mainContent
                 
                 Spacer()
                 
-                // Footer (Beenden) - Nur anzeigen wenn Spiel läuft
-                if !gameSettings.isWaitingForOtherPlayers && gameSettings.gamePhase == .playing {
-                    GameFooterView()
-                }
+                // Footer (Beenden)
+                GameFooterView()
             }
         }
         .onAppear {
             if isMultiplayerActive {
                 hasRevealedOwnCard = false
-                gameSettings.isWaitingForOtherPlayers = false
+                requestTimeSyncSamplesIfNeeded()
             }
             startGame()
         }
@@ -96,16 +94,15 @@ struct GamePlayView: View {
             let myName = MultipeerManager.shared.myPeerId.displayName
             let oldSelf = oldPlayers.first(where: { $0.name == myName })
             let newSelf = newPlayers.first(where: { $0.name == myName })
-            
-            // Check if Role actually changed, preventing flicker
             let shouldRefresh = currentCard == nil
                 || oldSelf?.word != newSelf?.word
                 || oldSelf?.isImposter != newSelf?.isImposter
-            
+                || oldSelf?.roleType != newSelf?.roleType
+                || oldSelf?.role != newSelf?.role
             if shouldRefresh {
-                currentCard = nil // Reset Card
-                prepareMultiplayerCardIfNeeded()
+                currentCard = nil
             }
+            prepareMultiplayerCardIfNeeded()
         }
         .onChange(of: gameSettings.roundCategory) { _, _ in
             if isMultiplayerActive {
@@ -124,18 +121,29 @@ struct GamePlayView: View {
     private var mainContent: some View {
         ZStack {
             if isMultiplayerActive {
-                if gameSettings.gamePhase == .finished {
+                switch gameSettings.gamePhase {
+                case .finished:
                     TimeOutResultView()
                         .transition(.opacity)
-                } else if gameSettings.isWaitingForOtherPlayers {
-                    // NEU: Warte-Screen
-                    MultiplayerWaitingView()
-                        .transition(.opacity)
-                } else if !hasRevealedOwnCard {
-                    cardRevealContent
-                        .transition(.opacity)
-                } else {
-                    playingContent
+                case .cardReveal:
+                    if hasRevealedOwnCard {
+                        MultiplayerWaitingView()
+                            .transition(.opacity)
+                    } else {
+                        cardRevealContent
+                            .transition(.opacity)
+                    }
+                case .playing:
+                    if gameSettings.isWaitingForOtherPlayers {
+                        MultiplayerWaitingView()
+                            .transition(.opacity)
+                    } else if gameSettings.multiplayerStartAtHostUptime != nil {
+                        multiplayerCountdownView
+                    } else {
+                        playingContent
+                    }
+                default:
+                    EmptyView()
                 }
             } else {
                 switch gameSettings.gamePhase {
@@ -158,29 +166,26 @@ struct GamePlayView: View {
     @ViewBuilder
     private var cardRevealContent: some View {
         if let card = currentCard {
-            // ZStack Hintergrund sicherstellen, damit nichts durchscheint
-            ZStack {
-                ImposterStyle.backgroundGradient.ignoresSafeArea()
-                
-                VStack {
-                    Spacer()
-                    SpyCardView(
-                        card: card,
-                        gameSettings: gameSettings,
-                        onCardTap: {
-                            if !isMultiplayerActive {
-                                gameLogic.markCurrentPlayerCardSeen()
-                            }
-                        },
-                        onCardDismissed: {
-                            handleCardDismissed()
+            // DIE EIGENTLICHE KARTE
+            // Die Sicherheit (Halten zum Enthüllen) ist jetzt in SpyCardView integriert
+            VStack {
+                Spacer()
+                SpyCardView(
+                    card: card,
+                    gameSettings: gameSettings,
+                    onCardTap: {
+                        if !isMultiplayerActive {
+                            gameLogic.markCurrentPlayerCardSeen()
                         }
-                    )
-                    .id(card.id) 
-                    Spacer()
-                }
-                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                    },
+                    onCardDismissed: {
+                        handleCardDismissed()
+                    }
+                )
+                .id(card.id) // Wichtig: Erzwingt Neu-Render bei Kartenwechsel
+                Spacer()
             }
+            .transition(.scale(scale: 0.95).combined(with: .opacity))
         } else {
             // Ladezustand
             ProgressView()
@@ -214,8 +219,56 @@ struct GamePlayView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private var multiplayerCountdownView: some View {
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+            StartingPlayerAnnouncementView(
+                player: startingPlayer,
+                countdownSeconds: countdownRemainingSeconds(),
+                showButton: false,
+                onContinue: {}
+            )
+        }
+    }
     
     // MARK: - Logic
+
+    private func countdownRemainingSeconds() -> Int {
+        guard let startAtHostUptime = gameSettings.multiplayerStartAtHostUptime else { return 0 }
+        let now = ProcessInfo.processInfo.systemUptime
+        let startAtClientUptime = startAtHostUptime - gameSettings.hostClockOffset
+        let remaining = startAtClientUptime - now
+        if remaining <= 0 { return 0 }
+        return Int(ceil(remaining))
+    }
+
+    private func requestTimeSyncSamplesIfNeeded() {
+        guard isMultiplayerActive else { return }
+        if MultipeerManager.shared.role == .host {
+            gameSettings.hostClockOffset = 0
+            gameSettings.hostClockOffsetRTT = 0
+            return
+        }
+        guard !didRequestTimeSync else { return }
+        didRequestTimeSync = true
+        let samples = 5
+        for index in 0..<samples {
+            let delay = Double(index) * 0.25
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                sendTimeSyncPing()
+            }
+        }
+    }
+
+    private func sendTimeSyncPing() {
+        let payload = ImposterTimeSyncPingPayload(
+            clientName: MultipeerManager.shared.myPeerId.displayName,
+            pingId: UUID(),
+            clientSendUptime: ProcessInfo.processInfo.systemUptime
+        )
+        MultipeerManager.shared.sendToHost(event: MPCEventType.imposterTimeSyncPing, object: payload)
+    }
     
     private func startGame() {
         gameLogic.stopGameTimer()
@@ -240,7 +293,6 @@ struct GamePlayView: View {
         guard let player = gameLogic.currentPlayer else { return }
         let myName = MultipeerManager.shared.myPeerId.displayName
         guard player.name == myName else { return }
-        
         if currentCard?.player.name != player.name {
             currentCard = nil
         }
@@ -271,6 +323,13 @@ struct GamePlayView: View {
              MultipeerManager.shared.sendToHost(event: MPCEventType.imposterCardSeen, object: payload)
         }
     }
+
+    private func maybeStartMultiplayerTimer() {
+        guard MultipeerManager.shared.role == .host else { return }
+        if gameSettings.players.allSatisfy({ $0.hasSeenCard }) {
+            gameLogic.startMultiplayerTimerIfNeeded()
+        }
+    }
     
     private func prepareNextCard() {
         guard let player = gameLogic.currentPlayer,
@@ -291,6 +350,8 @@ struct GamePlayView: View {
         }
 
         // PRE-CHECK: Ist das der letzte Spieler?
+        // Wenn ja, bereiten wir die Announcement-View VOR dem Phasenwechsel vor.
+        // Das verhindert, dass kurz der Timer aufblitzt.
         let isLastPlayer = gameSettings.currentPlayerIndex >= gameSettings.players.count - 1
         
         if isLastPlayer {
@@ -313,7 +374,9 @@ struct GamePlayView: View {
         if gameSettings.gamePhase == .cardReveal {
             // Nächster Spieler ist dran -> Handover Screen wieder aktivieren
             prepareNextCard()
-        } 
+        }
+        // Der Else-Block ist jetzt leerer, da die Logik schon oben passiert ist.
+        // Das ist beabsichtigt.
     }
     
     private func beginRoundAfterAnnouncement() {
@@ -413,7 +476,7 @@ struct ImposterGameHeaderView: View {
                 .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
             
-            Spacer() 
+            Spacer()
             
             // Rechts: Fortschritt (Runde)
             if gameSettings.gamePhase == .cardReveal && !isMultiplayerActive {
@@ -456,7 +519,21 @@ struct ImposterGameHeaderView: View {
 // MARK: - Starting Player Announcement
 struct StartingPlayerAnnouncementView: View {
     let player: Player?
+    let countdownSeconds: Int?
+    let showButton: Bool
     let onContinue: () -> Void
+
+    init(
+        player: Player?,
+        countdownSeconds: Int? = nil,
+        showButton: Bool = true,
+        onContinue: @escaping () -> Void
+    ) {
+        self.player = player
+        self.countdownSeconds = countdownSeconds
+        self.showButton = showButton
+        self.onContinue = onContinue
+    }
     
     var body: some View {
         VStack(spacing: 30) {
@@ -491,14 +568,29 @@ struct StartingPlayerAnnouncementView: View {
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+
+            if let countdownSeconds {
+                VStack(spacing: 6) {
+                    Text("START IN")
+                        .font(.caption.bold())
+                        .tracking(2)
+                        .foregroundColor(.white.opacity(0.6))
+                    Text("\(max(0, countdownSeconds))")
+                        .font(.system(size: 64, weight: .black, design: .monospaced))
+                        .foregroundColor(.white)
+                        .contentTransition(.numericText())
+                }
+            }
             
             Spacer()
             
-            ImposterPrimaryButton(title: "Los geht\'s") {
-                onContinue()
+            if showButton {
+                ImposterPrimaryButton(title: "Los geht's") {
+                    onContinue()
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
     }
 }

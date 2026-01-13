@@ -16,4 +16,7 @@ public enum MPCEventType {
     static let imposterCardSeen = "IMPOSTER_CARD_SEEN" // Payload: ImposterCardSeenPayload
     static let imposterRevealProgress = "IMPOSTER_REVEAL_PROGRESS" // Payload: ImposterRevealProgressPayload
     static let imposterHostActivity = "IMPOSTER_HOST_ACTIVITY" // Payload: ImposterHostActivityPayload
+    static let imposterRevealStart = "IMPOSTER_REVEAL_START" // Payload: none
+    static let imposterTimeSyncPing = "IMPOSTER_TIME_SYNC_PING" // Payload: ImposterTimeSyncPingPayload
+    static let imposterTimeSyncPong = "IMPOSTER_TIME_SYNC_PONG" // Payload: ImposterTimeSyncPongPayload
 }

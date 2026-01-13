@@ -33,10 +33,12 @@ struct ImposterRolePayload: Codable {
 // MARK: - MPC Game State Sync Packet
 struct ImposterGameStateSync: Codable {
     let timeRemaining: Int
+    let timeRemainingPrecise: TimeInterval
     let isTimerPaused: Bool
     let gamePhase: ImposterGamePhase
     let currentPlayerIndex: Int // Useful for card reveal phase
     let startingPlayerName: String?
+    let hostUptime: TimeInterval
 }
 
 // MARK: - MPC Card Seen Packet
@@ -53,4 +55,26 @@ struct ImposterRevealProgressPayload: Codable {
 // MARK: - MPC Host Activity Packet
 struct ImposterHostActivityPayload: Codable {
     let message: String
+}
+
+// MARK: - MPC Game Start Packet
+struct ImposterGameStartPayload: Codable {
+    let startingPlayerName: String?
+    let startAtHostUptime: TimeInterval
+    let countdownSeconds: Int
+}
+
+// MARK: - MPC Time Sync Packets
+struct ImposterTimeSyncPingPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+}
+
+struct ImposterTimeSyncPongPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+    let hostReceiveUptime: TimeInterval
+    let hostSendUptime: TimeInterval
 }

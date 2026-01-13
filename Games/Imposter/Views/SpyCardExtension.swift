@@ -7,7 +7,6 @@
 //
 
 import SwiftUI
-import MultipeerConnectivity
 
 private extension Character {
     var isEmojiLike: Bool {
@@ -29,7 +28,6 @@ struct SpyCardView: View {
     
     @Environment(\.colorScheme) var colorScheme
     
-    // Multiplayer check
     private var isMultiplayer: Bool {
         MultipeerManager.shared.role != .unknown
     }
@@ -67,7 +65,13 @@ struct SpyCardView: View {
         .offset(offset)
         .scaleEffect(isMovingOut ? 0.8 : 1.0)
         .opacity(isMovingOut ? 0.0 : 1.0)
-        // NOTE: Tap Gesture entfernt, da Buttons jetzt die Kontrolle übernehmen
+        .onTapGesture {
+            // Nur im lokalen Modus schließt Tap die Karte (wenn umgedreht)
+            if isFlipped && !isMovingOut && !isMultiplayer {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                moveCardOut()
+            }
+        }
         .animation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0), value: rotationAngle)
         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: offset)
         .animation(.easeIn(duration: 0.3), value: isMovingOut)
@@ -348,7 +352,7 @@ struct SpyCardFrontView: View {
                         i += 1 // Den nächsten Part überspringen, da wir ihn verarbeitet haben
                     }
                 }
-            } 
+            }
             // 3. Andere Hinweise
             else if part.contains("Verdächtige") || part.contains("Zwilling") || part.contains("Sicherer") || part.contains("Der Spion") {
                 info.hint = part
@@ -423,8 +427,9 @@ struct SpyCardFrontView: View {
                 .foregroundColor(.white)
                 
                 // KATEGORIE HERO BADGE (Neu positioniert: Direkt unter Header)
+                // Nur anzeigen, wenn kein Spion ODER wenn Spione die Kategorie sehen dürfen
                 if (!card.isImposter || gameSettings.shouldSpySeeCategory),
-                   let emoji = parsedSpyInfo.categoryEmoji, 
+                   let emoji = parsedSpyInfo.categoryEmoji,
                    let name = parsedSpyInfo.categoryName {
                     HStack(spacing: 12) {
                         Text("KATEGORIE")
@@ -525,6 +530,10 @@ struct RoleCardContent: View {
                 
                 if card.isImposter {
                     // SPION: Schlichtes Design (User Wunsch)
+                    // Kein Icon, kein Text in der Mitte.
+                    // Der Header sagt bereits "SPION".
+                    // Wir nutzen einen Spacer, damit Hints/Partner schön mittig/unten landen oder
+                    // einfach leerer Raum entsteht, der "geheimnisvoll" wirkt.
                     Spacer()
                         .frame(minHeight: 20)
                     

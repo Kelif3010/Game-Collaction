@@ -179,7 +179,7 @@ struct VotingResultsView: View {
                     // XP Animation
                     if showPoints && !isRescue && votingManager.gameEnded { // Keine Punkte bei Rettung, nur bei Spielende
                         VStack(spacing: 0) {
-                            Text("+10 XP") 
+                            Text("+10 XP")
                                 .font(.system(size: 24, weight: .black))
                                 .foregroundColor(isVictory ? .green : .red)
                                 .shadow(color: isVictory ? .green.opacity(0.5) : .red.opacity(0.5), radius: 2)
@@ -268,7 +268,7 @@ struct VotingResultsView: View {
                             onContinueToGameplay()
                         }
                     } else {
-                        if !votingManager.gameEnded {
+                        if !votingManager.gameEnded && votingManager.remainingSpies > 0 {
                             ImposterPrimaryButton(title: "MISSION FORTSETZEN") {
                                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                 let previouslyFound = votingManager.foundSpies
@@ -283,11 +283,9 @@ struct VotingResultsView: View {
                         if votingManager.gameEnded {
                             ImposterPrimaryButton(title: "NEUES SPIEL") {
                                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                                // FIX: Reset delay to avoid UI Glitch
-                                onNewGame() // Closes view
                                 Task { @MainActor in
-                                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s Delay
                                     await gameLogic.restartGame()
+                                    onNewGame()
                                 }
                             }
                             

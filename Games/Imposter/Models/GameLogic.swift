@@ -11,6 +11,15 @@ import Combine
 class GameLogic: ObservableObject {
     @Published var gameSettings: GameSettings
     private var gameTimer: Timer?
+    private var lastTickUptime: TimeInterval?
+    private var lastTimerSyncUptime: TimeInterval?
+    private var preciseTimeRemaining: TimeInterval?
+    private var scheduledStartWorkItem: DispatchWorkItem?
+    private var lastRemotePauseState: Bool?
+    private let timerTickInterval: TimeInterval = 0.25
+    private let timerSyncInterval: TimeInterval = 1.2
+    private let softSyncThreshold: TimeInterval = 0.7
+    private let softSyncFactor: TimeInterval = 0.25
     
     init(gameSettings: GameSettings) {
         self.gameSettings = gameSettings
@@ -19,6 +28,8 @@ class GameLogic: ObservableObject {
     deinit {
         gameTimer?.invalidate()
         gameTimer = nil
+        scheduledStartWorkItem?.cancel()
+        scheduledStartWorkItem = nil
     }
     
     /// Startet das Spiel und weist Begriffe und Imposter zu
@@ -346,54 +357,94 @@ class GameLogic: ObservableObject {
 
     private func startGameTimer() {
         guard gameTimer == nil else { return }
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            if !self.gameSettings.isTimerPaused && self.gameSettings.timeRemaining > 0 {
-                self.gameSettings.timeRemaining -= 1
-                
-                // Progressives haptisches Feedback für den Timer
-                ImposterHapticsManager.shared.playTimerTick(secondsRemaining: self.gameSettings.timeRemaining)
-                
-                // Sync im Multiplayer jede Sekunde, damit alle Clients live zaehlen
-                if MultipeerManager.shared.role == .host {
-                    self.syncTimerToPeers()
-                }
+        lastTickUptime = ProcessInfo.processInfo.systemUptime
+        if preciseTimeRemaining == nil {
+            preciseTimeRemaining = Double(gameSettings.timeRemaining)
+        }
+        lastTimerSyncUptime = nil
+        gameTimer = Timer.scheduledTimer(withTimeInterval: timerTickInterval, repeats: true) { [weak self] _ in
+            self?.handleTimerTick()
+        }
+    }
+
+    private func handleTimerTick() {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard let lastTickUptime else {
+            self.lastTickUptime = now
+            return
+        }
+
+        if gameSettings.isTimerPaused {
+            self.lastTickUptime = now
+            return
+        }
+
+        let delta = max(0, now - lastTickUptime)
+        self.lastTickUptime = now
+
+        let previousDisplay = gameSettings.timeRemaining
+        let baseRemaining = preciseTimeRemaining ?? Double(previousDisplay)
+        let updatedRemaining = max(0, baseRemaining - delta)
+        preciseTimeRemaining = updatedRemaining
+
+        let display = max(0, Int(ceil(updatedRemaining)))
+        if display != previousDisplay {
+            gameSettings.timeRemaining = display
+            ImposterHapticsManager.shared.playTimerTick(secondsRemaining: display)
+        }
+
+        if MultipeerManager.shared.role == .host {
+            maybeSyncTimer(now: now)
+        }
+
+        if updatedRemaining <= 0, gameSettings.gamePhase != .finished {
+            gameSettings.gamePhase = .finished
+            gameSettings.markRoundCompleted()
+            stopGameTimer()
+
+            // MPC Sync Final
+            if MultipeerManager.shared.role == .host {
+                broadcastGameState()
+                MultipeerManager.shared.sendToAll(event: MPCEventType.imposterGameOver)
             }
-            if self.gameSettings.timeRemaining <= 0 {
-                self.gameSettings.gamePhase = .finished
-                self.gameSettings.markRoundCompleted()
-                self.stopGameTimer()
-                
-                // MPC Sync Final
-                if MultipeerManager.shared.role == .host {
-                    self.broadcastGameState()
-                    MultipeerManager.shared.sendToAll(event: MPCEventType.imposterGameOver)
+
+            Task { @MainActor in
+                let spies = self.gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+                let citizens = self.gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
+
+                for spy in spies {
+                    StatsService.shared.recordSpyWinTimeOut(spyName: spy.name)
+                    GlobalStatsManager.shared.recordWin(for: spy.name) // NEU: Global Stats
                 }
-                
-                Task { @MainActor in
-                    let spies = self.gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
-                    let citizens = self.gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
-                    
-                    for spy in spies {
-                        StatsService.shared.recordSpyWinTimeOut(spyName: spy.name)
-                        GlobalStatsManager.shared.recordWin(for: spy.name) // NEU: Global Stats
-                    }
-                    
-                    // Bürger verlieren bei Timeout
-                    for citizen in citizens {
-                        GlobalStatsManager.shared.recordLoss(for: citizen.name) // NEU: Global Stats
-                    }
-                    
-                    StatsService.shared.recordLoss(playerNames: citizens.map { $0.name }, asImposter: false)
+
+                // Bürger verlieren bei Timeout
+                for citizen in citizens {
+                    GlobalStatsManager.shared.recordLoss(for: citizen.name) // NEU: Global Stats
                 }
+
+                StatsService.shared.recordLoss(playerNames: citizens.map { $0.name }, asImposter: false)
             }
         }
+    }
+
+    private func maybeSyncTimer(now: TimeInterval) {
+        guard !gameSettings.isTimerPaused else { return }
+        if let lastSync = lastTimerSyncUptime, (now - lastSync) < timerSyncInterval {
+            return
+        }
+        lastTimerSyncUptime = now
+        broadcastGameState()
     }
 
     func stopGameTimer() {
         gameTimer?.invalidate()
         gameTimer = nil
+        lastTickUptime = nil
+        lastTimerSyncUptime = nil
+        preciseTimeRemaining = nil
+        lastRemotePauseState = nil
+        scheduledStartWorkItem?.cancel()
+        scheduledStartWorkItem = nil
         HintService.shared.stopHints()
         VoiceService.shared.stopSpeaking()
     }
@@ -404,28 +455,94 @@ class GameLogic: ObservableObject {
             gameSettings.timeRemaining = gameSettings.timeLimit
         }
         gameSettings.gamePhase = .playing
-        gameSettings.isTimerPaused = false
+        scheduleMultiplayerStart(startAtHostUptime: ProcessInfo.processInfo.systemUptime)
+    }
+
+    func applyRemoteTimerSync(_ sync: ImposterGameStateSync, hostClockOffset: TimeInterval) {
+        let now = ProcessInfo.processInfo.systemUptime
+        let hostUptimeAtClient = sync.hostUptime - hostClockOffset
+        let elapsed = max(0, now - hostUptimeAtClient)
+        let baseRemaining = max(0, sync.timeRemainingPrecise)
+        let expectedRemaining = max(0, baseRemaining - (sync.isTimerPaused ? 0 : elapsed))
+        let pauseChanged = lastRemotePauseState == nil || lastRemotePauseState != sync.isTimerPaused
+        lastRemotePauseState = sync.isTimerPaused
+        gameSettings.isTimerPaused = sync.isTimerPaused
+
+        if pauseChanged {
+            // Hard sync on pause/resume to avoid visible lag.
+            preciseTimeRemaining = expectedRemaining
+        } else {
+            let currentRemaining = preciseTimeRemaining ?? Double(gameSettings.timeRemaining)
+            let delta = expectedRemaining - currentRemaining
+            if abs(delta) >= softSyncThreshold {
+                preciseTimeRemaining = expectedRemaining
+            } else {
+                preciseTimeRemaining = currentRemaining + delta * softSyncFactor
+            }
+        }
+
+        let display = max(0, Int(ceil(preciseTimeRemaining ?? expectedRemaining)))
+        if gameSettings.timeRemaining != display {
+            gameSettings.timeRemaining = display
+        }
+
+        lastTickUptime = now
         if gameTimer == nil {
             startGameTimer()
         }
-        broadcastGameState()
+    }
+
+    func scheduleMultiplayerStart(startAtHostUptime: TimeInterval) {
+        scheduledStartWorkItem?.cancel()
+        scheduledStartWorkItem = nil
+
+        if gameSettings.timeRemaining <= 0 {
+            gameSettings.timeRemaining = gameSettings.timeLimit
+        }
+
+        preciseTimeRemaining = Double(gameSettings.timeRemaining)
+        gameSettings.isTimerPaused = true
+
+        if gameTimer == nil {
+            startGameTimer()
+        }
+
+        let now = ProcessInfo.processInfo.systemUptime
+        let startAtClientUptime = startAtHostUptime - gameSettings.hostClockOffset
+        let delay = max(0, startAtClientUptime - now)
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.gameSettings.multiplayerStartAtHostUptime = nil
+            self.gameSettings.isTimerPaused = false
+            self.lastTickUptime = ProcessInfo.processInfo.systemUptime
+            if MultipeerManager.shared.role == .host {
+                self.broadcastGameState()
+            }
+        }
+
+        scheduledStartWorkItem = workItem
+        if delay == 0 {
+            workItem.perform()
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+        }
     }
     
     // MARK: - MPC Broadcast
     
-    private func syncTimerToPeers() {
-        broadcastGameState()
-    }
-    
     func broadcastGameState() {
         guard MultipeerManager.shared.role == .host else { return }
-        
+        let now = ProcessInfo.processInfo.systemUptime
+        let preciseRemaining = preciseTimeRemaining ?? Double(gameSettings.timeRemaining)
         let sync = ImposterGameStateSync(
             timeRemaining: gameSettings.timeRemaining,
+            timeRemainingPrecise: preciseRemaining,
             isTimerPaused: gameSettings.isTimerPaused,
             gamePhase: gameSettings.gamePhase,
             currentPlayerIndex: gameSettings.currentPlayerIndex,
-            startingPlayerName: gameSettings.startingPlayerName
+            startingPlayerName: gameSettings.startingPlayerName,
+            hostUptime: now
         )
         
         MultipeerManager.shared.sendToAll(event: MPCEventType.imposterTimerSync, object: sync)
@@ -452,6 +569,7 @@ class GameLogic: ObservableObject {
         gameSettings.currentPlayerIndex = 0
         gameSettings.gamePhase = .setup
         gameSettings.timeRemaining = gameSettings.timeLimit
+        gameSettings.multiplayerStartAtHostUptime = nil
         
         for i in gameSettings.players.indices {
             gameSettings.players[i].hasSeenCard = false

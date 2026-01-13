@@ -334,6 +334,9 @@ struct ImposterMultiplayerSheet: View {
                         mpc.readyPlayers = Set(list)
                     }
                 }
+            } else if type == MPCEventType.imposterRevealStart {
+                previousOnEventReceived?(type, payload)
+                dismiss()
             } else if type == MPCEventType.gameStart {
                 previousOnEventReceived?(type, payload)
                 dismiss()
