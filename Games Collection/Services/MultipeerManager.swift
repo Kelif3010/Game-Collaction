@@ -153,6 +153,21 @@ class MultipeerManager: NSObject, ObservableObject {
         }
     }
     
+    func sendToHost(event: String, object: Codable? = nil) {
+        guard role == .peer else { return }
+        // Der Host ist immer der erste in der lobbyPeers Liste (Konvention)
+        guard let hostName = lobbyPeers.first else { return }
+        
+        if let hostPeer = getPeer(byName: hostName) {
+            sendToPeer(event: event, object: object, to: hostPeer)
+        } else {
+            // Fallback: Wenn wir nur mit einem verbunden sind, ist das wahrscheinlich der Host
+            if connectedPeers.count == 1, let singleHost = connectedPeers.first {
+                sendToPeer(event: event, object: object, to: singleHost)
+            }
+        }
+    }
+    
     func getPeer(byName name: String) -> MCPeerID? {
         return connectedPeers.first(where: { $0.displayName == name })
     }
