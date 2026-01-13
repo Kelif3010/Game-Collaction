@@ -16,6 +16,7 @@ struct ImposterGameConfig: Codable {
     let spiesCanSeeEachOther: Bool
     let randomSpyCount: Bool
     let showSpyHints: Bool
+    let activeRoles: Set<RoleType>
     let selectedCategoryIds: Set<UUID>
     let isMixAllCategories: Bool
 }
@@ -41,4 +42,15 @@ struct ImposterGameStateSync: Codable {
 // MARK: - MPC Card Seen Packet
 struct ImposterCardSeenPayload: Codable {
     let playerName: String
+}
+
+// MARK: - MPC Reveal Progress Packet
+struct ImposterRevealProgressPayload: Codable {
+    let readyCount: Int
+    let totalCount: Int
+}
+
+// MARK: - MPC Host Activity Packet
+struct ImposterHostActivityPayload: Codable {
+    let message: String
 }

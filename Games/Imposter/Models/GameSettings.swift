@@ -66,6 +66,10 @@ class GameSettings: ObservableObject {
     @Published var isTimerPaused: Bool = false
     @Published var startingPlayerName: String? = nil
     
+    // Multiplayer Sync State
+    @Published var revealProgress: (ready: Int, total: Int)? = nil
+    @Published var isWaitingForOtherPlayers: Bool = false
+    
     /// Signal an übergeordnete Views, bis ins Hauptmenü zurückzunavigieren
     @Published var requestExitToMain: Bool = false
     
@@ -320,6 +324,7 @@ class GameSettings: ObservableObject {
             spiesCanSeeEachOther: spiesCanSeeEachOther,
             randomSpyCount: randomSpyCount,
             showSpyHints: showSpyHints,
+            activeRoles: activeRoles,
             selectedCategoryIds: selectedCategoryIds,
             isMixAllCategories: isMixAllCategories
         )
@@ -333,8 +338,15 @@ class GameSettings: ObservableObject {
         self.spiesCanSeeEachOther = config.spiesCanSeeEachOther
         self.randomSpyCount = config.randomSpyCount
         self.showSpyHints = config.showSpyHints
+        self.activeRoles = config.activeRoles
         self.selectedCategoryIds = config.selectedCategoryIds
         self.isMixAllCategories = config.isMixAllCategories
+        if selectedCategoryIds.count == 1, let id = selectedCategoryIds.first,
+           let category = categories.first(where: { $0.id == id }) {
+            selectedCategory = category
+        } else {
+            selectedCategory = nil
+        }
     }
 }
 

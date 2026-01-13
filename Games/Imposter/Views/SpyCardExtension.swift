@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import MultipeerConnectivity
 
 private extension Character {
     var isEmojiLike: Bool {
@@ -28,6 +29,11 @@ struct SpyCardView: View {
     
     @Environment(\.colorScheme) var colorScheme
     
+    // Multiplayer check
+    private var isMultiplayer: Bool {
+        MultipeerManager.shared.role != .unknown
+    }
+    
     var body: some View {
         ZStack {
             // Kartenrückseite mit integriertem Scanner
@@ -43,25 +49,25 @@ struct SpyCardView: View {
             )
             
             // Kartenvorderseite
-            SpyCardFrontView(card: card, gameSettings: gameSettings)
-                .opacity(isFlipped ? 1 : 0)
-                .rotation3DEffect(
-                    .degrees(rotationAngle + 180),
-                    axis: (x: 0, y: 1, z: 0)
-                )
+            SpyCardFrontView(
+                card: card,
+                gameSettings: gameSettings,
+                isMultiplayer: isMultiplayer,
+                onDismiss: {
+                    moveCardOut()
+                }
+            )
+            .opacity(isFlipped ? 1 : 0)
+            .rotation3DEffect(
+                .degrees(rotationAngle + 180),
+                axis: (x: 0, y: 1, z: 0)
+            )
         }
         .frame(width: 320, height: 500)
         .offset(offset)
         .scaleEffect(isMovingOut ? 0.8 : 1.0)
         .opacity(isMovingOut ? 0.0 : 1.0)
-        .onTapGesture {
-            // Nur das Schließen der Karte geht per Tap, 
-            // das Umdrehen wird jetzt vom Scanner in CardBackView gesteuert.
-            if isFlipped && !isMovingOut {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                moveCardOut()
-            }
-        }
+        // NOTE: Tap Gesture entfernt, da Buttons jetzt die Kontrolle übernehmen
         .animation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0), value: rotationAngle)
         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: offset)
         .animation(.easeIn(duration: 0.3), value: isMovingOut)
@@ -294,6 +300,8 @@ extension Image {
 struct SpyCardFrontView: View {
     let card: GameCard
     let gameSettings: GameSettings
+    let isMultiplayer: Bool
+    let onDismiss: () -> Void
     
     struct SpyInfo {
         var categoryEmoji: String?
@@ -395,6 +403,8 @@ struct SpyCardFrontView: View {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .strokeBorder(.white.opacity(0.15), lineWidth: 1)
                 )
+                // KANTE FIX: ClipShape hinzufügen
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .shadow(color: .black.opacity(0.5), radius: 25, y: 15)
             
             VStack(spacing: 0) {
@@ -413,7 +423,6 @@ struct SpyCardFrontView: View {
                 .foregroundColor(.white)
                 
                 // KATEGORIE HERO BADGE (Neu positioniert: Direkt unter Header)
-                // Nur anzeigen, wenn kein Spion ODER wenn Spione die Kategorie sehen dürfen
                 if (!card.isImposter || gameSettings.shouldSpySeeCategory),
                    let emoji = parsedSpyInfo.categoryEmoji, 
                    let name = parsedSpyInfo.categoryName {
@@ -445,14 +454,47 @@ struct SpyCardFrontView: View {
                 
                 Spacer()
                 
-                if !card.shortInstruction.isEmpty {
+                // MULTIPLAYER "VERSTANDEN" BUTTON
+                if isMultiplayer {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onDismiss()
+                    } label: {
+                        Text(LocalizedStringKey("Ich hab's"))
+                            .font(.headline.bold())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.blue)
+                            .cornerRadius(16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
+                } else if !card.shortInstruction.isEmpty {
+                    // LOKAL: Nur Text
                     Text(card.shortInstruction)
                         .font(.footnote)
                         .foregroundStyle(.white.opacity(0.6))
                         .padding(.bottom, 30)
                         .padding(.horizontal)
                         .multilineTextAlignment(.center)
+                        // Tap to dismiss erlauben (unsichtbarer Button oder Overlay)
+                        .overlay(
+                             Color.clear
+                                 .contentShape(Rectangle())
+                                 .onTapGesture { onDismiss() }
+                        )
                 }
+            }
+        }
+        // LOKAL: Tap auf ganze Karte schließt sie
+        .onTapGesture {
+            if !isMultiplayer {
+                onDismiss()
             }
         }
     }
@@ -483,10 +525,6 @@ struct RoleCardContent: View {
                 
                 if card.isImposter {
                     // SPION: Schlichtes Design (User Wunsch)
-                    // Kein Icon, kein Text in der Mitte.
-                    // Der Header sagt bereits "SPION".
-                    // Wir nutzen einen Spacer, damit Hints/Partner schön mittig/unten landen oder
-                    // einfach leerer Raum entsteht, der "geheimnisvoll" wirkt.
                     Spacer()
                         .frame(minHeight: 20)
                     

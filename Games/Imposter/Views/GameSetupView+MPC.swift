@@ -17,9 +17,11 @@ extension GameSetupView {
         gameSettings.players = newPlayers
         gameSettings.resetGame()
         gameSettings.roundCategory = category
-        gameSettings.gamePhase = .playing
+        gameSettings.gamePhase = .cardReveal // Start in Reveal Phase, not Playing!
         gameSettings.timeRemaining = gameSettings.timeLimit
         gameSettings.isTimerPaused = true
+        gameSettings.isWaitingForOtherPlayers = false // Reset waiting state
+        gameSettings.revealProgress = (0, allPeers.count)
         
         // Use GameLogic's role distribution logic
         // We need to temporarily simulate players in GameSettings to use existing logic or replicate it.
@@ -98,12 +100,8 @@ extension GameSetupView {
         let config = gameSettings.toMPCConfig()
         mpc.sendToAll(event: MPCEventType.imposterSyncConfig, object: config)
         
-        // 3. Send Game Start Signal
-        // Small delay to ensure roles arrive first
+        // 3. Navigate Host (BUT DO NOT START GAME YET)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            mpc.sendToAll(event: MPCEventType.gameStart)
-            
-            // Navigate Host
             self.route = .game
         }
     }
@@ -142,10 +140,12 @@ extension GameSetupView {
                             gameSettings.players[myIndex].isImposter = roleInfo.isImposter
                             gameSettings.players[myIndex].roleType = nil
                             gameSettings.players[myIndex].role = nil
+                            gameSettings.players[myIndex].hasSeenCard = false // RESET SEEN STATE
                             gameSettings.currentPlayerIndex = myIndex // For card view
+                            gameSettings.isWaitingForOtherPlayers = false // Reset waiting state
+                            gameSettings.gamePhase = .cardReveal // Explicitly set phase
                             
                             // Set Category (Placeholder category for display)
-                            // We might need to find the real category object if possible, or create a dummy
                             if let realCat = gameSettings.categories.first(where: { $0.name == roleInfo.categoryName }) {
                                 gameSettings.roundCategory = realCat
                             } else {
@@ -154,6 +154,9 @@ extension GameSetupView {
                                 gameSettings.roundCategory = dummy
                             }
                         }
+                        
+                        // Navigate to Game View
+                        route.wrappedValue = .game
                     }
                     
                 case MPCEventType.gameStart:
@@ -161,7 +164,17 @@ extension GameSetupView {
                     gameSettings.gamePhase = .playing
                     gameSettings.isTimerPaused = true
                     gameSettings.timeRemaining = gameSettings.timeLimit
-                    route.wrappedValue = .game
+                    gameSettings.isWaitingForOtherPlayers = false // Stop waiting
+                    // Route should already be set, but ensure it
+                    if route.wrappedValue != .game {
+                        route.wrappedValue = .game
+                    }
+                    
+                case MPCEventType.imposterRevealProgress:
+                     if let data = payload,
+                        let progress = try? JSONDecoder().decode(ImposterRevealProgressPayload.self, from: data) {
+                         gameSettings.revealProgress = (progress.readyCount, progress.totalCount)
+                     }
                     
                 case MPCEventType.imposterTimerSync:
                     if let data = payload,
@@ -176,15 +189,64 @@ extension GameSetupView {
                         gameSettings.startingPlayerName = sync.startingPlayerName
                     }
 
+                case MPCEventType.imposterHostActivity:
+                    if let data = payload,
+                       let info = try? JSONDecoder().decode(ImposterHostActivityPayload.self, from: data) {
+                        mpc.hostActivity = info.message
+                    }
+                    
+                case "PLAYER_READY_UPDATE":
+                    if let data = payload,
+                       let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
+                        if info.isReady {
+                            mpc.readyPlayers.insert(info.playerName)
+                        } else {
+                            mpc.readyPlayers.remove(info.playerName)
+                        }
+                        if mpc.role == .host {
+                            let validPlayers = Set(mpc.lobbyPeers)
+                            mpc.readyPlayers = mpc.readyPlayers.intersection(validPlayers)
+                            mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(mpc.readyPlayers))
+                        }
+                    }
+                    
+                case "LOBBY_STATE_SYNC":
+                    if let data = payload,
+                       let list = try? JSONDecoder().decode([String].self, from: data) {
+                        mpc.readyPlayers = Set(list)
+                    }
+
                 case MPCEventType.imposterCardSeen:
                     guard mpc.role == .host else { break }
                     if let data = payload,
                        let seen = try? JSONDecoder().decode(ImposterCardSeenPayload.self, from: data) {
+                        
+                        // 1. Mark player as ready
                         if let index = gameSettings.players.firstIndex(where: { $0.name == seen.playerName }) {
                             gameSettings.players[index].hasSeenCard = true
                         }
-                        if gameSettings.players.allSatisfy({ $0.hasSeenCard }) {
-                            gameLogic.startMultiplayerTimerIfNeeded()
+                        
+                        // 2. Calculate Progress
+                        let readyCount = gameSettings.players.filter { $0.hasSeenCard }.count
+                        let totalCount = gameSettings.players.count
+                        
+                        // 3. Broadcast Progress
+                        let progressPayload = ImposterRevealProgressPayload(readyCount: readyCount, totalCount: totalCount)
+                        mpc.sendToAll(event: MPCEventType.imposterRevealProgress, object: progressPayload)
+                        
+                        // Update Host UI
+                        gameSettings.revealProgress = (readyCount, totalCount)
+                        
+                        // 4. Check Start Condition
+                        // IMPORTANT: Host Logic to start game when everyone is ready
+                        if readyCount == totalCount {
+                            // Delay slightly to let everyone see "5/5"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                mpc.sendToAll(event: MPCEventType.gameStart)
+                                gameSettings.gamePhase = .playing
+                                gameSettings.isTimerPaused = true
+                                gameSettings.isWaitingForOtherPlayers = false
+                            }
                         }
                     }
                     
@@ -202,4 +264,9 @@ extension GameSetupView {
             }
         }
     }
+}
+
+private struct ReadyStatusPayload: Codable {
+    let playerName: String
+    let isReady: Bool
 }

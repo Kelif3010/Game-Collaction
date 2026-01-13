@@ -31,6 +31,9 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // NEU: Liste aller Spieler in der Lobby (vom Host empfangen)
     @Published var lobbyPeers: [String] = [] 
+    @Published var readyPlayers: Set<String> = []
+    @Published var activeRoomCode: String? = nil
+    @Published var hostActivity: String = ""
     
     // MC Objekte
     private var session: MCSession?
@@ -71,6 +74,8 @@ class MultipeerManager: NSObject, ObservableObject {
         syncPeerNameFromDefaults()
         role = .host
         lobbyPeers = [myPeerId.displayName] // Ich bin der erste
+        readyPlayers.removeAll()
+        activeRoomCode = roomCode
         setupSession()
         
         // Code in Discovery Info packen
@@ -89,6 +94,8 @@ class MultipeerManager: NSObject, ObservableObject {
         role = .peer
         targetRoomCode = roomCode
         lobbyPeers = [myPeerId.displayName] // Reset Lobby
+        readyPlayers.removeAll()
+        activeRoomCode = roomCode
         setupSession()
         browser = MCNearbyServiceBrowser(peer: myPeerId, serviceType: serviceType)
         browser?.delegate = self
@@ -103,8 +110,11 @@ class MultipeerManager: NSObject, ObservableObject {
         session?.disconnect()
         connectedPeers.removeAll()
         lobbyPeers.removeAll()
+        readyPlayers.removeAll()
+        hostActivity = ""
         role = .unknown
         targetRoomCode = nil
+        activeRoomCode = nil
     }
     
     func sendToAll(event: String, object: Codable? = nil) {

@@ -14,9 +14,9 @@ struct ImposterMultiplayerSheet: View {
     @State private var pendingAction: PendingAction?
     @State private var showExitConfirmation = false
     @State private var currentDetent: PresentationDetent = .medium
+    @State private var previousOnEventReceived: ((String, Data?) -> Void)?
     
-    // NEU: Bereit-Status
-    @State private var readyPlayers: Set<String> = []
+    // NEU: Bereit-Status (zentral im MPC gespeichert)
 
     enum Mode {
         case menu
@@ -53,6 +53,13 @@ struct ImposterMultiplayerSheet: View {
     private var needsNamePrompt: Bool {
         myPlayerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
+    private var displayRoomCode: String {
+        if isHost {
+            return generatedCode.isEmpty ? (mpc.activeRoomCode ?? "") : generatedCode
+        }
+        return inputCode.isEmpty ? (mpc.activeRoomCode ?? "") : inputCode
+    }
     
     // MARK: - Body
     
@@ -68,27 +75,15 @@ struct ImposterMultiplayerSheet: View {
                 
                 switch mode {
                 case .menu:
-                    menuView
+                    if isConnected {
+                        lobbyView
+                    } else {
+                        menuView
+                    }
                 case .enterCode:
                     enterCodeView
                 case .lobby:
-                    UnifiedLobbyView(
-                        roomCode: isHost ? generatedCode : inputCode,
-                        isHost: isHost,
-                        players: lobbyNames,
-                        readyPlayers: readyPlayers,
-                        myPlayerName: mpc.myPeerId.displayName,
-                        onStartGame: {
-                            // TODO: Trigger Game Start Event via MPC
-                            mpc.sendToAll(event: MPCEventType.gameStart)
-                            // Dismiss sheet handled by Wrapper observing the event
-                            dismiss()
-                        },
-                        onToggleReady: { isReady in
-                            toggleReadyState(isReady: isReady)
-                        }
-                    )
-                    .transition(.opacity)
+                    lobbyView
                 }
                 
                 Spacer()
@@ -97,6 +92,7 @@ struct ImposterMultiplayerSheet: View {
         .presentationDetents([.medium, .large], selection: $currentDetent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
+        .interactiveDismissDisabled(!isHost && mode == .lobby)
         .alert("Wie heißt du?", isPresented: $showNamePrompt) {
             TextField("Dein Name", text: $pendingName)
             Button("OK") {
@@ -122,6 +118,24 @@ struct ImposterMultiplayerSheet: View {
         }
         .onAppear {
             setupMPCListener()
+            if isConnected && mode == .menu {
+                if let roomCode = mpc.activeRoomCode {
+                    if isHost {
+                        generatedCode = roomCode
+                    } else {
+                        inputCode = roomCode
+                    }
+                }
+                withAnimation {
+                    mode = .lobby
+                    currentDetent = .large
+                }
+            }
+        }
+        .onDisappear {
+            if let previousOnEventReceived {
+                mpc.onEventReceived = previousOnEventReceived
+            }
         }
         .onChange(of: isConnected) { _, connected in
             // Wenn wir im Code-Eingabe Modus sind und die Verbindung steht -> Ab in die Lobby
@@ -130,6 +144,16 @@ struct ImposterMultiplayerSheet: View {
                     mode = .lobby
                     currentDetent = .large // Lobby braucht Platz
                 }
+            }
+        }
+        .onChange(of: mpc.lobbyPeers) { _, newPeers in
+            let validPlayers = Set(newPeers)
+            let filteredReady = mpc.readyPlayers.intersection(validPlayers)
+            if filteredReady != mpc.readyPlayers {
+                mpc.readyPlayers = filteredReady
+            }
+            if isHost {
+                mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
             }
         }
     }
@@ -170,11 +194,34 @@ struct ImposterMultiplayerSheet: View {
     }
     
     var headerTitle: String {
+        if mode == .menu && isConnected {
+            return isHost ? "Lobby (Host)" : "Lobby (Gast)"
+        }
         switch mode {
         case .menu: return "Multiplayer"
         case .enterCode: return "Beitreten"
         case .lobby: return isHost ? "Lobby (Host)" : "Lobby (Gast)"
         }
+    }
+
+    @ViewBuilder
+    private var lobbyView: some View {
+        UnifiedLobbyView(
+            roomCode: displayRoomCode,
+            isHost: isHost,
+            players: lobbyNames,
+            readyPlayers: mpc.readyPlayers,
+            myPlayerName: mpc.myPeerId.displayName,
+            onOpenSettings: {
+                if isHost {
+                    dismiss()
+                }
+            },
+            onToggleReady: { isReady in
+                toggleReadyState(isReady: isReady)
+            }
+        )
+        .transition(.opacity)
     }
     
     var menuView: some View {
@@ -267,24 +314,31 @@ struct ImposterMultiplayerSheet: View {
     // MARK: - Logic
     
     private func setupMPCListener() {
+        previousOnEventReceived = mpc.onEventReceived
         mpc.onEventReceived = { type, payload in
             if type == "PLAYER_READY_UPDATE", let data = payload {
                 if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
                     withAnimation {
                         if info.isReady {
-                            readyPlayers.insert(info.playerName)
+                            mpc.readyPlayers.insert(info.playerName)
                         } else {
-                            readyPlayers.remove(info.playerName)
+                            mpc.readyPlayers.remove(info.playerName)
                         }
                     }
+                    syncReadyStateIfHost()
                 }
             } else if type == "LOBBY_STATE_SYNC", let data = payload {
                 // Für neu beigetretene Spieler: Empfange kompletten Status
                 if let list = try? JSONDecoder().decode([String].self, from: data) {
                     withAnimation {
-                        readyPlayers = Set(list)
+                        mpc.readyPlayers = Set(list)
                     }
                 }
+            } else if type == MPCEventType.gameStart {
+                previousOnEventReceived?(type, payload)
+                dismiss()
+            } else {
+                previousOnEventReceived?(type, payload)
             }
         }
     }
@@ -292,16 +346,24 @@ struct ImposterMultiplayerSheet: View {
     private func toggleReadyState(isReady: Bool) {
         let name = mpc.myPeerId.displayName
         if isReady {
-            readyPlayers.insert(name)
+            mpc.readyPlayers.insert(name)
         } else {
-            readyPlayers.remove(name)
+            mpc.readyPlayers.remove(name)
         }
         
         // Sende Update an alle
         let payload = ReadyStatusPayload(playerName: name, isReady: isReady)
         mpc.sendToAll(event: "PLAYER_READY_UPDATE", object: payload)
-        
-        // Wenn ich Host bin, könnte ich hier noch eine Logik hinzufügen um Späteren Spielern den Status zu senden
+    }
+
+    private func syncReadyStateIfHost() {
+        guard isHost else { return }
+        let validPlayers = Set(lobbyNames)
+        let filteredReady = mpc.readyPlayers.intersection(validPlayers)
+        if filteredReady != mpc.readyPlayers {
+            mpc.readyPlayers = filteredReady
+        }
+        mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
     }
     
     private struct ReadyStatusPayload: Codable {
@@ -313,7 +375,7 @@ struct ImposterMultiplayerSheet: View {
         generatedCode = String(Int.random(in: 1000...9999))
         mode = .lobby
         currentDetent = .large
-        readyPlayers.removeAll()
+        mpc.readyPlayers.removeAll()
         mpc.startHosting(roomCode: generatedCode)
     }
     
@@ -329,7 +391,7 @@ struct ImposterMultiplayerSheet: View {
         currentDetent = .medium
         generatedCode = ""
         inputCode = ""
-        readyPlayers.removeAll()
+        mpc.readyPlayers.removeAll()
     }
 
     private func handleHostTap() {
@@ -380,7 +442,7 @@ private struct UnifiedLobbyView: View {
     let players: [String]
     let readyPlayers: Set<String>
     let myPlayerName: String
-    let onStartGame: () -> Void
+    let onOpenSettings: () -> Void
     let onToggleReady: (Bool) -> Void
     
     var body: some View {
@@ -440,38 +502,6 @@ private struct UnifiedLobbyView: View {
             // 3. Action Area
             VStack(spacing: 12) {
                 if isHost {
-                    Button(action: onStartGame) {
-                        VStack(spacing: 4) {
-                            Text("Spiel starten")
-                                .font(.title3.bold())
-                            
-                            // Info für Host
-                            if players.count >= 3 {
-                                let readyCount = readyPlayers.count
-                                Text("\(readyCount) von \(players.count) bereit")
-                                    .font(.caption2)
-                                    .opacity(0.8)
-                            }
-                        }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
-                        )
-                        .cornerRadius(20)
-                        .shadow(color: .green.opacity(0.4), radius: 8, y: 4)
-                    }
-                    .disabled(players.count < 2) // Mindestspielerzahl (anpassbar)
-                    .opacity(players.count < 3 ? 0.5 : 1.0)
-                    
-                    if players.count < 3 {
-                        Text("Mindestens 3 Spieler benötigt")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                } else {
-                    // Gast Ansicht
                     let amIReady = readyPlayers.contains(myPlayerName)
                     
                     Button {
@@ -493,10 +523,58 @@ private struct UnifiedLobbyView: View {
                         .animation(.easeInOut, value: amIReady)
                     }
                     
-                    if !amIReady {
+                    Button(action: onOpenSettings) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "slider.horizontal.3")
+                            Text("Spieleinstellungen")
+                        }
+                        .font(.headline.bold())
+                        .foregroundStyle(.white.opacity(0.9))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.12))
+                        .cornerRadius(18)
+                    }
+                    
+                    Text("\(readyPlayers.count) von \(players.count) bereit")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                } else {
+                    // Gast Ansicht
+                    let amIReady = readyPlayers.contains(myPlayerName)
+                    let hostActivity = MultipeerManager.shared.hostActivity
+                    
+                    Button {
+                        HapticsService.impact(.medium)
+                        onToggleReady(!amIReady)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: amIReady ? "checkmark.circle.fill" : "circle")
+                            Text(amIReady ? "Bereit" : "Ich bin bereit")
+                        }
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            amIReady ? Color.green : Color.white.opacity(0.15)
+                        )
+                        .cornerRadius(20)
+                        .animation(.easeInOut, value: amIReady)
+                    }
+                    
+                    if amIReady {
                         Text("Warte auf Host...")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.5))
+                    }
+                    
+                    if !hostActivity.isEmpty {
+                        Text(hostActivity)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 2)
                     }
                 }
             }

@@ -2,7 +2,7 @@ import SwiftUI
 
 extension GameSetupView {
     private var minimumPlayersRequired: Int {
-        switch MultipeerManager.shared.role {
+        switch mpc.role {
         case .host:
             return 2
         case .peer:
@@ -11,18 +11,26 @@ extension GameSetupView {
             return 4
         }
     }
+    
+    private var allPlayersReady: Bool {
+        guard mpc.role == .host else { return true }
+        let lobby = Set(mpc.lobbyPeers)
+        guard !lobby.isEmpty else { return false }
+        return lobby.isSubset(of: mpc.readyPlayers)
+    }
 
     var canStartGame: Bool {
-        if MultipeerManager.shared.role == .peer {
+        if mpc.role == .peer {
             return false
         }
-        return gameSettings.players.count >= minimumPlayersRequired
+        let baseReady = gameSettings.players.count >= minimumPlayersRequired
             && gameSettings.hasSelectedCategories
             && gameSettings.numberOfImposters < gameSettings.players.count
+        return baseReady && allPlayersReady
     }
 
     var startButtonHintText: String {
-        if MultipeerManager.shared.role == .peer {
+        if mpc.role == .peer {
             return "Warte auf den Host, der das Spiel startet."
         }
         var missingItems: [String] = []
@@ -39,19 +47,32 @@ extension GameSetupView {
         if gameSettings.numberOfImposters >= gameSettings.players.count && gameSettings.players.count > 0 {
             missingItems.append("Zu viele Spione für die Spieleranzahl")
         }
+        
+        if mpc.role == .host && !allPlayersReady {
+            let lobby = Set(mpc.lobbyPeers)
+            let missingReady = max(0, lobby.count - mpc.readyPlayers.intersection(lobby).count)
+            if missingReady > 0 {
+                missingItems.append("Noch \(missingReady) Spieler bereit")
+            }
+        }
         return missingItems.isEmpty ? "Alle Einstellungen vollständig" : missingItems.joined(separator: " • ")
     }
 
     func startGame() {
-        if MultipeerManager.shared.role == .host {
+        if mpc.role == .host {
              // MPC Host Start
              guard gameSettings.gameMode == .classic else {
                  alertMessage = "Multiplayer unterstützt aktuell nur den klassischen Modus."
                  showingAlert = true
                  return
              }
-             guard MultipeerManager.shared.lobbyPeers.count >= 2 else {
+             guard mpc.lobbyPeers.count >= 2 else {
                  alertMessage = "Mindestens 2 Spieler werden für Multiplayer benötigt."
+                 showingAlert = true
+                 return
+             }
+             guard allPlayersReady else {
+                 alertMessage = "Alle Spieler müssen bereit sein."
                  showingAlert = true
                  return
              }

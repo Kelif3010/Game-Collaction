@@ -11,6 +11,7 @@ struct GameSetupView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
     @StateObject var gameLogic: GameLogic
+    @ObservedObject var mpc = MultipeerManager.shared
 
     @State var showingAlert = false
     @State var alertMessage = ""
@@ -29,6 +30,69 @@ struct GameSetupView: View {
 
     init() {
         self._gameLogic = StateObject(wrappedValue: GameLogic(gameSettings: GameSettings()))
+    }
+    
+    private var isMultiplayerActive: Bool {
+        mpc.role != .unknown
+    }
+
+    private func broadcastConfigIfHost() {
+        guard mpc.role == .host else { return }
+        guard gameSettings.gamePhase == .setup else { return }
+        let config = gameSettings.toMPCConfig()
+        mpc.sendToAll(event: MPCEventType.imposterSyncConfig, object: config)
+    }
+
+    private func setHostActivity(_ message: String) {
+        guard mpc.role == .host else { return }
+        if mpc.hostActivity == message {
+            return
+        }
+        mpc.hostActivity = message
+        let payload = ImposterHostActivityPayload(message: message)
+        mpc.sendToAll(event: MPCEventType.imposterHostActivity, object: payload)
+    }
+    
+    private struct ConfigSignature: Equatable {
+        let numberOfImposters: Int
+        let timeLimit: Int
+        let gameMode: ImposterGameMode
+        let spyCanSeeCategory: Bool
+        let spiesCanSeeEachOther: Bool
+        let randomSpyCount: Bool
+        let showSpyHints: Bool
+        let activeRoles: Set<RoleType>
+        let selectedCategoryIds: Set<UUID>
+        let isMixAllCategories: Bool
+    }
+    
+    private var configSignature: ConfigSignature {
+        ConfigSignature(
+            numberOfImposters: gameSettings.numberOfImposters,
+            timeLimit: gameSettings.timeLimit,
+            gameMode: gameSettings.gameMode,
+            spyCanSeeCategory: gameSettings.spyCanSeeCategory,
+            spiesCanSeeEachOther: gameSettings.spiesCanSeeEachOther,
+            randomSpyCount: gameSettings.randomSpyCount,
+            showSpyHints: gameSettings.showSpyHints,
+            activeRoles: gameSettings.activeRoles,
+            selectedCategoryIds: gameSettings.selectedCategoryIds,
+            isMixAllCategories: gameSettings.isMixAllCategories
+        )
+    }
+
+    private struct HostSheetState: Equatable {
+        let gameMode: Bool
+        let categories: Bool
+        let rules: Bool
+    }
+
+    private var hostSheetState: HostSheetState {
+        HostSheetState(
+            gameMode: showingGameModeSheet,
+            categories: showingCategorySelectionSheet,
+            rules: showingSpyOptionsSheet
+        )
     }
 
     var body: some View {
@@ -76,15 +140,46 @@ struct GameSetupView: View {
                 gameSettings.gameMode = .classic
             }
         }
-        .onChange(of: MultipeerManager.shared.lobbyPeers) { _, newPeers in
-            if MultipeerManager.shared.role != .unknown, route == nil, gameSettings.gamePhase == .setup {
+        .onChange(of: mpc.lobbyPeers) { _, newPeers in
+            if mpc.role != .unknown, route == nil, gameSettings.gamePhase == .setup {
                 let mpcPlayers = newPeers.map { Player(name: $0) }
                 gameSettings.players = mpcPlayers
+            }
+            if mpc.role == .host {
+                let validPlayers = Set(newPeers)
+                let filteredReady = mpc.readyPlayers.intersection(validPlayers)
+                if filteredReady != mpc.readyPlayers {
+                    mpc.readyPlayers = filteredReady
+                }
+                mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
+                broadcastConfigIfHost()
+            }
+        }
+        .onChange(of: configSignature) { oldValue, newValue in
+            broadcastConfigIfHost()
+            if oldValue.timeLimit != newValue.timeLimit {
+                setHostActivity("Host stellt Timer ein")
+            } else if oldValue.numberOfImposters != newValue.numberOfImposters {
+                setHostActivity("Host waehlt Anzahl Spione")
+            }
+        }
+        .onChange(of: hostSheetState) { _, newValue in
+            if newValue.gameMode {
+                setHostActivity("Host ist im Spielmodus")
+            } else if newValue.categories {
+                setHostActivity("Host waehlt Kategorie")
+            } else if newValue.rules {
+                setHostActivity("Host aktiviert Rollen und Regeln")
+            } else if mpc.role == .host {
+                setHostActivity("Host wartet auf Start")
             }
         }
         .onAppear {
             gameLogic.gameSettings = gameSettings
             setupMPCListeners(gameSettings: gameSettings, route: $route)
+            if mpc.role == .host && mpc.hostActivity.isEmpty {
+                setHostActivity("Host wartet auf Start")
+            }
 
             if !gameSettings.hasSelectedCategories {
                 let fallbackCategory = gameSettings.categories.first(where: { ($0.sourceName ?? $0.name) == "Tiere" }) ?? gameSettings.categories.first
@@ -221,11 +316,23 @@ struct GameSetupView: View {
     }
 
     private var playersRow: some View {
-        RowCell(icon: "person.3.fill", title: "Spieler", value: "\(gameSettings.players.count)")
+        let valueText = isMultiplayerActive
+            ? "\(gameSettings.players.count) (online)"
+            : "\(gameSettings.players.count)"
+        return RowCell(
+            icon: "person.3.fill",
+            title: "Spieler",
+            value: valueText,
+            showsChevron: !isMultiplayerActive
+        )
             .contentShape(Rectangle())
             .onTapGesture {
-                showingAddPlayersSheet = true
+                if !isMultiplayerActive {
+                    showingAddPlayersSheet = true
+                }
             }
+            .disabled(isMultiplayerActive)
+            .opacity(isMultiplayerActive ? 0.6 : 1.0)
     }
 
     private var impostersRow: some View {

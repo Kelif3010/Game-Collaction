@@ -38,21 +38,26 @@ struct GamePlayView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header
-                ImposterGameHeaderView()
-                    .padding(.bottom, 10)
+                // Header (nur anzeigen wenn nicht im Vollbild-Lademodus)
+                if !gameSettings.isWaitingForOtherPlayers {
+                    ImposterGameHeaderView()
+                        .padding(.bottom, 10)
+                }
                 
                 mainContent
                 
                 Spacer()
                 
-                // Footer (Beenden)
-                GameFooterView()
+                // Footer (Beenden) - Nur anzeigen wenn Spiel läuft
+                if !gameSettings.isWaitingForOtherPlayers && gameSettings.gamePhase == .playing {
+                    GameFooterView()
+                }
             }
         }
         .onAppear {
             if isMultiplayerActive {
                 hasRevealedOwnCard = false
+                gameSettings.isWaitingForOtherPlayers = false
             }
             startGame()
         }
@@ -91,15 +96,16 @@ struct GamePlayView: View {
             let myName = MultipeerManager.shared.myPeerId.displayName
             let oldSelf = oldPlayers.first(where: { $0.name == myName })
             let newSelf = newPlayers.first(where: { $0.name == myName })
+            
+            // Check if Role actually changed, preventing flicker
             let shouldRefresh = currentCard == nil
                 || oldSelf?.word != newSelf?.word
                 || oldSelf?.isImposter != newSelf?.isImposter
-                || oldSelf?.roleType != newSelf?.roleType
-                || oldSelf?.role != newSelf?.role
+            
             if shouldRefresh {
-                currentCard = nil
+                currentCard = nil // Reset Card
+                prepareMultiplayerCardIfNeeded()
             }
-            prepareMultiplayerCardIfNeeded()
         }
         .onChange(of: gameSettings.roundCategory) { _, _ in
             if isMultiplayerActive {
@@ -120,6 +126,10 @@ struct GamePlayView: View {
             if isMultiplayerActive {
                 if gameSettings.gamePhase == .finished {
                     TimeOutResultView()
+                        .transition(.opacity)
+                } else if gameSettings.isWaitingForOtherPlayers {
+                    // NEU: Warte-Screen
+                    MultiplayerWaitingView()
                         .transition(.opacity)
                 } else if !hasRevealedOwnCard {
                     cardRevealContent
@@ -148,26 +158,29 @@ struct GamePlayView: View {
     @ViewBuilder
     private var cardRevealContent: some View {
         if let card = currentCard {
-            // DIE EIGENTLICHE KARTE
-            // Die Sicherheit (Halten zum Enthüllen) ist jetzt in SpyCardView integriert
-            VStack {
-                Spacer()
-                SpyCardView(
-                    card: card,
-                    gameSettings: gameSettings,
-                    onCardTap: {
-                        if !isMultiplayerActive {
-                            gameLogic.markCurrentPlayerCardSeen()
+            // ZStack Hintergrund sicherstellen, damit nichts durchscheint
+            ZStack {
+                ImposterStyle.backgroundGradient.ignoresSafeArea()
+                
+                VStack {
+                    Spacer()
+                    SpyCardView(
+                        card: card,
+                        gameSettings: gameSettings,
+                        onCardTap: {
+                            if !isMultiplayerActive {
+                                gameLogic.markCurrentPlayerCardSeen()
+                            }
+                        },
+                        onCardDismissed: {
+                            handleCardDismissed()
                         }
-                    },
-                    onCardDismissed: {
-                        handleCardDismissed()
-                    }
-                )
-                .id(card.id) // Wichtig: Erzwingt Neu-Render bei Kartenwechsel
-                Spacer()
+                    )
+                    .id(card.id) 
+                    Spacer()
+                }
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
-            .transition(.scale(scale: 0.95).combined(with: .opacity))
         } else {
             // Ladezustand
             ProgressView()
@@ -227,6 +240,7 @@ struct GamePlayView: View {
         guard let player = gameLogic.currentPlayer else { return }
         let myName = MultipeerManager.shared.myPeerId.displayName
         guard player.name == myName else { return }
+        
         if currentCard?.player.name != player.name {
             currentCard = nil
         }
@@ -237,19 +251,24 @@ struct GamePlayView: View {
 
     private func markMultiplayerCardSeen() {
         let myName = MultipeerManager.shared.myPeerId.displayName
+        
+        // Mark self ready locally FIRST
         if let myIndex = gameSettings.players.firstIndex(where: { $0.name == myName }) {
             gameSettings.players[myIndex].hasSeenCard = true
         }
-        if MultipeerManager.shared.role == .peer {
-            let payload = ImposterCardSeenPayload(playerName: myName)
-            MultipeerManager.shared.sendToAll(event: MPCEventType.imposterCardSeen, object: payload)
+        
+        // Show Waiting Screen
+        withAnimation {
+            gameSettings.isWaitingForOtherPlayers = true
         }
-    }
 
-    private func maybeStartMultiplayerTimer() {
-        guard MultipeerManager.shared.role == .host else { return }
-        if gameSettings.players.allSatisfy({ $0.hasSeenCard }) {
-            gameLogic.startMultiplayerTimerIfNeeded()
+        // Send to Host Logic (even if Host)
+        let payload = ImposterCardSeenPayload(playerName: myName)
+        if MultipeerManager.shared.role == .host {
+             // Host Logic simulation for self
+             MultipeerManager.shared.onEventReceived?(MPCEventType.imposterCardSeen, try? JSONEncoder().encode(payload))
+        } else {
+             MultipeerManager.shared.sendToHost(event: MPCEventType.imposterCardSeen, object: payload)
         }
     }
     
@@ -267,13 +286,11 @@ struct GamePlayView: View {
         if isMultiplayerActive {
             hasRevealedOwnCard = true
             markMultiplayerCardSeen()
-            maybeStartMultiplayerTimer()
+            // We do NOT start timer here anymore. We wait for MPC GameStart signal.
             return
         }
 
         // PRE-CHECK: Ist das der letzte Spieler?
-        // Wenn ja, bereiten wir die Announcement-View VOR dem Phasenwechsel vor.
-        // Das verhindert, dass kurz der Timer aufblitzt.
         let isLastPlayer = gameSettings.currentPlayerIndex >= gameSettings.players.count - 1
         
         if isLastPlayer {
@@ -297,8 +314,6 @@ struct GamePlayView: View {
             // Nächster Spieler ist dran -> Handover Screen wieder aktivieren
             prepareNextCard()
         } 
-        // Der Else-Block ist jetzt leerer, da die Logik schon oben passiert ist.
-        // Das ist beabsichtigt.
     }
     
     private func beginRoundAfterAnnouncement() {
@@ -306,6 +321,57 @@ struct GamePlayView: View {
             showStartingPlayerAnnouncement = false
         }
         gameSettings.isTimerPaused = false
+    }
+}
+
+// MARK: - Multiplayer Waiting View
+struct MultiplayerWaitingView: View {
+    @EnvironmentObject var gameSettings: GameSettings
+    
+    var body: some View {
+        ZStack {
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                // Animated Loading Circle
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 8)
+                        .frame(width: 120, height: 120)
+                    
+                    Circle()
+                        .trim(from: 0, to: 0.75)
+                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 120, height: 120)
+                        .rotationEffect(.degrees(Double(Int(Date().timeIntervalSince1970 * 100) % 360)))
+                        .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: Date())
+                }
+                
+                VStack(spacing: 10) {
+                    Text("WARTE AUF SPIELER")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .tracking(2)
+                        .foregroundColor(.white)
+                    
+                    if let progress = gameSettings.revealProgress {
+                        Text("\(progress.ready) / \(progress.total) BEREIT")
+                            .font(.system(size: 32, weight: .black, design: .monospaced))
+                            .foregroundColor(.blue)
+                    } else {
+                        Text("Synchronisiere...")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+                
+                Text("Das Spiel startet automatisch,\nsobald alle ihre Rolle gesehen haben.")
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.horizontal, 40)
+            }
+        }
     }
 }
 
@@ -347,7 +413,7 @@ struct ImposterGameHeaderView: View {
                 .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
             
-            Spacer()
+            Spacer() 
             
             // Rechts: Fortschritt (Runde)
             if gameSettings.gamePhase == .cardReveal && !isMultiplayerActive {
@@ -428,7 +494,7 @@ struct StartingPlayerAnnouncementView: View {
             
             Spacer()
             
-            ImposterPrimaryButton(title: "Los geht's") {
+            ImposterPrimaryButton(title: "Los geht\'s") {
                 onContinue()
             }
             .padding(.horizontal, 40)

@@ -1,4 +1,3 @@
-
 import Foundation
 
 // MARK: - MPC Event Types
@@ -15,4 +14,6 @@ public enum MPCEventType {
     static let imposterTimerSync = "IMPOSTER_TIMER_SYNC" // Payload: TimeInterval (or Int)
     static let imposterGameOver = "IMPOSTER_GAME_OVER"
     static let imposterCardSeen = "IMPOSTER_CARD_SEEN" // Payload: ImposterCardSeenPayload
+    static let imposterRevealProgress = "IMPOSTER_REVEAL_PROGRESS" // Payload: ImposterRevealProgressPayload
+    static let imposterHostActivity = "IMPOSTER_HOST_ACTIVITY" // Payload: ImposterHostActivityPayload
 }

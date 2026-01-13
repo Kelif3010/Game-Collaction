@@ -355,8 +355,8 @@ class GameLogic: ObservableObject {
                 // Progressives haptisches Feedback für den Timer
                 ImposterHapticsManager.shared.playTimerTick(secondsRemaining: self.gameSettings.timeRemaining)
                 
-                // Sync wenn Multiplayer aktiv (nur alle 5 Sekunden um Traffic zu sparen, oder bei kritischen Marken)
-                if MultipeerManager.shared.role != .unknown && (self.gameSettings.timeRemaining % 5 == 0 || self.gameSettings.timeRemaining <= 5) {
+                // Sync im Multiplayer jede Sekunde, damit alle Clients live zaehlen
+                if MultipeerManager.shared.role == .host {
                     self.syncTimerToPeers()
                 }
             }
