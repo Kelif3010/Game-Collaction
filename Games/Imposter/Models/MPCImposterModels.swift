@@ -57,14 +57,14 @@ struct ImposterHostActivityPayload: Codable {
     let message: String
 }
 
-// MARK: - MPC Game Start Packet
+// MARK: - MPC Game Start Payload (Sync Start Time)
 struct ImposterGameStartPayload: Codable {
     let startingPlayerName: String?
     let startAtHostUptime: TimeInterval
     let countdownSeconds: Int
 }
 
-// MARK: - MPC Time Sync Packets
+// MARK: - MPC Time Sync Payloads
 struct ImposterTimeSyncPingPayload: Codable {
     let clientName: String
     let pingId: UUID
@@ -77,4 +77,39 @@ struct ImposterTimeSyncPongPayload: Codable {
     let clientSendUptime: TimeInterval
     let hostReceiveUptime: TimeInterval
     let hostSendUptime: TimeInterval
+}
+
+// MARK: - MPC Voting Payloads
+
+/// Client sends this to Host when they submit their vote
+struct ImposterVoteCastPayload: Codable {
+    let voterName: String // Who voted?
+    let votedFor: [String] // Who did they vote for? (List of names, usually 1)
+}
+
+/// Host sends this to Clients to update "3/5 voted"
+struct ImposterVotingStatusPayload: Codable {
+    let votesReceived: Int
+    let totalVoters: Int
+    let tally: [String: Int]?
+}
+
+/// Host sends this to Clients when voting is done
+struct ImposterVotingResultPayload: Codable, Equatable {
+    let selectedPlayers: [String] // Names selected for voting resolution
+    let identifiedSpies: [String] // All eliminated spies so far
+    let revealedSpies: [String]? // All spies (only when game ended)
+    let gameEnded: Bool
+    let playersWon: Bool
+}
+
+/// Client sends this while choosing, to update live tally
+struct ImposterVotePreviewPayload: Codable {
+    let voterName: String
+    let selectedName: String?
+}
+
+/// Host sends this to Clients when spies guess the word correctly
+struct ImposterWordGuessResultPayload: Codable, Equatable {
+    let correctWord: String
 }

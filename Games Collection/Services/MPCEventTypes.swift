@@ -14,9 +14,21 @@ public enum MPCEventType {
     static let imposterTimerSync = "IMPOSTER_TIMER_SYNC" // Payload: TimeInterval (or Int)
     static let imposterGameOver = "IMPOSTER_GAME_OVER"
     static let imposterCardSeen = "IMPOSTER_CARD_SEEN" // Payload: ImposterCardSeenPayload
+    static let imposterRevealStart = "IMPOSTER_REVEAL_START" // No Payload
     static let imposterRevealProgress = "IMPOSTER_REVEAL_PROGRESS" // Payload: ImposterRevealProgressPayload
     static let imposterHostActivity = "IMPOSTER_HOST_ACTIVITY" // Payload: ImposterHostActivityPayload
-    static let imposterRevealStart = "IMPOSTER_REVEAL_START" // Payload: none
-    static let imposterTimeSyncPing = "IMPOSTER_TIME_SYNC_PING" // Payload: ImposterTimeSyncPingPayload
-    static let imposterTimeSyncPong = "IMPOSTER_TIME_SYNC_PONG" // Payload: ImposterTimeSyncPongPayload
+    
+    // Time Sync Events
+    static let imposterTimeSyncPing = "IMPOSTER_TIME_SYNC_PING"
+    static let imposterTimeSyncPong = "IMPOSTER_TIME_SYNC_PONG"
+    
+    // Voting Specific Events
+    static let imposterStartVoting = "IMPOSTER_START_VOTING" // Payload: ImposterVotingStatusPayload (optional)
+    static let imposterVotePreview = "IMPOSTER_VOTE_PREVIEW" // Payload: ImposterVotePreviewPayload
+    static let imposterVoteCast = "IMPOSTER_VOTE_CAST" // Payload: ImposterVoteCastPayload
+    static let imposterVotingStatus = "IMPOSTER_VOTING_STATUS" // Payload: ImposterVotingStatusPayload
+    static let imposterVotingResult = "IMPOSTER_VOTING_RESULT" // Payload: ImposterVotingResultPayload
+
+    // Word Guess Events
+    static let imposterWordGuessConfirmed = "IMPOSTER_WORD_GUESS_CONFIRMED" // Payload: ImposterWordGuessResultPayload
 }

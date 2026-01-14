@@ -74,7 +74,7 @@ class VotingManager: ObservableObject {
     }
     
     /// Wählt einen Spieler aus/ab
-    func togglePlayerSelection(_ playerID: UUID) {
+    func togglePlayerSelection(_ playerID: UUID, maxSelections: Int? = nil) {
         guard isVotingActive else {
             return
         }
@@ -85,6 +85,17 @@ class VotingManager: ObservableObject {
         if selectedPlayers.contains(playerID) {
             selectedPlayers.remove(playerID)
         } else {
+            if let maxSelections {
+                if maxSelections <= 1 {
+                    selectedPlayers = [playerID]
+                    return
+                }
+                if selectedPlayers.count >= maxSelections {
+                    return
+                }
+            } else if !canSelectMore {
+                return
+            }
             selectedPlayers.insert(playerID)
         }
     }
@@ -247,7 +258,12 @@ class VotingManager: ObservableObject {
     
     /// Gesamtanzahl der Spione
     var totalSpies: Int {
-        return gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }.count
+        let knownSpies = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }.count
+        if MultipeerManager.shared.role != .unknown {
+            let configured = max(1, gameSettings.numberOfImposters)
+            return max(configured, knownSpies)
+        }
+        return knownSpies
     }
     
     /// Verbleibende Spione

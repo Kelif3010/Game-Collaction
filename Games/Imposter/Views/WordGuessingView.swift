@@ -199,11 +199,26 @@ struct WordGuessResultView: View {
     let spies: [Player]
     let onNewGame: () -> Void
     let onExitToMain: () -> Void
+    let showActions: Bool
     
     @State private var showContent = false
     @State private var revealedText: String = ""
     @State private var glitchEffect = false
     @State private var showPoints = false // Animation State for Points
+
+    init(
+        result: WordGuessResult,
+        spies: [Player],
+        onNewGame: @escaping () -> Void,
+        onExitToMain: @escaping () -> Void,
+        showActions: Bool = true
+    ) {
+        self.result = result
+        self.spies = spies
+        self.onNewGame = onNewGame
+        self.onExitToMain = onExitToMain
+        self.showActions = showActions
+    }
     
     var body: some View {
         VStack(spacing: 30) {
@@ -263,20 +278,28 @@ struct WordGuessResultView: View {
             Spacer()
             
             // Actions
-            VStack(spacing: 16) {
-                ImposterPrimaryButton(title: NSLocalizedString("NEUE MISSION", comment: "")) {
-                    onNewGame()
+            if showActions {
+                VStack(spacing: 16) {
+                    ImposterPrimaryButton(title: NSLocalizedString("NEUE MISSION", comment: "")) {
+                        onNewGame()
+                    }
+                    
+                    Button(NSLocalizedString("SPIEL BEENDEN", comment: "")) {
+                        onExitToMain()
+                    }
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.4))
                 }
-                
-                Button(NSLocalizedString("SPIEL BEENDEN", comment: "")) {
-                    onExitToMain()
-                }
-                .font(.caption.bold())
-                .foregroundColor(.white.opacity(0.4))
+                .padding(.horizontal, 25)
+                .padding(.bottom, 100)
+                .opacity(showContent ? 1 : 0)
+            } else {
+                Text("Warte auf den Host...")
+                    .font(.caption.bold())
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.bottom, 100)
+                    .opacity(showContent ? 1 : 0)
             }
-            .padding(.horizontal, 25)
-            .padding(.bottom, 100)
-            .opacity(showContent ? 1 : 0)
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {

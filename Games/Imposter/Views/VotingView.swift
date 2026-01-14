@@ -6,12 +6,36 @@
 //
 
 import SwiftUI
+import MultipeerConnectivity
 
 struct VotingView: View {
     @ObservedObject var gameSettings: GameSettings
     @StateObject private var votingManager: VotingManager
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var gameLogic: GameLogic
+    
+    // Multiplayer State
+    @State private var hasVotedMultiplayer = false
+    
+    private var isMultiplayer: Bool {
+        MultipeerManager.shared.role != .unknown
+    }
+
+    private var votingProgress: ImposterVotingStatusPayload? {
+        gameSettings.multiplayerVotingProgress
+    }
+
+    private var votesReceivedCount: Int {
+        votingProgress?.votesReceived ?? 0
+    }
+
+    private var totalVotersCount: Int {
+        if let progressTotal = votingProgress?.totalVoters {
+            return progressTotal
+        }
+        return gameSettings.players.filter { !$0.isEliminated }.count
+    }
     
     init(gameSettings: GameSettings) {
         self.gameSettings = gameSettings
@@ -20,109 +44,282 @@ struct VotingView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                // Hintergrund
-                LinearGradient(
-                    colors: [Color.red.opacity(0.15), Color.orange.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
-                    SpyShootoutView(
-                        shooter: shooter,
-                        gameSettings: gameSettings,
-                        onHit: { target in
-                            // Spion trifft Geheimagent -> Spione gewinnen
-                            Task { @MainActor in
-                                StatsService.shared.recordSpyWinWordGuess(spyName: shooter.name, isFast: false) // Zählt als "besonderer" Sieg
-                                let citizenNames = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team == .citizen }.map { $0.name }
-                                StatsService.shared.recordLoss(playerNames: citizenNames, asImposter: false)
-                            }
-                            votingManager.isSpyShootoutActive = false
-                            votingManager.playersWon = false // Spione haben gestohlen!
-                            votingManager.gameEnded = true
-                            votingManager.showResults = true
-                            gameSettings.markRoundCompleted()
-                        },
-                        onMiss: { target in
-                            // Spion verfehlt -> Bürger gewinnen (Bestätigung)
-                            Task { @MainActor in
-                                let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
-                                let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
-                                StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: false)
-                                StatsService.shared.recordLoss(playerNames: spyNames, asImposter: true)
-                            }
-                            votingManager.isSpyShootoutActive = false
-                            votingManager.playersWon = true
-                            votingManager.gameEnded = true
-                            votingManager.showResults = true
-                            gameSettings.markRoundCompleted()
-                        }
-                    )
-                } else if votingManager.showResults {
-                    VotingResultsView(
-                        votingManager: votingManager,
-                        gameSettings: gameSettings,
-                        onNewGame: {
-                            dismiss()
-                        },
-                        onContinueToGameplay: {
-                            dismiss()
-                        }
-                    )
-                } else {
-                    VotingActiveView(
-                        votingManager: votingManager,
-                        gameSettings: gameSettings
-                    )
+            contentView
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    votingToolbar
                 }
-            }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                // Titel in der Mitte
-                ToolbarItem(placement: .principal) {
-                    Text("Abstimmung")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.red, .orange],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .shadow(color: .red.opacity(0.2), radius: 2, y: 1)
-                }
-                
-                // MARK: - Punkt 1: Schließen Button (X) oben rechts
-                if !votingManager.showResults {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(.gray)
-                                .font(.title2)
-                        }
-                    }
-                }
-            }
         }
         .onAppear {
             if !votingManager.isVotingActive && !votingManager.showResults {
                 votingManager.startVoting()
             }
+            
+            if isMultiplayer {
+                hasVotedMultiplayer = false
+            }
+        }
+        .onChange(of: votingManager.selectedPlayers) { _, _ in
+            if isMultiplayer && !hasVotedMultiplayer && !votingManager.showResults && gameSettings.multiplayerVotingSelection == nil {
+                sendMultiplayerVotePreview()
+            }
+        }
+        .onChange(of: gameSettings.multiplayerVotingSelection) { _, selection in
+            guard isMultiplayer, let selection else { return }
+            guard MultipeerManager.shared.role == .host else { return }
+            resolveMultiplayerSelection(selection)
+        }
+        .onChange(of: gameSettings.multiplayerVotingResult) { _, result in
+            guard isMultiplayer, let result else { return }
+            applyMultiplayerResult(result)
         }
         .onDisappear {
             // Timer-Status wiederherstellen wenn Voting-View geschlossen wird
             if !votingManager.showResults {
                 votingManager.restoreTimerState()
             }
+            if isMultiplayer {
+                gameSettings.shouldPresentVoting = false
+            }
         }
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        ZStack {
+            // Hintergrund
+            LinearGradient(
+                colors: [Color.red.opacity(0.15), Color.orange.opacity(0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            votingBody
+        }
+    }
+
+    @ViewBuilder
+    private var votingBody: some View {
+        if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
+            SpyShootoutView(
+                shooter: shooter,
+                gameSettings: gameSettings,
+                onHit: { _ in
+                    // Spion trifft Geheimagent -> Spione gewinnen
+                    Task { @MainActor in
+                        StatsService.shared.recordSpyWinWordGuess(spyName: shooter.name, isFast: false) // Zählt als "besonderer" Sieg
+                        let citizenNames = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team == .citizen }.map { $0.name }
+                        StatsService.shared.recordLoss(playerNames: citizenNames, asImposter: false)
+                    }
+                    votingManager.isSpyShootoutActive = false
+                    votingManager.playersWon = false // Spione haben gestohlen!
+                    votingManager.gameEnded = true
+                    votingManager.showResults = true
+                    gameSettings.markRoundCompleted()
+                },
+                onMiss: { _ in
+                    // Spion verfehlt -> Bürger gewinnen (Bestätigung)
+                    Task { @MainActor in
+                        let spyNames = gameSettings.players.filter { $0.isImposter }.map { $0.name }
+                        let citizenNames = gameSettings.players.filter { !$0.isImposter }.map { $0.name }
+                        StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: false)
+                        StatsService.shared.recordLoss(playerNames: spyNames, asImposter: true)
+                    }
+                    votingManager.isSpyShootoutActive = false
+                    votingManager.playersWon = true
+                    votingManager.gameEnded = true
+                    votingManager.showResults = true
+                    gameSettings.markRoundCompleted()
+                }
+            )
+        } else if votingManager.showResults {
+            VotingResultsView(
+                votingManager: votingManager,
+                gameSettings: gameSettings,
+                onNewGame: {
+                    dismiss()
+                },
+                onContinueToGameplay: {
+                    dismiss()
+                }
+            )
+        } else if isMultiplayer && hasVotedMultiplayer {
+            // Multiplayer Warte-Screen
+            MultiplayerVotingWaitView(
+                votesReceived: votesReceivedCount,
+                totalVoters: totalVotersCount
+            )
+        } else {
+            VotingActiveView(
+                votingManager: votingManager,
+                gameSettings: gameSettings,
+                isMultiplayer: isMultiplayer,
+                maxSelections: isMultiplayer ? 1 : votingManager.remainingSpies,
+                onVoteSubmitted: {
+                    if isMultiplayer {
+                        submitMultiplayerVote()
+                    } else {
+                        let _ = votingManager.executeVote()
+                        votingManager.finishVoting()
+                    }
+                }
+            )
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var votingToolbar: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            VStack(spacing: 2) {
+                Text("Abstimmung")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.red, .orange],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .red.opacity(0.2), radius: 2, y: 1)
+
+                if isMultiplayer {
+                    Text("\(votesReceivedCount)/\(totalVotersCount) Stimmen")
+                        .font(.caption2.bold())
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+        }
+
+        // MARK: - Punkt 1: Schließen Button (X) oben rechts
+        if !votingManager.showResults {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.gray)
+                        .font(.title2)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Multiplayer Logic
+    
+    private func submitMultiplayerVote() {
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        
+        // Hole die Namen der gewählten Spieler (IDs -> Namen mappen)
+        let selectedIDs = votingManager.selectedPlayers
+        let selectedNames = gameSettings.players
+            .filter { selectedIDs.contains($0.id) }
+            .map { $0.name }
+
+        guard let selectedName = selectedNames.first else { return }
+        
+        let payload = ImposterVoteCastPayload(voterName: myName, votedFor: [selectedName])
+        
+        if MultipeerManager.shared.role == .host {
+            gameLogic.handleMultiplayerVoteCast(payload)
+        } else {
+            MultipeerManager.shared.sendToHost(event: MPCEventType.imposterVoteCast, object: payload)
+        }
+        
+        withAnimation {
+            hasVotedMultiplayer = true
+        }
+    }
+
+    private func sendMultiplayerVotePreview() {
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        let selectedIDs = votingManager.selectedPlayers
+        let selectedName = gameSettings.players
+            .first(where: { selectedIDs.contains($0.id) })?
+            .name
+
+        let payload = ImposterVotePreviewPayload(voterName: myName, selectedName: selectedName)
+
+        if MultipeerManager.shared.role == .host {
+            gameLogic.handleMultiplayerVotePreview(payload)
+        } else {
+            MultipeerManager.shared.sendToHost(event: MPCEventType.imposterVotePreview, object: payload)
+        }
+    }
+
+    private func resolveMultiplayerSelection(_ selection: [String]) {
+        let selectedIDs = gameSettings.players
+            .filter { selection.contains($0.name) }
+            .map { $0.id }
+        votingManager.selectedPlayers = Set(selectedIDs)
+        let _ = votingManager.executeVote()
+        votingManager.finishVoting()
+        hasVotedMultiplayer = false
+
+        let identifiedSpies = gameSettings.players
+            .filter { ($0.isImposter || $0.roleType?.team == .imposter) && $0.isEliminated }
+            .map { $0.name }
+        let revealedSpies: [String]? = votingManager.gameEnded
+            ? gameSettings.players
+                .filter { $0.isImposter || $0.roleType?.team == .imposter }
+                .map { $0.name }
+            : nil
+
+        let payload = ImposterVotingResultPayload(
+            selectedPlayers: selection,
+            identifiedSpies: identifiedSpies,
+            revealedSpies: revealedSpies,
+            gameEnded: votingManager.gameEnded,
+            playersWon: votingManager.playersWon
+        )
+
+        gameSettings.multiplayerVotingResult = payload
+        gameSettings.multiplayerVotingSelection = nil
+        gameSettings.multiplayerVotingProgress = nil
+        gameSettings.multiplayerVoteTally = [:]
+
+        MultipeerManager.shared.sendToAll(event: MPCEventType.imposterVotingResult, object: payload)
+    }
+
+    private func applyMultiplayerResult(_ result: ImposterVotingResultPayload) {
+        let selectedIDs = gameSettings.players
+            .filter { result.selectedPlayers.contains($0.name) }
+            .map { $0.id }
+        votingManager.selectedPlayers = Set(selectedIDs)
+
+        let identifiedNames = Set(result.identifiedSpies)
+        let revealedNames = Set(result.revealedSpies ?? [])
+
+        for index in gameSettings.players.indices {
+            let name = gameSettings.players[index].name
+            if identifiedNames.contains(name) {
+                gameSettings.players[index].isImposter = true
+                gameSettings.players[index].isEliminated = true
+            }
+            if revealedNames.contains(name) {
+                gameSettings.players[index].isImposter = true
+            }
+        }
+
+        let identifiedIDs = Set(gameSettings.players
+            .filter { identifiedNames.contains($0.name) }
+            .map { $0.id }
+        )
+        votingManager.foundSpies = identifiedIDs
+        votingManager.gameEnded = result.gameEnded
+        votingManager.playersWon = result.playersWon
+        votingManager.lastRescueMessage = nil
+        votingManager.isSpyShootoutActive = false
+        votingManager.finishVoting()
+
+        hasVotedMultiplayer = false
+        gameSettings.multiplayerVotingProgress = nil
+        gameSettings.multiplayerVoteTally = [:]
+        gameSettings.multiplayerVotingSelection = nil
+        gameSettings.multiplayerVotingResult = nil
     }
 }
 
@@ -130,6 +327,9 @@ struct VotingView: View {
 struct VotingActiveView: View {
     @ObservedObject var votingManager: VotingManager
     let gameSettings: GameSettings
+    let isMultiplayer: Bool
+    let maxSelections: Int
+    let onVoteSubmitted: () -> Void
     
     var body: some View {
         ZStack {
@@ -144,19 +344,20 @@ struct VotingActiveView: View {
             )
             .ignoresSafeArea()
             
-            // MARK: - Punkt 2: Layout Umbau (VStack statt safeAreaInset für Header)
             VStack(spacing: 0) {
                 
                 // Fixierter Header Bereich
                 VStack(spacing: 6) {
-                    Text("Wer ist der Imposter?")
+                    Text(isMultiplayer ? "Wen verdächtigst du?" : "Wer ist der Imposter?")
                         .font(.title2)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white)
                     
-                    Text("Besprecht in der Gruppe und stimmt für die Eliminierung von genau einem Spieler ab.")
-                        .font(.subheadline) // Etwas kleiner für bessere Lesbarkeit
+                    Text(isMultiplayer 
+                         ? "Deine Stimme bleibt geheim, bis alle gewählt haben."
+                         : "Besprecht in der Gruppe und stimmt für die Eliminierung von genau einem Spieler ab.")
+                        .font(.subheadline)
                         .fontWeight(.medium)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
@@ -164,36 +365,39 @@ struct VotingActiveView: View {
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 20)
-                // Leichter Hintergrund für den Header, damit er sich abhebt (optional)
                 .background(Color.black.opacity(0.01))
                 
-                // Scrollbarer Bereich beginnt erst HIER
+                // Scrollbarer Bereich
                 ScrollView {
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 16),
                         GridItem(.flexible(), spacing: 16)
                     ], spacing: 16) {
+                        // Im Multiplayer kann man sich selbst nicht wählen (optional, hier erlaubt)
                         ForEach(gameSettings.players.filter { !votingManager.foundSpies.contains($0.id) }) { player in
+                            let voteCount = isMultiplayer ? (gameSettings.multiplayerVoteTally[player.name] ?? 0) : 0
                             VotingPlayerCard(
                                 player: player,
                                 votingManager: votingManager,
-                                gameSettings: gameSettings
+                                gameSettings: gameSettings,
+                                maxSelections: maxSelections,
+                                voteCount: voteCount,
+                                showVoteCount: isMultiplayer
                             )
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 120) // Viel Platz unten für den Button
+                    .padding(.bottom, 120)
                 }
             }
         }
-        // Button bleibt unten fixiert ("sticky")
+        // Button bleibt unten fixiert
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 10) {
                 Button {
-                    let _ = votingManager.executeVote()
-                    votingManager.finishVoting()
+                    onVoteSubmitted()
                 } label: {
-                    Text("Abstimmen")
+                    Text(isMultiplayer ? "Meine Stimme abgeben" : "Abstimmen")
                         .font(.headline)
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
@@ -217,7 +421,6 @@ struct VotingActiveView: View {
                 .padding(.bottom, 8)
             }
             .padding(.top, 8)
-            // Hintergrund für den Button-Bereich, damit man Text darunter nicht durchsieht
             .background(
                 LinearGradient(colors: [.black.opacity(0), .black.opacity(0.8), .black], startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
@@ -226,11 +429,59 @@ struct VotingActiveView: View {
     }
 }
 
+// MARK: - Multiplayer Warte Screen
+struct MultiplayerVotingWaitView: View {
+    let votesReceived: Int
+    let totalVoters: Int
+    
+    var body: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.1), lineWidth: 8)
+                    .frame(width: 140, height: 140)
+                
+                Circle()
+                    .trim(from: 0, to: totalVoters > 0 ? CGFloat(votesReceived) / CGFloat(totalVoters) : 0)
+                    .stroke(Color.red, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .frame(width: 140, height: 140)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(), value: votesReceived)
+                
+                VStack {
+                    Text("\(votesReceived)/\(totalVoters)")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("STIMMEN")
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            
+            Text("Stimme akzeptiert")
+                .font(.title2.bold())
+                .foregroundColor(.white)
+            
+            Text("Warte auf das Ergebnis der Gruppe...")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.6))
+            
+            Spacer()
+        }
+        .background(Color.black.opacity(0.8))
+    }
+}
+
 // MARK: - Spieler-Karte für Abstimmung
 struct VotingPlayerCard: View {
     let player: Player
     @ObservedObject var votingManager: VotingManager
     let gameSettings: GameSettings
+    let maxSelections: Int
+    let voteCount: Int
+    let showVoteCount: Bool
     @State private var isPressed = false
     
     private var isSelected: Bool {
@@ -242,7 +493,12 @@ struct VotingPlayerCard: View {
     }
     
     private var canBeSelected: Bool {
-        return !isSpyAlreadyFound && (isSelected || votingManager.canSelectMore)
+        if isSpyAlreadyFound { return false }
+        if isSelected { return true }
+        if maxSelections <= 1 {
+            return true
+        }
+        return votingManager.selectedPlayers.count < maxSelections
     }
     
     private var circleGradientColors: [Color] {
@@ -317,33 +573,51 @@ struct VotingPlayerCard: View {
                 ImposterHapticsManager.shared.playHeavyThud()
                 
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                    votingManager.togglePlayerSelection(player.id)
+                    votingManager.togglePlayerSelection(player.id, maxSelections: maxSelections)
                 }
             }
         }) {
-            VStack(spacing: 12) {
-                avatarView
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 12) {
+                    avatarView
 
-                Text(player.name)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    Text(player.name)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, minHeight: 140)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white.opacity(0.1))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(strokeColor, lineWidth: strokeLineWidth)
+                )
+                .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+                .scaleEffect(isPressed ? 0.97 : 1.0)
+                .animation(.easeInOut(duration: 0.12), value: isPressed)
+
+                if showVoteCount {
+                    Text("\(voteCount)")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(6)
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.15))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .padding(10)
+                }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 140)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white.opacity(0.1))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(strokeColor, lineWidth: strokeLineWidth)
-            )
-            .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
-            .scaleEffect(isPressed ? 0.97 : 1.0)
-            .animation(.easeInOut(duration: 0.12), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(!canBeSelected)
@@ -367,4 +641,5 @@ struct VotingPlayerCard: View {
     // Hinweis: Hier wird kein VotingManager injected, da er im Init der View erstellt wird,
     // aber für Previews ist das ok.
     return VotingView(gameSettings: settings)
+        .environmentObject(GameLogic(gameSettings: settings))
 }

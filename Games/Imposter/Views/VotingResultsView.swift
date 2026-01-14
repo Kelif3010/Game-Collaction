@@ -6,7 +6,75 @@
 //
 
 import SwiftUI
+import MultipeerConnectivity
 
+// MARK: - Glitch Effect
+struct GlitchModifier: ViewModifier {
+    let intensity: Double
+    let active: Bool
+    
+    @State private var offset1: CGFloat = 0
+    @State private var offset2: CGFloat = 0
+    @State private var sliceHeight: CGFloat = 0
+    @State private var sliceOffset: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        ZStack {
+            if active {
+                content
+                    .foregroundColor(.red)
+                    .offset(x: offset1)
+                    .opacity(0.7)
+                    .blendMode(.screen)
+                
+                content
+                    .foregroundColor(.blue)
+                    .offset(x: offset2)
+                    .opacity(0.7)
+                    .blendMode(.overlay)
+                
+                content
+                    .mask(
+                        Rectangle()
+                            .padding(.top, sliceOffset)
+                            .padding(.bottom, 100 - sliceOffset - sliceHeight)
+                    )
+                    .offset(x: offset1 * 2)
+            }
+            content
+        }
+        .onAppear {
+            if active {
+                startGlitchLoop()
+            }
+        }
+    }
+    
+    func startGlitchLoop() {
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            if Int.random(in: 0...10) > 7 {
+                withAnimation(.linear(duration: 0.05)) {
+                    offset1 = CGFloat.random(in: -5...5) * intensity
+                    offset2 = CGFloat.random(in: -5...5) * intensity
+                    sliceHeight = CGFloat.random(in: 5...20)
+                    sliceOffset = CGFloat.random(in: 0...100)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    offset1 = 0
+                    offset2 = 0
+                }
+            }
+        }
+    }
+}
+
+extension View {
+    func glitchEffect(intensity: Double = 1.0, active: Bool = true) -> some View {
+        modifier(GlitchModifier(intensity: intensity, active: active))
+    }
+}
+
+// MARK: - Main View
 struct VotingResultsView: View {
     @ObservedObject var votingManager: VotingManager
     let gameSettings: GameSettings
@@ -17,235 +85,261 @@ struct VotingResultsView: View {
     
     @State private var showContent = false
     @State private var showStamp = false
-    @State private var radarRotation = 0.0
-    @State private var showPoints = false // Animation State for Points
-    @State private var displayedIdentifiedSpies: [Player] = []
+    @State private var showPoints = false
     
-    private var isRescue: Bool {
-        return votingManager.lastRescueMessage != nil
+    // Derived States
+    private var isMultiplayer: Bool {
+        MultipeerManager.shared.role != .unknown
     }
 
-    private var isRoundContinue: Bool {
-        return !votingManager.gameEnded && !isRescue
-    }
-    
-    private var isVictory: Bool {
-        return votingManager.playersWon || isRoundContinue
-    }
-    
-    private var statusTitle: String {
-        if isRoundContinue {
-            return "Spion entlarvt"
+    private var localPlayerIsSpy: Bool {
+        guard isMultiplayer else { return false } // In Single Device we assume Neutral/Spectator perspective unless customized
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        if let player = gameSettings.players.first(where: { $0.name == myName }) {
+            return player.isImposter || player.roleType?.team == .imposter
         }
-        return isVictory ? "Bedrohung Neutralisiert" : "Sicherheitsbruch"
+        return false
     }
     
-    private var statusSubtitle: String {
-        if isRoundContinue {
-            return "Guter Treffer. Weitere Spione sind noch aktiv."
+    // Game Outcome Logic
+    private var isRescue: Bool { votingManager.lastRescueMessage != nil }
+    private var spiesWon: Bool { votingManager.gameEnded && !votingManager.playersWon }
+    private var citizensWon: Bool { votingManager.gameEnded && votingManager.playersWon }
+    private var isRoundContinue: Bool { !votingManager.gameEnded && !isRescue }
+    
+    // THEME ENGINE
+    struct ResultTheme {
+        let title: String
+        let subtitle: String
+        let stampText: String
+        let icon: String
+        let primaryColor: Color
+        let secondaryColor: Color
+        let isGlitchy: Bool
+        let isVictory: Bool // Emotional victory for the viewer
+    }
+    
+    private var currentTheme: ResultTheme {
+        // SCENARIO 1: RETTUNG (Immer positiv)
+        if isRescue {
+            return ResultTheme(
+                title: "RETTUNG ERFOLGREICH",
+                subtitle: votingManager.lastRescueMessage ?? "Der Leibwächter hat eingegriffen.",
+                stampText: "GESCHÜTZT",
+                icon: "shield.lefthalf.filled",
+                primaryColor: .green,
+                secondaryColor: .blue,
+                isGlitchy: false,
+                isVictory: true
+            )
         }
-        return isVictory
-            ? "Hervorragende Arbeit. Die Spione wurden identifiziert und aus dem System entfernt."
-            : "Die Spione haben unsere Reihen infiltriert. Mission abgebrochen."
-    }
-    
-    private var stampText: String {
+        
+        // SCENARIO 2: RUNDE GEHT WEITER (Spion gefunden)
         if isRoundContinue {
-            return "TREFFER"
+            return ResultTheme(
+                title: "ZIEL NEUTRALISIERT",
+                subtitle: "Ein Spion wurde entfernt. Bleibt wachsam.",
+                stampText: "TREFFER",
+                icon: "scope",
+                primaryColor: .orange,
+                secondaryColor: .red,
+                isGlitchy: false,
+                isVictory: true
+            )
         }
-        return isVictory ? "ERFOLG" : "FEHLSCHLAG"
+        
+        // SCENARIO 3: SPIONE GEWINNEN
+        if spiesWon {
+            if isMultiplayer && localPlayerIsSpy {
+                // Ich bin Spion -> MEIN SIEG
+                return ResultTheme(
+                    title: "MISSION ERFOLGREICH",
+                    subtitle: "Hervorragende Arbeit, Agent. Das System gehört uns.",
+                    stampText: "DOMINANZ",
+                    icon: "lock.open.fill",
+                    primaryColor: .red, // Sieger-Rot (Satt)
+                    secondaryColor: .purple,
+                    isGlitchy: false,
+                    isVictory: true
+                )
+            } else if isMultiplayer {
+                // Ich bin Bürger -> NIEDERLAGE / GLITCH
+                return ResultTheme(
+                    title: "SYSTEM ZERSTÖRT",
+                    subtitle: "Kritischer Fehler. Die Spione haben die Kontrolle übernommen.",
+                    stampText: "VERSAGT",
+                    icon: "exclamationmark.triangle.fill",
+                    primaryColor: .red, // Alarm-Rot
+                    secondaryColor: .black,
+                    isGlitchy: true,
+                    isVictory: false
+                )
+            } else {
+                // Single Device -> Neutral "Spione haben gewonnen" aber cool
+                return ResultTheme(
+                    title: "SABOTAGE ERFOLGREICH",
+                    subtitle: "Team Spion hat das Spiel für sich entschieden.",
+                    stampText: "SIEG: SPIONE",
+                    icon: "eye.slash.fill",
+                    primaryColor: .red,
+                    secondaryColor: .orange,
+                    isGlitchy: true, // Glitch passt gut zu "Spionen"
+                    isVictory: false // Neutral
+                )
+            }
+        }
+        
+        // SCENARIO 4: BÜRGER GEWINNEN
+        if citizensWon {
+            if isMultiplayer && localPlayerIsSpy {
+                // Ich bin Spion -> NIEDERLAGE / GEFASST
+                return ResultTheme(
+                    title: "MISSION GESCHEITERT",
+                    subtitle: "Deine Tarnung ist aufgeflogen. Zugriff verweigert.",
+                    stampText: "ENTTARNT",
+                    icon: "hand.raised.fill",
+                    primaryColor: .red,
+                    secondaryColor: .gray,
+                    isGlitchy: true,
+                    isVictory: false
+                )
+            } else {
+                // Ich bin Bürger (oder Single Device) -> SIEG
+                return ResultTheme(
+                    title: "BEDROHUNG ELIMINIERT",
+                    subtitle: "Alle Spione wurden identifiziert. Das System ist sicher.",
+                    stampText: "ERFOLG",
+                    icon: "shield.checkered",
+                    primaryColor: .green,
+                    secondaryColor: .mint,
+                    isGlitchy: false,
+                    isVictory: true
+                )
+            }
+        }
+        
+        // Fallback
+        return ResultTheme(title: "?", subtitle: "?", stampText: "?", icon: "questionmark", primaryColor: .gray, secondaryColor: .white, isGlitchy: false, isVictory: false)
     }
-    
-    private var eliminatedSpies: [Player] {
+
+    private var frozenIdentifiedSpies: [Player] {
+        // Logic to show who was found/is imposter
+        if votingManager.gameEnded {
+            return gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+        }
         let selected = votingManager.selectedPlayers
         return gameSettings.players.filter { selected.contains($0.id) && ($0.isImposter || $0.roleType?.team == .imposter) }
     }
 
-    private var identifiedSpies: [Player] {
-        if votingManager.gameEnded {
-            return gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
-        }
-        return eliminatedSpies
-    }
-    
-    private var frozenIdentifiedSpies: [Player] {
-        displayedIdentifiedSpies.isEmpty ? identifiedSpies : displayedIdentifiedSpies
-    }
-
     var body: some View {
+        let theme = currentTheme
+        
         ZStack {
-            ImposterStyle.backgroundGradient.ignoresSafeArea()
+            // Background
+            Color.black.ignoresSafeArea()
             
-            // Background Radar Animation
-            GeometryReader { geo in
-                ZStack {
-                    ForEach(0..<3) { i in
-                        Circle()
-                            .stroke(Color.white.opacity(0.03), lineWidth: 1)
-                            .frame(width: geo.size.width * (0.5 + Double(i) * 0.3))
-                    }
-                    
-                    AngularGradient(gradient: Gradient(colors: [.clear, (isVictory || isRescue) ? .green.opacity(0.1) : .red.opacity(0.1), .clear]), center: .center)
-                        .rotationEffect(.degrees(radarRotation))
-                        .frame(width: geo.size.width * 1.5, height: geo.size.width * 1.5)
-                        .blur(radius: 20)
-                }
-                .position(x: geo.size.width / 2, y: geo.size.height * 0.4)
+            // Dynamic Background Gradient
+            if theme.isGlitchy {
+                // Chaos Background
+                LinearGradient(colors: [.black, theme.primaryColor.opacity(0.2), .black], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+            } else {
+                // Victory/Clean Background
+                RadialGradient(colors: [theme.primaryColor.opacity(0.3), .black], center: .center, startRadius: 5, endRadius: 500)
+                    .ignoresSafeArea()
             }
-            .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Bar
                 HStack {
-                    Text("MISSION REPORT // \(Date().formatted(date: .numeric, time: .omitted))")
+                    Text("STATUS // \(theme.isVictory ? "NORMAL" : "KRITISCH")")
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(theme.primaryColor.opacity(0.8))
                         .padding(8)
-                        .background(Color.white.opacity(0.05))
+                        .background(theme.primaryColor.opacity(0.1))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(theme.primaryColor.opacity(0.3)))
                         .cornerRadius(4)
                 }
                 .padding(.top, 20)
                 
                 Spacer()
                 
-                // Main Status
+                // Main Icon & Stamp
                 ZStack {
-                    if isRescue {
-                        // RESCUE UI
-                        Image(systemName: "shield.lefthalf.filled")
-                            .font(.system(size: 80))
-                            .foregroundColor(.green.opacity(0.3))
-                            .blur(radius: 10)
-                            .scaleEffect(showContent ? 1 : 0.8)
-                        
-                        Image(systemName: "shield.lefthalf.filled")
-                            .font(.system(size: 80))
-                            .foregroundColor(.green)
-                            .shadow(color: .green.opacity(0.5), radius: 20)
-                            .scaleEffect(showContent ? 1 : 0.8)
-                        
-                        if showStamp {
-                            Text("GERETTET")
-                                .font(.system(size: 42, weight: .black, design: .rounded))
-                                .foregroundColor(.green)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.green, lineWidth: 6)
-                                )
-                                .background(Color.black.opacity(0.01))
-                                .rotationEffect(.degrees(-12))
-                                .scaleEffect(1.2)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    } else {
-                        // STANDARD UI
-                        Image(systemName: isVictory ? "shield.checkered" : "exclamationmark.triangle.fill")
-                            .font(.system(size: 80))
-                            .foregroundColor(isVictory ? .green.opacity(0.3) : .red.opacity(0.3))
-                            .blur(radius: 10)
-                            .scaleEffect(showContent ? 1 : 0.8)
-                        
-                        Image(systemName: isVictory ? "shield.checkered" : "exclamationmark.triangle.fill")
-                            .font(.system(size: 80))
-                            .foregroundColor(isVictory ? .green : .red)
-                            .shadow(color: isVictory ? .green.opacity(0.5) : .red.opacity(0.5), radius: 20)
-                            .scaleEffect(showContent ? 1 : 0.8)
-                        
-                        if showStamp {
-                            Text(stampText)
-                                .font(.system(size: 42, weight: .black, design: .rounded))
-                                .foregroundColor(isVictory ? .green : .red)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(isVictory ? Color.green : Color.red, lineWidth: 6)
-                                )
-                                .mask(
-                                    Image("grunge_texture") // Fallback to plain if texture missing
-                                        .resizable()
-                                        .scaledToFill()
-                                        .opacity(0.9)
-                                )
-                                .background(Color.black.opacity(0.01))
-                                .rotationEffect(.degrees(-12))
-                                .scaleEffect(1.2)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
+                    Image(systemName: theme.icon)
+                        .font(.system(size: 100))
+                        .foregroundColor(theme.primaryColor.opacity(0.2))
+                        .blur(radius: 20)
+                        .scaleEffect(showContent ? 1 : 0.8)
                     
-                    // XP Animation
-                    if showPoints && !isRescue && votingManager.gameEnded { // Keine Punkte bei Rettung, nur bei Spielende
-                        VStack(spacing: 0) {
-                            Text("+10 XP")
-                                .font(.system(size: 24, weight: .black))
-                                .foregroundColor(isVictory ? .green : .red)
-                                .shadow(color: isVictory ? .green.opacity(0.5) : .red.opacity(0.5), radius: 2)
-                            
-                            Text(isVictory ? "TEAM BÜRGER" : "TEAM SPION")
-                                .font(.caption.bold())
-                                .foregroundColor(isVictory ? .green.opacity(0.8) : .red.opacity(0.8))
-                                .padding(.top, 2)
-                        }
-                        .offset(y: -90)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    Image(systemName: theme.icon)
+                        .font(.system(size: 90))
+                        .foregroundColor(theme.primaryColor)
+                        .shadow(color: theme.primaryColor.opacity(0.8), radius: 30)
+                        .scaleEffect(showContent ? 1 : 0.8)
+                        .glitchEffect(intensity: 2, active: theme.isGlitchy)
+                    
+                    if showStamp {
+                        Text(theme.stampText)
+                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .foregroundColor(theme.primaryColor)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(theme.primaryColor, lineWidth: 8)
+                            )
+                            .background(Color.black.opacity(0.5))
+                            .rotationEffect(.degrees(-12))
+                            .scaleEffect(1.2)
+                            .transition(.scale.combined(with: .opacity))
                     }
                 }
-                .frame(height: 200)
-                .padding(.bottom, 20)
+                .frame(height: 240)
                 
-                // Narrative Text
-                VStack(spacing: 12) {
-                    if isRescue {
-                        Text("Einsatz erfolgreich")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                            .tracking(1)
-                        
-                        Text(votingManager.lastRescueMessage ?? "Der Leibwächter hat eingegriffen.")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .padding(.horizontal, 40)
-                    } else {
-                        Text(statusTitle)
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                            .tracking(1)
-                        
-                        Text(statusSubtitle)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .padding(.horizontal, 40)
-                    }
+                // Text Content
+                VStack(spacing: 16) {
+                    Text(theme.title)
+                        .font(.system(size: 28, weight: .black, design: .default))
+                        .foregroundColor(.white)
+                        .tracking(2)
+                        .multilineTextAlignment(.center)
+                        .shadow(color: theme.primaryColor.opacity(0.5), radius: 10)
+                    
+                    Text(theme.subtitle)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 40)
                 }
                 .opacity(showContent ? 1 : 0)
                 .offset(y: showContent ? 0 : 20)
                 
                 Spacer()
                 
-                // Identified Agents Section (eliminated spies per round, all spies at game end)
-                if !isRescue && !frozenIdentifiedSpies.isEmpty {
-                    VStack(alignment: .leading, spacing: 16) {
+                // Agents Revealed Section
+                if !frozenIdentifiedSpies.isEmpty && !isRescue {
+                    VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                                .foregroundColor(isVictory ? .green : .red)
-                            Text("IDENTIFIZIERTE AGENTEN")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white.opacity(0.6))
+                            Image(systemName: "eye.trianglebadge.exclamationmark")
+                                .foregroundColor(theme.primaryColor)
+                            Text("BETEILIGTE AGENTEN")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white.opacity(0.5))
                         }
                         .padding(.horizontal, 30)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
+                            HStack(spacing: 12) {
                                 ForEach(frozenIdentifiedSpies) { player in
-                                    ImposterResultCard(player: player, isRevealed: true, isVictory: isVictory)
-                                        .frame(width: 150)
+                                    ImposterResultCard(
+                                        player: player,
+                                        isRevealed: true,
+                                        isVictory: citizensWon, // Grün wenn Bürger gewinnen, sonst rot
+                                        themeColor: theme.primaryColor
+                                    )
+                                    .frame(width: 140)
                                 }
                             }
                             .padding(.horizontal, 30)
@@ -253,54 +347,41 @@ struct VotingResultsView: View {
                     }
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 30)
+                    .padding(.bottom, 20)
                 }
                 
-                Spacer()
-                
-                // Action Buttons
+                // Buttons
                 VStack(spacing: 16) {
                     if isRescue {
-                        ImposterPrimaryButton(title: "WEITERSPIELEN") {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            // Zurück zum Spiel, Timer läuft weiter (wurde pausiert)
-                            votingManager.resetForNextRound()
-                            votingManager.restoreTimerState()
-                            onContinueToGameplay()
+                         ImposterPrimaryButton(title: "WEITERSPIELEN") {
+                             continueRound()
+                         }
+                    } else if !votingManager.gameEnded {
+                        // Spion gefunden, aber Spiel läuft weiter
+                        ImposterPrimaryButton(title: "MISSION FORTSETZEN") {
+                            continueRound()
                         }
                     } else {
-                        if !votingManager.gameEnded && votingManager.remainingSpies > 0 {
-                            ImposterPrimaryButton(title: "MISSION FORTSETZEN") {
-                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                let previouslyFound = votingManager.foundSpies
-                                let eliminatedIDs = Set(eliminatedSpies.map { $0.id })
-                                votingManager.resetForNextRound()
-                                votingManager.foundSpies = previouslyFound.union(eliminatedIDs)
-                                votingManager.restoreTimerState()
-                                onContinueToGameplay()
+                        // Spiel Ende
+                        ImposterPrimaryButton(title: "NEUES SPIEL") {
+                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                            Task { @MainActor in
+                                await gameLogic.restartGame()
+                                onNewGame()
                             }
                         }
                         
-                        if votingManager.gameEnded {
-                            ImposterPrimaryButton(title: "NEUES SPIEL") {
-                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                                Task { @MainActor in
-                                    await gameLogic.restartGame()
-                                    onNewGame()
-                                }
+                        Button {
+                            gameSettings.requestExitToMain = true
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Image(systemName: "chevron.left")
+                                Text("HAUPTMENÜ")
                             }
-                            
-                            Button {
-                                gameSettings.requestExitToMain = true
-                                dismiss()
-                            } label: {
-                                HStack {
-                                    Image(systemName: "chevron.left")
-                                    Text("HAUPTMENÜ")
-                                }
-                                .font(.caption.bold())
-                                .foregroundColor(.white.opacity(0.5))
-                                .padding(10)
-                            }
+                            .font(.caption.bold())
+                            .foregroundColor(.white.opacity(0.5))
+                            .padding(10)
                         }
                     }
                 }
@@ -310,11 +391,10 @@ struct VotingResultsView: View {
             }
         }
         .onAppear {
-            if displayedIdentifiedSpies.isEmpty {
-                displayedIdentifiedSpies = identifiedSpies
-            }
-            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
-                radarRotation = 360
+            if theme.isVictory {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } else {
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
             }
             
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
@@ -325,28 +405,37 @@ struct VotingResultsView: View {
                 showStamp = true
             }
             
-            // XP Animation Delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                    showPoints = true
-                }
-            }
-            
-            // GLOBAL STATS TRACKING
+            // Stats Tracking (nur einmal ausführen)
             if votingManager.gameEnded && !isRescue {
-                let imposters = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
-                let citizens = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
-                
-                if isVictory {
-                    // Bürger gewinnen
-                    for citizen in citizens { GlobalStatsManager.shared.recordWin(for: citizen.name) }
-                    for imposter in imposters { GlobalStatsManager.shared.recordLoss(for: imposter.name) }
-                } else {
-                    // Spione gewinnen
-                    for imposter in imposters { GlobalStatsManager.shared.recordWin(for: imposter.name) }
-                    for citizen in citizens { GlobalStatsManager.shared.recordLoss(for: citizen.name) }
-                }
+                recordStats(spiesWon: spiesWon)
             }
+        }
+    }
+    
+    private func continueRound() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        if !isRescue {
+            let previouslyFound = votingManager.foundSpies
+            let eliminatedIDs = Set(frozenIdentifiedSpies.map { $0.id })
+            votingManager.resetForNextRound()
+            votingManager.foundSpies = previouslyFound.union(eliminatedIDs)
+        } else {
+            votingManager.resetForNextRound()
+        }
+        votingManager.restoreTimerState()
+        onContinueToGameplay()
+    }
+    
+    private func recordStats(spiesWon: Bool) {
+        let imposters = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }
+        let citizens = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }
+        
+        if spiesWon {
+            for imp in imposters { GlobalStatsManager.shared.recordWin(for: imp.name) }
+            for cit in citizens { GlobalStatsManager.shared.recordLoss(for: cit.name) }
+        } else {
+            for imp in imposters { GlobalStatsManager.shared.recordLoss(for: imp.name) }
+            for cit in citizens { GlobalStatsManager.shared.recordWin(for: cit.name) }
         }
     }
 }
@@ -355,24 +444,18 @@ struct ImposterResultCard: View {
     let player: Player
     var isRevealed: Bool
     var isVictory: Bool
+    var themeColor: Color = .white
     
     var body: some View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(isVictory ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                    .frame(width: 60, height: 60)
+                    .fill(themeColor.opacity(0.1))
+                    .frame(width: 50, height: 50)
                 
                 Text(String(player.name.prefix(1)).uppercased())
-                    .font(.title2.bold())
-                    .foregroundColor(isVictory ? .green : .red)
-                
-                if isVictory {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .background(Circle().fill(.black))
-                        .offset(x: 20, y: 20)
-                }
+                    .font(.title3.bold())
+                    .foregroundColor(themeColor)
             }
             
             VStack(spacing: 4) {
@@ -381,22 +464,22 @@ struct ImposterResultCard: View {
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
-                Text(player.roleType?.rawValue.uppercased() ?? "IMPOSTER")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(isVictory ? .green : .red)
+                Text(player.roleType?.rawValue.uppercased() ?? "SPION")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(themeColor)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background((isVictory ? Color.green : Color.red).opacity(0.2))
+                    .background(themeColor.opacity(0.2))
                     .cornerRadius(4)
             }
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
-        .background(Color.white.opacity(0.03))
-        .cornerRadius(16)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isVictory ? Color.green.opacity(0.2) : Color.red.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(themeColor.opacity(0.3), lineWidth: 1)
         )
     }
 }

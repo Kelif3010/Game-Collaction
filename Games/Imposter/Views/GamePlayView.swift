@@ -199,7 +199,7 @@ struct GamePlayView: View {
     @ViewBuilder
     private var playingContent: some View {
         if showStartingPlayerAnnouncement {
-            StartingPlayerAnnouncementView(player: startingPlayer) {
+            StartingPlayerAnnouncementView(playerName: startingPlayerDisplayName) {
                 beginRoundAfterAnnouncement()
             }
         } else {
@@ -224,12 +224,19 @@ struct GamePlayView: View {
     private var multiplayerCountdownView: some View {
         TimelineView(.periodic(from: .now, by: 0.1)) { _ in
             StartingPlayerAnnouncementView(
-                player: startingPlayer,
+                playerName: startingPlayerDisplayName,
                 countdownSeconds: countdownRemainingSeconds(),
                 showButton: false,
                 onContinue: {}
             )
         }
+    }
+
+    private var startingPlayerDisplayName: String? {
+        if let name = gameSettings.startingPlayerName, !name.isEmpty {
+            return name
+        }
+        return startingPlayer?.name
     }
     
     // MARK: - Logic
@@ -518,21 +525,26 @@ struct ImposterGameHeaderView: View {
 
 // MARK: - Starting Player Announcement
 struct StartingPlayerAnnouncementView: View {
-    let player: Player?
+    let playerName: String?
     let countdownSeconds: Int?
     let showButton: Bool
     let onContinue: () -> Void
 
     init(
-        player: Player?,
+        playerName: String?,
         countdownSeconds: Int? = nil,
         showButton: Bool = true,
         onContinue: @escaping () -> Void
     ) {
-        self.player = player
+        self.playerName = playerName
         self.countdownSeconds = countdownSeconds
         self.showButton = showButton
         self.onContinue = onContinue
+    }
+
+    private var displayName: String {
+        let trimmed = playerName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? "..." : trimmed
     }
     
     var body: some View {
@@ -557,7 +569,7 @@ struct StartingPlayerAnnouncementView: View {
                     .textCase(.uppercase)
                     .kerning(2)
                 
-                Text(player?.name ?? "Zufall")
+                Text(displayName)
                     .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -605,10 +617,22 @@ struct GameTimerView: View {
     @State private var showWordGuessConfirm = false
     @State private var startWordGuessImmediateWin = false
     @State private var wasTimerPausedBeforeWordGuess = false
+    @State private var showSelfCard = false
 
     private var isHostOrLocal: Bool {
         let role = MultipeerManager.shared.role
         return role == .host || role == .unknown
+    }
+
+    private var isGuest: Bool {
+        MultipeerManager.shared.role == .peer
+    }
+
+    private var selfCard: GameCard? {
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        guard let player = gameSettings.players.first(where: { $0.name == myName }) else { return nil }
+        guard let category = gameSettings.roundCategory ?? gameSettings.selectedCategory else { return nil }
+        return GameCard(player: player, category: category)
     }
     
     var body: some View {
@@ -663,29 +687,48 @@ struct GameTimerView: View {
             
             // 2. ACTION BUTTONS (Vertikal statt Grid)
             VStack(spacing: 16) {
-                // Abstimmen Button
-                GameControlBtn(
-                    title: "Jetzt Abstimmen",
-                    subtitle: "Verdächtigen wählen",
-                    icon: "hand.point.up.left.fill",
-                    color: Color.blue,
-                    isEnabled: isHostOrLocal,
-                    action: {
-                        if isHostOrLocal { showVotingView = true }
-                    }
-                )
-                
-                // Wort lösen Button
-                GameControlBtn(
-                    title: "Wort lösen",
-                    subtitle: "Nur für Spione",
-                    icon: "lightbulb.max.fill",
-                    color: Color.orange,
-                    isEnabled: isHostOrLocal,
-                    action: {
-                        if isHostOrLocal { showWordGuessConfirm = true }
-                    }
-                )
+                if isGuest {
+                    GameControlBtn(
+                        title: "Karte sehen",
+                        subtitle: "Deine Rolle & Hinweise",
+                        icon: "person.text.rectangle",
+                        color: Color.teal,
+                        isEnabled: true,
+                        action: {
+                            showSelfCard = true
+                        }
+                    )
+                } else {
+                    // Abstimmen Button
+                    GameControlBtn(
+                        title: "Jetzt Abstimmen",
+                        subtitle: "Verdächtigen wählen",
+                        icon: "hand.point.up.left.fill",
+                        color: Color.blue,
+                        isEnabled: isHostOrLocal,
+                        action: {
+                            if isHostOrLocal {
+                                if MultipeerManager.shared.role == .host {
+                                    gameLogic.startMultiplayerVoting()
+                                } else {
+                                    showVotingView = true
+                                }
+                            }
+                        }
+                    )
+                    
+                    // Wort lösen Button
+                    GameControlBtn(
+                        title: "Wort lösen",
+                        subtitle: "Nur für Spione",
+                        icon: "lightbulb.max.fill",
+                        color: Color.orange,
+                        isEnabled: isHostOrLocal,
+                        action: {
+                            if isHostOrLocal { showWordGuessConfirm = true }
+                        }
+                    )
+                }
             }
             .padding(.horizontal, 30)
             .padding(.bottom, 40)
@@ -695,12 +738,47 @@ struct GameTimerView: View {
             VotingView(gameSettings: gameSettings)
                 .environmentObject(gameLogic)
                 .interactiveDismissDisabled(true)
+                .onDisappear {
+                    if MultipeerManager.shared.role != .unknown {
+                        gameSettings.shouldPresentVoting = false
+                    }
+                }
+        }
+        .sheet(isPresented: $showSelfCard) {
+            ZStack {
+                ImposterStyle.backgroundGradient.ignoresSafeArea()
+                if let card = selfCard {
+                    SpyCardFrontView(
+                        card: card,
+                        gameSettings: gameSettings,
+                        isMultiplayer: true,
+                        onDismiss: {
+                            showSelfCard = false
+                        }
+                    )
+                    .frame(width: 320, height: 500)
+                } else {
+                    Text("Keine Karte verfügbar")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+        }
+        .onChange(of: gameSettings.shouldPresentVoting) { _, newValue in
+            if newValue {
+                showVotingView = true
+            }
         }
         .alert(LocalizedStringKey("Spion enttarnt sich?"), isPresented: $showWordGuessConfirm) {
             Button("Abbrechen", role: .cancel) { }
             Button(LocalizedStringKey("Ja, Wort lösen")) {
                 wasTimerPausedBeforeWordGuess = gameSettings.isTimerPaused
                 gameSettings.isTimerPaused = true
+                if MultipeerManager.shared.role == .host {
+                    let correctWord = gameSettings.players.first { !$0.isImposter }?.word ?? "Unbekannt"
+                    let payload = ImposterWordGuessResultPayload(correctWord: correctWord)
+                    MultipeerManager.shared.sendToAll(event: MPCEventType.imposterWordGuessConfirmed, object: payload)
+                }
                 startWordGuessImmediateWin = true
                 showWordGuessingView = true
             }
@@ -716,6 +794,32 @@ struct GameTimerView: View {
                     }
                     startWordGuessImmediateWin = false
                 }
+        }
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { gameSettings.multiplayerWordGuessResult != nil },
+                set: { newValue in
+                    if !newValue {
+                        gameSettings.multiplayerWordGuessResult = nil
+                    }
+                }
+            )
+        ) {
+            if let payload = gameSettings.multiplayerWordGuessResult {
+                WordGuessResultView(
+                    result: WordGuessResult(
+                        wasCorrect: true,
+                        correctWord: payload.correctWord,
+                        spyWon: true,
+                        gameEnded: true
+                    ),
+                    spies: gameSettings.players.filter { $0.isImposter },
+                    onNewGame: {},
+                    onExitToMain: {},
+                    showActions: false
+                )
+                .interactiveDismissDisabled(true)
+            }
         }
     }
     

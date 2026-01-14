@@ -23,11 +23,13 @@ extension GameSetupView {
         gameSettings.isTimerPaused = true
         gameSettings.isWaitingForOtherPlayers = false // Reset waiting state
         gameSettings.revealProgress = (0, allPeers.count)
+        gameSettings.multiplayerVotes.removeAll()
+        gameSettings.multiplayerVotingProgress = nil
+        gameSettings.multiplayerVotingSelection = nil
+        gameSettings.multiplayerVotingResult = nil
+        gameSettings.shouldPresentVoting = false
         
         // Use GameLogic's role distribution logic
-        // We need to temporarily simulate players in GameSettings to use existing logic or replicate it.
-        // Replicating is safer to avoid messing with UI state too much.
-        
         let words = category.words
         let secretWord = words.randomElement() ?? "Fehler"
         let showCategoryForSpies = gameSettings.shouldSpySeeCategory
@@ -42,6 +44,7 @@ extension GameSetupView {
         }
         // Safety cap
         impostersCount = min(impostersCount, max(0, totalPlayers - 1))
+        gameSettings.numberOfImposters = impostersCount
         
         // Indices for Imposters
         var indices = Array(0..<totalPlayers)
@@ -70,7 +73,6 @@ extension GameSetupView {
             }
             
             // Simple Role Mapping for now
-            // Standard Imposter = Saboteur (internal ID), Standard Citizen = SecretAgent
             let assignedRole: RoleType = isImposter ? .saboteur : .secretAgent 
             
             let payload = ImposterRolePayload(
@@ -157,6 +159,8 @@ extension GameSetupView {
                             }
                         }
                         
+                        // Navigate to Game View
+                        route.wrappedValue = .game
                     }
                     
                 case MPCEventType.imposterRevealStart:
@@ -183,11 +187,11 @@ extension GameSetupView {
                         gameSettings.startingPlayerName = startPayload.startingPlayerName
                         gameSettings.multiplayerStartAtHostUptime = startPayload.startAtHostUptime
                         gameLogic.scheduleMultiplayerStart(startAtHostUptime: startPayload.startAtHostUptime)
-                        // Route should already be set, but ensure it
                         if route.wrappedValue != .game {
                             route.wrappedValue = .game
                         }
                     } else {
+                        // Fallback
                         gameSettings.gamePhase = .playing
                         gameSettings.isTimerPaused = true
                         gameSettings.timeRemaining = gameSettings.timeLimit
@@ -277,6 +281,53 @@ extension GameSetupView {
                         mpc.readyPlayers = Set(list)
                     }
 
+                case MPCEventType.imposterStartVoting:
+                    if let data = payload,
+                       let status = try? JSONDecoder().decode(ImposterVotingStatusPayload.self, from: data) {
+                        gameSettings.multiplayerVotingProgress = status
+                        if let tally = status.tally {
+                            gameSettings.multiplayerVoteTally = tally
+                        } else {
+                            gameSettings.multiplayerVoteTally = [:]
+                        }
+                    } else {
+                        let total = gameSettings.players.filter { !$0.isEliminated }.count
+                        gameSettings.multiplayerVotingProgress = ImposterVotingStatusPayload(votesReceived: 0, totalVoters: total, tally: nil)
+                        gameSettings.multiplayerVoteTally = [:]
+                    }
+                    gameSettings.multiplayerVotingSelection = nil
+                    gameSettings.multiplayerVotingResult = nil
+                    gameSettings.shouldPresentVoting = true
+
+                case MPCEventType.imposterVotePreview:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let preview = try? JSONDecoder().decode(ImposterVotePreviewPayload.self, from: data) {
+                        gameLogic.handleMultiplayerVotePreview(preview)
+                    }
+
+                case MPCEventType.imposterVotingStatus:
+                    if let data = payload,
+                       let status = try? JSONDecoder().decode(ImposterVotingStatusPayload.self, from: data) {
+                        gameSettings.multiplayerVotingProgress = status
+                        if let tally = status.tally {
+                            gameSettings.multiplayerVoteTally = tally
+                        }
+                    }
+
+                case MPCEventType.imposterVotingResult:
+                    if let data = payload,
+                       let result = try? JSONDecoder().decode(ImposterVotingResultPayload.self, from: data) {
+                        gameSettings.multiplayerVotingResult = result
+                    }
+
+                case MPCEventType.imposterWordGuessConfirmed:
+                    if let data = payload,
+                       let result = try? JSONDecoder().decode(ImposterWordGuessResultPayload.self, from: data) {
+                        gameSettings.isTimerPaused = true
+                        gameSettings.multiplayerWordGuessResult = result
+                    }
+
                 case MPCEventType.imposterCardSeen:
                     guard mpc.role == .host else { break }
                     if let data = payload,
@@ -299,7 +350,6 @@ extension GameSetupView {
                         gameSettings.revealProgress = (readyCount, totalCount)
                         
                         // 4. Check Start Condition
-                        // IMPORTANT: Host Logic to start game when everyone is ready
                         if readyCount == totalCount, gameSettings.multiplayerStartAtHostUptime == nil {
                             // Delay slightly to let everyone see "5/5"
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -321,6 +371,13 @@ extension GameSetupView {
                                 self.gameLogic.scheduleMultiplayerStart(startAtHostUptime: startAtHostUptime)
                             }
                         }
+                    }
+                    
+                case MPCEventType.imposterVoteCast:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let vote = try? JSONDecoder().decode(ImposterVoteCastPayload.self, from: data) {
+                        gameLogic.handleMultiplayerVoteCast(vote)
                     }
                     
                 case MPCEventType.imposterGameOver:

@@ -72,6 +72,17 @@ class GameSettings: ObservableObject {
     // Multiplayer Sync State
     @Published var revealProgress: (ready: Int, total: Int)? = nil
     @Published var isWaitingForOtherPlayers: Bool = false
+
+    // Multiplayer Voting State
+    @Published var shouldPresentVoting: Bool = false
+    @Published var multiplayerVotingProgress: ImposterVotingStatusPayload? = nil
+    @Published var multiplayerVotingSelection: [String]? = nil
+    @Published var multiplayerVotingResult: ImposterVotingResultPayload? = nil
+    @Published var multiplayerWordGuessResult: ImposterWordGuessResultPayload? = nil
+    @Published var multiplayerVoteTally: [String: Int] = [:]
+    
+    // Multiplayer Voting State (Host Only)
+    @Published var multiplayerVotes: [String: [String]] = [:] // VoterName -> [VotedForName]
     
     /// Signal an übergeordnete Views, bis ins Hauptmenü zurückzunavigieren
     @Published var requestExitToMain: Bool = false
@@ -241,6 +252,13 @@ class GameSettings: ObservableObject {
         multiplayerStartAtHostUptime = nil
         hostClockOffset = 0
         hostClockOffsetRTT = .greatestFiniteMagnitude
+        shouldPresentVoting = false
+        multiplayerVotingProgress = nil
+        multiplayerVotingSelection = nil
+        multiplayerVotingResult = nil
+        multiplayerWordGuessResult = nil
+        multiplayerVoteTally = [:]
+        multiplayerVotes.removeAll()
         hasRecordedRoundCompletion = false
         
         // Reset player states
