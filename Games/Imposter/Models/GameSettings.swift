@@ -79,6 +79,8 @@ class GameSettings: ObservableObject {
     @Published var multiplayerVotingSelection: [String]? = nil
     @Published var multiplayerVotingResult: ImposterVotingResultPayload? = nil
     @Published var multiplayerWordGuessResult: ImposterWordGuessResultPayload? = nil
+    @Published var multiplayerRematchOffer: ImposterRematchOfferPayload? = nil
+    @Published var multiplayerRematchWaiting: Bool = false
     @Published var multiplayerVoteTally: [String: Int] = [:]
     
     // Multiplayer Voting State (Host Only)
@@ -257,6 +259,8 @@ class GameSettings: ObservableObject {
         multiplayerVotingSelection = nil
         multiplayerVotingResult = nil
         multiplayerWordGuessResult = nil
+        multiplayerRematchOffer = nil
+        multiplayerRematchWaiting = false
         multiplayerVoteTally = [:]
         multiplayerVotes.removeAll()
         hasRecordedRoundCompletion = false

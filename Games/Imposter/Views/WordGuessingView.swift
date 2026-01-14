@@ -13,6 +13,11 @@ struct WordGuessingView: View {
     @EnvironmentObject var gameLogic: GameLogic
     @Environment(\.dismiss) var dismiss
     private let startWithImmediateWinFlag: Bool
+
+    private var canControlSession: Bool {
+        let role = MultipeerManager.shared.role
+        return role == .host || role == .unknown
+    }
     
     init(gameSettings: GameSettings, startWithImmediateWin: Bool = false) {
         self.gameSettings = gameSettings
@@ -42,8 +47,12 @@ struct WordGuessingView: View {
                     result: result,
                     spies: gameSettings.players.filter { $0.isImposter },
                     onNewGame: {
-                        Task { @MainActor in
-                            await gameLogic.restartGame()
+                        if MultipeerManager.shared.role == .host {
+                            gameLogic.startMultiplayerRematchOffer()
+                        } else {
+                            Task { @MainActor in
+                                await gameLogic.restartGame()
+                            }
                         }
                     },
                     onExitToMain: {
@@ -53,8 +62,12 @@ struct WordGuessingView: View {
                             gameSettings.markRoundCompleted()
                             gameSettings.resetGame()
                             gameSettings.requestExitToSetup = true
+                            if MultipeerManager.shared.role != .unknown {
+                                MultipeerManager.shared.stop()
+                            }
                         }
-                    }
+                    },
+                    showActions: canControlSession && !gameSettings.multiplayerRematchWaiting
                 )
             } else {
                 WordGuessingActiveView(wordGuessingManager: wordGuessingManager)
@@ -201,6 +214,9 @@ struct WordGuessResultView: View {
     let onExitToMain: () -> Void
     let showActions: Bool
     
+    @EnvironmentObject var gameSettings: GameSettings
+    @EnvironmentObject var gameLogic: GameLogic
+
     @State private var showContent = false
     @State private var revealedText: String = ""
     @State private var glitchEffect = false
@@ -218,6 +234,13 @@ struct WordGuessResultView: View {
         self.onNewGame = onNewGame
         self.onExitToMain = onExitToMain
         self.showActions = showActions
+    }
+
+    private var waitingMessage: String {
+        if MultipeerManager.shared.role == .host {
+            return "Warte auf Antworten..."
+        }
+        return "Warte auf den Host..."
     }
     
     var body: some View {
@@ -294,7 +317,7 @@ struct WordGuessResultView: View {
                 .padding(.bottom, 100)
                 .opacity(showContent ? 1 : 0)
             } else {
-                Text("Warte auf den Host...")
+                Text(waitingMessage)
                     .font(.caption.bold())
                     .foregroundColor(.white.opacity(0.5))
                     .padding(.bottom, 100)
@@ -325,6 +348,23 @@ struct WordGuessResultView: View {
                     showPoints = true
                 }
             }
+        }
+        .alert("Neue Runde?", isPresented: Binding(
+            get: { gameSettings.multiplayerRematchOffer != nil },
+            set: { newValue in
+                if !newValue {
+                    gameSettings.multiplayerRematchOffer = nil
+                }
+            }
+        )) {
+            Button("Nein", role: .destructive) {
+                gameLogic.sendRematchResponse(wantsRematch: false)
+            }
+            Button("Ja") {
+                gameLogic.sendRematchResponse(wantsRematch: true)
+            }
+        } message: {
+            Text("Der Host möchte eine neue Runde starten.")
         }
     }
     

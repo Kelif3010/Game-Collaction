@@ -173,7 +173,7 @@ class HintsManager: ObservableObject {
         // 1. Das Wort (oder ein falsches Wort für Pechvogel)
         if role == .confused {
             // Pechvogel bekommt ein zufälliges anderes Wort aus der Kategorie
-            var otherWords = category.words.filter { $0 != word }
+            let otherWords = category.words.filter { $0 != word }
             if otherWords.isEmpty {
                 // Fallback: Sollte nicht passieren, aber sicher ist sicher
                 components.append(word)

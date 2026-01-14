@@ -41,6 +41,10 @@ struct ImposterMultiplayerSheet: View {
         list.append(contentsOf: mpc.connectedPeers.map { $0.displayName })
         return list.unique() // Extension oder Logik um Doppelte zu vermeiden
     }
+
+    private var disconnectedPlayers: Set<String> {
+        mpc.disconnectedPeers
+    }
     
     private var isHost: Bool {
         mpc.role == .host
@@ -211,6 +215,7 @@ struct ImposterMultiplayerSheet: View {
             isHost: isHost,
             players: lobbyNames,
             readyPlayers: mpc.readyPlayers,
+            disconnectedPlayers: disconnectedPlayers,
             myPlayerName: mpc.myPeerId.displayName,
             onOpenSettings: {
                 if isHost {
@@ -444,6 +449,7 @@ private struct UnifiedLobbyView: View {
     let isHost: Bool
     let players: [String]
     let readyPlayers: Set<String>
+    let disconnectedPlayers: Set<String>
     let myPlayerName: String
     let onOpenSettings: () -> Void
     let onToggleReady: (Bool) -> Void
@@ -492,7 +498,8 @@ private struct UnifiedLobbyView: View {
                             LobbyPlayerCard(
                                 name: player,
                                 isMe: player == myPlayerName,
-                                isReady: readyPlayers.contains(player)
+                                isReady: readyPlayers.contains(player),
+                                isDisconnected: disconnectedPlayers.contains(player)
                             )
                         }
                     }
@@ -504,6 +511,13 @@ private struct UnifiedLobbyView: View {
             
             // 3. Action Area
             VStack(spacing: 12) {
+                if !disconnectedPlayers.isEmpty {
+                    Text("Verbindung getrennt… \(disconnectedPlayers.count) Spieler hat 30 Sekunden zum Wiederverbinden.")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                }
                 if isHost {
                     let amIReady = readyPlayers.contains(myPlayerName)
                     
@@ -591,6 +605,7 @@ private struct LobbyPlayerCard: View {
     let name: String
     let isMe: Bool
     let isReady: Bool
+    let isDisconnected: Bool
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -627,14 +642,17 @@ private struct LobbyPlayerCard: View {
             // Status Icon (Ecke rechts oben)
             // Nur anzeigen, wenn Spieler NICHT der Host ist (optional), 
             // oder einfach immer Status anzeigen (besser für Klarheit)
-            Image(systemName: isReady ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(isReady ? .green : .red.opacity(0.5))
+            let statusIcon = isDisconnected ? "wifi.slash" : (isReady ? "checkmark.circle.fill" : "xmark.circle.fill")
+            let statusColor: Color = isDisconnected ? .orange : (isReady ? .green : .red.opacity(0.5))
+            Image(systemName: statusIcon)
+                .foregroundColor(statusColor)
                 .background(Circle().fill(.white).padding(2))
                 .clipShape(Circle())
                 .offset(x: 5, y: -5)
                 .shadow(radius: 2)
         }
         .padding(4)
+        .opacity(isDisconnected ? 0.6 : 1.0)
     }
 }
 

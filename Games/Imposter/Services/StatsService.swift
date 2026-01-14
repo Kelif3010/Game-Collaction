@@ -160,11 +160,14 @@ class StatsService: ObservableObject {
     }
     
     private func persist() {
-        do {
-            let data = try JSONEncoder().encode(stats)
-            defaults.set(data, forKey: key)
-        } catch {
-            print("Failed to save stats: \(error)")
+        let snapshot = stats
+        Task.detached(priority: .utility) { [key] in
+            do {
+                let data = try JSONEncoder().encode(snapshot)
+                UserDefaults.standard.set(data, forKey: key)
+            } catch {
+                print("Failed to save stats: \(error)")
+            }
         }
     }
     

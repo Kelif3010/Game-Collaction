@@ -153,7 +153,9 @@ final class AppViewModel: ObservableObject {
         
         // Listen for Factory Reset
         NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
-            self?.resetToDefaults()
+            Task { @MainActor [weak self] in
+                self?.resetToDefaults()
+            }
         }
     }
     

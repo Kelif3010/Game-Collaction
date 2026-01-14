@@ -93,6 +93,11 @@ struct DrawingLineWidths {
     }
 }
 
+struct PixelPoint: Hashable {
+    let x: Int
+    let y: Int
+}
+
 /// Zentraler State für das Zeichnen
 class DrawingState: ObservableObject {
     // Drawing Content
@@ -198,7 +203,7 @@ class DrawingState: ObservableObject {
         )
         
         // Konvertiere zu optimierten Pfaden
-        if !filledPixels.isEmpty {
+        if filledPixels.count > 0 {
             let fillPath = createOptimizedPath(from: filledPixels, color: color)
             
             if let path = fillPath {
@@ -250,6 +255,8 @@ class DrawingState: ObservableObject {
         let width = Int(canvasSize.width)
         let height = Int(canvasSize.height)
         
+        if width <= 0 || height <= 0 { return [] }
+        
         print("🖼️ DEBUG: Creating bitmap of size \(width)x\(height) from \(strokes.count) strokes")
         
         // Erstelle leere weiße Bitmap
@@ -265,6 +272,7 @@ class DrawingState: ObservableObject {
     }
     
     private func rasterizeStrokeIntoBitmap(_ bitmap: inout [[Color]], stroke: DrawingStroke) {
+        guard !bitmap.isEmpty, !bitmap[0].isEmpty else { return }
         let width = bitmap[0].count
         let height = bitmap.count
         let path = stroke.path
@@ -330,6 +338,7 @@ class DrawingState: ObservableObject {
         let x = Int(point.x)
         let y = Int(point.y)
         
+        guard !bitmap.isEmpty, !bitmap[0].isEmpty else { return .white }
         if y >= 0 && y < bitmap.count && x >= 0 && x < bitmap[0].count {
             return bitmap[y][x]
         }
@@ -410,14 +419,15 @@ class DrawingState: ObservableObject {
         return colorCounts.values.max(by: { $0.count < $1.count })?.color
     }
     
-    private func floodFillOptimized(bitmap: [[Color]], startPoint: CGPoint, targetColor: Color, fillColor: Color) -> Set<CGPoint> {
+    private func floodFillOptimized(bitmap: [[Color]], startPoint: CGPoint, targetColor: Color, fillColor: Color) -> Set<PixelPoint> {
+        guard !bitmap.isEmpty, !bitmap[0].isEmpty else { return [] }
         let width = bitmap[0].count
         let height = bitmap.count
         let startX = Int(startPoint.x)
         let startY = Int(startPoint.y)
         
         guard startX >= 0 && startX < width && startY >= 0 && startY < height else {
-            return Set<CGPoint>()
+            return []
         }
         
         // Dynamisches Pixel-Limit basierend auf Canvas-Größe
@@ -426,13 +436,13 @@ class DrawingState: ObservableObject {
         
         print("🎯 DEBUG: Canvas size: \(width)x\(height) = \(totalCanvasPixels) pixels, max fill: \(maxFillPixels)")
         
-        var filledPixels = Set<CGPoint>()
-        var stack = [CGPoint(x: startX, y: startY)]
+        var filledPixels = Set<PixelPoint>()
+        var stack = [PixelPoint(x: startX, y: startY)]
         
         while !stack.isEmpty {
             let point = stack.removeLast()
-            let x = Int(point.x)
-            let y = Int(point.y)
+            let x = point.x
+            let y = point.y
             
             // Prüfe Grenzen
             guard x >= 0 && x < width && y >= 0 && y < height else { continue }
@@ -447,10 +457,10 @@ class DrawingState: ObservableObject {
             filledPixels.insert(point)
             
             // Füge benachbarte Pixel zum Stack hinzu
-            stack.append(CGPoint(x: x + 1, y: y))
-            stack.append(CGPoint(x: x - 1, y: y))
-            stack.append(CGPoint(x: x, y: y + 1))
-            stack.append(CGPoint(x: x, y: y - 1))
+            stack.append(PixelPoint(x: x + 1, y: y))
+            stack.append(PixelPoint(x: x - 1, y: y))
+            stack.append(PixelPoint(x: x, y: y + 1))
+            stack.append(PixelPoint(x: x, y: y - 1))
             
             // Dynamisches Limit - verhindere nur echte Endlos-Schleifen
             if filledPixels.count > maxFillPixels {
@@ -470,8 +480,8 @@ class DrawingState: ObservableObject {
         return filledPixels
     }
     
-    private func createOptimizedPath(from pixels: Set<CGPoint>, color: Color) -> Path? {
-        guard !pixels.isEmpty else { return nil }
+    private func createOptimizedPath(from pixels: Set<PixelPoint>, color: Color) -> Path? {
+        guard pixels.count > 0 else { return nil }
         
         // Finde Bounding Rectangle des gefüllten Bereichs
         let pixelArray = Array(pixels)
@@ -481,10 +491,10 @@ class DrawingState: ObservableObject {
         let maxY = pixelArray.map(\.y).max()!
         
         let fillRect = CGRect(
-            x: minX,
-            y: minY,
-            width: maxX - minX + 1,
-            height: maxY - minY + 1
+            x: CGFloat(minX),
+            y: CGFloat(minY),
+            width: CGFloat(maxX - minX + 1),
+            height: CGFloat(maxY - minY + 1)
         )
         
         let area = fillRect.width * fillRect.height
@@ -505,13 +515,13 @@ class DrawingState: ObservableObject {
         }
     }
     
-    private func createPrecisePathFromPixels(_ pixels: Set<CGPoint>) -> Path {
+    private func createPrecisePathFromPixels(_ pixels: Set<PixelPoint>) -> Path {
         return Path { path in
             // Gruppiere in horizontale Linien für bessere Performance
             let sortedPixels = Array(pixels).sorted { $0.y < $1.y || ($0.y == $1.y && $0.x < $1.x) }
             
-            var currentLineStart: CGPoint?
-            var currentLineEnd: CGPoint?
+            var currentLineStart: PixelPoint?
+            var currentLineEnd: PixelPoint?
             
             for pixel in sortedPixels {
                 if let lineStart = currentLineStart,
@@ -523,9 +533,9 @@ class DrawingState: ObservableObject {
                     // Füge vorherige Linie hinzu
                     if let lineStart = currentLineStart, let lineEnd = currentLineEnd {
                         path.addRect(CGRect(
-                            x: lineStart.x,
-                            y: lineStart.y,
-                            width: lineEnd.x - lineStart.x + 1,
+                            x: CGFloat(lineStart.x),
+                            y: CGFloat(lineStart.y),
+                            width: CGFloat(lineEnd.x - lineStart.x + 1),
                             height: 1
                         ))
                     }
@@ -538,9 +548,9 @@ class DrawingState: ObservableObject {
             // Füge letzte Linie hinzu
             if let lineStart = currentLineStart, let lineEnd = currentLineEnd {
                 path.addRect(CGRect(
-                    x: lineStart.x,
-                    y: lineStart.y,
-                    width: lineEnd.x - lineStart.x + 1,
+                    x: CGFloat(lineStart.x),
+                    y: CGFloat(lineStart.y),
+                    width: CGFloat(lineEnd.x - lineStart.x + 1),
                     height: 1
                 ))
             }
@@ -578,4 +588,3 @@ class DrawingState: ObservableObject {
         clearDrawing()
     }
 }
-

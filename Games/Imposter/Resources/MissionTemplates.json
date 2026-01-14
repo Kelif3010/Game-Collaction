@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "key": "default",
+      "aliases": [],
+      "texts": [
+        "Deine Mission beginnt jetzt, {player}. Bleib ruhig und unauffaellig unauffaellig.",
+        "Handle leise und zielstrebig, {player}. Die Runde ist dein Spielfeld.",
+        "Vertraue auf Instinkt, {player}, und verliere nie den Fokus.",
+        "Jede Frage kann eine Falle sein. Spiele klug, {player}.",
+        "Du kennst die Regeln. Jetzt zaehlt nur Kontrolle und Timing.",
+        "Beobachte, sammle Hinweise, entscheide spaet.",
+        "Die Gruppe sucht Antworten. Du lenkst die Richtung.",
+        "Bleib in Bewegung, aber gib nichts preis.",
+        "Nutze kurze Antworten, lange Pausen und klare Blicke.",
+        "Du bist bereit. Keine Fehler, nur Entscheidungen."
+      ]
+    },
+    {
+      "key": "orte",
+      "aliases": ["ort", "stadt", "land", "platz", "gebaeude", "location"],
+      "texts": [
+        "Mische dich in {category}, {player}, als waerst du immer dort gewesen.",
+        "Sprich wie ein Insider von {category}, aber bleib vage.",
+        "In {category} kennt jeder die Regeln. Tu so, als auch du.",
+        "Dein Cover in {category}: ruhig, sachlich, vertraut.",
+        "Ein falsches Detail zu {category} kann dich enttarnen.",
+        "Halte dich an allgemeine Fakten ueber {category}.",
+        "Wenn du unsicher bist, stell eine Gegenfrage zu {category}.",
+        "Deine Aufgabe in {category}: unsichtbar bleiben."
+      ]
+    },
+    {
+      "key": "tiere",
+      "aliases": ["tier", "animal", "tiere"],
+      "texts": [
+        "Bei {category} geht es um Verhalten. Bleib bei groben Merkmalen.",
+        "Sprich ueber Groesse und Bewegung, nicht ueber Details.",
+        "Viele kennen {category} aus Filmen. Nutze das.",
+        "Lenke auf Lebensraum, ohne zu konkret zu werden.",
+        "In {category} sind Muster wichtig. Sprich allgemein.",
+        "Vergleiche vermeiden, aber nutze typische Eigenschaften.",
+        "Waehle sichere Hinweise wie Farbe, Bewegung, Umgebung.",
+        "Ein Tier kann vieles sein. Bleib flexibel."
+      ]
+    },
+    {
+      "key": "essen",
+      "aliases": ["essen", "frucht", "gemuese", "speise", "gericht", "koch", "kueche"],
+      "texts": [
+        "In {category} geht es um Geschmack und Zubereitung.",
+        "Bleib bei Geruch und Form, nicht bei Zutaten.",
+        "Nenne keine Marken, nur allgemeine Hinweise zu {category}.",
+        "Viele Speisen aus {category} sind bekannt. Nutze das.",
+        "Wenn du unsicher bist, rede ueber Temperatur oder Textur.",
+        "Halte dich an typische Anlaesse rund um {category}.",
+        "Ein Gericht kann suess oder salzig sein. Nutze das Spiel.",
+        "Sprich ueber Aufbau, nicht ueber exakte Begriffe."
+      ]
+    },
+    {
+      "key": "berufe",
+      "aliases": ["beruf", "job", "taetigkeit", "arbeit", "profi"],
+      "texts": [
+        "In {category} zaehlen Aufgaben, nicht Titel.",
+        "Beschreibe Werkzeuge, aber nie den Beruf.",
+        "Der Alltag in {category} hat klare Routinen.",
+        "Bleib vage: Menschen helfen, planen, pruefen.",
+        "Zeige Kompetenz, ohne dich festzulegen.",
+        "Sprich ueber Orte der Arbeit, nicht ueber Namen.",
+        "Der Beruf in {category} wirkt wichtig. Bleib ruhig.",
+        "Leite die Gruppe, aber verrate nichts."
+      ]
+    },
+    {
+      "key": "sport",
+      "aliases": ["sport", "spiel", "wett", "training", "team"],
+      "texts": [
+        "In {category} geht es um Regeln und Bewegung.",
+        "Sprich ueber Spielablauf statt Teamnamen.",
+        "Nenne typische Ausruestung, nicht die Sportart.",
+        "Viele kennen {category} aus dem Fernsehen.",
+        "Bleib bei Tempo, Technik und Rollen.",
+        "Ein falscher Begriff verraet dich. Bleib allgemein.",
+        "Nutze Begriffe wie Runde, Training, Spiel.",
+        "Halte dich an neutrale Beschreibungen."
+      ]
+    },
+    {
+      "key": "filme",
+      "aliases": ["film", "kino", "serie", "movie"],
+      "texts": [
+        "In {category} geht es um Geschichten. Bleib vage.",
+        "Sprich ueber Genre statt Titel.",
+        "Nutze Rollen wie Held, Gegner, Nebenfigur.",
+        "Viele Filme aus {category} sind bekannt. Sei vorsichtig.",
+        "Fokus auf Stimmung, nicht auf Details.",
+        "Ein Klischee kann helfen, aber nicht zu konkret."
+      ]
+    },
+    {
+      "key": "marken",
+      "aliases": ["marke", "brand", "firma", "produkt", "logo"],
+      "texts": [
+        "In {category} sind Logos und Design wichtig.",
+        "Sprich ueber Zielgruppe statt Marke.",
+        "Bleib bei Farben und Formen, nicht beim Namen.",
+        "Viele Marken aus {category} sind alltaeglich.",
+        "Nutze allgemeine Begriffe wie Produkt, Firma, Stil.",
+        "Ein falscher Hinweis ist besser als ein zu konkreter."
+      ]
+    }
+  ]
+}

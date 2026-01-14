@@ -15,7 +15,7 @@ struct CategoryDefaultData {
         // HIER SPÄTER WEITERE SPRACHEN EINFÜGEN:
         // case .spanish: return spanishCategories
         // case .french: return frenchCategories
-        default:
+        @unknown default:
             return germanCategories
         }
     }

@@ -125,76 +125,101 @@ struct GameSetupView: View {
     }
 
     private var mainView: some View {
+        applySetupBindings(to: navigationBase)
+    }
+
+    private var navigationBase: some View {
         NavigationStack {
             mainLayout
                 .navigationDestination(item: $route, destination: destinationView)
         }
         .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+        .hideNavigationBarBackgroundIfAvailable()
         .navigationBarBackButtonHidden(true)
-        .onChange(of: gameSettings.players.count) { _, _ in
-            gameSettings.clampNumberOfImpostersToCap()
-        }
-        .onChange(of: gameSettings.isRolesCategorySelected) { _, isValid in
-            if gameSettings.gameMode == .roles && !isValid {
-                gameSettings.gameMode = .classic
-            }
-        }
-        .onChange(of: mpc.lobbyPeers) { _, newPeers in
-            if mpc.role != .unknown, route == nil, gameSettings.gamePhase == .setup {
-                let mpcPlayers = newPeers.map { Player(name: $0) }
-                gameSettings.players = mpcPlayers
-            }
-            if mpc.role == .host {
-                let validPlayers = Set(newPeers)
-                let filteredReady = mpc.readyPlayers.intersection(validPlayers)
-                if filteredReady != mpc.readyPlayers {
-                    mpc.readyPlayers = filteredReady
-                }
-                mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
-                broadcastConfigIfHost()
-            }
-        }
-        .onChange(of: configSignature) { oldValue, newValue in
-            broadcastConfigIfHost()
-            if oldValue.timeLimit != newValue.timeLimit {
-                setHostActivity("Host stellt Timer ein")
-            } else if oldValue.numberOfImposters != newValue.numberOfImposters {
-                setHostActivity("Host waehlt Anzahl Spione")
-            }
-        }
-        .onChange(of: hostSheetState) { _, newValue in
-            if newValue.gameMode {
-                setHostActivity("Host ist im Spielmodus")
-            } else if newValue.categories {
-                setHostActivity("Host waehlt Kategorie")
-            } else if newValue.rules {
-                setHostActivity("Host aktiviert Rollen und Regeln")
-            } else if mpc.role == .host {
-                setHostActivity("Host wartet auf Start")
-            }
-        }
-        .onAppear {
-            gameLogic.gameSettings = gameSettings
-            setupMPCListeners(gameSettings: gameSettings, route: $route)
-            if mpc.role == .host && mpc.hostActivity.isEmpty {
-                setHostActivity("Host wartet auf Start")
-            }
+    }
 
-            if !gameSettings.hasSelectedCategories {
-                let fallbackCategory = gameSettings.categories.first(where: { ($0.sourceName ?? $0.name) == "Tiere" }) ?? gameSettings.categories.first
-                if let fallbackCategory {
-                    gameSettings.selectedCategory = fallbackCategory
-                    gameSettings.selectedCategoryIds = [fallbackCategory.id]
-                    gameSettings.isMixAllCategories = false
+    private func applySetupBindings<Content: View>(to content: Content) -> some View {
+        let step1 = AnyView(
+            content
+                .onChange(of: gameSettings.players.count) { _, _ in
+                    gameSettings.clampNumberOfImpostersToCap()
                 }
-            } else if gameSettings.selectedCategoryIds.isEmpty, let selectedCategory = gameSettings.selectedCategory {
-                gameSettings.selectedCategoryIds = [selectedCategory.id]
+                .onChange(of: gameSettings.isRolesCategorySelected) { _, isValid in
+                    if gameSettings.gameMode == .roles && !isValid {
+                        gameSettings.gameMode = .classic
+                    }
+                }
+        )
+
+        let step2 = AnyView(
+            step1.onChange(of: mpc.lobbyPeers) { _, newPeers in
+                if mpc.role != .unknown, route == nil, gameSettings.gamePhase == .setup {
+                    let mpcPlayers = newPeers.map { Player(name: $0) }
+                    gameSettings.players = mpcPlayers
+                }
+                if mpc.role == .host {
+                    let validPlayers = Set(newPeers)
+                    let filteredReady = mpc.readyPlayers.intersection(validPlayers)
+                    if filteredReady != mpc.readyPlayers {
+                        mpc.readyPlayers = filteredReady
+                    }
+                    mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
+                    broadcastConfigIfHost()
+                }
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            startButtonInset
-        }
+        )
+
+        let step3 = AnyView(
+            step2.onChange(of: configSignature) { oldValue, newValue in
+                broadcastConfigIfHost()
+                if oldValue.timeLimit != newValue.timeLimit {
+                    setHostActivity("Host stellt Timer ein")
+                } else if oldValue.numberOfImposters != newValue.numberOfImposters {
+                    setHostActivity("Host waehlt Anzahl Spione")
+                }
+            }
+        )
+
+        let step4 = AnyView(
+            step3.onChange(of: hostSheetState) { _, newValue in
+                if newValue.gameMode {
+                    setHostActivity("Host ist im Spielmodus")
+                } else if newValue.categories {
+                    setHostActivity("Host waehlt Kategorie")
+                } else if newValue.rules {
+                    setHostActivity("Host aktiviert Rollen und Regeln")
+                } else if mpc.role == .host {
+                    setHostActivity("Host wartet auf Start")
+                }
+            }
+        )
+
+        let step5 = AnyView(
+            step4.onAppear {
+                gameLogic.gameSettings = gameSettings
+                setupMPCListeners(gameSettings: gameSettings, route: $route)
+                if mpc.role == .host && mpc.hostActivity.isEmpty {
+                    setHostActivity("Host wartet auf Start")
+                }
+
+                if !gameSettings.hasSelectedCategories {
+                    let fallbackCategory = gameSettings.categories.first(where: { ($0.sourceName ?? $0.name) == "Tiere" }) ?? gameSettings.categories.first
+                    if let fallbackCategory {
+                        gameSettings.selectedCategory = fallbackCategory
+                        gameSettings.selectedCategoryIds = [fallbackCategory.id]
+                        gameSettings.isMixAllCategories = false
+                    }
+                } else if gameSettings.selectedCategoryIds.isEmpty, let selectedCategory = gameSettings.selectedCategory {
+                    gameSettings.selectedCategoryIds = [selectedCategory.id]
+                }
+            }
+        )
+
+        return AnyView(
+            step5.safeAreaInset(edge: .bottom) {
+                startButtonInset
+            }
+        )
     }
 
     private var mainLayout: some View {
@@ -215,7 +240,6 @@ struct GameSetupView: View {
             contentScroll
         }
     }
-
     private var topBar: some View {
         HStack {
             Button {
@@ -544,6 +568,17 @@ private struct GameSetupSheetsModifier: ViewModifier {
             .sheet(isPresented: $showingSettingsSheet) {
                 ImposterSettingsView()
             }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func hideNavigationBarBackgroundIfAvailable() -> some View {
+        if #available(iOS 18.0, *) {
+            toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+        } else {
+            self
+        }
     }
 }
 

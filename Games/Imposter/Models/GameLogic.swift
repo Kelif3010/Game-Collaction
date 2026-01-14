@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import MultipeerConnectivity
 
 class GameLogic: ObservableObject {
     @Published var gameSettings: GameSettings
@@ -17,6 +18,11 @@ class GameLogic: ObservableObject {
     private var scheduledStartWorkItem: DispatchWorkItem?
     private var lastRemotePauseState: Bool?
     private var multiplayerVotePreview: [String: String] = [:]
+    private var rematchOfferId: UUID?
+    private var rematchResponses: [String: Bool] = [:]
+    private var roleAssignmentId: UUID?
+    private var pendingRoleAcks: Set<String> = []
+    private var playerIdByName: [String: UUID] = [:]
     private let timerTickInterval: TimeInterval = 0.25
     private let timerSyncInterval: TimeInterval = 1.2
     private let softSyncThreshold: TimeInterval = 0.7
@@ -67,6 +73,202 @@ class GameLogic: ObservableObject {
         gameSettings.gamePhase = .cardReveal
         gameSettings.currentPlayerIndex = 0
         gameSettings.timeRemaining = gameSettings.timeLimit
+    }
+
+    @MainActor
+    func startMultiplayerGameAsHost() async -> Bool {
+        guard gameSettings.gameMode == .classic else { return false }
+        guard let category = gameSettings.chooseRoundCategory() else { return false }
+
+        // 1. Setup Data
+        let mpc = MultipeerManager.shared
+        let allPeers = mpc.lobbyPeers // Includes Host + Clients (Names)
+
+        playerIdByName.removeAll()
+        playerIdByName[mpc.myPeerId.displayName] = mpc.playerId
+
+        let newPlayers = allPeers.map { Player(name: $0) }
+        gameSettings.players = newPlayers
+        gameSettings.resetGame()
+        gameSettings.roundCategory = category
+        gameSettings.gamePhase = .cardReveal // Start in Reveal Phase, not Playing!
+        gameSettings.timeRemaining = gameSettings.timeLimit
+        gameSettings.isTimerPaused = true
+        gameSettings.isWaitingForOtherPlayers = false // Reset waiting state
+        gameSettings.revealProgress = (0, allPeers.count)
+        gameSettings.multiplayerVotes.removeAll()
+        gameSettings.multiplayerVotingProgress = nil
+        gameSettings.multiplayerVotingSelection = nil
+        gameSettings.multiplayerVotingResult = nil
+        gameSettings.multiplayerWordGuessResult = nil
+        gameSettings.multiplayerRematchOffer = nil
+        gameSettings.multiplayerRematchWaiting = false
+        gameSettings.shouldPresentVoting = false
+
+        // Use GameLogic's role distribution logic
+        let words = category.words
+        let secretWord = words.randomElement() ?? "Fehler"
+        let showCategoryForSpies = gameSettings.shouldSpySeeCategory
+        let showHintsForSpies = gameSettings.showSpyHints
+
+        // Config
+        let totalPlayers = allPeers.count
+        var impostersCount = gameSettings.numberOfImposters
+        if gameSettings.randomSpyCount {
+            let maxSpies = gameSettings.maxAllowedImpostersCap
+            impostersCount = Int.random(in: 1...max(1, maxSpies))
+        }
+        // Safety cap
+        impostersCount = min(impostersCount, max(0, totalPlayers - 1))
+        gameSettings.numberOfImposters = impostersCount
+
+        let assignmentId = UUID()
+        roleAssignmentId = assignmentId
+        pendingRoleAcks = Set(allPeers.filter { $0 != mpc.myPeerId.displayName })
+
+        // Indices for Imposters
+        var indices = Array(0..<totalPlayers)
+        indices.shuffle()
+        let imposterIndices = Set(indices.prefix(impostersCount))
+
+        // Distribute
+        var assignments: [(peer: MCPeerID, payload: ImposterRolePayload)] = []
+        for (index, playerName) in allPeers.enumerated() {
+            let isImposter = imposterIndices.contains(index)
+            let assignedWord: String
+            if isImposter {
+                let otherSpyNames = allPeers.enumerated()
+                    .filter { imposterIndices.contains($0.offset) && $0.offset != index }
+                    .map { $0.element }
+                let visibleSpyNames = gameSettings.shouldSpiesSeeEachOther ? otherSpyNames : []
+                assignedWord = HintsManager.createSpyCardText(
+                    word: secretWord,
+                    categoryName: category.name,
+                    categoryEmoji: category.emoji,
+                    showCategory: showCategoryForSpies,
+                    showHints: showHintsForSpies,
+                    otherSpyNames: visibleSpyNames
+                )
+            } else {
+                assignedWord = secretWord
+            }
+
+            // Simple Role Mapping for now
+            let assignedRole: RoleType = isImposter ? .saboteur : .secretAgent
+
+            let payload = ImposterRolePayload(
+                role: assignedRole,
+                word: assignedWord,
+                categoryName: category.name,
+                isImposter: isImposter,
+                assignmentId: assignmentId
+            )
+
+            gameSettings.players[index].isImposter = isImposter
+            gameSettings.players[index].word = assignedWord
+            gameSettings.players[index].roleType = nil
+            gameSettings.players[index].role = nil
+            gameSettings.players[index].hasSeenCard = false
+
+            if playerName == mpc.myPeerId.displayName {
+                // For Host, we set the current player index to self so the card view works if needed
+                gameSettings.currentPlayerIndex = index
+            } else if let peerID = mpc.getPeer(byName: playerName) {
+                assignments.append((peer: peerID, payload: payload))
+            }
+        }
+
+        await withTaskGroup(of: Void.self) { group in
+            for assignment in assignments {
+                group.addTask { @MainActor in
+                    mpc.sendToPeer(
+                        event: MPCEventType.imposterRoleAssignment,
+                        object: assignment.payload,
+                        to: assignment.peer
+                    )
+                }
+            }
+        }
+
+        // 2. Send Config Sync (Optional, but good for timer/mode display on clients)
+        let config = gameSettings.toMPCConfig()
+        mpc.sendToAll(event: MPCEventType.imposterSyncConfig, object: config)
+
+        // 3. Warte kurz auf Role-ACKs, damit Reveal nicht zu frueh kommt
+        if !pendingRoleAcks.isEmpty {
+            let timeout: TimeInterval = 2.5
+            let deadline = Date().timeIntervalSinceReferenceDate + timeout
+            while !pendingRoleAcks.isEmpty && Date().timeIntervalSinceReferenceDate < deadline {
+                try? await Task.sleep(nanoseconds: 150_000_000)
+            }
+            if !pendingRoleAcks.isEmpty {
+                print("⚠️ MPC: Role-ACK Timeout fuer: \(pendingRoleAcks)")
+            }
+        }
+
+        pendingRoleAcks.removeAll()
+        roleAssignmentId = nil
+
+        // 4. Start Reveal Phase for everyone (BUT DO NOT START GAME YET)
+        mpc.sendToAll(event: MPCEventType.imposterRevealStart)
+
+        return true
+    }
+
+    @MainActor
+    func registerPlayerIdentity(playerName: String, playerId: UUID) {
+        playerIdByName[playerName] = playerId
+    }
+
+    @MainActor
+    func makeRejoinStatePayload(for playerName: String) -> ImposterRejoinStatePayload? {
+        guard gameSettings.gamePhase != .setup else { return nil }
+        guard let playerIndex = gameSettings.players.firstIndex(where: { $0.name == playerName }) else { return nil }
+
+        let player = gameSettings.players[playerIndex]
+        let categoryName = gameSettings.roundCategory?.name
+            ?? gameSettings.selectedCategory?.name
+            ?? "Kategorie"
+
+        let role = ImposterRolePayload(
+            role: player.isImposter ? .saboteur : .secretAgent,
+            word: player.word,
+            categoryName: categoryName,
+            isImposter: player.isImposter,
+            assignmentId: nil
+        )
+
+        let now = ProcessInfo.processInfo.systemUptime
+        let preciseRemaining = preciseTimeRemaining ?? Double(gameSettings.timeRemaining)
+        let sync = ImposterGameStateSync(
+            timeRemaining: gameSettings.timeRemaining,
+            timeRemainingPrecise: preciseRemaining,
+            isTimerPaused: gameSettings.isTimerPaused,
+            gamePhase: gameSettings.gamePhase,
+            currentPlayerIndex: playerIndex,
+            startingPlayerName: gameSettings.startingPlayerName,
+            hostUptime: now
+        )
+
+        let revealProgress: ImposterRevealProgressPayload?
+        if gameSettings.gamePhase == .cardReveal {
+            let readyCount = gameSettings.players.filter { $0.hasSeenCard }.count
+            let totalCount = gameSettings.players.count
+            revealProgress = ImposterRevealProgressPayload(readyCount: readyCount, totalCount: totalCount)
+        } else {
+            revealProgress = nil
+        }
+
+        let config = gameSettings.toMPCConfig()
+        return ImposterRejoinStatePayload(
+            playerName: playerName,
+            playerHasSeenCard: player.hasSeenCard,
+            role: role,
+            gameState: sync,
+            multiplayerStartAtHostUptime: gameSettings.multiplayerStartAtHostUptime,
+            revealProgress: revealProgress,
+            config: config
+        )
     }
     
     // MARK: - Role Distribution Logic
@@ -344,8 +546,8 @@ class GameLogic: ObservableObject {
             
             // Falls wir im "Klassisch"-Modus sind, können wir Hinweise vorbereiten, aber noch nicht abspielen
             if gameSettings.gameMode != .twoWords,
-               let category = gameSettings.roundCategory,
-               let normalPlayer = gameSettings.players.first(where: { !$0.isImposter }) {
+               let _ = gameSettings.roundCategory,
+               let _ = gameSettings.players.first(where: { !$0.isImposter }) {
                 // Hinweise laden, aber erst starten, wenn Timer läuft (wird in gameTimer Logik oder unpause geregelt)
                 // Hier machen wir nichts, HintService horcht oft auf Timer.
             }
@@ -482,6 +684,49 @@ class GameLogic: ObservableObject {
         MultipeerManager.shared.sendToAll(event: MPCEventType.imposterStartVoting, object: status)
     }
 
+    func startMultiplayerRematchOffer() {
+        guard MultipeerManager.shared.role == .host else { return }
+        let offerId = UUID()
+        rematchOfferId = offerId
+        rematchResponses.removeAll()
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        rematchResponses[myName] = true
+        gameSettings.multiplayerRematchWaiting = true
+
+        let payload = ImposterRematchOfferPayload(offerId: offerId, hostName: myName)
+        MultipeerManager.shared.sendToAll(event: MPCEventType.imposterRematchOffer, object: payload)
+        maybeFinalizeRematch()
+    }
+
+    func handleMultiplayerRematchResponse(_ response: ImposterRematchResponsePayload) {
+        guard MultipeerManager.shared.role == .host else { return }
+        guard response.offerId == rematchOfferId else { return }
+        rematchResponses[response.playerName] = response.wantsRematch
+        maybeFinalizeRematch()
+    }
+
+    func sendRematchResponse(wantsRematch: Bool) {
+        guard MultipeerManager.shared.role == .peer else { return }
+        guard let offer = gameSettings.multiplayerRematchOffer else { return }
+        let myName = MultipeerManager.shared.myPeerId.displayName
+        let payload = ImposterRematchResponsePayload(
+            offerId: offer.offerId,
+            playerName: myName,
+            wantsRematch: wantsRematch
+        )
+        MultipeerManager.shared.sendToHost(event: MPCEventType.imposterRematchResponse, object: payload)
+        gameSettings.multiplayerRematchOffer = nil
+        if !wantsRematch {
+            MultipeerManager.shared.stop()
+            gameSettings.requestExitToSetup = true
+        }
+    }
+
+    func handleRematchLobbyUpdate() {
+        guard gameSettings.multiplayerRematchWaiting else { return }
+        maybeFinalizeRematch()
+    }
+
     func handleMultiplayerVotePreview(_ preview: ImposterVotePreviewPayload) {
         guard MultipeerManager.shared.role == .host else { return }
         let eligibleVoters = gameSettings.players.filter { !$0.isEliminated }.map { $0.name }
@@ -604,6 +849,31 @@ class GameLogic: ObservableObject {
         }
 
         return selected
+    }
+
+    private func maybeFinalizeRematch() {
+        guard MultipeerManager.shared.role == .host else { return }
+        guard rematchOfferId != nil else { return }
+
+        let currentLobby = Set(MultipeerManager.shared.lobbyPeers)
+        let allResponded = currentLobby.allSatisfy { rematchResponses[$0] != nil }
+        let allWantToContinue = currentLobby.allSatisfy { rematchResponses[$0] == true }
+
+        guard allResponded, allWantToContinue else { return }
+
+        gameSettings.multiplayerRematchWaiting = false
+        rematchOfferId = nil
+        rematchResponses.removeAll()
+
+        Task { @MainActor in
+            _ = await startMultiplayerGameAsHost()
+        }
+    }
+
+    @MainActor
+    func handleRoleAck(_ ack: ImposterRoleAckPayload) {
+        guard ack.assignmentId == roleAssignmentId else { return }
+        pendingRoleAcks.remove(ack.playerName)
     }
 
     func applyRemoteTimerSync(_ sync: ImposterGameStateSync, hostClockOffset: TimeInterval) {

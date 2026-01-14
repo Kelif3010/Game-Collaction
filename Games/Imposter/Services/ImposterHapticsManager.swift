@@ -14,9 +14,11 @@ class ImposterHapticsManager {
     static let shared = ImposterHapticsManager()
     
     private var engine: CHHapticEngine?
+    private var lifecycleObservers: [NSObjectProtocol] = []
     
     init() {
         createEngine()
+        setupLifecycleObservers()
     }
     
     private func createEngine() {
@@ -34,6 +36,32 @@ class ImposterHapticsManager {
         } catch {
             print("Haptic Engine Error: \(error)")
         }
+    }
+
+    deinit {
+        engine?.stop()
+        for observer in lifecycleObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    private func setupLifecycleObservers() {
+        let center = NotificationCenter.default
+        let didEnter = center.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.engine?.stop()
+        }
+        let willEnter = center.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            try? self?.engine?.start()
+        }
+        lifecycleObservers = [didEnter, willEnter]
     }
     
     /// Spielt einen schweren, dumpfen Schlag (wie ein Richterhammer)

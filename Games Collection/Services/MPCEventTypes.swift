@@ -5,11 +5,15 @@ import Foundation
 public enum MPCEventType {
     // Global Lobby Events
     static let lobbyUpdate = "LOBBY_UPDATE"
+    static let lobbyDisconnected = "LOBBY_DISCONNECTED"
     static let gameStart = "GAME_START"
     static let gameAbort = "GAME_ABORT"
     
     // Imposter Specific Events
     static let imposterRoleAssignment = "IMPOSTER_ROLE_ASSIGNMENT" // Payload: ImposterRolePayload
+    static let imposterRoleAck = "IMPOSTER_ROLE_ACK" // Payload: ImposterRoleAckPayload
+    static let imposterRejoinRequest = "IMPOSTER_REJOIN_REQUEST" // Payload: ImposterRejoinRequestPayload
+    static let imposterRejoinState = "IMPOSTER_REJOIN_STATE" // Payload: ImposterRejoinStatePayload
     static let imposterSyncConfig = "IMPOSTER_SYNC_CONFIG" // Payload: ImposterGameConfig
     static let imposterTimerSync = "IMPOSTER_TIMER_SYNC" // Payload: TimeInterval (or Int)
     static let imposterGameOver = "IMPOSTER_GAME_OVER"
@@ -31,4 +35,8 @@ public enum MPCEventType {
 
     // Word Guess Events
     static let imposterWordGuessConfirmed = "IMPOSTER_WORD_GUESS_CONFIRMED" // Payload: ImposterWordGuessResultPayload
+
+    // Rematch Events
+    static let imposterRematchOffer = "IMPOSTER_REMATCH_OFFER" // Payload: ImposterRematchOfferPayload
+    static let imposterRematchResponse = "IMPOSTER_REMATCH_RESPONSE" // Payload: ImposterRematchResponsePayload
 }

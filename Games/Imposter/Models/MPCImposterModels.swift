@@ -27,7 +27,31 @@ struct ImposterRolePayload: Codable {
     let word: String
     let categoryName: String // Category to display
     let isImposter: Bool
+    let assignmentId: UUID?
     // Add other necessary fields if needed
+}
+
+// MARK: - MPC Role Ack Packet
+struct ImposterRoleAckPayload: Codable {
+    let assignmentId: UUID
+    let playerName: String
+}
+
+// MARK: - MPC Rejoin Request Packet
+struct ImposterRejoinRequestPayload: Codable {
+    let playerName: String
+    let playerId: UUID
+}
+
+// MARK: - MPC Rejoin State Packet
+struct ImposterRejoinStatePayload: Codable {
+    let playerName: String
+    let playerHasSeenCard: Bool
+    let role: ImposterRolePayload
+    let gameState: ImposterGameStateSync
+    let multiplayerStartAtHostUptime: TimeInterval?
+    let revealProgress: ImposterRevealProgressPayload?
+    let config: ImposterGameConfig
 }
 
 // MARK: - MPC Game State Sync Packet
@@ -112,4 +136,17 @@ struct ImposterVotePreviewPayload: Codable {
 /// Host sends this to Clients when spies guess the word correctly
 struct ImposterWordGuessResultPayload: Codable, Equatable {
     let correctWord: String
+}
+
+/// Host sends this to Clients when asking for a rematch
+struct ImposterRematchOfferPayload: Codable, Equatable {
+    let offerId: UUID
+    let hostName: String
+}
+
+/// Clients send this back to Host with their decision
+struct ImposterRematchResponsePayload: Codable, Equatable {
+    let offerId: UUID
+    let playerName: String
+    let wantsRematch: Bool
 }

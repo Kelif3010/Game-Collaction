@@ -13,6 +13,7 @@ struct GamePlayView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @EnvironmentObject var gameLogic: GameLogic
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var mpc = MultipeerManager.shared
     
     @State private var currentCard: GameCard?
     @State private var hasRevealedOwnCard = false
@@ -20,6 +21,9 @@ struct GamePlayView: View {
     @State private var showStartingPlayerAnnouncement = false
     @State private var startingPlayer: Player?
     @State private var didRequestTimeSync = false
+    @State private var didSendRejoinRequest = false
+    @State private var myPlayerIdentity: PlayerIdentity?
+    @State private var lastConnectedPeerNames: Set<String> = []
     
     // KI-Services
     @StateObject private var hintService = HintService.shared
@@ -53,13 +57,17 @@ struct GamePlayView: View {
             }
         }
         .onAppear {
+            resetLocalState()
+            lastConnectedPeerNames = Set(mpc.connectedPeers.map { $0.displayName })
             if isMultiplayerActive {
                 hasRevealedOwnCard = false
                 requestTimeSyncSamplesIfNeeded()
+                sendRejoinRequestIfNeeded()
             }
             startGame()
         }
         .onDisappear {
+            resetLocalState()
             gameLogic.stopGameTimer()
         }
         .navigationBarHidden(true)
@@ -74,6 +82,31 @@ struct GamePlayView: View {
                 dismiss()
             }
         }
+        .onChange(of: mpc.lobbyPeers) { _, _ in
+            gameLogic.handleRematchLobbyUpdate()
+        }
+        .onChange(of: mpc.connectedPeers) { _, newPeers in
+            let newNames = Set(newPeers.map { $0.displayName })
+            if newPeers.isEmpty {
+                didRequestTimeSync = false
+                didSendRejoinRequest = false
+                lastConnectedPeerNames = []
+                return
+            }
+            if mpc.role == .host, gameSettings.gamePhase != .setup {
+                let joined = newNames.subtracting(lastConnectedPeerNames)
+                for name in joined {
+                    guard gameSettings.players.contains(where: { $0.name == name }) else { continue }
+                    if let peer = mpc.getPeer(byName: name),
+                       let state = gameLogic.makeRejoinStatePayload(for: name) {
+                        mpc.sendToPeer(event: MPCEventType.imposterRejoinState, object: state, to: peer)
+                    }
+                }
+            }
+            lastConnectedPeerNames = newNames
+            requestTimeSyncSamplesIfNeeded()
+            sendRejoinRequestIfNeeded()
+        }
         .onChange(of: gameSettings.startingPlayerName) { _, newName in
             if let newName = newName {
                 startingPlayer = gameSettings.players.first(where: { $0.name == newName })
@@ -82,10 +115,23 @@ struct GamePlayView: View {
         .onChange(of: gameSettings.gamePhase) { _, newPhase in
             if newPhase == .finished {
                 gameLogic.stopGameTimer()
-            } else if newPhase == .cardReveal && !isMultiplayerActive {
-                showStartingPlayerAnnouncement = false
-                gameSettings.isTimerPaused = true
-                prepareNextCard()
+            } else if newPhase == .cardReveal {
+                if isMultiplayerActive {
+                    let myName = mpc.myPeerId.displayName
+                    let hasSeen = gameSettings.players.first(where: { $0.name == myName })?.hasSeenCard ?? false
+                    hasRevealedOwnCard = hasSeen
+                    currentCard = nil
+                    gameSettings.isWaitingForOtherPlayers = hasSeen
+                    showStartingPlayerAnnouncement = false
+                    startingPlayer = nil
+                    if !hasSeen {
+                        prepareMultiplayerCardIfNeeded()
+                    }
+                } else {
+                    showStartingPlayerAnnouncement = false
+                    gameSettings.isTimerPaused = true
+                    prepareNextCard()
+                }
             }
         }
         .onChange(of: gameSettings.players) { oldPlayers, newPlayers in
@@ -94,14 +140,16 @@ struct GamePlayView: View {
             let myName = MultipeerManager.shared.myPeerId.displayName
             let oldSelf = oldPlayers.first(where: { $0.name == myName })
             let newSelf = newPlayers.first(where: { $0.name == myName })
-            let shouldRefresh = currentCard == nil
-                || oldSelf?.word != newSelf?.word
-                || oldSelf?.isImposter != newSelf?.isImposter
-                || oldSelf?.roleType != newSelf?.roleType
-                || oldSelf?.role != newSelf?.role
-            if shouldRefresh {
-                currentCard = nil
+            let oldIdentity = PlayerIdentity(from: oldSelf)
+            let newIdentity = PlayerIdentity(from: newSelf)
+            hasRevealedOwnCard = newSelf?.hasSeenCard ?? false
+            if oldIdentity != newIdentity {
+                myPlayerIdentity = newIdentity
             }
+        }
+        .onChange(of: myPlayerIdentity) { _, _ in
+            guard isMultiplayerActive, !hasRevealedOwnCard else { return }
+            currentCard = nil
             prepareMultiplayerCardIfNeeded()
         }
         .onChange(of: gameSettings.roundCategory) { _, _ in
@@ -268,6 +316,19 @@ struct GamePlayView: View {
         }
     }
 
+    private func sendRejoinRequestIfNeeded() {
+        let mpc = MultipeerManager.shared
+        guard isMultiplayerActive, mpc.role == .peer else { return }
+        guard !didSendRejoinRequest else { return }
+        guard !mpc.connectedPeers.isEmpty else { return }
+        let payload = ImposterRejoinRequestPayload(
+            playerName: mpc.myPeerId.displayName,
+            playerId: mpc.playerId
+        )
+        mpc.sendToHost(event: MPCEventType.imposterRejoinRequest, object: payload)
+        didSendRejoinRequest = true
+    }
+
     private func sendTimeSyncPing() {
         let payload = ImposterTimeSyncPingPayload(
             clientName: MultipeerManager.shared.myPeerId.displayName,
@@ -306,6 +367,7 @@ struct GamePlayView: View {
         if currentCard == nil {
             prepareNextCard()
         }
+        myPlayerIdentity = PlayerIdentity(from: player)
     }
 
     private func markMultiplayerCardSeen() {
@@ -391,6 +453,32 @@ struct GamePlayView: View {
             showStartingPlayerAnnouncement = false
         }
         gameSettings.isTimerPaused = false
+    }
+
+    private func resetLocalState() {
+        currentCard = nil
+        hasRevealedOwnCard = false
+        showStartingPlayerAnnouncement = false
+        startingPlayer = nil
+        myPlayerIdentity = nil
+        didSendRejoinRequest = false
+    }
+}
+
+private struct PlayerIdentity: Equatable {
+    let name: String
+    let word: String
+    let isImposter: Bool
+    let roleType: RoleType?
+    let role: String?
+
+    init?(from player: Player?) {
+        guard let player else { return nil }
+        name = player.name
+        word = player.word
+        isImposter = player.isImposter
+        roleType = player.roleType
+        role = player.role
     }
 }
 
@@ -767,6 +855,13 @@ struct GameTimerView: View {
         .onChange(of: gameSettings.shouldPresentVoting) { _, newValue in
             if newValue {
                 showVotingView = true
+            }
+        }
+        .onChange(of: gameSettings.gamePhase) { _, newPhase in
+            if newPhase == .cardReveal {
+                showWordGuessingView = false
+                showWordGuessConfirm = false
+                startWordGuessImmediateWin = false
             }
         }
         .alert(LocalizedStringKey("Spion enttarnt sich?"), isPresented: $showWordGuessConfirm) {

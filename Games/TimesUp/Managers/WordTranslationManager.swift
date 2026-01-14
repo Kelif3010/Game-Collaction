@@ -7,14 +7,15 @@
 
 import Combine
 import Foundation
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 
 @MainActor
 class WordTranslationManager: ObservableObject {
     @Published private(set) var isAIAvailable = false
 
-    private let model = SystemLanguageModel.default
-    private var session: LanguageModelSession?
+    private var session: Any?
     private let fallbackTranslations: [String: String]
 
     init() {
@@ -23,49 +24,52 @@ class WordTranslationManager: ObservableObject {
     }
 
     private func checkAIAvailability() {
-        switch model.availability {
-        case .available:
-            isAIAvailable = true
-            session = LanguageModelSession(
-                model: model,
-                instructions: createTranslationInstructions()
-            )
-            print("🤖 WordTranslationManager: Apple Intelligence verfügbar")
-        case .unavailable:
-            isAIAvailable = false
-            print("⚠️ WordTranslationManager: Apple Intelligence nicht verfügbar – Verwende Fallback-Wörterbuch")
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            let model = SystemLanguageModel.default
+            switch model.availability {
+            case .available:
+                isAIAvailable = true
+                session = LanguageModelSession(instructions: createTranslationInstructionsText())
+                print("🤖 WordTranslationManager: Apple Intelligence verfügbar")
+            case .unavailable:
+                isAIAvailable = false
+                print("⚠️ WordTranslationManager: Apple Intelligence nicht verfügbar – Verwende Fallback-Wörterbuch")
+            }
+            return
         }
+        #endif
+        isAIAvailable = false
+        print("⚠️ WordTranslationManager: Apple Intelligence nicht verfügbar – iOS-Version zu alt")
     }
 
-    private func createTranslationInstructions() -> Instructions {
-        Instructions {
-            "Du übersetzt einzelne Begriffe ins Englische."
-            "Antwort nur im JSON-Format {\"english\":\"<Wort>\"} ohne zusätzliche Erklärungen."
-        }
+    private func createTranslationInstructionsText() -> String {
+        """
+        Du übersetzt einzelne Begriffe ins Englische.
+        Antwort nur im JSON-Format {"english":"<Wort>"} ohne zusätzliche Erklärungen.
+        """
     }
 
     func translateToEnglish(_ term: String) async -> String {
         let cleaned = term.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return term }
 
-        if isAIAvailable, let session = session {
-            let prompt = Prompt {
-                "Übersetze das Wort '\(cleaned)' ins Englische."
-                "Antworte ausschließlich im JSON-Format {\"english\":\"<Übersetzung>\"}."
-            }
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *), isAIAvailable, let session = session as? LanguageModelSession {
+            let prompt = """
+            Übersetze das Wort '\(cleaned)' ins Englische.
+            Antworte ausschließlich im JSON-Format {"english":"<Übersetzung>"}.
+            """
             do {
-                let response = try await session.respond(
-                    to: prompt,
-                    generating: WordTranslationResponse.self
-                )
-                let translation = response.content.english.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !translation.isEmpty {
+                let response = try await session.respond(to: prompt)
+                if let translation = parseTranslation(from: response.content) {
                     return translation
                 }
             } catch {
                 print("⚠️ WordTranslationManager: Übersetzung fehlgeschlagen -> \(error.localizedDescription)")
             }
         }
+        #endif
 
         let key = cleaned.lowercased()
         return fallbackTranslations[key] ?? cleaned
@@ -110,9 +114,23 @@ class WordTranslationManager: ObservableObject {
         return Dictionary(uniqueKeysWithValues: entries.map { ($0.0.lowercased(), $0.1) })
     }
 
-    @Generable(description: "Übersetzt einen einzelnen Begriff ins Englische")
-    struct WordTranslationResponse {
-        @Guide(description: "Englische Version des Begriffs")
-        var english: String
+    private struct TranslationResponse: Decodable {
+        let english: String
+    }
+
+    private func parseTranslation(from text: String) -> String? {
+        guard let data = extractJSON(from: text),
+              let decoded = try? JSONDecoder().decode(TranslationResponse.self, from: data) else {
+            return nil
+        }
+        let trimmed = decoded.english.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func extractJSON(from text: String) -> Data? {
+        guard let start = text.firstIndex(of: "{"),
+              let end = text.lastIndex(of: "}") else { return nil }
+        let jsonStr = String(text[start...end])
+        return jsonStr.data(using: .utf8)
     }
 }

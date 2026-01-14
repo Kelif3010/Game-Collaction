@@ -21,6 +21,10 @@ struct TimeOutResultView: View {
         MultipeerManager.shared.role != .unknown
     }
 
+    private var isHost: Bool {
+        MultipeerManager.shared.role == .host
+    }
+
     private var localPlayerIsSpy: Bool {
         guard isMultiplayer else { return false }
         let myName = MultipeerManager.shared.myPeerId.displayName
@@ -174,19 +178,38 @@ struct TimeOutResultView: View {
                 
                 // Buttons
                 VStack(spacing: 16) {
-                    ImposterPrimaryButton(title: "NEUES SPIEL") {
-                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                        Task { @MainActor in
-                            await gameLogic.restartGame()
+                    if isMultiplayer {
+                        if isHost {
+                            if gameSettings.multiplayerRematchWaiting {
+                                Text("Warte auf Antworten...")
+                                    .font(.caption.bold())
+                                    .foregroundColor(.white.opacity(0.6))
+                            } else {
+                                ImposterPrimaryButton(title: "NEUES SPIEL") {
+                                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                    gameLogic.startMultiplayerRematchOffer()
+                                }
+                            }
+                        } else {
+                            Text("Warte auf den Host...")
+                                .font(.caption.bold())
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                    } else {
+                        ImposterPrimaryButton(title: "NEUES SPIEL") {
+                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                            Task { @MainActor in
+                                await gameLogic.restartGame()
+                            }
                         }
                     }
                     
                     Button {
-                        gameSettings.requestExitToMain = true
+                        endGameAndExit()
                     } label: {
                         HStack {
                             Image(systemName: "chevron.left")
-                            Text("HAUPTMENÜ")
+                            Text("SPIEL BEENDEN")
                         }
                         .font(.caption.bold())
                         .foregroundColor(.white.opacity(0.5))
@@ -212,5 +235,30 @@ struct TimeOutResultView: View {
                 showStamp = true
             }
         }
+        .alert("Neue Runde?", isPresented: Binding(
+            get: { gameSettings.multiplayerRematchOffer != nil },
+            set: { newValue in
+                if !newValue {
+                    gameSettings.multiplayerRematchOffer = nil
+                }
+            }
+        )) {
+            Button("Nein", role: .destructive) {
+                gameLogic.sendRematchResponse(wantsRematch: false)
+            }
+            Button("Ja") {
+                gameLogic.sendRematchResponse(wantsRematch: true)
+            }
+        } message: {
+            Text("Der Host möchte eine neue Runde starten.")
+        }
+    }
+
+    private func endGameAndExit() {
+        if isMultiplayer {
+            MultipeerManager.shared.stop()
+        }
+        gameSettings.requestExitToSetup = true
+        dismiss()
     }
 }

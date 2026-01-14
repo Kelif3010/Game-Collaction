@@ -108,7 +108,6 @@ struct MPCDebugView: View {
                             .textFieldStyle(.roundedBorder)
                         Button {
                             // Sende String als Payload
-                            let payload = messageText.data(using: .utf8)
                             mpc.sendToAll(event: "CHAT", object: messageText) // Quick hack: passing string as codable works? Yes.
                             messageText = ""
                         } label: {

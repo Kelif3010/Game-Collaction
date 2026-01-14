@@ -90,47 +90,49 @@ extension AIService {
     @MainActor
     func generateGameContent(word: String, category: Category) async -> GameContent? {
         #if canImport(FoundationModels)
-        guard isAvailable else { return nil }
-        
-        // Zufällige Auswahl, was generiert werden soll, um Varianz zu schaffen
-        // 50% echter Hinweis, 30% Challenge, 20% falscher Hinweis
-        let rand = Int.random(in: 1...100)
-        let requestType: String
-        if rand <= 50 { requestType = "hint" }
-        else if rand <= 80 { requestType = "challenge" }
-        else { requestType = "fake_hint" }
-        let expectedType = GameContentType(rawValue: requestType) ?? .hint
-        
-        let prompt = """
-        Kategorie: "\(category.name)"
-        Geheimes Wort: "\(word)"
-        Typ: "\(requestType)"
-        Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
-        Stil: 1 Satz, 6–12 Wörter.
-        hint/fake_hint: beginne mit "Es". challenge: kurze Frage/Aufgabe.
-        Antworte NUR JSON: {"type":"\(requestType)","content":"...","isTrue":true/false}
-        """
-        
-        for _ in 0..<3 {
-            do {
-                let text = try await AIRequestLimiter.shared.withPermit {
-                    let localSession = makeHintSession()
-                    let response = try await localSession.respond(to: prompt)
-                    return response.content
+        if #available(iOS 26.0, *) {
+            guard isAvailable else { return nil }
+            
+            // Zufällige Auswahl, was generiert werden soll, um Varianz zu schaffen
+            // 50% echter Hinweis, 30% Challenge, 20% falscher Hinweis
+            let rand = Int.random(in: 1...100)
+            let requestType: String
+            if rand <= 50 { requestType = "hint" }
+            else if rand <= 80 { requestType = "challenge" }
+            else { requestType = "fake_hint" }
+            let expectedType = GameContentType(rawValue: requestType) ?? .hint
+            
+            let prompt = """
+            Kategorie: "\(category.name)"
+            Geheimes Wort: "\(word)"
+            Typ: "\(requestType)"
+            Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
+            Stil: 1 Satz, 6–12 Wörter.
+            hint/fake_hint: beginne mit "Es". challenge: kurze Frage/Aufgabe.
+            Antworte NUR JSON: {"type":"\(requestType)","content":"...","isTrue":true/false}
+            """
+            
+            for _ in 0..<3 {
+                do {
+                    let text = try await AIRequestLimiter.shared.withPermit {
+                        let localSession = makeHintSession()
+                        let response = try await localSession.respond(to: prompt)
+                        return response.content
+                    }
+                    
+                    if let content = decodeGameContent(from: text, category: category.name, word: word, expectedType: expectedType) {
+                        return content
+                    }
+                } catch {
+                    print("💡 KI-Content-Fehler: \(error)")
+                    break
                 }
-                
-                if let content = decodeGameContent(from: text, category: category.name, word: word, expectedType: expectedType) {
-                    return content
-                }
-            } catch {
-                print("💡 KI-Content-Fehler: \(error)")
-                break
             }
         }
-        return nil
         #else
         return nil
         #endif
+        return nil
     }
 
     /// Legacy Support für reine Hints
@@ -138,37 +140,39 @@ extension AIService {
     func generateAIHint(word: String, category: Category, mustBeTrue: Bool) async -> GameHint? {
         // Wir nutzen die neue Logik, erzwingen aber den Typ
         #if canImport(FoundationModels)
-        guard isAvailable else { return nil }
-        
-        let type = mustBeTrue ? "hint" : "fake_hint"
-        let prompt = """
-        Wort: "\(word)" (Kategorie: \(category.name))
-        Erzeuge einen kurzen \(mustBeTrue ? "wahren" : "falschen/irreführenden") Hinweis auf Deutsch.
-        Antworte NUR JSON: {"type": "\(type)", "content": "...", "isTrue": \(mustBeTrue)}
-        """
-        
-        do {
-            let responseText = try await AIRequestLimiter.shared.withPermit {
-                let localSession = makeHintSession()
-                let response = try await localSession.respond(to: prompt)
-                return response.content
+        if #available(iOS 26.0, *) {
+            guard isAvailable else { return nil }
+            
+            let type = mustBeTrue ? "hint" : "fake_hint"
+            let prompt = """
+            Wort: "\(word)" (Kategorie: \(category.name))
+            Erzeuge einen kurzen \(mustBeTrue ? "wahren" : "falschen/irreführenden") Hinweis auf Deutsch.
+            Antworte NUR JSON: {"type": "\(type)", "content": "...", "isTrue": \(mustBeTrue)}
+            """
+            
+            do {
+                let responseText = try await AIRequestLimiter.shared.withPermit {
+                    let localSession = makeHintSession()
+                    let response = try await localSession.respond(to: prompt)
+                    return response.content
+                }
+                let expectedType = GameContentType(rawValue: type) ?? .hint
+                if let content = decodeGameContent(from: responseText, category: category.name, word: word, expectedType: expectedType) {
+                    return GameHint(content: content.content, type: .general, isTrue: content.isTrue, word: word, category: category)
+                }
+            } catch {
+                print("Error generating specific hint: \(error)")
             }
-            let expectedType = GameContentType(rawValue: type) ?? .hint
-            if let content = decodeGameContent(from: responseText, category: category.name, word: word, expectedType: expectedType) {
-                return GameHint(content: content.content, type: .general, isTrue: content.isTrue, word: word, category: category)
-            }
-        } catch {
-            print("Error generating specific hint: \(error)")
         }
-        return nil
         #else
         return nil
         #endif
+        return nil
     }
     
     // MARK: - Decoding Logic
     
-    nonisolated private func decodeGameContent(from text: String, category: String, word: String, expectedType: GameContentType? = nil) -> GameContent? {
+    private func decodeGameContent(from text: String, category: String, word: String, expectedType: GameContentType? = nil) -> GameContent? {
         guard let data = extractJSON(from: text) else { return nil }
         
         do {
@@ -206,67 +210,70 @@ extension AIService {
     @MainActor
     func generateSpyHints(for word: String, categoryName: String, count: Int = 4) async -> [String] {
         #if canImport(FoundationModels)
-        guard isAvailable else {
-            return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
-        }
-        
-        let cacheKey = "\(normalizeForMatching(categoryName))|\(normalizeForMatching(word))"
-        return await SpyHintCache.shared.hints(for: cacheKey) { [count] in
-            let prompt = """
-            Kategorie: "\(categoryName)"
-            Geheimes Wort: "\(word)"
-            Erstelle \(count) vage Hinweise (ein Satz, 6–12 Wörter).
-            Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
-            Beginne jeden Hinweis mit "Es".
-            Antworte NUR JSON Array: ["Es ...", ...]
-            """
+        if #available(iOS 26.0, *) {
+            guard isAvailable else {
+                return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
+            }
             
-            var collected: [String] = []
-            var seen: Set<String> = []
-            
-            for _ in 0..<3 {
-                do {
-                    let responseText = try await AIRequestLimiter.shared.withPermit {
-                        let localSession = self.makeHintSession()
-                        let response = try await localSession.respond(to: prompt)
-                        return response.content
-                    }
-                    if let data = self.extractJSONArray(from: responseText),
-                       let rawHints = try? JSONDecoder().decode([String].self, from: data) {
-                        let filtered = self.filterSpyHints(rawHints, word: word, categoryName: categoryName)
-                        for hint in filtered {
-                            let key = self.normalizeForMatching(hint)
-                            guard !seen.contains(key) else { continue }
-                            seen.insert(key)
-                            collected.append(hint)
+            let cacheKey = "\(normalizeForMatching(categoryName))|\(normalizeForMatching(word))"
+            return await SpyHintCache.shared.hints(for: cacheKey) { [count] in
+                let prompt = """
+                Kategorie: "\(categoryName)"
+                Geheimes Wort: "\(word)"
+                Erstelle \(count) vage Hinweise (ein Satz, 6–12 Wörter).
+                Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
+                Beginne jeden Hinweis mit "Es".
+                Antworte NUR JSON Array: ["Es ...", ...]
+                """
+                
+                var collected: [String] = []
+                var seen: Set<String> = []
+                
+                for _ in 0..<3 {
+                    do {
+                        let responseText = try await AIRequestLimiter.shared.withPermit {
+                            let localSession = self.makeHintSession()
+                            let response = try await localSession.respond(to: prompt)
+                            return response.content
                         }
-                        if collected.count >= count {
-                            return Array(collected.prefix(count))
+                        if let data = self.extractJSONArray(from: responseText),
+                           let rawHints = try? JSONDecoder().decode([String].self, from: data) {
+                            let filtered = self.filterSpyHints(rawHints, word: word, categoryName: categoryName)
+                            for hint in filtered {
+                                let key = self.normalizeForMatching(hint)
+                                guard !seen.contains(key) else { continue }
+                                seen.insert(key)
+                                collected.append(hint)
+                            }
+                            if collected.count >= count {
+                                return Array(collected.prefix(count))
+                            }
                         }
+                    } catch {
+                        print("Spy Hint Error: \(error)")
+                        break
                     }
-                } catch {
-                    print("Spy Hint Error: \(error)")
-                    break
                 }
-            }
-            if collected.isEmpty {
-                return self.generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
-            }
-            var result = collected
-            let fallback = self.generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
-            for hint in fallback {
-                if result.count >= count { break }
-                let key = self.normalizeForMatching(hint)
-                if !seen.contains(key) {
-                    seen.insert(key)
-                    result.append(hint)
+                if collected.isEmpty {
+                    return self.generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
                 }
+                var result = collected
+                let fallback = self.generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
+                for hint in fallback {
+                    if result.count >= count { break }
+                    let key = self.normalizeForMatching(hint)
+                    if !seen.contains(key) {
+                        seen.insert(key)
+                        result.append(hint)
+                    }
+                }
+                return Array(result.prefix(count))
             }
-            return Array(result.prefix(count))
         }
         #else
         return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
         #endif
+        return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
     }
     
     nonisolated private func extractJSONArray(from text: String) -> Data? {
@@ -524,6 +531,7 @@ extension AIService {
     }
 
     #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
     private func makeHintSession() -> LanguageModelSession {
         let instructions = "Du bist Moderator eines Ratespiels. Antworte auf Deutsch, kurz und präzise."
         return LanguageModelSession(instructions: instructions)
@@ -546,33 +554,35 @@ extension AIService {
         // Da die Datei komplett ersetzt wird, muss ich die Funktion wiederherstellen.
         
         #if canImport(FoundationModels)
-        guard isAvailable, let session = session else { return "Besucher" }
-        let prompt = "Nenne EINE typische Rolle (Beruf/Person) für den Ort '\(location)'. Nur das Wort."
-        do {
-            let res = try await session.respond(to: prompt)
-            return res.content.trimmingCharacters(in: .whitespacesAndNewlines)
-                .replacingOccurrences(of: "\"", with: "")
-        } catch { return "Besucher" }
-        #else
-        return "Besucher"
+        if #available(iOS 26.0, *) {
+            guard isAvailable, let session = session as? LanguageModelSession else { return "Besucher" }
+            let prompt = "Nenne EINE typische Rolle (Beruf/Person) für den Ort '\(location)'. Nur das Wort."
+            do {
+                let res = try await session.respond(to: prompt)
+                return res.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: "\"", with: "")
+            } catch { return "Besucher" }
+        }
         #endif
+        return "Besucher"
     }
     
     @MainActor
     func generateRoles(for location: String, count: Int) async -> [String] {
         #if canImport(FoundationModels)
-        guard isAvailable, let session = session else { return Array(repeating: "Besucher", count: count) }
-        let prompt = "Nenne \(count) verschiedene typische Rollen für '\(location)'. Antworte als JSON Array string."
-        do {
-             let res = try await session.respond(to: prompt)
-             if let data = extractJSONArray(from: res.content),
-                let roles = try? JSONDecoder().decode([String].self, from: data) {
-                 return roles
-             }
-        } catch { }
-        return Array(repeating: "Besucher", count: count)
-        #else
-        return Array(repeating: "Besucher", count: count)
+        if #available(iOS 26.0, *) {
+            guard isAvailable, let session = session as? LanguageModelSession else { return Array(repeating: "Besucher", count: count) }
+            let prompt = "Nenne \(count) verschiedene typische Rollen für '\(location)'. Antworte als JSON Array string."
+            do {
+                let res = try await session.respond(to: prompt)
+                if let data = extractJSONArray(from: res.content),
+                   let roles = try? JSONDecoder().decode([String].self, from: data) {
+                    return roles
+                }
+            } catch { }
+            return Array(repeating: "Besucher", count: count)
+        }
         #endif
+        return Array(repeating: "Besucher", count: count)
     }
 }

@@ -75,6 +75,11 @@ struct VotingView: View {
             guard isMultiplayer, let result else { return }
             applyMultiplayerResult(result)
         }
+        .onChange(of: gameSettings.gamePhase) { _, newPhase in
+            if isMultiplayer && newPhase == .cardReveal {
+                dismiss()
+            }
+        }
         .onDisappear {
             // Timer-Status wiederherstellen wenn Voting-View geschlossen wird
             if !votingManager.showResults {

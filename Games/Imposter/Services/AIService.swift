@@ -23,11 +23,7 @@ class AIService: ObservableObject {
     // Text-to-Speech
     private let synthesizer = AVSpeechSynthesizer()
     
-    #if canImport(FoundationModels)
-    var session: LanguageModelSession?
-    #else
     var session: Any?
-    #endif
     private let fallbackService = FallbackAIService()
     private let settings = SettingsService.shared
     
@@ -38,23 +34,26 @@ class AIService: ObservableObject {
     /// Prüft ob Apple Intelligence verfügbar ist
     private func checkAvailability() {
         #if canImport(FoundationModels)
-        let model = SystemLanguageModel.default
-        
-        switch model.availability {
-        case .available:
-            isAvailable = true
-            setupSession()
-        case .unavailable:
-            isAvailable = false
+        if #available(iOS 26.0, *) {
+            let model = SystemLanguageModel.default
+            
+            switch model.availability {
+            case .available:
+                isAvailable = true
+                setupSession()
+            case .unavailable:
+                isAvailable = false
+            }
+            return
         }
-        #else
-        isAvailable = false
         #endif
+        isAvailable = false
     }
     
     /// Erstellt eine neue KI-Session
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
     private func setupSession() {
-        #if canImport(FoundationModels)
         let instructions = """
         Du bist ein intelligenter Moderator für ein Spion-Spiel.
         Deine Aufgabe ist es, Hinweise, Rollen und Moderations-Logs zu liefern,
@@ -67,56 +66,58 @@ class AIService: ObservableObject {
         - Verwende einen spannenden, geheimnisvollen Ton
         """
         session = LanguageModelSession(instructions: instructions)
-        #endif
     }
+    #endif
     
     /// Generiert Mission-Flavor für Imposter
     func generateMissionFlavor(for player: Player, category: Category) async -> String {
         #if canImport(FoundationModels)
-        guard isAvailable, let session = session else {
-            return fallbackService.generateMissionFlavor(for: player, category: category)
-        }
-        
-        isResponding = true
-        defer { isResponding = false }
-        
-        do {
-            let prompt = """
-            Generiere eine kurze, spannende Mission-Beschreibung für \(player.name) 
-            in der Kategorie "\(category.name)". 
-            Maximal 2 Sätze, geheimnisvoller Ton.
-            """
+        if #available(iOS 26.0, *) {
+            guard isAvailable, let session = session as? LanguageModelSession else {
+                return fallbackService.generateMissionFlavor(for: player, category: category)
+            }
             
-            let response = try await session.respond(to: prompt)
-            return response.content
-        } catch {
-            return fallbackService.generateMissionFlavor(for: player, category: category)
+            isResponding = true
+            defer { isResponding = false }
+            
+            do {
+                let prompt = """
+                Generiere eine kurze, spannende Mission-Beschreibung für \(player.name) 
+                in der Kategorie "\(category.name)". 
+                Maximal 2 Sätze, geheimnisvoller Ton.
+                """
+                
+                let response = try await session.respond(to: prompt)
+                return response.content
+            } catch {
+                return fallbackService.generateMissionFlavor(for: player, category: category)
+            }
         }
-        #else
-        return fallbackService.generateMissionFlavor(for: player, category: category)
         #endif
+        return fallbackService.generateMissionFlavor(for: player, category: category)
     }
     
     /// Generiert Moderator-Log Erklärung
     func generateModeratorLog(for selection: ImposterSelection) async -> String {
         #if canImport(FoundationModels)
-        guard isAvailable, let session = session else {
-            return fallbackService.generateModeratorLog(for: selection)
+        if #available(iOS 26.0, *) {
+            guard isAvailable, let session = session as? LanguageModelSession else {
+                return fallbackService.generateModeratorLog(for: selection)
+            }
+            
+            isResponding = true
+            defer { isResponding = false }
+            
+            do {
+                let prompt = createModeratorLogPrompt(selection: selection)
+                let response = try await session.respond(to: prompt)
+                return response.content
+            } catch {
+                return fallbackService.generateModeratorLog(for: selection)
+            }
         }
-        
-        isResponding = true
-        defer { isResponding = false }
-        
-        do {
-            let prompt = createModeratorLogPrompt(selection: selection)
-            let response = try await session.respond(to: prompt)
-            return response.content
-        } catch {
-            return fallbackService.generateModeratorLog(for: selection)
-        }
-        #else
-        return fallbackService.generateModeratorLog(for: selection)
         #endif
+        return fallbackService.generateModeratorLog(for: selection)
     }
     
     /// Finds a German Siri (female) voice if available, otherwise falls back to any German voice
@@ -181,18 +182,76 @@ class AIService: ObservableObject {
 
 class FallbackAIService {
     private let missionFlavors = [
-        "Deine Mission erfordert höchste Diskretion.",
-        "Die Zeit drängt - handle schnell und präzise.",
-        "Vertraue niemandem, nicht einmal deinen engsten Verbündeten.",
+        "Deine Mission erfordert hoechste Diskretion.",
+        "Die Zeit draengt - handle schnell und praezise.",
+        "Vertraue niemandem, nicht einmal deinen engsten Verbuendeten.",
         "Dein Ziel ist in Reichweite, aber Vorsicht ist geboten.",
-        "Die Mission ist kritisch für den Erfolg der Operation."
+        "Die Mission ist kritisch fuer den Erfolg der Operation."
     ]
+    private let templateCatalog = MissionTemplateCatalog.load()
     
     func generateMissionFlavor(for player: Player, category: Category) -> String {
+        if let template = templateCatalog?.randomTemplate(for: category.name) {
+            return renderTemplate(template, player: player, category: category)
+        }
         return missionFlavors.randomElement() ?? "Deine Mission beginnt jetzt."
     }
     
     func generateModeratorLog(for selection: ImposterSelection) -> String {
         return "Imposter ausgewählt basierend auf Fairness-Algorithmus. Cooldown und Häufigkeits-Tracking berücksichtigt."
+    }
+
+    private func renderTemplate(_ template: String, player: Player, category: Category) -> String {
+        return template
+            .replacingOccurrences(of: "{player}", with: player.name)
+            .replacingOccurrences(of: "{category}", with: category.name)
+    }
+}
+
+private struct MissionTemplateCatalog: Decodable {
+    let categories: [MissionTemplateCategory]
+
+    static func load() -> MissionTemplateCatalog? {
+        guard let url = Bundle.main.url(forResource: "MissionTemplates", withExtension: "json") else {
+            return nil
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(MissionTemplateCatalog.self, from: data)
+        } catch {
+            print("MissionTemplates.json konnte nicht geladen werden: \(error)")
+            return nil
+        }
+    }
+
+    func randomTemplate(for categoryName: String) -> String? {
+        let normalized = normalize(categoryName)
+        if let match = categories.first(where: { $0.matches(normalized) }),
+           let template = match.texts.randomElement() {
+            return template
+        }
+        if let fallback = categories.first(where: { $0.key == "default" }) {
+            return fallback.texts.randomElement()
+        }
+        return nil
+    }
+
+    private func normalize(_ input: String) -> String {
+        var normalized = input.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+        normalized = normalized.replacingOccurrences(of: "ß", with: "ss")
+        normalized = normalized.replacingOccurrences(of: "[^a-z0-9 ]", with: " ", options: .regularExpression)
+        normalized = normalized.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return normalized.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private struct MissionTemplateCategory: Decodable {
+    let key: String
+    let aliases: [String]
+    let texts: [String]
+
+    func matches(_ normalizedCategory: String) -> Bool {
+        if normalizedCategory.contains(key) { return true }
+        return aliases.contains(where: { normalizedCategory.contains($0) })
     }
 }

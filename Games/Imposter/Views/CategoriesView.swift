@@ -276,8 +276,8 @@ struct ImposterAddCategoryView: View {
     
     private func removeWord(at index: Int) {
         if index < words.count {
-            withAnimation {
-                words.remove(at: index)
+            withAnimation(.default) {
+                _ = words.remove(at: index)
             }
         }
     }

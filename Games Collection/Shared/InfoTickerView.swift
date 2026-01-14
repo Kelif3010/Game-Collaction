@@ -41,7 +41,7 @@ struct InfoTickerView: View {
                         Color.clear.onAppear {
                             textWidth = textGeo.size.width
                         }
-                        .onChange(of: tickerText) { _ in
+                        .onChange(of: tickerText) { _, _ in
                             textWidth = textGeo.size.width
                         }
                     })
@@ -56,7 +56,7 @@ struct InfoTickerView: View {
             .onReceive(timer) { _ in
                 animateTicker()
             }
-            .onChange(of: geo.size.width) { newWidth in
+            .onChange(of: geo.size.width) { _, newWidth in
                 containerWidth = newWidth
             }
         }

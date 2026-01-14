@@ -44,7 +44,7 @@ struct Games_CollectionApp: App {
             .onAppear {
                 lifecycleManager.onAppLaunch()
             }
-            .onChange(of: scenePhase) { newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .background || newPhase == .inactive {
                     lifecycleManager.onAppBackgroundOrExit()
                 } else if newPhase == .active {

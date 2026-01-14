@@ -23,6 +23,7 @@ class MultipeerManager: NSObject, ObservableObject {
     // Konfiguration
     private let serviceType = "gc-party" // Max 15 Zeichen, keine Sonderzeichen
     
+    let playerId: UUID
     @Published var myPeerId: MCPeerID
     @Published var connectedPeers: [MCPeerID] = []
     @Published var role: MPCRole = .unknown
@@ -34,6 +35,7 @@ class MultipeerManager: NSObject, ObservableObject {
     @Published var readyPlayers: Set<String> = []
     @Published var activeRoomCode: String? = nil
     @Published var hostActivity: String = ""
+    @Published var disconnectedPeers: Set<String> = []
     
     // MC Objekte
     private var session: MCSession?
@@ -42,12 +44,24 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // Aktueller Ziel-Raumcode (für Clients)
     private var targetRoomCode: String?
+    private var disconnectTasks: [String: Task<Void, Never>] = [:]
+    private let disconnectGraceInterval: TimeInterval = 30
     
     // Publishers für spezifische Events (damit ViewModels lauschen können)
     // Key: EventType (String), Value: Payload (Data)
     var onEventReceived: ((String, Data?) -> Void)?
     
     override init() {
+        let defaults = UserDefaults.standard
+        if let stored = defaults.string(forKey: "mpc.playerId"),
+           let uuid = UUID(uuidString: stored) {
+            self.playerId = uuid
+        } else {
+            let uuid = UUID()
+            self.playerId = uuid
+            defaults.set(uuid.uuidString, forKey: "mpc.playerId")
+        }
+
         // Name aus UserDefaults oder Gerät
         let savedName = UserDefaults.standard.string(forKey: "myPlayerName")
         let deviceName = UIDevice.current.name
@@ -111,6 +125,11 @@ class MultipeerManager: NSObject, ObservableObject {
         connectedPeers.removeAll()
         lobbyPeers.removeAll()
         readyPlayers.removeAll()
+        disconnectedPeers.removeAll()
+        for task in disconnectTasks.values {
+            task.cancel()
+        }
+        disconnectTasks.removeAll()
         hostActivity = ""
         role = .unknown
         targetRoomCode = nil
@@ -179,6 +198,10 @@ class MultipeerManager: NSObject, ObservableObject {
         // Liste aller: Ich + Verbundenen
         var allNames = [myPeerId.displayName]
         allNames.append(contentsOf: connectedPeers.map { $0.displayName })
+        if !disconnectedPeers.isEmpty {
+            allNames.append(contentsOf: disconnectedPeers.filter { $0 != myPeerId.displayName })
+        }
+        allNames = Array(Set(allNames))
         
         // Lokal updaten
         self.lobbyPeers = allNames
@@ -187,6 +210,37 @@ class MultipeerManager: NSObject, ObservableObject {
         
         // An alle senden
         sendToAll(event: "LOBBY_UPDATE", object: allNames)
+        sendToAll(event: MPCEventType.lobbyDisconnected, object: Array(disconnectedPeers))
+    }
+
+    private func markPeerDisconnected(_ name: String) {
+        guard role == .host else { return }
+        disconnectedPeers.insert(name)
+        readyPlayers.remove(name)
+        broadcastLobbyState()
+        sendToAll(event: "LOBBY_STATE_SYNC", object: Array(readyPlayers))
+        
+        disconnectTasks[name]?.cancel()
+        let task = Task { [weak self] in
+            let nanoseconds = UInt64(self?.disconnectGraceInterval ?? 30) * 1_000_000_000
+            try? await Task.sleep(nanoseconds: nanoseconds)
+            await MainActor.run {
+                guard let self else { return }
+                guard self.disconnectedPeers.contains(name) else { return }
+                self.disconnectedPeers.remove(name)
+                self.disconnectTasks.removeValue(forKey: name)
+                self.broadcastLobbyState()
+            }
+        }
+        disconnectTasks[name] = task
+    }
+
+    private func clearPeerDisconnected(_ name: String) {
+        guard role == .host else { return }
+        disconnectedPeers.remove(name)
+        disconnectTasks[name]?.cancel()
+        disconnectTasks.removeValue(forKey: name)
+        broadcastLobbyState()
     }
     
     // MARK: - Private Setup
@@ -221,9 +275,13 @@ extension MultipeerManager: MCSessionDelegate {
             }
             
             switch state {
-            case .connected: print("MPC: Verbunden mit \(peerID.displayName)")
+            case .connected:
+                print("MPC: Verbunden mit \(peerID.displayName)")
+                self.clearPeerDisconnected(peerID.displayName)
             case .connecting: print("MPC: Verbinde mit \(peerID.displayName)...")
-            case .notConnected: print("MPC: Getrennt von \(peerID.displayName)")
+            case .notConnected:
+                print("MPC: Getrennt von \(peerID.displayName)")
+                self.markPeerDisconnected(peerID.displayName)
             @unknown default: break
             }
         }
@@ -239,6 +297,12 @@ extension MultipeerManager: MCSessionDelegate {
                         print("MPC Gast: Lobby-Update empfangen: \(names)")
                         self.lobbyPeers = names
                         return // Nicht weiterleiten, ist intern
+                    }
+                }
+                if message.type == MPCEventType.lobbyDisconnected, let payload = message.payload {
+                    if let names = try? JSONDecoder().decode([String].self, from: payload) {
+                        self.disconnectedPeers = Set(names)
+                        return
                     }
                 }
                 

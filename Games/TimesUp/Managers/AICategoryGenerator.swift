@@ -6,7 +6,9 @@
 //
 
 import Foundation
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 import Combine
 
 @MainActor
@@ -15,9 +17,7 @@ class AICategoryGenerator: ObservableObject {
     @Published var errorMessage: String?
     @Published var isAIAvailable = false
     
-    // Apple Foundation Models
-    private let model = SystemLanguageModel.default
-    private var session: LanguageModelSession?
+    private var session: Any?
     
     // Fallback Mock-Daten
     private let mockData = MockAIData()
@@ -27,27 +27,32 @@ class AICategoryGenerator: ObservableObject {
     }
     
     private func checkAIAvailability() {
-        switch model.availability {
-        case .available:
-            isAIAvailable = true
-            session = LanguageModelSession(
-                model: model,
-                instructions: createAIInstructions()
-            )
-            print("🤖 DEBUG: Apple Intelligence verfügbar - echte KI wird verwendet")
-        case .unavailable(.deviceNotEligible):
-            isAIAvailable = false
-            print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Gerät nicht kompatibel - verwende Mock-Daten")
-        case .unavailable(.appleIntelligenceNotEnabled):
-            isAIAvailable = false
-            print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - nicht aktiviert in Einstellungen - verwende Mock-Daten")
-        case .unavailable(.modelNotReady):
-            isAIAvailable = false
-            print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Modell noch nicht bereit - verwende Mock-Daten")
-        case .unavailable(let other):
-            isAIAvailable = false
-            print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Unbekannter Grund: \(other) - verwende Mock-Daten")
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            let model = SystemLanguageModel.default
+            switch model.availability {
+            case .available:
+                isAIAvailable = true
+                session = LanguageModelSession(instructions: createAIInstructionsText())
+                print("🤖 DEBUG: Apple Intelligence verfügbar - echte KI wird verwendet")
+            case .unavailable(.deviceNotEligible):
+                isAIAvailable = false
+                print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Gerät nicht kompatibel - verwende Mock-Daten")
+            case .unavailable(.appleIntelligenceNotEnabled):
+                isAIAvailable = false
+                print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - nicht aktiviert in Einstellungen - verwende Mock-Daten")
+            case .unavailable(.modelNotReady):
+                isAIAvailable = false
+                print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Modell noch nicht bereit - verwende Mock-Daten")
+            case .unavailable(let other):
+                isAIAvailable = false
+                print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - Unbekannter Grund: \(other) - verwende Mock-Daten")
+            }
+            return
         }
+        #endif
+        isAIAvailable = false
+        print("⚠️ DEBUG: Apple Intelligence nicht verfügbar - iOS-Version zu alt - verwende Mock-Daten")
     }
     
     private var currentLanguage: AppLanguage {
@@ -60,19 +65,19 @@ class AICategoryGenerator: ObservableObject {
         }
     }
 
-    private func createAIInstructions() -> Instructions {
+    private func createAIInstructionsText() -> String {
         if currentLanguage == .english {
-            return Instructions {
-                "You create Time's Up categories with English terms."
-                "Terms: well-known, guessable, no special characters."
-                "Create exactly the requested amount."
-            }
+            return """
+            You create Time's Up categories with English terms.
+            Terms: well-known, guessable, no special characters.
+            Create exactly the requested amount.
+            """
         } else {
-            return Instructions {
-                "Du erstellst Time's Up Kategorien mit deutschen Begriffen."
-                "Begriffe: bekannt, erratbar, ohne Umlaute."
-                "Erstelle exakt die angeforderte Anzahl."
-            }
+            return """
+            Du erstellst Time's Up Kategorien mit deutschen Begriffen.
+            Begriffe: bekannt, erratbar, ohne Umlaute.
+            Erstelle exakt die angeforderte Anzahl.
+            """
         }
     }
     
@@ -88,7 +93,8 @@ class AICategoryGenerator: ObservableObject {
         }
         
         do {
-            if isAIAvailable, let session = session {
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *), isAIAvailable, let session = session as? LanguageModelSession {
                 print("🤖 DEBUG: Generiere Kategorie '\(theme)' mit ECHTER Apple KI (Schwierigkeit: \(difficulty.rawValue), \(difficulty.wordCount) Begriffe)")
                 let rawTerms = try await generateWithAI(theme: theme, difficulty: difficulty, session: session)
                 var result = finalizeCategory(name: theme, originalRequest: theme, desiredCount: difficulty.wordCount, rawTerms: rawTerms, allowFillers: false)
@@ -100,12 +106,12 @@ class AICategoryGenerator: ObservableObject {
                 }
                 
                 return GeneratedCategory(name: theme, terms: result.terms)
-            } else {
-                print("⚠️ DEBUG: Generiere Kategorie '\(theme)' mit MOCK-DATEN (Schwierigkeit: \(difficulty.rawValue), \(difficulty.wordCount) Begriffe)")
-                let rawTerms = try await mockData.generateTerms(for: theme, difficulty: difficulty, language: currentLanguage)
-                let result = finalizeCategory(name: theme, originalRequest: theme, desiredCount: difficulty.wordCount, rawTerms: rawTerms, allowFillers: true)
-                return GeneratedCategory(name: theme, terms: result.terms)
             }
+            #endif
+            print("⚠️ DEBUG: Generiere Kategorie '\(theme)' mit MOCK-DATEN (Schwierigkeit: \(difficulty.rawValue), \(difficulty.wordCount) Begriffe)")
+            let rawTerms = try await mockData.generateTerms(for: theme, difficulty: difficulty, language: currentLanguage)
+            let result = finalizeCategory(name: theme, originalRequest: theme, desiredCount: difficulty.wordCount, rawTerms: rawTerms, allowFillers: true)
+            return GeneratedCategory(name: theme, terms: result.terms)
         } catch {
             // Prüfe ob es ein Context Window Fehler ist
             if error.localizedDescription.contains("context window") ||
@@ -125,6 +131,8 @@ class AICategoryGenerator: ObservableObject {
         }
     }
     
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
     private func generateWithAI(theme: String, difficulty: CategoryDifficulty, session: LanguageModelSession) async throws -> [Term] {
         let wordCount = difficulty.wordCount
         print("🤖 DEBUG: Erstelle Prompt für Apple KI - Thema: '\(theme)', Schwierigkeit: \(difficulty.rawValue), Ziel: \(wordCount) Begriffe")
@@ -144,31 +152,34 @@ class AICategoryGenerator: ObservableObject {
             topicLine = isEnglish ? "Topic: \(theme)" : "Thema: \(theme)"
         }
         
-        let prompt = Prompt {
-            topicLine
-            if isEnglish {
-                "Create \(wordCount) unique terms fitting these topics."
-                "Each term must appear only once and be a single word or short phrase."
-                "No numbering, no duplicates, no explanations - just the terms."
-            } else {
-                "Erstelle \(wordCount) eindeutige Begriffe, die zu diesen Themen passen."
-                "Jeder Begriff darf nur einmal vorkommen und soll als einzelnes Wort oder kurze Wortgruppe geliefert werden."
-                "Keine Nummerierung, keine Duplikate, keine Erklärungen – nur die Begriffe."
-            }
+        let prompt: String
+        if isEnglish {
+            prompt = """
+            \(topicLine)
+            Create \(wordCount) unique terms fitting these topics.
+            Each term must appear only once and be a single word or short phrase.
+            No numbering, no duplicates, no explanations - just the terms.
+            Answer only JSON: {"terms":["...","..."]}
+            """
+        } else {
+            prompt = """
+            \(topicLine)
+            Erstelle \(wordCount) eindeutige Begriffe, die zu diesen Themen passen.
+            Jeder Begriff darf nur einmal vorkommen und soll als einzelnes Wort oder kurze Wortgruppe geliefert werden.
+            Keine Nummerierung, keine Duplikate, keine Erklärungen – nur die Begriffe.
+            Antworte nur als JSON: {"terms":["...","..."]}
+            """
         }
         
         print("🤖 DEBUG: Sende Prompt an Apple KI...")
-        let response = try await session.respond(
-            to: prompt,
-            generating: AICategoryResponse.self
-        )
-        
-        let terms = response.content.terms.map { Term(text: $0) }
+        let response = try await session.respond(to: prompt)
+        let terms = parseTerms(from: response.content).map { Term(text: $0) }
         print("🤖 DEBUG: Apple KI erfolgreich - \(terms.count) Begriffe generiert")
         print("🤖 DEBUG: Erste 5 Begriffe: \(terms.prefix(5).map { $0.text })")
         
         return terms
     }
+    #endif
     
     private func finalizeCategory(name: String, originalRequest theme: String, desiredCount: Int, rawTerms: [Term], allowFillers: Bool) -> SanitizedTermsResult {
         var sanitized: [Term] = []
@@ -221,6 +232,21 @@ class AICategoryGenerator: ObservableObject {
         let duplicateRatio = result.sourceCount > 0 ? Double(result.duplicatesRemoved) / Double(result.sourceCount) : 0
         return uniqueRatio < 0.8 || duplicateRatio > 0.4
     }
+
+    private func parseTerms(from text: String) -> [String] {
+        guard let data = extractJSON(from: text),
+              let decoded = try? JSONDecoder().decode(AICategoryResponse.self, from: data) else {
+            return []
+        }
+        return decoded.terms
+    }
+
+    private func extractJSON(from text: String) -> Data? {
+        guard let start = text.firstIndex(of: "{"),
+              let end = text.lastIndex(of: "}") else { return nil }
+        let jsonStr = String(text[start...end])
+        return jsonStr.data(using: .utf8)
+    }
     
     /// Generiert eine Kategorie basierend auf mehreren Themen (kombiniert alle Themen)
     func generateMultipleCategories(themes: [String], difficulty: CategoryDifficulty = .medium) async throws -> [GeneratedCategory] {
@@ -242,10 +268,8 @@ class AICategoryGenerator: ObservableObject {
 
 // MARK: - AI Response Types
 
-@Generable(description: "Eine Kategorie mit Begriffen für das Time's Up Spiel")
-struct AICategoryResponse {
-    @Guide(description: "Liste der Begriffe für die Kategorie")
-    var terms: [String]
+private struct AICategoryResponse: Decodable {
+    let terms: [String]
 }
 
 // MARK: - Supporting Types

@@ -1258,7 +1258,7 @@ struct PenaltyRevealScoreboardView: View {
             let delay = Double(index) * delayStep
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 activeTeamID = team.id
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.65, blendDuration: 0.3)) {
+                _ = withAnimation(.spring(response: 0.6, dampingFraction: 0.65, blendDuration: 0.3)) {
                     revealedTeamIDs.insert(team.id)
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {

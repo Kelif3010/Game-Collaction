@@ -8,105 +8,11 @@ extension GameSetupView {
     
     func startMPCGame() {
         guard gameSettings.gameMode == .classic else { return }
-        guard let category = gameSettings.chooseRoundCategory() else { return }
-        
-        // 1. Setup Data
-        let mpc = MultipeerManager.shared
-        let allPeers = mpc.lobbyPeers // Includes Host + Clients (Names)
-
-        let newPlayers = allPeers.map { Player(name: $0) }
-        gameSettings.players = newPlayers
-        gameSettings.resetGame()
-        gameSettings.roundCategory = category
-        gameSettings.gamePhase = .cardReveal // Start in Reveal Phase, not Playing!
-        gameSettings.timeRemaining = gameSettings.timeLimit
-        gameSettings.isTimerPaused = true
-        gameSettings.isWaitingForOtherPlayers = false // Reset waiting state
-        gameSettings.revealProgress = (0, allPeers.count)
-        gameSettings.multiplayerVotes.removeAll()
-        gameSettings.multiplayerVotingProgress = nil
-        gameSettings.multiplayerVotingSelection = nil
-        gameSettings.multiplayerVotingResult = nil
-        gameSettings.shouldPresentVoting = false
-        
-        // Use GameLogic's role distribution logic
-        let words = category.words
-        let secretWord = words.randomElement() ?? "Fehler"
-        let showCategoryForSpies = gameSettings.shouldSpySeeCategory
-        let showHintsForSpies = gameSettings.showSpyHints
-        
-        // Config
-        let totalPlayers = allPeers.count
-        var impostersCount = gameSettings.numberOfImposters
-        if gameSettings.randomSpyCount {
-            let maxSpies = gameSettings.maxAllowedImpostersCap
-            impostersCount = Int.random(in: 1...max(1, maxSpies))
-        }
-        // Safety cap
-        impostersCount = min(impostersCount, max(0, totalPlayers - 1))
-        gameSettings.numberOfImposters = impostersCount
-        
-        // Indices for Imposters
-        var indices = Array(0..<totalPlayers)
-        indices.shuffle()
-        let imposterIndices = Set(indices.prefix(impostersCount))
-        
-        // Distribute
-        for (index, playerName) in allPeers.enumerated() {
-            let isImposter = imposterIndices.contains(index)
-            let assignedWord: String
-            if isImposter {
-                let otherSpyNames = allPeers.enumerated()
-                    .filter { imposterIndices.contains($0.offset) && $0.offset != index }
-                    .map { $0.element }
-                let visibleSpyNames = gameSettings.shouldSpiesSeeEachOther ? otherSpyNames : []
-                assignedWord = HintsManager.createSpyCardText(
-                    word: secretWord,
-                    categoryName: category.name,
-                    categoryEmoji: category.emoji,
-                    showCategory: showCategoryForSpies,
-                    showHints: showHintsForSpies,
-                    otherSpyNames: visibleSpyNames
-                )
-            } else {
-                assignedWord = secretWord
+        Task { @MainActor in
+            let didStart = await gameLogic.startMultiplayerGameAsHost()
+            if didStart {
+                self.route = .game
             }
-            
-            // Simple Role Mapping for now
-            let assignedRole: RoleType = isImposter ? .saboteur : .secretAgent 
-            
-            let payload = ImposterRolePayload(
-                role: assignedRole, 
-                word: assignedWord, 
-                categoryName: category.name,
-                isImposter: isImposter
-            )
-            
-            gameSettings.players[index].isImposter = isImposter
-            gameSettings.players[index].word = assignedWord
-            gameSettings.players[index].roleType = nil
-            gameSettings.players[index].role = nil
-            gameSettings.players[index].hasSeenCard = false
-
-            if playerName == mpc.myPeerId.displayName {
-                // For Host, we set the current player index to self so the card view works if needed
-                gameSettings.currentPlayerIndex = index
-            } else {
-                // Send to Client
-                if let peerID = mpc.getPeer(byName: playerName) {
-                    mpc.sendToPeer(event: MPCEventType.imposterRoleAssignment, object: payload, to: peerID)
-                }
-            }
-        }
-        
-        // 2. Send Config Sync (Optional, but good for timer/mode display on clients)
-        let config = gameSettings.toMPCConfig()
-        mpc.sendToAll(event: MPCEventType.imposterSyncConfig, object: config)
-        
-        // 3. Start Reveal Phase for everyone (BUT DO NOT START GAME YET)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            mpc.sendToAll(event: MPCEventType.imposterRevealStart)
-            self.route = .game
         }
     }
     
@@ -158,6 +64,14 @@ extension GameSetupView {
                                 gameSettings.roundCategory = dummy
                             }
                         }
+
+                        if let assignmentId = roleInfo.assignmentId, mpc.role == .peer {
+                            let ack = ImposterRoleAckPayload(
+                                assignmentId: assignmentId,
+                                playerName: myName
+                            )
+                            mpc.sendToHost(event: MPCEventType.imposterRoleAck, object: ack)
+                        }
                         
                         // Navigate to Game View
                         route.wrappedValue = .game
@@ -169,9 +83,7 @@ extension GameSetupView {
                     gameSettings.timeRemaining = gameSettings.timeLimit
                     gameSettings.isWaitingForOtherPlayers = false
                     gameSettings.multiplayerStartAtHostUptime = nil
-                    if gameSettings.revealProgress == nil {
-                        gameSettings.revealProgress = (0, max(1, gameSettings.players.count))
-                    }
+                    gameSettings.revealProgress = (0, max(1, gameSettings.players.count))
                     if route.wrappedValue != .game {
                         route.wrappedValue = .game
                     }
@@ -306,6 +218,88 @@ extension GameSetupView {
                         gameLogic.handleMultiplayerVotePreview(preview)
                     }
 
+                case MPCEventType.imposterRoleAck:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let ack = try? JSONDecoder().decode(ImposterRoleAckPayload.self, from: data) {
+                        gameLogic.handleRoleAck(ack)
+                    }
+
+                case MPCEventType.imposterRejoinRequest:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let request = try? JSONDecoder().decode(ImposterRejoinRequestPayload.self, from: data) {
+                        gameLogic.registerPlayerIdentity(playerName: request.playerName, playerId: request.playerId)
+                        if let peer = mpc.getPeer(byName: request.playerName),
+                           let state = gameLogic.makeRejoinStatePayload(for: request.playerName) {
+                            mpc.sendToPeer(event: MPCEventType.imposterRejoinState, object: state, to: peer)
+                        }
+                    }
+
+                case MPCEventType.imposterRejoinState:
+                    guard mpc.role == .peer else { break }
+                    if let data = payload,
+                       let state = try? JSONDecoder().decode(ImposterRejoinStatePayload.self, from: data) {
+                        gameSettings.applyMPCConfig(state.config)
+                        gameSettings.timeRemaining = state.config.timeLimit
+
+                        if gameSettings.players.isEmpty {
+                            gameSettings.players = mpc.lobbyPeers.map { Player(name: $0) }
+                        }
+
+                        let myName = state.playerName
+                        if let myIndex = gameSettings.players.firstIndex(where: { $0.name == myName }) {
+                            gameSettings.players[myIndex].word = state.role.word
+                            gameSettings.players[myIndex].isImposter = state.role.isImposter
+                            gameSettings.players[myIndex].roleType = nil
+                            gameSettings.players[myIndex].role = nil
+                            gameSettings.players[myIndex].hasSeenCard = state.playerHasSeenCard
+                        } else {
+                            var me = Player(name: myName)
+                            me.word = state.role.word
+                            me.isImposter = state.role.isImposter
+                            me.hasSeenCard = state.playerHasSeenCard
+                            gameSettings.players.append(me)
+                        }
+
+                        if let realCat = gameSettings.categories.first(where: { $0.name == state.role.categoryName }) {
+                            gameSettings.roundCategory = realCat
+                        } else {
+                            var dummy = Category(name: state.role.categoryName, words: [])
+                            dummy.isCustom = true
+                            gameSettings.roundCategory = dummy
+                        }
+
+                        gameSettings.gamePhase = state.gameState.gamePhase
+                        gameSettings.timeRemaining = state.gameState.timeRemaining
+                        gameSettings.isTimerPaused = state.gameState.isTimerPaused
+                        gameSettings.currentPlayerIndex = state.gameState.currentPlayerIndex
+                        gameSettings.startingPlayerName = state.gameState.startingPlayerName
+                        gameSettings.multiplayerStartAtHostUptime = state.multiplayerStartAtHostUptime
+                        if let progress = state.revealProgress {
+                            gameSettings.revealProgress = (progress.readyCount, progress.totalCount)
+                        } else {
+                            gameSettings.revealProgress = nil
+                        }
+
+                        if state.gameState.gamePhase == .cardReveal {
+                            gameSettings.isWaitingForOtherPlayers = state.playerHasSeenCard
+                        } else {
+                            gameSettings.isWaitingForOtherPlayers = false
+                        }
+
+                        gameLogic.applyRemoteTimerSync(state.gameState, hostClockOffset: gameSettings.hostClockOffset)
+
+                        if state.gameState.gamePhase == .playing,
+                           let startAt = state.multiplayerStartAtHostUptime {
+                            gameLogic.scheduleMultiplayerStart(startAtHostUptime: startAt)
+                        }
+
+                        if route.wrappedValue != .game {
+                            route.wrappedValue = .game
+                        }
+                    }
+
                 case MPCEventType.imposterVotingStatus:
                     if let data = payload,
                        let status = try? JSONDecoder().decode(ImposterVotingStatusPayload.self, from: data) {
@@ -326,6 +320,19 @@ extension GameSetupView {
                        let result = try? JSONDecoder().decode(ImposterWordGuessResultPayload.self, from: data) {
                         gameSettings.isTimerPaused = true
                         gameSettings.multiplayerWordGuessResult = result
+                    }
+
+                case MPCEventType.imposterRematchOffer:
+                    if let data = payload,
+                       let offer = try? JSONDecoder().decode(ImposterRematchOfferPayload.self, from: data) {
+                        gameSettings.multiplayerRematchOffer = offer
+                    }
+
+                case MPCEventType.imposterRematchResponse:
+                    guard mpc.role == .host else { break }
+                    if let data = payload,
+                       let response = try? JSONDecoder().decode(ImposterRematchResponsePayload.self, from: data) {
+                        gameLogic.handleMultiplayerRematchResponse(response)
                     }
 
                 case MPCEventType.imposterCardSeen:
