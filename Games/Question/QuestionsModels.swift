@@ -92,9 +92,9 @@ public struct QuestionsRoundState: Hashable, Codable {
 
 public enum QuestionsDefaults {
     
-    // MARK: - Alltag & Soziales
-    public static let everydaySocial = QuestionsCategory(
-        name: "Alltag & Soziales",
+    // MARK: - Alltag
+    public static let everyday = QuestionsCategory(
+        name: "Alltag",
         promptPairs: [
             // Bürger: Wasser / Spion: Kaffee (Beides Mengenfragen)
             QuestionsPromptPair(topic: "Getränke", citizenQuestion: "Wie viele Gläser Wasser trinkst du am Tag?", spyQuestion: "Wie viele Tassen Kaffee trinkst du am Tag?"),
@@ -122,8 +122,7 @@ public enum QuestionsDefaults {
             // Bürger: Viel Geld / Spion: Zu wenig Geld (Beides Ausgaben)
             QuestionsPromptPair(topic: "Geld", citizenQuestion: "Wofür gibst du gerne viel Geld aus?", spyQuestion: "Wofür gibst du ungern Geld aus, musst aber?"),
             
-            // Bürger: Traumreise / Spion: Letzte Reise (Beides Länder/Orte)
-            QuestionsPromptPair(topic: "Reisen", citizenQuestion: "In welches Land möchtest du unbedingt noch reisen?", spyQuestion: "In welchem Land warst du zuletzt im Urlaub?"),
+            QuestionsPromptPair(topic: "Reisen", citizenQuestion: "Welches Land steht bei dir ganz oben auf der Reiseliste?", spyQuestion: "Welche Stadt steht bei dir als nächstes auf der Reiseliste?"),
             
             QuestionsPromptPair(topic: "Technik", citizenQuestion: "Welches Gadget benutzt du täglich?", spyQuestion: "Auf welches Gadget könntest du nicht verzichten?"),
             
@@ -143,7 +142,7 @@ public enum QuestionsDefaults {
             
             QuestionsPromptPair(topic: "Serien", citizenQuestion: "Welche Serie hast du zuletzt geschaut?", spyQuestion: "Welche Serie ist deine absolute Lieblingsserie?"),
             
-            QuestionsPromptPair(topic: "Snacks", citizenQuestion: "Was ist dein liebster süßer Snack?", spyQuestion: "Was ist dein liebster salziger Snack?"),
+            QuestionsPromptPair(topic: "Snacks", citizenQuestion: "Was snackst du am liebsten zu Hause?", spyQuestion: "Was snackst du am liebsten unterwegs?"),
             
             QuestionsPromptPair(topic: "Pause", citizenQuestion: "Was machst du in deiner Mittagspause?", spyQuestion: "Was machst du direkt nach Feierabend?"),
             
@@ -153,9 +152,22 @@ public enum QuestionsDefaults {
             
             QuestionsPromptPair(topic: "Frühstück", citizenQuestion: "Was isst du typischerweise zum Frühstück?", spyQuestion: "Was isst du am liebsten zum Sonntagsbrunch?"),
             
-            QuestionsPromptPair(topic: "Schuhe", citizenQuestion: "Wie viele Paar Schuhe besitzt du ungefähr?", spyQuestion: "Wie viele Jacken besitzt du ungefähr?"),
+            QuestionsPromptPair(topic: "Schuhe", citizenQuestion: "Wie viele Paar Schuhe besitzt du ungefähr?", spyQuestion: "Wie viele Paar Schuhe trägst du wirklich regelmäßig?"),
             
-            QuestionsPromptPair(topic: "Nachricht", citizenQuestion: "Wem hast du zuletzt eine Nachricht geschrieben?", spyQuestion: "Von wem hast du die letzte Nachricht erhalten?")
+            QuestionsPromptPair(topic: "Nachricht", citizenQuestion: "Wem hast du zuletzt eine Nachricht geschrieben?", spyQuestion: "Von wem hast du die letzte Nachricht erhalten?"),
+            QuestionsPromptPair(topic: "Screen Time", citizenQuestion: "Wie viele Stunden bist du täglich am Handy?", spyQuestion: "Wie viele Stunden verbringst du täglich vor Bildschirmen (PC/TV)?"),
+            QuestionsPromptPair(topic: "Ordnung", citizenQuestion: "Wie oft räumst du deine Wohnung auf?", spyQuestion: "Wie oft putzt du deine Wohnung gründlich?"),
+            QuestionsPromptPair(topic: "Aufgaben", citizenQuestion: "Was schiebst du am liebsten auf?", spyQuestion: "Was vergisst du im Alltag am häufigsten?"),
+            QuestionsPromptPair(topic: "Pünktlichkeit", citizenQuestion: "Wie viele Minuten bist du typischerweise zu spät?", spyQuestion: "Wie viele Minuten bist du typischerweise zu früh?"),
+            QuestionsPromptPair(topic: "Schnell essen", citizenQuestion: "Was isst du, wenn es schnell gehen muss?", spyQuestion: "Was isst du oft unterwegs?"),
+            QuestionsPromptPair(topic: "Transport", citizenQuestion: "Welches Verkehrsmittel nutzt du am häufigsten?", spyQuestion: "Welches Verkehrsmittel nutzt du am liebsten?"),
+            QuestionsPromptPair(topic: "Kleidung", citizenQuestion: "Was ist dein liebstes Kleidungsstück?", spyQuestion: "Was ist dein bequemstes Kleidungsstück?"),
+            QuestionsPromptPair(topic: "Hygiene", citizenQuestion: "Wie oft duschst du in der Woche?", spyQuestion: "Wie oft wäschst du deine Haare in der Woche?"),
+            QuestionsPromptPair(topic: "Freizeit", citizenQuestion: "Was machst du typischerweise sonntags?", spyQuestion: "Was machst du an einem freien Brückentag?"),
+            QuestionsPromptPair(topic: "Dabei", citizenQuestion: "Was hast du immer in deiner Tasche dabei?", spyQuestion: "Was hast du immer in deiner Jackentasche?"),
+            QuestionsPromptPair(topic: "Schlafen", citizenQuestion: "In welcher Position schläfst du ein?", spyQuestion: "In welcher Position wachst du meistens auf?"),
+            QuestionsPromptPair(topic: "Termine", citizenQuestion: "Wie oft gehst du zum Friseur?", spyQuestion: "Wie oft gehst du zur Vorsorge (Zahnarzt/Arzt)?"),
+            QuestionsPromptPair(topic: "Zuhause", citizenQuestion: "Was machst du als Erstes, wenn du nach Hause kommst?", spyQuestion: "Was machst du als Letztes, bevor du das Haus verlässt?")
         ]
     )
     
@@ -178,8 +190,7 @@ public enum QuestionsDefaults {
             // Bürger: Beziehung / Spion: Persönlich (Beides Zukunftsvisionen)
             QuestionsPromptPair(topic: "Zukunft", citizenQuestion: "Wo siehst du dich beziehungstechnisch in 5 Jahren?", spyQuestion: "Wo siehst du dich persönlich/wohnlich in 5 Jahren?"),
             
-            // Bürger: Sauer / Spion: Gestresst (Beides Reaktionen auf negative Gefühle)
-            QuestionsPromptPair(topic: "Konflikt", citizenQuestion: "Wie reagierst du, wenn du sauer auf deinen Partner bist?", spyQuestion: "Wie reagierst du, wenn du extrem gestresst bist?"),
+            QuestionsPromptPair(topic: "Konflikt", citizenQuestion: "Wie reagierst du, wenn du sauer auf deinen Partner bist?", spyQuestion: "Wie reagierst du, wenn du enttäuscht von deinem Partner bist?"),
             
             // Bürger: Pärchenurlaub / Spion: Urlaub mit Freunden (Beides Urlaubs-Prioritäten)
             QuestionsPromptPair(topic: "Urlaub", citizenQuestion: "Was ist dir im Pärchenurlaub am wichtigsten?", spyQuestion: "Was ist dir im Urlaub mit Freunden am wichtigsten?"),
@@ -193,8 +204,7 @@ public enum QuestionsDefaults {
             // Bürger: Eifersucht / Spion: Unsicherheit (Beides negative Gefühle)
             QuestionsPromptPair(topic: "Gefühle", citizenQuestion: "In welcher Situation wirst du eifersüchtig?", spyQuestion: "In welcher Situation wirst du unsicher?"),
             
-            // Bürger: Kochen / Spion: Fahren (Beides Rollenverteilung)
-            QuestionsPromptPair(topic: "Rollen", citizenQuestion: "Wer kocht in einer Beziehung meistens?", spyQuestion: "Wer fährt im Auto meistens?"),
+            QuestionsPromptPair(topic: "Rollen", citizenQuestion: "Wer kocht in einer Beziehung meistens?", spyQuestion: "Wer plant in einer Beziehung meistens den Alltag?"),
             
             // Bürger: Partner / Spion: Allgemein (Beides Optik)
             QuestionsPromptPair(topic: "Aussehen", citizenQuestion: "Worauf achtest du beim anderen Geschlecht optisch zuerst?", spyQuestion: "Worauf achtest du bei Menschen generell zuerst?"),
@@ -215,10 +225,77 @@ public enum QuestionsDefaults {
             QuestionsPromptPair(topic: "Feiern", citizenQuestion: "Wie groß würdest du gerne heiraten?", spyQuestion: "Wie groß feierst du deine runden Geburtstage?")
         ]
     )
+
+    // MARK: - Paare (safe)
+    public static let couplesSafe = QuestionsCategory(
+        name: "Paare (safe)",
+        promptPairs: [
+            QuestionsPromptPair(topic: "Reise", citizenQuestion: "In welches Land würdest du spontan reisen?", spyQuestion: "In welche Stadt würdest du spontan reisen?"),
+            QuestionsPromptPair(topic: "Essen", citizenQuestion: "Welches Gericht würdest du heute kochen, wenn du Zeit hättest?", spyQuestion: "Welches Gericht würdest du heute bestellen?"),
+            QuestionsPromptPair(topic: "Freizeit", citizenQuestion: "Wie sieht dein perfekter Sonntag aus?", spyQuestion: "Wie sieht dein perfekter Abend aus?"),
+            QuestionsPromptPair(topic: "Medien", citizenQuestion: "Welchen Film würdest du jederzeit nochmal schauen?", spyQuestion: "Welche Serie würdest du jederzeit nochmal starten?"),
+            QuestionsPromptPair(topic: "Musik", citizenQuestion: "Welche Musik passt für dich zu einem Roadtrip?", spyQuestion: "Welche Musik passt für dich zu einem ruhigen Abend?"),
+            QuestionsPromptPair(topic: "Geld", citizenQuestion: "Wofür würdest du dir gern etwas gönnen?", spyQuestion: "Wofür würdest du lieber sparen?"),
+            QuestionsPromptPair(topic: "Stimmung", citizenQuestion: "Was hebt deine Laune sofort?", spyQuestion: "Was entspannt dich sofort?"),
+            QuestionsPromptPair(topic: "Leute", citizenQuestion: "Was machst du gern mit Freunden?", spyQuestion: "Was machst du gern allein?"),
+            QuestionsPromptPair(topic: "Urlaub", citizenQuestion: "Was ist dir im Urlaub am wichtigsten?", spyQuestion: "Was brauchst du im Urlaub unbedingt, damit er gut wird?"),
+            QuestionsPromptPair(topic: "Fähigkeiten", citizenQuestion: "Welche Fähigkeit würdest du gern sofort können?", spyQuestion: "Welche Fähigkeit würdest du gern verbessern?"),
+            QuestionsPromptPair(topic: "Wohnen", citizenQuestion: "Was macht eine Wohnung für dich gemütlich?", spyQuestion: "Was macht eine Wohnung für dich praktisch?"),
+            QuestionsPromptPair(topic: "Werte", citizenQuestion: "Was ist dir bei Freundschaften am wichtigsten?", spyQuestion: "Was ist dir bei Teamarbeit am wichtigsten?"),
+            QuestionsPromptPair(topic: "Tagesstart", citizenQuestion: "Was gehört für dich zu einem perfekten Start in den Tag?", spyQuestion: "Was gehört für dich zu einem perfekten Abschluss des Tages?"),
+            QuestionsPromptPair(topic: "Spontanität", citizenQuestion: "Was planst du gern im Voraus?", spyQuestion: "Was machst du lieber spontan?"),
+            QuestionsPromptPair(topic: "Sport", citizenQuestion: "Welchen Sport würdest du gern ausprobieren?", spyQuestion: "Welchen Sport würdest du gern regelmäßig machen?"),
+            QuestionsPromptPair(topic: "Essenzeiten", citizenQuestion: "Was könntest du jeden Tag zum Frühstück essen?", spyQuestion: "Was könntest du jeden Tag zum Abendessen essen?"),
+            QuestionsPromptPair(topic: "Kleidung", citizenQuestion: "Worauf achtest du bei bequemer Kleidung am meisten?", spyQuestion: "Worauf achtest du bei schicker Kleidung am meisten?"),
+            QuestionsPromptPair(topic: "Medienformat", citizenQuestion: "Welchen Podcast würdest du sofort hören?", spyQuestion: "Welches Hörbuch würdest du sofort hören?"),
+            QuestionsPromptPair(topic: "Pause", citizenQuestion: "Was machst du gern in einer kurzen Pause?", spyQuestion: "Was machst du gern in einer langen Pause?"),
+            QuestionsPromptPair(topic: "Zeit", citizenQuestion: "Wofür nimmst du dir immer Zeit?", spyQuestion: "Wofür hättest du gern mehr Zeit?"),
+            QuestionsPromptPair(topic: "Ordnung", citizenQuestion: "Was räumst du sofort weg?", spyQuestion: "Was lässt du eher liegen?"),
+            QuestionsPromptPair(topic: "Kochen", citizenQuestion: "Welches Gewürz darf bei dir nie fehlen?", spyQuestion: "Welche Zutat lässt du eher weg?"),
+            QuestionsPromptPair(topic: "Unterkunft", citizenQuestion: "Worauf achtest du bei einer Unterkunft als erstes?", spyQuestion: "Was muss eine Unterkunft haben, damit du dich wohlfühlst?"),
+            QuestionsPromptPair(topic: "Hobby", citizenQuestion: "Welches Hobby würdest du gern neu anfangen?", spyQuestion: "Welches Hobby würdest du gern wieder aufnehmen?"),
+            QuestionsPromptPair(topic: "Energie", citizenQuestion: "Wann fühlst du dich am energiegeladensten?", spyQuestion: "Wann bist du am kreativsten?"),
+            QuestionsPromptPair(topic: "Einkaufen", citizenQuestion: "Was kaufst du lieber online?", spyQuestion: "Was kaufst du lieber im Laden?"),
+            QuestionsPromptPair(topic: "Alltag", citizenQuestion: "Was erledigst du am liebsten morgens?", spyQuestion: "Was erledigst du am liebsten abends?"),
+            QuestionsPromptPair(topic: "Getränke", citizenQuestion: "Welches Getränk passt für dich eher zum Morgen?", spyQuestion: "Welches Getränk passt für dich eher zum Abend?"),
+            QuestionsPromptPair(topic: "Natur", citizenQuestion: "Wo kannst du in der Natur am besten abschalten?", spyQuestion: "Was in der Natur beruhigt dich am meisten?"),
+            QuestionsPromptPair(topic: "Kultur", citizenQuestion: "Welche kulturelle Aktivität macht dir am meisten Spaß?", spyQuestion: "Welche kulturelle Aktivität würdest du gern öfter machen?"),
+            QuestionsPromptPair(topic: "Spiele", citizenQuestion: "Welches Spiel spielst du lieber mit anderen?", spyQuestion: "Welches Spiel spielst du lieber allein?"),
+            QuestionsPromptPair(topic: "Kommunikation", citizenQuestion: "Wann schreibst du lieber eine Nachricht statt zu telefonieren?", spyQuestion: "Wann telefonierst du lieber statt zu schreiben?"),
+            QuestionsPromptPair(topic: "Lernen", citizenQuestion: "Was würdest du gern neu lernen?", spyQuestion: "Was würdest du gern besser können?"),
+            QuestionsPromptPair(topic: "Gesundheit", citizenQuestion: "Welche Bewegung macht dir am meisten Spaß?", spyQuestion: "Welche Bewegung tut dir am meisten gut?"),
+            QuestionsPromptPair(topic: "Zuhause", citizenQuestion: "Welcher Raum ist für dich zum Entspannen am wichtigsten?", spyQuestion: "Welcher Raum ist für dich zum Arbeiten am wichtigsten?"),
+            QuestionsPromptPair(topic: "Tempo", citizenQuestion: "Was machst du lieber langsam und bewusst?", spyQuestion: "Was erledigst du lieber schnell und direkt?"),
+            QuestionsPromptPair(topic: "Regenwetter", citizenQuestion: "Was machst du gern, wenn es draußen regnet?", spyQuestion: "Was machst du gern, wenn es draußen richtig warm ist?"),
+            QuestionsPromptPair(topic: "Energiequelle", citizenQuestion: "Was gibt dir im Alltag am meisten Energie?", spyQuestion: "Was zieht dir im Alltag am meisten Energie?"),
+            QuestionsPromptPair(topic: "Aussortieren", citizenQuestion: "Welche Sache würdest du sofort aussortieren?", spyQuestion: "Welche Sache würdest du nie aussortieren?"),
+            QuestionsPromptPair(topic: "Kuechenkunst", citizenQuestion: "Welches Gericht gelingt dir immer?", spyQuestion: "Welches Gericht wuerdest du gern besser koennen?"),
+            QuestionsPromptPair(topic: "Ueberraschung", citizenQuestion: "Worueber wuerdest du dich heute spontan freuen?", spyQuestion: "Womit wuerdest du heute jemand anderen spontan ueberraschen?"),
+            QuestionsPromptPair(topic: "Routine", citizenQuestion: "Welche kleine Routine tut dir gut?", spyQuestion: "Welche kleine Routine wuerdest du gern aufbauen?"),
+            QuestionsPromptPair(topic: "Lesen", citizenQuestion: "Welche Art von Buch wuerdest du sofort anfangen?", spyQuestion: "Welche Art von Artikel liest du am liebsten?"),
+            QuestionsPromptPair(topic: "Geraeusch", citizenQuestion: "Welches Geraeusch findest du beruhigend?", spyQuestion: "Welches Geraeusch nervt dich schnell?"),
+            QuestionsPromptPair(topic: "Geruch", citizenQuestion: "Welcher Geruch macht dir sofort gute Laune?", spyQuestion: "Welcher Geruch ist dir unangenehm?"),
+            QuestionsPromptPair(topic: "Einkaufsliste", citizenQuestion: "Was steht fast immer auf deiner Einkaufsliste?", spyQuestion: "Was kaufst du nur selten, aber immer gern?"),
+            QuestionsPromptPair(topic: "Tageszeit", citizenQuestion: "Was macht fuer dich einen guten Abend aus?", spyQuestion: "Was macht fuer dich einen guten Morgen aus?"),
+            QuestionsPromptPair(topic: "Ziele", citizenQuestion: "Welches kleine Ziel hast du fuer die naechste Woche?", spyQuestion: "Welches kleine Ziel hast du fuer den naechsten Monat?"),
+            QuestionsPromptPair(topic: "Handy", citizenQuestion: "Wann legst du dein Handy bewusst weg?", spyQuestion: "Wann greifst du fast automatisch zum Handy?"),
+            QuestionsPromptPair(topic: "Musikmoment", citizenQuestion: "Bei welcher Gelegenheit hoerst du Musik am liebsten?", spyQuestion: "Bei welcher Gelegenheit hoerst du lieber keine Musik?"),
+            QuestionsPromptPair(topic: "Teamwork", citizenQuestion: "Wobei arbeitest du gern im Team?", spyQuestion: "Wobei arbeitest du lieber allein?"),
+            QuestionsPromptPair(topic: "Spaziergang", citizenQuestion: "Wo gehst du gern spazieren?", spyQuestion: "Wann gehst du gern spazieren?"),
+            QuestionsPromptPair(topic: "Lernenstil", citizenQuestion: "Wie lernst du neue Dinge am liebsten?", spyQuestion: "Wie erklaerst du anderen am liebsten etwas?"),
+            QuestionsPromptPair(topic: "Wohngefuehl", citizenQuestion: "Was darf in deinem Zuhause nicht fehlen?", spyQuestion: "Was wuerdest du in einem neuen Zuhause als Erstes aendern?"),
+            QuestionsPromptPair(topic: "Feierabend", citizenQuestion: "Wie schaltest du nach der Arbeit ab?", spyQuestion: "Wie kommst du morgens am besten in Gang?"),
+            QuestionsPromptPair(topic: "Kleinigkeiten", citizenQuestion: "Welche Kleinigkeit macht dir den Tag schoener?", spyQuestion: "Welche Kleinigkeit nervt dich im Alltag?"),
+            QuestionsPromptPair(topic: "Reisegepaeck", citizenQuestion: "Was nimmst du auf Reisen immer mit?", spyQuestion: "Was laesst du auf Reisen bewusst zu Hause?"),
+            QuestionsPromptPair(topic: "Entspannung", citizenQuestion: "Welche Aktivitaet beruhigt dich schnell?", spyQuestion: "Welche Aktivitaet bringt dich schnell in Bewegung?"),
+            QuestionsPromptPair(topic: "Kreativ", citizenQuestion: "Womit wirst du kreativ?", spyQuestion: "Womit entspannst du dich kreativ?"),
+            QuestionsPromptPair(topic: "Sprache", citizenQuestion: "Welches Wort benutzt du zu oft?", spyQuestion: "Welches Wort benutzt du kaum, wuerdest es aber gern?")
+        ]
+    )
     
-    // MARK: - Mindset & Meinung
-    public static let mindsetOpinion = QuestionsCategory(
-        name: "Mindset & Meinung",
+    // MARK: - Mindset & Zukunft
+    public static let mindsetFuture = QuestionsCategory(
+        name: "Mindset & Zukunft",
         promptPairs: [
             // Bürger: Wichtigster Wert / Spion: Vernachlässigter Wert
             QuestionsPromptPair(topic: "Werte", citizenQuestion: "Welcher Wert steht für dich an erster Stelle?", spyQuestion: "Welchen Wert vernachlässigen viele Menschen heutzutage?"),
@@ -238,8 +315,7 @@ public enum QuestionsDefaults {
             // Bürger: Freude / Spion: Neugier (Beides Zukunft)
             QuestionsPromptPair(topic: "Zukunft", citizenQuestion: "Worauf freust du dich in der Zukunft am meisten?", spyQuestion: "Worauf bist du in der Zukunft am meisten gespannt?"),
             
-            // Bürger: Kopf/Bauch / Spion: Plan/Spontan (Beides Entscheidungswege)
-            QuestionsPromptPair(topic: "Entscheidung", citizenQuestion: "Hörst du eher auf Kopf oder Bauch?", spyQuestion: "Planst du lieber oder entscheidest du spontan?"),
+            QuestionsPromptPair(topic: "Entscheidung", citizenQuestion: "Triffst du Entscheidungen eher spontan oder geplant?", spyQuestion: "Vertraust du bei Entscheidungen eher auf Kopf oder Bauch?"),
             
             // Bürger: Superkraft / Spion: Talent (Beides Fähigkeiten)
             QuestionsPromptPair(topic: "Fähigkeit", citizenQuestion: "Welche Superkraft hättest du gerne?", spyQuestion: "Welches Talent hättest du gerne?"),
@@ -250,8 +326,7 @@ public enum QuestionsDefaults {
             // Bürger: Luxus / Spion: Gönnen (Beides Materielles)
             QuestionsPromptPair(topic: "Luxus", citizenQuestion: "Was ist für dich der größte Luxus?", spyQuestion: "Womit verwöhnst du dich selbst am liebsten?"),
             
-            // Bürger: Jüngeres Ich / Spion: Zukünftiges Ich (Beides Ratschläge)
-            QuestionsPromptPair(topic: "Rat", citizenQuestion: "Welchen Rat würdest du deinem jüngeren Ich geben?", spyQuestion: "Was würdest du dein zukünftiges Ich fragen?"),
+            QuestionsPromptPair(topic: "Rat", citizenQuestion: "Welchen Rat würdest du deinem jüngeren Ich geben?", spyQuestion: "Welchen Rat würdest du deinem zukünftigen Ich geben?"),
             
             QuestionsPromptPair(topic: "Tier", citizenQuestion: "Welches Tier wärst du gerne?", spyQuestion: "Welches Tier fasziniert dich am meisten?"),
             
@@ -265,119 +340,28 @@ public enum QuestionsDefaults {
             // Bürger: Reisen / Spion: Leben (Beides Epochen)
             QuestionsPromptPair(topic: "Zeit", citizenQuestion: "In welche Epoche würdest du gerne reisen?", spyQuestion: "In welcher Epoche hättest du gerne gelebt?"),
             
-            // Bürger: Leben / Spion: Geschmack (Beides Filmgenres)
-            QuestionsPromptPair(topic: "Genre", citizenQuestion: "Welches Filmgenre beschreibt dein Leben am besten?", spyQuestion: "Welches Filmgenre schaust du am liebsten?")
-        ]
-    )
-    
-    // MARK: - Alltag & Verhalten
-    public static let everydayBehavior = QuestionsCategory(
-        name: "Alltag & Verhalten",
-        promptPairs: [
-            // Bürger: Handy / Spion: TV/PC (Beides Bildschirmzeit)
-            QuestionsPromptPair(topic: "Screen Time", citizenQuestion: "Wie viele Stunden bist du täglich am Handy?", spyQuestion: "Wie viele Stunden verbringst du täglich vor Bildschirmen (PC/TV)?"),
-            
-            // Bürger: Aufräumen / Spion: Putzen (Beides Hausarbeit Frequenz)
-            QuestionsPromptPair(topic: "Ordnung", citizenQuestion: "Wie oft räumst du deine Wohnung auf?", spyQuestion: "Wie oft putzt du deine Wohnung gründlich?"),
-            
-            // Bürger: Aufschieben / Spion: Vergessen (Beides Aufgaben)
-            QuestionsPromptPair(topic: "Aufgaben", citizenQuestion: "Was schiebst du am liebsten auf?", spyQuestion: "Was vergisst du im Alltag am häufigsten?"),
-            
-            // Bürger: Zu spät / Spion: Zu früh (Beides Pünktlichkeit)
-            QuestionsPromptPair(topic: "Zeit", citizenQuestion: "Wie viele Minuten bist du typischerweise zu spät?", spyQuestion: "Wie viele Minuten bist du typischerweise zu früh?"),
-            
-            // Bürger: Schnell / Spion: Unterwegs (Beides Essen)
-            QuestionsPromptPair(topic: "Essen", citizenQuestion: "Was isst du, wenn es schnell gehen muss?", spyQuestion: "Was isst du oft unterwegs?"),
-            
-            // Bürger: Häufig / Spion: Liebste (Beides Verkehrsmittel)
-            QuestionsPromptPair(topic: "Transport", citizenQuestion: "Welches Verkehrsmittel nutzt du am häufigsten?", spyQuestion: "Welches Verkehrsmittel nutzt du am liebsten?"),
-            
-            // Bürger: Liebstes / Spion: Bequemstes (Beides Kleidung)
-            QuestionsPromptPair(topic: "Kleidung", citizenQuestion: "Was ist dein liebstes Kleidungsstück?", spyQuestion: "Was ist dein bequemstes Kleidungsstück?"),
-            
-            // Bürger: Duschen / Spion: Haare waschen (Beides Hygiene Frequenz)
-            QuestionsPromptPair(topic: "Hygiene", citizenQuestion: "Wie oft duschst du in der Woche?", spyQuestion: "Wie oft wäschst du deine Haare in der Woche?"),
-            
-            // Bürger: Nachbar / Spion: Postbote (Beides bekannte Personen)
-            QuestionsPromptPair(topic: "Namen", citizenQuestion: "Wie heißt dein direkter Nachbar?", spyQuestion: "Wie heißt eine Person, die du oft siehst, aber kaum kennst?"),
-            
-            // Bürger: Sonntag / Spion: Feiertag (Beides Freizeitaktivitäten)
-            QuestionsPromptPair(topic: "Freizeit", citizenQuestion: "Was machst du typischerweise sonntags?", spyQuestion: "Was machst du an einem freien Brückentag?"),
-            
-            // Bürger: Supermarkt / Spion: Drogerie (Beides Einkaufsorte)
-            QuestionsPromptPair(topic: "Einkauf", citizenQuestion: "In welchem Supermarkt kaufst du meistens ein?", spyQuestion: "In welcher Drogerie kaufst du meistens ein?"),
-            
-            // Bürger: Tasche / Spion: Jackentasche (Beides Gegenstände dabei)
-            QuestionsPromptPair(topic: "Dabei", citizenQuestion: "Was hast du immer in deiner Tasche dabei?", spyQuestion: "Was hast du immer in deiner Jackentasche?"),
-            
-            // Bürger: Einschlafen / Spion: Aufwachen (Beides Positionen)
-            QuestionsPromptPair(topic: "Schlafen", citizenQuestion: "In welcher Position schläfst du ein?", spyQuestion: "In welcher Position wachst du meistens auf?"),
-            
-            // Bürger: Friseur / Spion: Zahnarzt (Beides Termine Frequenz)
-            QuestionsPromptPair(topic: "Termine", citizenQuestion: "Wie oft gehst du zum Friseur?", spyQuestion: "Wie oft gehst du zur Vorsorge (Zahnarzt/Arzt)?"),
-            
-            // Bürger: Licht an / Spion: Fenster auf (Beides Heimkommen-Rituale)
-            QuestionsPromptPair(topic: "Zuhause", citizenQuestion: "Welches Licht machst du zuhause zuerst an?", spyQuestion: "Was machst du als Erstes, wenn du nach Hause kommst?"),
-            
-            // Bürger: Treppe/Aufzug / Spion: Laufen/Fahren (Beides Fortbewegung)
-            QuestionsPromptPair(topic: "Wahl", citizenQuestion: "Nimmst du eher Treppe oder Aufzug?", spyQuestion: "Läufst du kurze Strecken oder fährst du?")
-        ]
-    )
-    
-    // MARK: - Träume & Zukunft
-    public static let dreamsFutureWishes = QuestionsCategory(
-        name: "Träume & Zukunft",
-        promptPairs: [
-            // Bürger: Leben / Spion: Längere Zeit wohnen (Beides Städte)
+            QuestionsPromptPair(topic: "Genre", citizenQuestion: "Welches Filmgenre beschreibt dein Leben am besten?", spyQuestion: "Welches Filmgenre schaust du am liebsten?"),
             QuestionsPromptPair(topic: "Wohnen", citizenQuestion: "In welcher Stadt würdest du gerne leben?", spyQuestion: "In welcher Stadt könntest du dir vorstellen, ein Jahr zu bleiben?"),
-            
-            // Bürger: Traumjob / Spion: Hobby zum Beruf (Beides Arbeit)
             QuestionsPromptPair(topic: "Job", citizenQuestion: "Was wäre dein Traumjob?", spyQuestion: "Welches Hobby würdest du gerne zum Beruf machen?"),
-            
-            // Bürger: Kaufen / Spion: Investieren (Beides Geld ausgeben)
             QuestionsPromptPair(topic: "Lotto", citizenQuestion: "Was würdest du als Erstes kaufen, wenn du im Lotto gewinnst?", spyQuestion: "In was würdest du investieren, wenn du reich wärst?"),
-            
-            // Bürger: Nächste Reise / Spion: Traumreise (Beides Ziele)
             QuestionsPromptPair(topic: "Reise", citizenQuestion: "Wohin geht deine nächste große Reise?", spyQuestion: "Was ist dein absolutes Traumreiseziel?"),
-            
-            // Bürger: Nicht fehlen / Spion: Highlight (Beides Haus-Features)
             QuestionsPromptPair(topic: "Haus", citizenQuestion: "Was darf in deinem Traumhaus nicht fehlen?", spyQuestion: "Was wäre das Highlight in deinem Traumhaus?"),
-            
-            // Bürger: Werden / Spion: Fühlen (Beides Alter)
             QuestionsPromptPair(topic: "Alter", citizenQuestion: "Wie alt möchtest du werden?", spyQuestion: "Welches Alter findest du am besten?"),
-            
-            // Bürger: Sprechen / Spion: Verstehen (Beides Sprachen)
             QuestionsPromptPair(topic: "Sprache", citizenQuestion: "Welche Sprache würdest du gerne fließend sprechen?", spyQuestion: "Welche Sprache würdest du gerne verstehen können?"),
-            
-            // Bürger: Spielen / Spion: Lernen (Beides Instrumente)
             QuestionsPromptPair(topic: "Musik", citizenQuestion: "Welches Instrument würdest du gerne spielen?", spyQuestion: "Welches Instrument findest du am schönsten?"),
-            
-            // Bürger: Erleben / Spion: Sehen (Beides Bucket List)
-            QuestionsPromptPair(topic: "Abenteuer", citizenQuestion: "Welches Abenteuer willst du unbedingt noch erleben?", spyQuestion: "Welches Naturwunder willst du unbedingt noch sehen?"),
-            
-            // Bürger: Lebensabend / Spion: Ferienhaus (Beides Orte)
+            QuestionsPromptPair(topic: "Abenteuer", citizenQuestion: "Welches Abenteuer willst du unbedingt noch erleben?", spyQuestion: "Welches besondere Erlebnis steht ganz oben auf deiner Liste?"),
             QuestionsPromptPair(topic: "Ort", citizenQuestion: "Wo möchtest du deinen Lebensabend verbringen?", spyQuestion: "Wo hättest du gerne ein Ferienhaus?"),
-            
-            // Bürger: Machen / Spion: Nutzen (Beides Erfindungen)
-            QuestionsPromptPair(topic: "Erfindung", citizenQuestion: "Welche Erfindung würdest du gerne machen?", spyQuestion: "Welche Erfindung aus Science-Fiction hättest du gerne?"),
-            
-            // Bürger: Treffen / Spion: Essen gehen (Beides Promis)
+            QuestionsPromptPair(topic: "Erfindung", citizenQuestion: "Welche Erfindung würdest du gerne machen?", spyQuestion: "Welche Erfindung würdest du gerne besitzen, wenn es sie gäbe?"),
             QuestionsPromptPair(topic: "Promi", citizenQuestion: "Welchen Star würdest du gerne treffen?", spyQuestion: "Mit welchem Promi würdest du gerne essen gehen?"),
-            
-            // Bürger: Schreiben / Spion: Lesen (Beides Buchthemen)
             QuestionsPromptPair(topic: "Buch", citizenQuestion: "Über welches Thema würdest du ein Buch schreiben?", spyQuestion: "Über welches Thema liest du am liebsten?"),
-            
-            // Bürger: Traumauto / Spion: Alltagsauto (Beides Autos)
-            QuestionsPromptPair(topic: "Auto", citizenQuestion: "Was wäre dein absolutes Traumauto?", spyQuestion: "Welches Auto würdest du dir kaufen, wenn Geld egal wäre?"),
-            
-            // Bürger: Besiegen / Spion: Nicht haben (Beides Ängste)
+            QuestionsPromptPair(topic: "Auto", citizenQuestion: "Was wäre dein absolutes Traumauto?", spyQuestion: "Welches Auto würdest du dir als Erstes kaufen, wenn Geld egal wäre?"),
             QuestionsPromptPair(topic: "Angst", citizenQuestion: "Welche Angst würdest du gerne besiegen?", spyQuestion: "Auf welche Sorge würdest du gerne verzichten?")
         ]
     )
     
-    // MARK: - Party & Peinlich
-    public static let partyEmbarrassing = QuestionsCategory(
-        name: "Party & Peinlich",
+    // MARK: - Party & Spicy
+    public static let partySpicy = QuestionsCategory(
+        name: "Party & Spicy",
         promptPairs: [
             // Bürger: Tanzen / Spion: Mitsingen (Beides Songs)
             QuestionsPromptPair(topic: "Musik", citizenQuestion: "Bei welchem Song stürmst du die Tanzfläche?", spyQuestion: "Bei welchem Song singst du am lautesten mit?"),
@@ -422,61 +406,27 @@ public enum QuestionsDefaults {
             QuestionsPromptPair(topic: "Geld", citizenQuestion: "Wie viel gibst du an einem guten Abend aus?", spyQuestion: "Wie viel Geld nimmst du bar zum Feiern mit?"),
             
             // Bürger: Aufgewacht / Spion: Eingeschlafen (Beides Orte)
-            QuestionsPromptPair(topic: "Schlaf", citizenQuestion: "Wo bist du nach einer Party mal aufgewacht?", spyQuestion: "Wo bist du schon mal versehentlich eingeschlafen?")
-        ]
-    )
-    
-    // MARK: - Spicy & Persönlich
-    public static let spicyPersonal = QuestionsCategory(
-        name: "Spicy & Persönlich",
-        promptPairs: [
-            // Bürger: Körperlich / Spion: Ausstrahlung (Beides Attraktivität)
+            QuestionsPromptPair(topic: "Schlaf", citizenQuestion: "Wo bist du nach einer Party mal aufgewacht?", spyQuestion: "Wo bist du schon mal versehentlich eingeschlafen?"),
             QuestionsPromptPair(topic: "Attraktivität", citizenQuestion: "Was findest du an anderen körperlich am attraktivsten?", spyQuestion: "Was findest du an der Ausstrahlung anderer am wichtigsten?"),
-            
-            // Bürger: Wichtig / Spion: Gut (Beides Bett-Themen)
             QuestionsPromptPair(topic: "Bett", citizenQuestion: "Was ist dir im Bett besonders wichtig?", spyQuestion: "Was macht für dich guten Sex aus?"),
-            
-            // Bürger: Ungewöhnlich / Spion: Aufregend (Beides Orte)
             QuestionsPromptPair(topic: "Ort", citizenQuestion: "An welchem ungewöhnlichen Ort hattest du schon Sex?", spyQuestion: "An welchem Ort hättest du gerne mal Sex?"),
-            
-            // Bürger: Sexy / Spion: Anziehend (Beides Kleidung)
             QuestionsPromptPair(topic: "Kleidung", citizenQuestion: "Was findest du beim anderen Geschlecht sexy?", spyQuestion: "Welches Kleidungsstück findest du besonders anziehend?"),
-            
-            // Bürger: Benutzt / Spion: Installiert (Beides Apps)
             QuestionsPromptPair(topic: "App", citizenQuestion: "Welche Dating-App hast du schon mal benutzt?", spyQuestion: "Auf welcher Plattform hast du schon mal geflirtet?"),
-            
-            // Bürger: Kontakt / Spion: Befreundet (Beides Ex-Partner Zahlen)
             QuestionsPromptPair(topic: "Ex", citizenQuestion: "Mit wie vielen Ex-Partnern hast du noch Kontakt?", spyQuestion: "Mit wie vielen Ex-Partnern bist du noch befreundet?"),
-            
-            // Bürger: Erster Schritt / Spion: Initiative (Beides Dating)
             QuestionsPromptPair(topic: "Initiative", citizenQuestion: "Machst du eher den ersten Schritt oder wartest du?", spyQuestion: "Sprichst du jemanden an oder lässt du dich ansprechen?"),
-            
-            // Bürger: Crush / Spion: Fan (Beides Promis)
             QuestionsPromptPair(topic: "Crush", citizenQuestion: "Wer ist dein Celebrity Crush?", spyQuestion: "Welchen Promi findest du heiß?"),
-            
-            // Bürger: ONS / Spion: Date (Beides Erfahrung Ja/Nein)
             QuestionsPromptPair(topic: "Erfahrung", citizenQuestion: "Hattest du schon mal einen One Night Stand?", spyQuestion: "Hattest du schon mal ein Date, das im Bett endete?"),
-            
-            // Bürger: Erster Kuss / Spion: Erstes Mal (Beides Alter/Zeitpunkt)
             QuestionsPromptPair(topic: "Erstes Mal", citizenQuestion: "Wann hast du deinen ersten Kuss bekommen?", spyQuestion: "In welchem Alter hattest du deinen ersten Kuss?"),
-            
-            // Bürger: Unterwäsche / Spion: Oberteil (Beides Farben)
-            QuestionsPromptPair(topic: "Farbe", citizenQuestion: "Welche Farbe hat deine Unterwäsche gerade?", spyQuestion: "Welche Farbe hat dein Oberteil gerade?"),
-            
-            // Bürger: Fantasie / Spion: Traum (Beides Gedanken)
+            QuestionsPromptPair(topic: "Farbe", citizenQuestion: "Welche Farbe findest du bei Unterwäsche attraktiv?", spyQuestion: "Welche Farbe trägst du bei Kleidung am liebsten?"),
             QuestionsPromptPair(topic: "Gedanken", citizenQuestion: "Hast du eine geheime Fantasie?", spyQuestion: "Wovon träumst du manchmal tagüber?"),
-            
-            // Bürger: Okay / Spion: Ideal (Beides Altersunterschied)
             QuestionsPromptPair(topic: "Alter", citizenQuestion: "Welcher Altersunterschied ist für dich okay?", spyQuestion: "Welchen Altersunterschied findest du ideal?"),
-            
-            // Bürger: Magst / Spion: Bevorzugst (Beides Stellungen)
             QuestionsPromptPair(topic: "Vorliebe", citizenQuestion: "Welche Stellung magst du am liebsten?", spyQuestion: "Welche Position bevorzugst du meistens?")
         ]
     )
     
-    // MARK: - Dark & Tabu
+    // MARK: - Hard & Tabu (optional)
     public static let darkTaboo = QuestionsCategory(
-        name: "Dark & Tabu",
+        name: "Hard & Tabu",
         promptPairs: [
             // Bürger: Gesetz / Spion: Regel (Beides Verstöße)
             QuestionsPromptPair(topic: "Regelbruch", citizenQuestion: "Welches Gesetz würdest du brechen, wenn es keine Strafe gäbe?", spyQuestion: "Welche gesellschaftliche Regel würdest du gerne ignorieren?"),
@@ -487,8 +437,17 @@ public enum QuestionsDefaults {
             // Bürger: Hasst / Spion: Verachtest (Beides Abneigung Personen)
             QuestionsPromptPair(topic: "Feind", citizenQuestion: "Gibt es jemanden, den du wirklich hasst?", spyQuestion: "Gibt es jemanden, den du absolut nicht ausstehen kannst?"),
             
-            // Bürger: Sterben / Spion: Alt werden (Beides Lebensende)
-            QuestionsPromptPair(topic: "Ende", citizenQuestion: "Wie würdest du am liebsten sterben?", spyQuestion: "Bis zu welchem Alter möchtest du fit bleiben?"),
+            QuestionsPromptPair(topic: "Ende", citizenQuestion: "Wie würdest du am liebsten sterben?", spyQuestion: "Wovor hättest du beim Thema Tod am meisten Angst?"),
+
+            QuestionsPromptPair(topic: "Scham", citizenQuestion: "Wofür schämst du dich heute noch ein bisschen?", spyQuestion: "Wofür würdest du dich wahrscheinlich schämen, wenn es rauskommt?"),
+            
+            QuestionsPromptPair(topic: "Notlüge", citizenQuestion: "Welche Notlüge benutzt du am häufigsten?", spyQuestion: "Welche Wahrheit würdest du am ehesten verschweigen?"),
+            
+            QuestionsPromptPair(topic: "Grenze", citizenQuestion: "Wo ziehst du eine klare moralische Grenze?", spyQuestion: "Wo wärst du am ehesten bereit, eine Grenze zu überschreiten?"),
+            
+            QuestionsPromptPair(topic: "Neugier", citizenQuestion: "Was würdest du gerne heimlich wissen?", spyQuestion: "Was würdest du lieber niemals erfahren?"),
+            
+            QuestionsPromptPair(topic: "Manipulation", citizenQuestion: "Hast du schon mal jemanden manipuliert?", spyQuestion: "Hast du dich schon mal manipuliert gefühlt?"),
             
             // Bürger: Geheimnisse / Spion: Wahres Ich (Beides Wissen über dich)
             QuestionsPromptPair(topic: "Wissen", citizenQuestion: "Wer kennt deine dunkelsten Geheimnisse?", spyQuestion: "Wer weiß alles über dich?"),
@@ -521,18 +480,20 @@ public enum QuestionsDefaults {
             QuestionsPromptPair(topic: "Gedanke", citizenQuestion: "Was war dein dunkelster Gedanke?", spyQuestion: "Was ist ein Gedanke, den du niemandem erzählst?"),
             
             // Bürger: Drogen / Spion: Rauschmittel (Beides Konsum)
-            QuestionsPromptPair(topic: "Illegal", citizenQuestion: "Hast du schon mal illegale Substanzen probiert?", spyQuestion: "Hast du schon mal etwas Verbotenes konsumiert?")
+            QuestionsPromptPair(topic: "Illegal", citizenQuestion: "Hast du schon mal illegale Substanzen probiert?", spyQuestion: "Hast du schon mal etwas Verbotenes konsumiert?"),
+            
+            QuestionsPromptPair(topic: "Geheimnis", citizenQuestion: "Welches Geheimnis würdest du nie laut sagen?", spyQuestion: "Welches Geheimnis würdest du nur einer Person anvertrauen?"),
+            
+            QuestionsPromptPair(topic: "Reue", citizenQuestion: "Was bereust du am meisten?", spyQuestion: "Was würdest du sofort anders machen, wenn du könntest?")
         ]
     )
     
     public static let all: [QuestionsCategory] = [
-        everydaySocial,
+        everyday,
         loveRelationships,
-        mindsetOpinion,
-        everydayBehavior,
-        dreamsFutureWishes,
-        partyEmbarrassing,
-        spicyPersonal,
+        couplesSafe,
+        mindsetFuture,
+        partySpicy,
         darkTaboo
     ]
 }
