@@ -376,6 +376,10 @@ class GameManager: ObservableObject {
     
     func correctGuess() {
         guard gameState.phase == .playing else { return }
+        
+        // Haptik
+        TimesUpHapticsManager.shared.playSuccess()
+        
         let currentTeamId = gameState.currentTeam?.id
         
         if let teamId = currentTeamId, pausePenaltyTargets.remove(teamId) != nil {
@@ -431,6 +435,12 @@ class GameManager: ObservableObject {
         guard gameState.currentTerm != nil else {
             return
         }
+        
+        // Haptik
+        if reason == .skip {
+            TimesUpHapticsManager.shared.playSkip()
+        }
+        
         let visibleIndex = gameState.resolvedCurrentTermIndex()
         gameState.markCurrentTermAsSeen()
         
@@ -476,6 +486,11 @@ class GameManager: ObservableObject {
     
     private func applySkipPenaltyIfNeeded() {
         guard gameState.currentTeamIndex < gameState.settings.teams.count else { return }
+        
+        if gameState.settings.difficulty != .easy {
+            TimesUpHapticsManager.shared.playPenalty()
+        }
+        
         let round = gameState.currentRound.rawValue
         let teamId = gameState.settings.teams[gameState.currentTeamIndex].id
         if consumeShieldIfAvailable(for: teamId) {
@@ -515,6 +530,10 @@ class GameManager: ObservableObject {
     
     private func addPenaltyCardForCurrentTeam() {
         guard gameState.currentTeamIndex < gameState.settings.teams.count else { return }
+        
+        // Haptik
+        TimesUpHapticsManager.shared.playPenalty()
+        
         let team = gameState.settings.teams[gameState.currentTeamIndex]
         var penaltyTerm = generatePenaltyTerm(for: team)
         penaltyTerm.assignedTeamId = team.id
@@ -1359,6 +1378,10 @@ class GameManager: ObservableObject {
     
     private func applyPerkEffect(_ perk: AwardedPerk, teamIndex: Int) {
         guard gameState.settings.perksEnabled else { return }
+        
+        // Haptik
+        TimesUpHapticsManager.shared.playPerkActivation()
+        
         switch perk.type {
         case .freezeTime:
             activateFreezeTime(for: perk.teamId)
@@ -1679,9 +1702,15 @@ class GameManager: ObservableObject {
             if self.gameState.turnTimeRemaining > 0 {
                 let decrement = self.timerDecrementForCurrentTeam()
                 self.gameState.turnTimeRemaining = max(0, self.gameState.turnTimeRemaining - decrement)
+                
+                // Haptik Ticken
+                TimesUpHapticsManager.shared.playTimerTick(secondsRemaining: Int(self.gameState.turnTimeRemaining))
+                
                 self.cleanupExpiredRushIfNeeded()
                 self.notifyUIChange()
             } else {
+                // Haptik Game Over
+                TimesUpHapticsManager.shared.playTimerTick(secondsRemaining: 0)
                 self.handleTurnTimeEnd()
             }
         }

@@ -7,6 +7,9 @@ struct MainSettingsView: View {
     @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
     @AppStorage("useSystemLanguage") private var useSystemLanguage = true
     
+    // Global Haptics Setting
+    @AppStorage("isHapticsEnabled") private var isHapticsEnabled = true
+    
     // Globaler Spieler-Manager
     @StateObject private var playerManager = GlobalPlayerManager.shared
     @State private var newPlayerName = ""
@@ -88,7 +91,24 @@ struct MainSettingsView: View {
                                     )
                                 }
                                 
-                                // 3. App Icon (Placeholder)
+                                // 3. Haptics (Global)
+                                Button {
+                                    withAnimation {
+                                        isHapticsEnabled.toggle()
+                                        if isHapticsEnabled {
+                                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                        }
+                                    }
+                                } label: {
+                                    DashboardCard(
+                                        icon: "iphone.radiowaves.left.and.right",
+                                        title: LocalizedStringKey("Haptik"),
+                                        subtitle: isHapticsEnabled ? LocalizedStringKey("Vibrationen an") : LocalizedStringKey("Vibrationen aus"),
+                                        color: isHapticsEnabled ? .green : .gray
+                                    )
+                                }
+                                
+                                // 4. App Icon (Placeholder)
                                 NavigationLink(destination: Text("App Icons Coming Soon")) {
                                     DashboardCard(
                                         icon: "app.badge",

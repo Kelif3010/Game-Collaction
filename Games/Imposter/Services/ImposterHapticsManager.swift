@@ -16,13 +16,19 @@ class ImposterHapticsManager {
     private var engine: CHHapticEngine?
     private var lifecycleObservers: [NSObjectProtocol] = []
     
+    // Prüft, ob Haptik hardwareseitig unterstützt wird UND global aktiviert ist
+    private var isHapticsEnabledAndSupported: Bool {
+        let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
+        return isEnabled && CHHapticEngine.capabilitiesForHardware().supportsHaptics
+    }
+    
     init() {
         createEngine()
         setupLifecycleObservers()
     }
     
     private func createEngine() {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        guard isHapticsEnabledAndSupported else { return }
         
         do {
             engine = try CHHapticEngine()
@@ -67,9 +73,12 @@ class ImposterHapticsManager {
     /// Spielt einen schweren, dumpfen Schlag (wie ein Richterhammer)
     /// Ideal für: Voting-Entscheidungen
     func playHeavyThud() {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-            // Fallback für alte Geräte
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        guard isHapticsEnabledAndSupported else {
+            // Fallback für alte Geräte (nur wenn Haptik generell an ist)
+            let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
+            if isEnabled {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            }
             return
         }
         
@@ -90,12 +99,15 @@ class ImposterHapticsManager {
     /// Spielt einen einzelnen Scan-Tick (Progressiv)
     /// - Parameter progress: Fortschritt von 0.0 bis 1.0
     func playScanTick(progress: Float) {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+        guard isHapticsEnabledAndSupported else {
             // Fallback
-            if progress > 0.8 {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            } else {
-                UISelectionFeedbackGenerator().selectionChanged()
+            let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
+            if isEnabled {
+                if progress > 0.8 {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                } else {
+                    UISelectionFeedbackGenerator().selectionChanged()
+                }
             }
             return
         }
@@ -124,8 +136,9 @@ class ImposterHapticsManager {
     /// Spielt einen Timer-Tick basierend auf der verbleibenden Zeit
     /// Optimiert für: Spürbarkeit auf dem Tisch (Vibration + Sound)
     func playTimerTick(secondsRemaining: Int) {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-            if secondsRemaining <= 5 && secondsRemaining > 0 {
+        guard isHapticsEnabledAndSupported else {
+            let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
+            if isEnabled && secondsRemaining <= 5 && secondsRemaining > 0 {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             }
             return

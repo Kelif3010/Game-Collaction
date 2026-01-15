@@ -346,3 +346,8 @@
 /* AI Availability */
 "Apple Intelligence benötigt" = "Apple Intelligence benötigt";
 "Diese Funktion nutzt fortschrittliche KI-Modelle, die auf deinem Gerät momentan nicht verfügbar sind." = "Diese Funktion nutzt fortschrittliche KI-Modelle, die auf deinem Gerät momentan nicht verfügbar sind.";
+
+/* Haptics Settings */
+"Haptik" = "Haptik";
+"Vibrationen an" = "Vibrationen an";
+"Vibrationen aus" = "Vibrationen aus";

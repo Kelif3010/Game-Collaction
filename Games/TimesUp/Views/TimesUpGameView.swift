@@ -577,55 +577,59 @@ struct PlayingPhaseView: View {
                 Spacer()
                 
                 VStack(spacing: 20) {
-                    if !forcedSkipActive {
-                        Button(action: {
-                            gameManager.correctGuess()
-                        }) {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.green, .blue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: 120, height: 120)
-                                .overlay(
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 40, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
-                        }
-                    }
-
                     if gameManager.gameState.currentRound.canSkip {
                         let skipFrozen = gameManager.isSkipButtonFrozenForCurrentTeam()
-                        Button(action: {
-                            gameManager.skipTerm()
-                        }) {
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 80, height: 80)
-                                .overlay(
-                                    Image(systemName: "arrow.right")
-                                        .font(.system(size: 25, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
-                                .overlay(alignment: .bottomTrailing) {
-                                    if skipFrozen {
-                                        Image(systemName: "lock.fill")
-                                            .font(.caption)
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                gameManager.skipTerm()
+                            }) {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 80, height: 80)
+                                    .overlay(
+                                        Image(systemName: "arrow.right")
+                                            .font(.system(size: 25, weight: .bold))
                                             .foregroundColor(.white)
-                                            .padding(6)
-                                            .background(Color.black.opacity(0.45))
-                                            .clipShape(Circle())
-                                            .offset(x: 20, y: 20)
+                                    )
+                                    .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
+                                    .overlay(alignment: .bottomTrailing) {
+                                        if skipFrozen {
+                                            Image(systemName: "lock.fill")
+                                                .font(.caption)
+                                                .foregroundColor(.white)
+                                                .padding(6)
+                                                .background(Color.black.opacity(0.45))
+                                                .clipShape(Circle())
+                                                .offset(x: 20, y: 20)
+                                        }
                                     }
+                            }
+                            .disabled(skipFrozen)
+                            
+                            if !forcedSkipActive {
+                                Button(action: {
+                                    gameManager.correctGuess()
+                                }) {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.green, .green.opacity(0.75)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 120, height: 120)
+                                        .overlay(
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 40, weight: .bold))
+                                                .foregroundColor(.white)
+                                        )
+                                        .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
                                 }
+                            }
                         }
-                        .disabled(skipFrozen)
+                        .frame(maxWidth: .infinity)
+                        
                         if forcedSkipActive {
                             Text("Zwangs-Skip aktiv – zuerst Skip ausführen.")
                                 .font(.footnote)
@@ -651,6 +655,26 @@ struct PlayingPhaseView: View {
                                     .shadow(color: .red.opacity(0.5), radius: 10, x: 0, y: 5)
                             }
                             .disabled(skipFrozen)
+                        }
+                    } else if !forcedSkipActive {
+                        Button(action: {
+                            gameManager.correctGuess()
+                        }) {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.green, .green.opacity(0.75)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 120, height: 120)
+                                .overlay(
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 40, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                                .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
                         }
                     }
                 }
