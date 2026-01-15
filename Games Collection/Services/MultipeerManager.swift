@@ -37,6 +37,9 @@ class MultipeerManager: NSObject, ObservableObject {
     @Published var hostActivity: String = ""
     @Published var disconnectedPeers: Set<String> = []
     
+    // NEU: Für UI-Benachrichtigungen
+    @Published var lastDisconnectedPlayerName: String? = nil
+    
     // MC Objekte
     private var session: MCSession?
     private var advertiser: MCNearbyServiceAdvertiser?
@@ -102,9 +105,17 @@ class MultipeerManager: NSObject, ObservableObject {
         print("MPC: Hosting gestartet als \(myPeerId.displayName) mit Code \(roomCode)")
     }
     
+    var lastJoinedRoomCode: String? {
+        UserDefaults.standard.string(forKey: "mpc.lastRoomCode")
+    }
+    
     func joinSession(roomCode: String) {
         stop()
         syncPeerNameFromDefaults()
+        
+        // Save Code for Rejoin Convenience
+        UserDefaults.standard.set(roomCode, forKey: "mpc.lastRoomCode")
+        
         role = .peer
         targetRoomCode = roomCode
         lobbyPeers = [myPeerId.displayName] // Reset Lobby
@@ -281,6 +292,7 @@ extension MultipeerManager: MCSessionDelegate {
             case .connecting: print("MPC: Verbinde mit \(peerID.displayName)...")
             case .notConnected:
                 print("MPC: Getrennt von \(peerID.displayName)")
+                self.lastDisconnectedPlayerName = peerID.displayName
                 self.markPeerDisconnected(peerID.displayName)
             @unknown default: break
             }

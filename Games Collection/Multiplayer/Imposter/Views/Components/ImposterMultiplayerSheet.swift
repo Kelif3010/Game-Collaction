@@ -263,6 +263,25 @@ struct ImposterMultiplayerSheet: View {
                 .cornerRadius(16)
             }
             
+            // NEU: Rejoin Button
+            if let lastCode = mpc.lastJoinedRoomCode {
+                Button {
+                    inputCode = lastCode
+                    joinGame()
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("Letzte Sitzung (\(lastCode))")
+                    }
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.white.opacity(0.15))
+                    .foregroundColor(.white)
+                    .cornerRadius(16)
+                }
+            }
+            
             Text("Verbinde dich mit Freunden in der Nähe (WLAN/Bluetooth).")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.6))

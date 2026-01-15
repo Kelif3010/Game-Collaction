@@ -106,13 +106,17 @@ struct CardBackView: View {
     @State private var scanTimer: Timer?
     @State private var showSuccess = false
     
+    // Abwechslung: Zufällige Animation
+    @State private var selectedAnimation = "Fingerprint biometric scan"
+    private let availableAnimations = ["Fingerprint biometric scan", "Android Fingerprint"]
+    
     // Haptik
     private let impactGenerator = UIImpactFeedbackGenerator(style: .light)
     private let successGenerator = UINotificationFeedbackGenerator()
     
     var body: some View {
         ZStack {
-            // 1. Edler Hintergrund
+            // ... (Restlicher Hintergrund-Code bleibt gleich)
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -162,40 +166,33 @@ struct CardBackView: View {
                 
                 // Der Scanner (Zentral)
                 ZStack {
-                    // Pulsierende Aura
-                    if isScanning {
-                        Circle()
-                            .stroke(Color.cyan.opacity(0.5), lineWidth: 2)
-                            .frame(width: 130, height: 130)
-                            .scaleEffect(1.4)
-                            .opacity(0)
-                            .animation(.easeOut(duration: 1.2).repeatForever(autoreverses: false), value: isScanning)
+                    // Lottie Animation (Fingerprint)
+                    if !showSuccess {
+                        LottieView(
+                            filename: selectedAnimation,
+                            loopMode: .loop,
+                            isPlaying: isScanning
+                        )
+                        .frame(width: 200, height: 200) // Etwas größer für Details
+                        .opacity(isScanning ? 1.0 : 0.7) // Gedimmt wenn inaktiv
+                        .scaleEffect(isScanning ? 1.2 : 1.0)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isScanning)
+                        // Fallback-Overlay, falls man nicht scannt (damit man sieht wo man drücken muss)
+                        .overlay(
+                            !isScanning ? Image(systemName: "touchid").font(.largeTitle).foregroundColor(.white.opacity(0.2)) : nil
+                        )
                     }
                     
-                    // Hintergrund Kreis
-                    Circle()
-                        .fill(Color.black.opacity(0.3))
-                        .frame(width: 140, height: 140)
-                        .overlay(Circle().stroke(.white.opacity(0.1), lineWidth: 1))
-                    
-                    // Fortschritts-Ring
-                    Circle()
-                        .trim(from: 0, to: progress)
-                        .stroke(
-                            LinearGradient(colors: [.cyan, .blue, .purple], startPoint: .top, endPoint: .bottom),
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                        )
-                        .frame(width: 140, height: 140)
-                        .rotationEffect(.degrees(-90))
-                    
-                    // Fingerprint Icon
-                    Image(systemName: showSuccess ? "checkmark" : "touchid")
-                        .font(.system(size: 50))
-                        .foregroundStyle(showSuccess ? .green : (isScanning ? .cyan : .white.opacity(0.6)))
-                        .contentTransition(.symbolEffect(.replace))
+                    // Success State (Checkmark)
+                    if showSuccess {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 80))
+                            .foregroundStyle(.green)
+                            .background(Circle().fill(.white).padding(10))
+                            .shadow(color: .green.opacity(0.6), radius: 20)
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
-                .scaleEffect(isScanning ? 1.05 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isScanning)
                 // GESTE direkt auf dem Scanner-Zentrum
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
@@ -227,11 +224,16 @@ struct CardBackView: View {
         }
         .onAppear {
             impactGenerator.prepare()
+            // Zufällige Animation wählen
+            selectedAnimation = availableAnimations.randomElement() ?? availableAnimations[0]
         }
     }
     
     private func startScan() {
         isScanning = true
+        // Start-Sound (Processing Loop)
+        SoundManager.shared.playSound(named: "ui-processing-data-continuous-sequence-sensor-scan-small-230491")
+        
         // Start-Tick
         ImposterHapticsManager.shared.playScanTick(progress: 0.0)
         
@@ -258,6 +260,9 @@ struct CardBackView: View {
     
     private func stopScan() {
         guard !showSuccess else { return }
+        // Sound stoppen
+        SoundManager.shared.stopSound()
+        
         isScanning = false
         scanTimer?.invalidate()
         scanTimer = nil
@@ -269,6 +274,9 @@ struct CardBackView: View {
     }
     
     private func completeScan() {
+        // Scan-Sound stoppen bevor der Success-Sound kommt
+        SoundManager.shared.stopSound()
+        
         scanTimer?.invalidate()
         scanTimer = nil
         // Kein Herzschlag mehr zu stoppen
@@ -277,8 +285,11 @@ struct CardBackView: View {
         progress = 1.0
         showSuccess = true
         
-        // Finaler Bestätigungs-Effekt
+        // Finaler Bestätigungs-Effekt (Haptik)
         successGenerator.notificationOccurred(.success)
+        
+        // Sound-Effekt abspielen
+        SoundManager.shared.playSound(named: "computer-processing-sound-effects-short-click-select-01-122134")
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             onUnlocked()

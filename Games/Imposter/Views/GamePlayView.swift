@@ -25,6 +25,10 @@ struct GamePlayView: View {
     @State private var myPlayerIdentity: PlayerIdentity?
     @State private var lastConnectedPeerNames: Set<String> = []
     
+    // Disconnect Toast State
+    @State private var showDisconnectToast = false
+    @State private var disconnectToastName = ""
+    
     // KI-Services
     @StateObject private var hintService = HintService.shared
 
@@ -55,6 +59,31 @@ struct GamePlayView: View {
                 // Footer (Beenden)
                 GameFooterView()
             }
+            
+            // Disconnect Toast Overlay
+            if showDisconnectToast {
+                VStack {
+                    HStack(spacing: 12) {
+                        Image(systemName: "wifi.slash")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("\(disconnectToastName) hat die Verbindung verloren")
+                            .font(.subheadline.bold())
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.red.opacity(0.9))
+                    .clipShape(Capsule())
+                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                    .padding(.top, 60) // Unter der Notch/Dynamic Island
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(100)
+                    
+                    Spacer()
+                }
+            }
         }
         .onAppear {
             resetLocalState()
@@ -71,6 +100,21 @@ struct GamePlayView: View {
             gameLogic.stopGameTimer()
         }
         .navigationBarHidden(true)
+        .onChange(of: mpc.lastDisconnectedPlayerName) { _, newName in
+            if let name = newName {
+                disconnectToastName = name
+                withAnimation(.spring()) {
+                    showDisconnectToast = true
+                }
+                
+                // Hide after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    withAnimation {
+                        showDisconnectToast = false
+                    }
+                }
+            }
+        }
         .onChange(of: gameSettings.requestExitToMain) { _, newValue in
             if newValue {
                 dismiss()
@@ -491,18 +535,21 @@ struct MultiplayerWaitingView: View {
             ImposterStyle.backgroundGradient.ignoresSafeArea()
             
             VStack(spacing: 30) {
-                // Animated Loading Circle
+                // Animated Radar Scanner
                 ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                        .frame(width: 120, height: 120)
-                    
-                    Circle()
-                        .trim(from: 0, to: 0.75)
-                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .frame(width: 120, height: 120)
-                        .rotationEffect(.degrees(Double(Int(Date().timeIntervalSince1970 * 100) % 360)))
-                        .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: Date())
+                    LottieView(
+                        filename: "Radar animation",
+                        loopMode: .loop,
+                        isPlaying: true
+                    )
+                    .frame(width: 200, height: 200)
+                    .shadow(color: .blue.opacity(0.5), radius: 20)
+                }
+                .onAppear {
+                    SoundManager.shared.playSound(named: "radar-beeping-192404", loop: true)
+                }
+                .onDisappear {
+                    SoundManager.shared.stopSound()
                 }
                 
                 VStack(spacing: 10) {
