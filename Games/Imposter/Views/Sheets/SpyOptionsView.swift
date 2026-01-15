@@ -7,6 +7,9 @@ struct SpyOptionsView: View {
     @State private var showTutorial = false
     @State private var roleToExplain: RoleType?
     @AppStorage("hasSeenRolesTutorial") private var hasSeenRolesTutorial = false
+    
+    // AI Alert State
+    @State private var showAIAlert = false
 
     var body: some View {
         ZStack {
@@ -105,8 +108,15 @@ struct SpyOptionsView: View {
                                     tint: .orange,
                                     title: NSLocalizedString("Spion-Hinweise anzeigen", comment: ""),
                                     subtitle: NSLocalizedString("Zeigt dezente Tipps für Spione in der Runde.", comment: ""),
+                                    isDisabled: !AIService.shared.isAvailable,
                                     badgeText: NSLocalizedString("Beta", comment: ""),
-                                    isOn: $gameSettings.showSpyHints
+                                    isOn: Binding(
+                                        get: { gameSettings.showSpyHints && AIService.shared.isAvailable },
+                                        set: { if AIService.shared.isAvailable { gameSettings.showSpyHints = $0 } }
+                                    ),
+                                    onDisabledTap: {
+                                        showAIAlert = true
+                                    }
                                 )
                             }
                         }
@@ -153,6 +163,11 @@ struct SpyOptionsView: View {
             }
         }
         .presentationDragIndicator(.visible)
+        .alert("Apple Intelligence benötigt", isPresented: $showAIAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Diese Funktion nutzt fortschrittliche KI-Modelle, die auf deinem Gerät momentan nicht verfügbar sind.")
+        }
         .sheet(isPresented: $showTutorial) {
             RolesTutorialView()
         }

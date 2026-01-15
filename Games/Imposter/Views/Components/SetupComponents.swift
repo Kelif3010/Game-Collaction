@@ -68,6 +68,7 @@ struct SpyOptionRow: View {
     var isDisabled: Bool = false
     var badgeText: String? = nil
     var isOn: Binding<Bool>
+    var onDisabledTap: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -88,6 +89,7 @@ struct SpyOptionRow: View {
             Toggle("", isOn: isOn)
                 .labelsHidden()
                 .tint(.green)
+                .disabled(isDisabled)
         }
         .imposterRowStyle()
         .overlay(alignment: .topTrailing) {
@@ -104,7 +106,12 @@ struct SpyOptionRow: View {
             }
         }
         .opacity(isDisabled ? 0.5 : 1.0)
-        .disabled(isDisabled)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isDisabled {
+                onDisabledTap?()
+            }
+        }
     }
 }
 

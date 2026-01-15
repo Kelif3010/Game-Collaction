@@ -17,6 +17,9 @@ struct CategoryManagementView: View {
     @State private var showingDeleteAlert = false
     @State private var categoryToDelete: TimesUpCategory?
     
+    // AI Alert
+    @State private var showAIAlert = false
+    
     // Theme Reference (copied locally to ensure preview works easily)
     private let backgroundGradient = LinearGradient(
         colors: [
@@ -70,7 +73,11 @@ struct CategoryManagementView: View {
                             VStack(spacing: 12) {
                                 // AI Generator Button
                                 Button {
-                                    showingAIGenerator = true
+                                    if AIService.shared.isAvailable {
+                                        showingAIGenerator = true
+                                    } else {
+                                        showAIAlert = true
+                                    }
                                 } label: {
                                     HStack(spacing: 14) {
                                         ZStack {
@@ -91,8 +98,14 @@ struct CategoryManagementView: View {
                                                 .foregroundColor(.white.opacity(0.7))
                                         }
                                         Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.white.opacity(0.5))
+                                        
+                                        if !AIService.shared.isAvailable {
+                                            Image(systemName: "lock.fill")
+                                                .foregroundColor(.white.opacity(0.5))
+                                        } else {
+                                            Image(systemName: "chevron.right")
+                                                .foregroundColor(.white.opacity(0.5))
+                                        }
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.08))
@@ -101,6 +114,7 @@ struct CategoryManagementView: View {
                                         RoundedRectangle(cornerRadius: 18)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
                                     )
+                                    .opacity(AIService.shared.isAvailable ? 1.0 : 0.5)
                                 }
                                 
                                 // Manual Add Button
@@ -195,6 +209,11 @@ struct CategoryManagementView: View {
                 } else {
                     Text(LocalizedStringKey("Möchtest du diese Kategorie löschen?"))
                 }
+            }
+            .alert(LocalizedStringKey("Apple Intelligence benötigt"), isPresented: $showAIAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Diese Funktion nutzt fortschrittliche KI-Modelle, die auf deinem Gerät momentan nicht verfügbar sind.")
             }
         }
     }

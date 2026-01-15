@@ -209,7 +209,7 @@ class VotingManager: ObservableObject {
                 
                 if jesterWon {
                     // Narr gewinnt -> Alle anderen verlieren
-                    let jesters = gameSettings.players.filter { $0.roleType == .fool }.map { $0.name }
+                    _ = gameSettings.players.filter { $0.roleType == .fool }.map { $0.name }
                     let losers = spyNames + citizenNames
                     StatsService.shared.recordLoss(playerNames: losers, asImposter: false) // Zählt als Niederlage
                     // TODO: Record Jester Win explicitly if needed in StatsService
