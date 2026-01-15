@@ -347,3 +347,11 @@
 "Team Bürger" = "Team Bürger";
 "Team Spion" = "Team Spion";
 "Team Chaos" = "Team Chaos";
+
+/* Imposter Narr */
+"NARR GEWINNT" = "NARR GEWINNT";
+"Du wurdest rausgewählt! Genau das war dein Plan." = "Du wurdest rausgewählt! Genau das war dein Plan.";
+"DAS LETZTE LACHEN" = "DAS LETZTE LACHEN";
+"GETÄUSCHT" = "GETÄUSCHT";
+"Ihr habt den Narren rausgewählt. Er gewinnt alleine." = "Ihr habt den Narren rausgewählt. Er gewinnt alleine.";
+"NARR HAT EUCH GETÄUSCHT" = "NARR HAT EUCH GETÄUSCHT";

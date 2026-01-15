@@ -821,7 +821,7 @@
 "Welcher Altersunterschied ist für dich okay?" = "What age difference is okay for you?";
 "Welche Stellung magst du am liebsten?" = "Which position do you like most?";
 "Welches Gesetz würdest du brechen, wenn es keine Strafe gäbe?" = "Which law would you break if there were no punishment?";
-"Wann hast du zuletzt gelogen?" = "When did you last lie?";
+"Wann hast du zuletzt die Wahrheit verdreht?" = "When did you last twist the truth?";
 "Gibt es jemanden, den du wirklich hasst?" = "Is there someone you really hate?";
 "Wie würdest du am liebsten sterben?" = "How would you like to die?";
 "Wer kennt deine dunkelsten Geheimnisse?" = "Who knows your darkest secrets?";
@@ -1008,3 +1008,11 @@
 "Team Bürger" = "Team Citizens";
 "Team Spion" = "Team Spies";
 "Team Chaos" = "Team Chaos";
+
+/* Imposter Narr */
+"NARR GEWINNT" = "JESTER WINS";
+"Du wurdest rausgewählt! Genau das war dein Plan." = "You were voted out! That was exactly your plan.";
+"DAS LETZTE LACHEN" = "THE LAST LAUGH";
+"GETÄUSCHT" = "FOOLED";
+"Ihr habt den Narren rausgewählt. Er gewinnt alleine." = "You voted out the Jester. He wins alone.";
+"NARR HAT EUCH GETÄUSCHT" = "JESTER FOOLED YOU";

@@ -39,6 +39,7 @@ class VotingManager: ObservableObject {
     @Published var foundSpies: Set<UUID> = []  // Bereits gefundene Spione
     @Published var gameEnded = false
     @Published var playersWon = false
+    @Published var jesterWon = false // NEU: Hat der Narr gewonnen?
     @Published var lastRescueMessage: String? // Für Leibwächter-Rettung
     
     // Shootout (Geheimagenten-Jagd)
@@ -71,6 +72,7 @@ class VotingManager: ObservableObject {
         shooter = nil
         lastRoundResult = nil
         lastRescueMessage = nil
+        jesterWon = false // Reset
     }
     
     /// Wählt einen Spieler aus/ab
@@ -135,18 +137,34 @@ class VotingManager: ObservableObject {
         var correctGuesses: [UUID] = []
         var incorrectGuesses: [UUID] = []
         var rescuedPlayers: [String] = []
+        jesterWon = false // Reset for safety
         
         // Prüfen welche Auswahl korrekt war
         for playerID in selectedPlayers {
             if let index = gameSettings.players.firstIndex(where: { $0.id == playerID }) {
                 let player = gameSettings.players[index]
-                if (player.isImposter || player.roleType?.team == .imposter) && !foundSpies.contains(playerID) {
+                
+                // 1. Check: Narr (Jester) Win Condition
+                if player.roleType == .fool {
+                    if player.isProtected {
+                         rescuedPlayers.append(player.name)
+                         // Narr wird gerettet -> Gewinnt NICHT
+                    } else {
+                        // Narr wurde gevotet und nicht geschützt -> Narr gewinnt!
+                        jesterWon = true
+                        gameSettings.players[index].isEliminated = true
+                        // Zählt technisch als "incorrect guess" für die Bürger, aber Spiel endet sofort
+                        incorrectGuesses.append(playerID) 
+                    }
+                }
+                // 2. Check: Spion (oder Böses Team)
+                else if (player.isImposter || player.roleType?.team == .imposter) && !foundSpies.contains(playerID) {
                     // Spion gefunden (Leibwächter schützt Spione NICHT vor dem Voting)
                     correctGuesses.append(playerID)
                     foundSpies.insert(playerID)
                     gameSettings.players[index].isEliminated = true
                 } else {
-                    // Falscher Verdacht (Bürger/Narr/Pechvogel)
+                    // 3. Check: Unschuldiger Bürger/Andere Rolle
                     // PRÜFUNG: Hat der Leibwächter ihn geschützt?
                     if player.isProtected {
                         // GERETTET!
@@ -161,9 +179,10 @@ class VotingManager: ObservableObject {
         }
         
         // Spiel-Ende-Logik
-        // Spiel endet, wenn ein Ungeschützter falsch gevotet wurde ODER alle Spione gefunden sind.
-        let gameEnded = !incorrectGuesses.isEmpty || foundSpies.count == totalSpies
-        let playersWon = incorrectGuesses.isEmpty && foundSpies.count == totalSpies
+        // Spiel endet, wenn ein Ungeschützter falsch gevotet wurde ODER alle Spione gefunden sind ODER der Narr gewonnen hat.
+        let gameEnded = !incorrectGuesses.isEmpty || foundSpies.count == totalSpies || jesterWon
+        // Bürger gewinnen nur, wenn keine Fehler gemacht wurden, alle Spione weg sind UND der Narr NICHT gewonnen hat.
+        let playersWon = incorrectGuesses.isEmpty && foundSpies.count == totalSpies && !jesterWon
         
         self.gameEnded = gameEnded
         self.playersWon = playersWon
@@ -188,7 +207,13 @@ class VotingManager: ObservableObject {
                 let spyNames = gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }.map { $0.name }
                 let citizenNames = gameSettings.players.filter { !$0.isImposter && $0.roleType?.team != .imposter }.map { $0.name }
                 
-                if playersWon {
+                if jesterWon {
+                    // Narr gewinnt -> Alle anderen verlieren
+                    let jesters = gameSettings.players.filter { $0.roleType == .fool }.map { $0.name }
+                    let losers = spyNames + citizenNames
+                    StatsService.shared.recordLoss(playerNames: losers, asImposter: false) // Zählt als Niederlage
+                    // TODO: Record Jester Win explicitly if needed in StatsService
+                } else if playersWon {
                     let isFast = (Double(gameSettings.timeRemaining) > (Double(gameSettings.timeLimit) / 2.0)) || votingRound == 1
                     StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: isFast)
                     StatsService.shared.recordLoss(playerNames: spyNames, asImposter: true)
@@ -235,6 +260,7 @@ class VotingManager: ObservableObject {
         showResults = false
         votingRound += 1
         lastRoundResult = nil
+        jesterWon = false
     }
     
     /// Setzt die gesamte Abstimmung zurück
@@ -247,6 +273,7 @@ class VotingManager: ObservableObject {
         playersWon = false
         votingRound = 1
         lastRoundResult = nil
+        jesterWon = false
     }
     
     /// Setzt Timer-Status zurück

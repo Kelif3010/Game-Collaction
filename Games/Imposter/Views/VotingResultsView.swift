@@ -138,7 +138,40 @@ struct VotingResultsView: View {
             )
         }
         
-        // SCENARIO 2: RUNDE GEHT WEITER (Spion gefunden)
+        // SCENARIO 2: NARR GEWINNT (Spezialfall)
+        if votingManager.jesterWon {
+            // Prüfen ob ich selbst der Narr bin
+            let myName = MultipeerManager.shared.myPeerId.displayName
+            let amIJester = gameSettings.players.first(where: { $0.name == myName })?.roleType == .fool
+            
+            if amIJester {
+                // ICH habe gewonnen!
+                return ResultTheme(
+                    title: "NARR GEWINNT",
+                    subtitle: "Du wurdest rausgewählt! Genau das war dein Plan.",
+                    stampText: "DAS LETZTE LACHEN",
+                    icon: "theatermasks.fill",
+                    primaryColor: .purple,
+                    secondaryColor: .pink,
+                    isGlitchy: false,
+                    isVictory: true
+                )
+            } else {
+                // Wir wurden getäuscht!
+                return ResultTheme(
+                    title: "GETÄUSCHT",
+                    subtitle: "Ihr habt den Narren rausgewählt. Er gewinnt alleine.",
+                    stampText: "NARR HAT EUCH GETÄUSCHT",
+                    icon: "theatermasks.circle.fill", // Etwas anderes Icon
+                    primaryColor: .pink,
+                    secondaryColor: .purple,
+                    isGlitchy: true,
+                    isVictory: false
+                )
+            }
+        }
+        
+        // SCENARIO 3: RUNDE GEHT WEITER (Spion gefunden)
         if isRoundContinue {
             return ResultTheme(
                 title: "ZIEL NEUTRALISIERT",
@@ -152,7 +185,7 @@ struct VotingResultsView: View {
             )
         }
         
-        // SCENARIO 3: SPIONE GEWINNEN
+        // SCENARIO 4: SPIONE GEWINNEN
         if spiesWon {
             if isMultiplayer && localPlayerIsSpy {
                 // Ich bin Spion -> MEIN SIEG
