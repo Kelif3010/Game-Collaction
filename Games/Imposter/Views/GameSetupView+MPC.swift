@@ -75,6 +75,9 @@ extension GameSetupView {
                         
                         // Navigate to Game View
                         route.wrappedValue = .game
+                        
+                        // Close any open sheets (Lobby)
+                        gameSettings.shouldDismissSheets = true
                     }
                     
                 case MPCEventType.imposterRevealStart:
@@ -298,6 +301,9 @@ extension GameSetupView {
                         if route.wrappedValue != .game {
                             route.wrappedValue = .game
                         }
+                        
+                        // Close Lobby sheet
+                        gameSettings.shouldDismissSheets = true
                     }
 
                 case MPCEventType.imposterVotingStatus:

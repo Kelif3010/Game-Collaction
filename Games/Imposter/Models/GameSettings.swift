@@ -92,6 +92,9 @@ class GameSettings: ObservableObject {
     /// Signal an übergeordnete Views, das laufende Spiel zu beenden und zum Setup zurückzukehren
     @Published var requestExitToSetup: Bool = false
     
+    /// Signal, um alle offenen Sheets (z.B. Lobby) zu schließen (wichtig für Rejoin)
+    @Published var shouldDismissSheets: Bool = false
+    
     private let customCategoryStore = CustomCategoryStore.shared
     private var customCategories: [Category] = []
     private var hasRecordedRoundCompletion = false

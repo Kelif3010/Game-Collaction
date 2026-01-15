@@ -122,6 +122,24 @@ struct GameSetupView: View {
                     gameSettings.requestExitToMain = false
                 }
             }
+            .onChange(of: gameSettings.shouldDismissSheets) { _, newValue in
+                guard newValue else { return }
+                
+                // Alle Sheets schließen
+                showingMultiplayerSheet = false
+                showingGameModeSheet = false
+                showingCategorySelectionSheet = false
+                showingSpyOptionsSheet = false
+                showingCategoryManagementSheet = false
+                showingLeaderboardSheet = false
+                showingInfoSheet = false
+                showingSettingsSheet = false
+                showingAddPlayersSheet = false
+                
+                DispatchQueue.main.async {
+                    gameSettings.shouldDismissSheets = false
+                }
+            }
     }
 
     private var mainView: some View {
