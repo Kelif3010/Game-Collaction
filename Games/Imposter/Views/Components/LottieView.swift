@@ -92,14 +92,13 @@ struct LottieView: UIViewRepresentable {
         #if canImport(Lottie)
         guard let animationView = uiView.subviews.first(where: { $0 is LottieAnimationView }) as? LottieAnimationView else { return }
         
-        // Wir entfernen die problematische Prüfung auf .name
-        // Stattdessen laden wir die Animation neu, wenn der View aktualisiert wird.
-        // LottieAnimation.named cacht intern effizient, daher ist das okay.
-        // Um Flackern zu vermeiden, könnte man das aktuelle Animationsobjekt prüfen, 
-        // aber für diesen Einsatzzweck reicht es, einfach play/stop zu steuern.
-        
+        // Animation aktualisieren, falls sie sich geändert hat
+        // Hinweis: LottieAnimation.named(filename) ist gecacht und sehr performant.
+        // Wir setzen sie hier erneut, damit der Wechsel von "selectedAnimation" 
+        // auch im UI ankommt.
         if isPlaying {
-            if !animationView.isAnimationPlaying {
+            if animationView.animation == nil || !animationView.isAnimationPlaying {
+                animationView.animation = LottieAnimation.named(filename)
                 animationView.play()
             }
         } else {

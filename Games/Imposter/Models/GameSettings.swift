@@ -57,7 +57,13 @@ class GameSettings: ObservableObject {
     @Published var showSpyHints: Bool {
         didSet { UserDefaults.standard.set(showSpyHints, forKey: "imposter.showSpyHints") }
     }
-    @Published var activeRoles: Set<RoleType> = []
+    @Published var activeRoles: Set<RoleType> = [] {
+        didSet {
+            if let data = try? JSONEncoder().encode(activeRoles) {
+                UserDefaults.standard.set(data, forKey: "imposter.activeRoles")
+            }
+        }
+    }
     
     // Spielzustand
     @Published var currentPlayerIndex: Int = 0
@@ -65,6 +71,7 @@ class GameSettings: ObservableObject {
     @Published var timeRemaining: Int = 300
     @Published var isTimerPaused: Bool = false
     @Published var startingPlayerName: String? = nil
+    @Published var currentCardBackAnimation: String = "Fingerprint biometric scan" // Animation für die aktuelle Runde
     @Published var multiplayerStartAtHostUptime: TimeInterval? = nil
     @Published var hostClockOffset: TimeInterval = 0
     var hostClockOffsetRTT: TimeInterval = .greatestFiniteMagnitude
@@ -113,6 +120,17 @@ class GameSettings: ObservableObject {
             self.gameMode = .classic
         }
         
+        // Load Active Roles
+        if let data = defaults.data(forKey: "imposter.activeRoles"),
+           let roles = try? JSONDecoder().decode(Set<RoleType>.self, from: data) {
+            self.activeRoles = roles
+        }
+        
+        // Load Players
+        if let savedNames = defaults.stringArray(forKey: "imposter.lastPlayerNames") {
+            self.players = savedNames.map { Player(name: $0) }
+        }
+        
         self.spyCanSeeCategory = defaults.bool(forKey: "imposter.spyCanSeeCategory")
         self.spiesCanSeeEachOther = defaults.bool(forKey: "imposter.spiesCanSeeEachOther")
         self.randomSpyCount = defaults.bool(forKey: "imposter.randomSpyCount")
@@ -140,6 +158,9 @@ class GameSettings: ObservableObject {
         spiesCanSeeEachOther = false
         randomSpyCount = false
         showSpyHints = false
+        activeRoles = []
+        players = []
+        savePlayers()
     }
 
     var selectedCategories: [Category] {
@@ -199,6 +220,7 @@ class GameSettings: ObservableObject {
     func addPlayer(name: String) {
         let player = Player(name: name)
         players.append(player)
+        savePlayers()
         // Initialize fairness stats for a newly joined player
         let round = fairnessState.currentRound
         fairnessState.updateStats(for: player.id) { s in
@@ -211,7 +233,13 @@ class GameSettings: ObservableObject {
     func removePlayer(at index: Int) {
         if index < players.count {
             players.remove(at: index)
+            savePlayers()
         }
+    }
+    
+    private func savePlayers() {
+        let names = players.map { $0.name }
+        UserDefaults.standard.set(names, forKey: "imposter.lastPlayerNames")
     }
     
     func addCustomCategory(_ category: Category) {
@@ -275,6 +303,8 @@ class GameSettings: ObservableObject {
             players[i].word = ""
             players[i].isEliminated = false
             players[i].role = nil
+            players[i].roleType = nil // Reset RoleType (Fix for duplicate roles)
+            players[i].isProtected = false // Reset Bodyguard protection
         }
         
         // Fairness state wird NICHT zurückgesetzt, damit Statistiken erhalten bleiben

@@ -39,6 +39,7 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // NEU: Für UI-Benachrichtigungen
     @Published var lastDisconnectedPlayerName: String? = nil
+    @Published var lastReconnectedPlayerName: String? = nil
     
     // MC Objekte
     private var session: MCSession?
@@ -288,6 +289,7 @@ extension MultipeerManager: MCSessionDelegate {
             switch state {
             case .connected:
                 print("MPC: Verbunden mit \(peerID.displayName)")
+                self.lastReconnectedPlayerName = peerID.displayName
                 self.clearPeerDisconnected(peerID.displayName)
             case .connecting: print("MPC: Verbinde mit \(peerID.displayName)...")
             case .notConnected:

@@ -35,7 +35,11 @@ struct SpyCardView: View {
     var body: some View {
         ZStack {
             // Kartenrückseite mit integriertem Scanner
-            CardBackView(playerName: card.player.name, isImposter: card.isImposter) {
+            CardBackView(
+                playerName: card.player.name,
+                isImposter: card.isImposter,
+                animationName: gameSettings.currentCardBackAnimation
+            ) {
                 // Wird aufgerufen, wenn Scan abgeschlossen ist
                 flipCard()
                 onCardTap()
@@ -98,6 +102,7 @@ struct SpyCardView: View {
 struct CardBackView: View {
     let playerName: String
     let isImposter: Bool
+    let animationName: String // Von außen gesteuert (pro Runde)
     let onUnlocked: () -> Void
     
     // Scanner State
@@ -105,10 +110,6 @@ struct CardBackView: View {
     @State private var isScanning = false
     @State private var scanTimer: Timer?
     @State private var showSuccess = false
-    
-    // Abwechslung: Zufällige Animation
-    @State private var selectedAnimation = "Fingerprint biometric scan"
-    private let availableAnimations = ["Fingerprint biometric scan", "Android Fingerprint"]
     
     // Haptik
     private let impactGenerator = UIImpactFeedbackGenerator(style: .light)
@@ -169,7 +170,7 @@ struct CardBackView: View {
                     // Lottie Animation (Fingerprint)
                     if !showSuccess {
                         LottieView(
-                            filename: selectedAnimation,
+                            filename: animationName,
                             loopMode: .loop,
                             isPlaying: isScanning
                         )
@@ -224,8 +225,6 @@ struct CardBackView: View {
         }
         .onAppear {
             impactGenerator.prepare()
-            // Zufällige Animation wählen
-            selectedAnimation = availableAnimations.randomElement() ?? availableAnimations[0]
         }
     }
     

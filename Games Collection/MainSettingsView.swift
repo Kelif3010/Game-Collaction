@@ -20,6 +20,12 @@ struct MainSettingsView: View {
     // Eigener Name (NEU)
     @AppStorage("myPlayerName") private var myPlayerName = ""
     
+    // Sound Helper
+    var isSoundEnabled: Bool {
+        get { SoundManager.shared.isSoundEnabled }
+        nonmutating set { SoundManager.shared.isSoundEnabled = newValue }
+    }
+    
     // Grid Layout Definition
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -105,6 +111,20 @@ struct MainSettingsView: View {
                                         title: LocalizedStringKey("Haptik"),
                                         subtitle: isHapticsEnabled ? LocalizedStringKey("Vibrationen an") : LocalizedStringKey("Vibrationen aus"),
                                         color: isHapticsEnabled ? .green : .gray
+                                    )
+                                }
+                                
+                                // 4. Sound (Global)
+                                Button {
+                                    withAnimation {
+                                        isSoundEnabled = !isSoundEnabled
+                                    }
+                                } label: {
+                                    DashboardCard(
+                                        icon: isSoundEnabled ? "speaker.wave.3.fill" : "speaker.slash.fill",
+                                        title: LocalizedStringKey("Sound"),
+                                        subtitle: isSoundEnabled ? LocalizedStringKey("Effekte an") : LocalizedStringKey("Effekte aus"),
+                                        color: isSoundEnabled ? .blue : .gray
                                     )
                                 }
                                 

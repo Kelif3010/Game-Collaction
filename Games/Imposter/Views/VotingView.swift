@@ -17,6 +17,7 @@ struct VotingView: View {
     
     // Multiplayer State
     @State private var hasVotedMultiplayer = false
+    @State private var isLockingAnimationActive = false
     
     private var isMultiplayer: Bool {
         MultipeerManager.shared.role != .unknown
@@ -108,7 +109,22 @@ struct VotingView: View {
 
     @ViewBuilder
     private var votingBody: some View {
-        if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
+        if isLockingAnimationActive {
+            VStack(spacing: 20) {
+                LottieView(
+                    filename: "Lock Unlock Icon",
+                    loopMode: .playOnce,
+                    isPlaying: true
+                )
+                .frame(width: 180, height: 180)
+                
+                Text("STIMME VERRIEGELT")
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .foregroundColor(.orange)
+                    .tracking(2)
+            }
+            .transition(.scale.combined(with: .opacity))
+        } else if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
             SpyShootoutView(
                 shooter: shooter,
                 gameSettings: gameSettings,
@@ -164,11 +180,25 @@ struct VotingView: View {
                 isMultiplayer: isMultiplayer,
                 maxSelections: isMultiplayer ? 1 : votingManager.remainingSpies,
                 onVoteSubmitted: {
-                    if isMultiplayer {
-                        submitMultiplayerVote()
-                    } else {
-                        let _ = votingManager.executeVote()
-                        votingManager.finishVoting()
+                    withAnimation {
+                        isLockingAnimationActive = true
+                    }
+                    
+                    // Sound & Haptik
+                    SoundManager.shared.playSound(named: "computer-processing-sound-effects-short-click-select-01-122134")
+                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    
+                    // Kurze Verzögerung für die Animation (1.5 Sekunden)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation {
+                            isLockingAnimationActive = false
+                            if isMultiplayer {
+                                submitMultiplayerVote()
+                            } else {
+                                let _ = votingManager.executeVote()
+                                votingManager.finishVoting()
+                            }
+                        }
                     }
                 }
             )

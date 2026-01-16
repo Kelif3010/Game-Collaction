@@ -14,7 +14,6 @@ struct QuestionsSetupView: View {
     @State private var showSettingsSheet = false
     @State private var showLeaderboardSheet = false
     @State private var showInfoSheet = false
-    @State private var showTimerSheet = false
     
     // Validierung
     private var playerCount: Int { appModel.players.count }
@@ -148,17 +147,27 @@ struct QuestionsSetupView: View {
                                 }
                                 .questionsRowStyle()
                                 
-                                // Timer Row
-                                Button {
-                                    showTimerSheet = true
-                                } label: {
-                                    QuestionsRowCell(
-                                        icon: "timer",
-                                        title: "Diskussion",
-                                        value: timeString,
-                                        tint: .green
-                                    )
+                                // Timer Row (Slider)
+                                VStack(spacing: 10) {
+                                    HStack(spacing: 12) {
+                                        QuestionsIconBadge(systemName: "timer", tint: .green)
+                                        Text("Diskussion")
+                                            .font(.body)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Text(timeString)
+                                            .font(.callout)
+                                            .foregroundStyle(QuestionsStyle.mutedText)
+                                    }
+
+                                    Slider(value: Binding(
+                                        get: { Double(discussionTime) },
+                                        set: { discussionTime = TimeInterval($0) }
+                                    ), in: 60...1800, step: 60)
+                                    .tint(.green)
                                 }
+                                .questionsRowStyle()
                                 
                                 // Kategorie Row
                                 Button {
@@ -228,13 +237,6 @@ struct QuestionsSetupView: View {
             .sheet(isPresented: $showInfoSheet) {
                 QuestionsPlaceholderSheet(title: "Anleitung", icon: "book.fill")
                     .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-                    .presentationCornerRadius(28)
-                    .presentationBackground(.clear)
-            }
-            .sheet(isPresented: $showTimerSheet) {
-                QuestionsTimerSheet(discussionTime: $discussionTime)
-                    .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
                     .presentationBackground(.clear)
@@ -328,6 +330,7 @@ struct QuestionsTimerSheet: View {
 struct QuestionsPlayerManagementSheet: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.dismiss) var dismiss
+    @AppStorage("myPlayerName") private var myPlayerName = ""
     @State private var newPlayerName = ""
     @FocusState private var isInputFocused: Bool
 
@@ -392,6 +395,14 @@ struct QuestionsPlayerManagementSheet: View {
                     .environment(\.editMode, .constant(.active))
                 }
                 .padding(.horizontal, QuestionsStyle.padding)
+            }
+        }
+        .onAppear {
+            if !myPlayerName.isEmpty {
+                // Automatisch hinzufügen, wenn noch nicht vorhanden
+                if !appModel.players.contains(where: { $0.name == myPlayerName }) {
+                    appModel.players.append(Player(name: myPlayerName))
+                }
             }
         }
     }

@@ -29,6 +29,10 @@ struct GamePlayView: View {
     @State private var showDisconnectToast = false
     @State private var disconnectToastName = ""
     
+    // Reconnect Toast State
+    @State private var showReconnectToast = false
+    @State private var reconnectToastName = ""
+    
     // KI-Services
     @StateObject private var hintService = HintService.shared
 
@@ -84,6 +88,31 @@ struct GamePlayView: View {
                     Spacer()
                 }
             }
+            
+            // Reconnect Toast Overlay
+            if showReconnectToast {
+                VStack {
+                    HStack(spacing: 12) {
+                        Image(systemName: "wifi")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("\(reconnectToastName) ist zurückgekehrt")
+                            .font(.subheadline.bold())
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.green.opacity(0.9))
+                    .clipShape(Capsule())
+                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                    .padding(.top, 60) // Unter der Notch/Dynamic Island
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(101) // Über dem roten Toast
+                    
+                    Spacer()
+                }
+            }
         }
         .onAppear {
             resetLocalState()
@@ -100,6 +129,21 @@ struct GamePlayView: View {
             gameLogic.stopGameTimer()
         }
         .navigationBarHidden(true)
+        .onChange(of: mpc.lastReconnectedPlayerName) { _, newName in
+            if let name = newName {
+                reconnectToastName = name
+                withAnimation(.spring()) {
+                    showReconnectToast = true
+                }
+                
+                // Hide after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    withAnimation {
+                        showReconnectToast = false
+                    }
+                }
+            }
+        }
         .onChange(of: mpc.lastDisconnectedPlayerName) { _, newName in
             if let name = newName {
                 disconnectToastName = name
@@ -1069,6 +1113,9 @@ struct GameFooterView: View {
         ) {
             Button("Abbrechen", role: .cancel) { }
             Button("Spiel beenden", role: .destructive) {
+                if MultipeerManager.shared.role != .unknown {
+                    MultipeerManager.shared.stop()
+                }
                 gameSettings.markRoundCompleted()
                 gameSettings.resetGame()
                 dismiss()

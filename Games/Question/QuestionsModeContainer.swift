@@ -264,27 +264,8 @@ struct QuestionsModeContainer: View {
             
             Spacer()
             
-            HStack(spacing: 8) {
-                // Trophäe
-                Button { showLeaderboardSheet = true } label: {
-                    Image(systemName: "trophy.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(.yellow)
-                        .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                
-                // Ordner (Kategorie - Read Only im Spiel)
-                Button { showCategorySheet = true } label: {
-                    Image(systemName: "folder.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                        .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
-            }
+            Color.clear
+                .frame(width: 36, height: 36)
         }
         .padding(.horizontal, 16)
         .padding(.top, 50)

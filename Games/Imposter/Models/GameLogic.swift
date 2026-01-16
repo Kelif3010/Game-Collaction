@@ -53,6 +53,10 @@ class GameLogic: ObservableObject {
         // Spiel zurücksetzen
         gameSettings.resetGame()
         HintService.shared.resetState()
+        
+        // Animation für diese Runde zufällig wählen
+        let animations = ["Fingerprint biometric scan", "Android Fingerprint"]
+        gameSettings.currentCardBackAnimation = animations.randomElement() ?? "Fingerprint biometric scan"
 
         guard let roundCategory = gameSettings.chooseRoundCategory(),
               !roundCategory.words.isEmpty,

@@ -13,10 +13,17 @@ class SoundManager {
     static let shared = SoundManager()
     
     private var player: AVAudioPlayer?
-    private var isSoundEnabled: Bool {
-        // Hier könnte später eine globale Einstellung abgerufen werden
-        // z.B. UserDefaults.standard.bool(forKey: "global_sound_enabled")
-        return true
+    var isSoundEnabled: Bool {
+        get {
+            // Standardmäßig an (true), wenn nicht explizit ausgeschaltet
+            if UserDefaults.standard.object(forKey: "global_sound_enabled") == nil {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: "global_sound_enabled")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "global_sound_enabled")
+        }
     }
 
     private init() {

@@ -8,6 +8,7 @@ struct PlayerManagementSheet: View {
     @EnvironmentObject var gameSettings: GameSettings
     @Environment(\.dismiss) private var dismiss
 
+    @AppStorage("myPlayerName") private var myPlayerName = ""
     @State private var newPlayerName = ""
     @FocusState private var isInputFocused: Bool
     
@@ -146,6 +147,14 @@ struct PlayerManagementSheet: View {
                         }
                     }
                     .padding(.bottom, 40)
+                }
+            }
+        }
+        .onAppear {
+            if !myPlayerName.isEmpty {
+                // Automatisch hinzufügen, wenn noch nicht vorhanden
+                if !gameSettings.players.contains(where: { $0.name == myPlayerName }) {
+                    gameSettings.addPlayer(name: myPlayerName)
                 }
             }
         }
