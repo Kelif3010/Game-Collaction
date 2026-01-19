@@ -1,6 +1,5 @@
 //
 //  Player.swift
-//  Imposter
 //
 //  Created by Ken on 22.09.25.
 //

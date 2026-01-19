@@ -207,16 +207,16 @@ struct QuestionsVotingResultsView: View {
     }
     
     private func recordStats() {
-        let imposterIds = evaluation.liars
+        let liarIds = evaluation.liars
         let winners: [Player]
         let losers: [Player]
         
         if evaluation.outcome == .citizensWin {
-            winners = players.filter { !imposterIds.contains($0.id) }
-            losers = players.filter { imposterIds.contains($0.id) }
+            winners = players.filter { !liarIds.contains($0.id) }
+            losers = players.filter { liarIds.contains($0.id) }
         } else {
-            winners = players.filter { imposterIds.contains($0.id) }
-            losers = players.filter { !imposterIds.contains($0.id) }
+            winners = players.filter { liarIds.contains($0.id) }
+            losers = players.filter { !liarIds.contains($0.id) }
         }
         
         for p in winners { GlobalStatsManager.shared.recordWin(for: p.name) }

@@ -72,7 +72,7 @@ final class QuestionsEngine: ObservableObject {
         
         if let fairnessState, let fairnessPolicy {
             var rng: any RandomNumberGeneratorLike = SystemRNGAdapter()
-            let picked = ImposterPicker.pickImposters(
+            let identifiedLiars = ImposterPicker.pickImposters(
                 players: players.map { $0.id },
                 count: liarCount,
                 policy: fairnessPolicy,
@@ -84,16 +84,16 @@ final class QuestionsEngine: ObservableObject {
                     state: fairnessState
                 )
             )
-            liars = Set(picked)
+            liars = Set(identifiedLiars)
             let round = fairnessState.currentRound
-            fairnessState.recordImposters(picked)
-            for id in picked {
+            fairnessState.recordImposters(identifiedLiars)
+            for id in identifiedLiars {
                 fairnessState.updateStats(for: id) { s in
                     s.cooldownUntilRound = round + fairnessPolicy.minCooldownRounds
                 }
             }
-            let pickedSet = Set(picked)
-            for id in players.map({ $0.id }) where !pickedSet.contains(id) {
+            let identifiedSet = Set(identifiedLiars)
+            for id in players.map({ $0.id }) where !identifiedSet.contains(id) {
                 fairnessState.updateStats(for: id) { s in
                     if s.currentStreak > 0 { s.currentStreak = 0 }
                 }
