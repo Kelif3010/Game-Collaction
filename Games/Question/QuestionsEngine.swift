@@ -11,11 +11,11 @@ final class QuestionsEngine: ObservableObject {
 
     // Players (injected)
     private(set) var players: [Player] = []
-    private var spies: Set<UUID> = [] // player ids
+    private var liars: Set<UUID> = [] // player ids
     private var fairnessState: FairnessState?
     private var fairnessPolicy: FairnessPolicy?
-    // Expose current spy IDs as read-only for consumers like voting UI
-    var currentSpyIDs: Set<UUID> { spies }
+    // Expose current liar IDs as read-only for consumers like voting UI
+    var currentLiarIDs: Set<UUID> { liars }
 
     // Internals
     private var cancellables = Set<AnyCancellable>()
@@ -49,13 +49,13 @@ final class QuestionsEngine: ObservableObject {
 
     func configure(
         players: [Player],
-        numberOfSpies: Int,
+        numberOfLiars: Int,
         category: QuestionsCategory,
         fairnessPolicy: FairnessPolicy? = nil,
         fairnessState: FairnessState? = nil
     ) {
         self.players = players
-        self.config.numberOfSpies = max(0, min(numberOfSpies, max(0, players.count - 1)))
+        self.config.numberOfLiars = max(0, min(numberOfLiars, max(0, players.count - 1)))
         self.config.selectedCategory = category
         self.fairnessPolicy = fairnessPolicy
         self.fairnessState = fairnessState
@@ -63,18 +63,18 @@ final class QuestionsEngine: ObservableObject {
         usedPromptIndices.removeAll()
     }
 
-    // Randomly assign spies for this mode (separate from base game, if desired)
-    func assignSpiesRandomly(seed: UInt64? = nil) {
+    // Randomly assign liars for this mode (separate from base game, if desired)
+    func assignLiarsRandomly(seed: UInt64? = nil) {
         guard players.count > 0 else { return }
-        spies.removeAll()
-        let spyCount = min(config.numberOfSpies, max(0, players.count - 1))
-        guard spyCount > 0 else { return }
+        liars.removeAll()
+        let liarCount = min(config.numberOfLiars, max(0, players.count - 1))
+        guard liarCount > 0 else { return }
         
         if let fairnessState, let fairnessPolicy {
             var rng: any RandomNumberGeneratorLike = SystemRNGAdapter()
             let picked = ImposterPicker.pickImposters(
                 players: players.map { $0.id },
-                count: spyCount,
+                count: liarCount,
                 policy: fairnessPolicy,
                 state: fairnessState,
                 rng: &rng,
@@ -84,7 +84,7 @@ final class QuestionsEngine: ObservableObject {
                     state: fairnessState
                 )
             )
-            spies = Set(picked)
+            liars = Set(picked)
             let round = fairnessState.currentRound
             fairnessState.recordImposters(picked)
             for id in picked {
@@ -100,7 +100,7 @@ final class QuestionsEngine: ObservableObject {
             }
         } else {
             var rng = seed.map { SeededGenerator(seed: $0) } ?? SeededGenerator()
-            spies = Set(players.shuffled(using: &rng).prefix(spyCount).map { $0.id })
+            liars = Set(players.shuffled(using: &rng).prefix(liarCount).map { $0.id })
         }
     }
 
@@ -108,7 +108,7 @@ final class QuestionsEngine: ObservableObject {
 
     func startNewRound(roundIndex: Int = 0) {
         guard let category = config.selectedCategory else { return }
-        assignSpiesRandomly()
+        assignLiarsRandomly()
         guard category.promptPairs.isEmpty == false else { return }
 
         // pick an unused prompt pair if possible
@@ -128,7 +128,7 @@ final class QuestionsEngine: ObservableObject {
     }
 
     func role(for playerID: UUID) -> QuestionsRole {
-        spies.contains(playerID) ? .spy : .citizen
+        liars.contains(playerID) ? .liar : .citizen
     }
 
     // Player submits an answer; returns true if accepted

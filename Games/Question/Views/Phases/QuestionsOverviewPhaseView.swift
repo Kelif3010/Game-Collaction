@@ -6,7 +6,7 @@ struct QuestionsOverviewPhaseView: View {
     @AppStorage("question.hint.overview") private var overviewHintSeen = false
     
     private var revealGridColumns: [GridItem] {
-        viewModel.showSpyDetailsList ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())]
+        viewModel.showLiarDetailsList ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())]
     }
     
     var body: some View {
@@ -47,7 +47,7 @@ struct QuestionsOverviewPhaseView: View {
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
-                            LazyVGrid(columns: revealGridColumns, spacing: viewModel.showSpyDetailsList ? 18 : 12) {
+                            LazyVGrid(columns: revealGridColumns, spacing: viewModel.showLiarDetailsList ? 18 : 12) {
                                 ForEach(viewModel.answersInOrder, id: \.id) { answer in
                                     let playerID = answer.playerID
                                     let name = viewModel.playerName(for: playerID)
@@ -55,12 +55,12 @@ struct QuestionsOverviewPhaseView: View {
                                     
                                     // Voting Logic
                                     let voteCount = viewModel.voteCountForDisplay(playerID: playerID)
-                                    let showSelectionBox = viewModel.isRevealVoteActive && evaluation == nil && !viewModel.foundRevealSpies.contains(playerID)
+                                    let showSelectionBox = viewModel.isRevealVoteActive && evaluation == nil && !viewModel.foundRevealLiars.contains(playerID)
                                     
-                                    let showGreenCheck = evaluation?.correct.contains(playerID) == true || viewModel.foundRevealSpies.contains(playerID)
+                                    let showGreenCheck = evaluation?.correct.contains(playerID) == true || viewModel.foundRevealLiars.contains(playerID)
                                     let revealRoundOver = evaluation.map { $0.citizensWon || !$0.incorrect.isEmpty } ?? false
-                                    let imposters = evaluation?.imposters ?? viewModel.currentSpyIDs
-                                    let highlightAsSpy = revealRoundOver && imposters.contains(playerID)
+                                    let liars = evaluation?.liars ?? viewModel.currentLiarIDs
+                                    let highlightAsLiar = revealRoundOver && liars.contains(playerID)
                                     let isSlowest = answer.timeTaken > 0 && answer.timeTaken == viewModel.slowestTime
                                     
                                     QuestionsAnswerRevealCard(
@@ -70,9 +70,9 @@ struct QuestionsOverviewPhaseView: View {
                                         showSelectionBox: showSelectionBox,
                                         selectionEnabled: showSelectionBox,
                                         showGreenCheck: showGreenCheck,
-                                        showRedX: highlightAsSpy,
-                                        shakeTrigger: highlightAsSpy ? viewModel.revealShakeTrigger : 0,
-                                        isFullWidth: viewModel.showSpyDetailsList,
+                                        showRedX: highlightAsLiar,
+                                        shakeTrigger: highlightAsLiar ? viewModel.revealShakeTrigger : 0,
+                                        isFullWidth: viewModel.showLiarDetailsList,
                                         spyQuestion: nil, // Always nil during overview
                                         isSlowest: isSlowest,
                                         voteCount: voteCount,
@@ -87,7 +87,7 @@ struct QuestionsOverviewPhaseView: View {
                             Color.clear.frame(height: 140)
                         }
                         .frame(maxHeight: .infinity, alignment: .top)
-                        .onChange(of: viewModel.spyScrollTarget) { oldValue, target in
+                        .onChange(of: viewModel.liarScrollTarget) { oldValue, target in
                             guard let target else { return }
                             DispatchQueue.main.async {
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { proxy.scrollTo(target, anchor: .top) }
@@ -98,7 +98,21 @@ struct QuestionsOverviewPhaseView: View {
             }
             .padding(.bottom, viewModel.isRevealVoteActive ? 110 : 30)
             VStack { Spacer(); revealActionBar }
+            if !overviewHintSeen {
+                VStack {
+                    QuestionsHintBanner(
+                        text: "Vergleicht die Aussagen. Markiert dann eure Verdächtigen.",
+                        actionTitle: "Verstanden",
+                        onDismiss: { overviewHintSeen = true }
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: overviewHintSeen)
     }
     
     private var revealActionBar: some View {
@@ -137,19 +151,19 @@ struct QuestionsOverviewPhaseView: View {
     }
     
     private var revealButtonTitle: LocalizedStringKey {
-        if !viewModel.isRevealVoteActive { return "Lügner aufdecken" }
-        if viewModel.revealEvaluation == nil { return "Aufdecken" }
+        if !viewModel.isRevealVoteActive { return "Lügner entlarven" }
+        if viewModel.revealEvaluation == nil { return "Überprüfen" }
         return "Runde abschließen"
     }
     
     private var revealStatusMessage: LocalizedStringKey? {
-        if !viewModel.isRevealVoteActive { return !viewModel.answersInOrder.isEmpty ? "Diskutiert und verteilt dann die Stimmen." : nil }
+        if !viewModel.isRevealVoteActive { return !viewModel.answersInOrder.isEmpty ? "Analysiert die Aussagen und markiert Verdächtige." : nil }
         if let evaluation = viewModel.revealEvaluation {
-            if evaluation.citizensWon { return "Treffer! Alle Lügner wurden enttarnt." }
-            if !evaluation.incorrect.isEmpty { return "Daneben! Die Lügner bleiben verborgen." }
-            return "Richtiger Treffer – es sind noch Lügner übrig."
+            if evaluation.citizensWon { return "Lüge identifiziert! Der Lügner wurde überführt." }
+            if !evaluation.incorrect.isEmpty { return "Falscher Verdacht! Der Lügner bleibt unentdeckt." }
+            return "Teilerfolg – es gibt noch weitere Lügner."
         }
-        if viewModel.currentSpyIDs.isEmpty { return "Keine Spione in dieser Runde." }
+        if viewModel.currentLiarIDs.isEmpty { return "Keine Abweichungen in dieser Runde." }
         
         // Voting Phase Status
         if viewModel.currentTotalVotes < viewModel.maxVotes {

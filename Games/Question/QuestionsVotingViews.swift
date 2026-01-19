@@ -2,16 +2,16 @@ import SwiftUI
 
 struct QuestionsVotingView: View {
     let players: [Player]
-    let imposters: Set<UUID>
+    let liars: Set<UUID>
     let onFinished: (QuestionsVoteEvaluation) -> Void
     
     @StateObject private var manager: QuestionsVotingManager
     
-    init(players: [Player], imposters: Set<UUID>, onFinished: @escaping (QuestionsVoteEvaluation) -> Void) {
+    init(players: [Player], liars: Set<UUID>, onFinished: @escaping (QuestionsVoteEvaluation) -> Void) {
         self.players = players
-        self.imposters = imposters
+        self.liars = liars
         self.onFinished = onFinished
-        _manager = StateObject(wrappedValue: QuestionsVotingManager(players: players.map { $0.id }, imposters: imposters))
+        _manager = StateObject(wrappedValue: QuestionsVotingManager(players: players.map { $0.id }, liars: liars))
     }
     
     private let columns = [GridItem(.adaptive(minimum: 140), spacing: 16)]
@@ -107,8 +107,8 @@ struct QuestionsVotingResultsView: View {
         switch evaluation.outcome {
         case .citizensWin:
             return "Bewohner haben gewonnen"
-        case .impostersWin:
-            return "Imposter haben gewonnen"
+        case .liarsWin:
+            return "Lügner haben gewonnen"
         }
     }
     
@@ -120,8 +120,8 @@ struct QuestionsVotingResultsView: View {
         players.filter { selectedPlayerIDs.contains($0.id) }
     }
     
-    private var imposters: [Player] {
-        players.filter { evaluation.imposters.contains($0.id) }
+    private var liars: [Player] {
+        players.filter { evaluation.liars.contains($0.id) }
     }
     
     var body: some View {
@@ -161,15 +161,15 @@ struct QuestionsVotingResultsView: View {
             .padding(.horizontal, 16)
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("Tatsächliche Imposter")
+                Text("Tatsächliche Lügner")
                     .font(.headline)
                 
-                if imposters.isEmpty {
-                    Text("Keine Imposter")
+                if liars.isEmpty {
+                    Text("Keine Lügner")
                         .foregroundColor(.secondary)
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                        ForEach(imposters, id: \.id) { player in
+                        ForEach(liars, id: \.id) { player in
                             Text(LocalizedStringKey(player.name))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
@@ -207,7 +207,7 @@ struct QuestionsVotingResultsView: View {
     }
     
     private func recordStats() {
-        let imposterIds = evaluation.imposters
+        let imposterIds = evaluation.liars
         let winners: [Player]
         let losers: [Player]
         

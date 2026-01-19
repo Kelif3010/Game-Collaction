@@ -17,8 +17,8 @@ class AppModel: ObservableObject {
             }
         }
     }
-    @Published var numberOfImposters: Int = 1 {
-        didSet { UserDefaults.standard.set(numberOfImposters, forKey: "question.numberOfImposters") }
+    @Published var numberOfLiars: Int = 1 {
+        didSet { UserDefaults.standard.set(numberOfLiars, forKey: "question.numberOfLiars") }
     }
     
     // WICHTIG: Hier speichern wir den Fairness-Zustand
@@ -72,9 +72,9 @@ class AppModel: ObservableObject {
             self.selectedQuestionsCategory = QuestionsDefaults.all.first
         }
         
-        // 3. Imposters
-        let savedImposters = defaults.integer(forKey: "question.numberOfImposters")
-        self.numberOfImposters = savedImposters > 0 ? savedImposters : 1
+        // 3. Liars
+        let savedLiars = defaults.integer(forKey: "question.numberOfLiars")
+        self.numberOfLiars = savedLiars > 0 ? savedLiars : 1
         
         // 4. Fairness State
         if let data = defaults.data(forKey: "question.fairnessState"),
@@ -123,7 +123,7 @@ class AppModel: ObservableObject {
     private func resetToDefaults() {
         players = (1...4).map { Player(name: defaultPlayerName(for: $0)) }
         selectedQuestionsCategory = QuestionsDefaults.all.first
-        numberOfImposters = 1
+        numberOfLiars = 1
         fairnessState = FairnessState()
         scores = [:]
         // Policy reset if needed, but usually static defaults are fine or re-init policy

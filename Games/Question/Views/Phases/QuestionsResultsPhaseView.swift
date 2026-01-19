@@ -15,9 +15,9 @@ struct QuestionsResultsPhaseView: View {
         let suspectID = evaluation?.selected.first
         let suspectName = suspectID != nil ? viewModel.playerName(for: suspectID!) : "Niemand"
         
-        // Logik: War er ein Spion?
-        let imposters = evaluation?.imposters ?? viewModel.currentSpyIDs
-        let isSpy = suspectID != nil && imposters.contains(suspectID!)
+        // Logik: War er ein Lügner?
+        let liars = evaluation?.liars ?? viewModel.currentLiarIDs
+        let isLiar = suspectID != nil && liars.contains(suspectID!)
         let citizensWon = evaluation?.citizensWon ?? false
         
         // Stempel-Text und Farbe
@@ -30,7 +30,7 @@ struct QuestionsResultsPhaseView: View {
         } else if suspectID == nil {
             stampText = "ENTKOMMEN" // Niemand gewählt
             stampColor = .red
-        } else if isSpy {
+        } else if isLiar {
             stampText = "ENTTARNT" // Sollte durch citizensWon abgedeckt sein, aber sicherheitshalber
             stampColor = .green
         } else {
@@ -39,22 +39,27 @@ struct QuestionsResultsPhaseView: View {
         }
         
         return ZStack {
-            Color.black.ignoresSafeArea()
+            QuestionsTheme.gradient.ignoresSafeArea()
             
-            // Phase 0: Intro (Dunkelheit)
+            // Phase 0: Intro (Analyse)
             if revealStage == 0 {
-                Text("ANALYSIERE BEWEISE...")
-                    .font(.system(.title2, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .transition(.opacity)
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(1.5)
+                    Text("ABGLEICH DER BIOMETRISCHEN DATEN...")
+                        .font(.system(.title3, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .transition(.opacity)
             }
             
             // Phase 1: Der Verdächtige
             if revealStage >= 1 {
                 VStack(spacing: 20) {
-                    Text("HAUPTVERDÄCHTIGER")
+                    Text("MARKIERTE PERSON")
                         .font(.caption)
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(Color.white.opacity(0.6))
                         .tracking(4)
                     
                     Text(LocalizedStringKey(suspectName))
@@ -70,7 +75,7 @@ struct QuestionsResultsPhaseView: View {
                 .transition(.opacity)
             }
             
-            // Phase 2: Der Stempel (BANG!)
+            // Phase 2: Der Stempel (Wahrheit / Lüge)
             if revealStage >= 2 {
                 Text(stampText)
                     .font(.system(size: 60, weight: .black))
@@ -91,13 +96,13 @@ struct QuestionsResultsPhaseView: View {
                     Spacer()
                     
                     // Aufklärung
-                    if !citizensWon && !imposters.isEmpty {
+                    if !citizensWon && !liars.isEmpty {
                         VStack(spacing: 10) {
-                            Text("DIE WAHREN AGENTEN:")
+                            Text("TATSÄCHLICHE LÜGNER:")
                                 .font(.caption.bold())
                                 .foregroundStyle(.red)
                             
-                            ForEach(Array(imposters), id: \.self) { id in
+                            ForEach(Array(liars), id: \.self) { id in
                                 Text(viewModel.playerName(for: id))
                                     .font(.title3.bold())
                                     .foregroundStyle(.white)
@@ -114,9 +119,9 @@ struct QuestionsResultsPhaseView: View {
                         Button {
                             viewModel.startRound()
                         } label: {
-                            Text("Nächster Fall")
+                            Text("Nächste Analyse")
                                 .font(.headline)
-                                .foregroundStyle(.black)
+                                .foregroundStyle(QuestionsTheme.textAccent)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color.white)
@@ -126,9 +131,9 @@ struct QuestionsResultsPhaseView: View {
                         Button {
                             dismiss()
                         } label: {
-                            Text("Mission abbrechen")
+                            Text("Programm beenden")
                                 .font(.subheadline)
-                                .foregroundStyle(.gray)
+                                .foregroundStyle(.white.opacity(0.6))
                         }
                     }
                     .padding(.horizontal, 40)

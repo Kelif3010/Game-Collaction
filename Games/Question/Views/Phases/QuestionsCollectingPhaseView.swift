@@ -23,13 +23,13 @@ struct QuestionsCollectingPhaseView: View {
                             // Header: Name & Timer
                             VStack(spacing: 8) {
                                 if isMultiplayer {
-                                    Text("Eingabe läuft...")
+                                    Text("ANALYSE LÄUFT...")
                                         .font(.subheadline)
                                         .foregroundStyle(QuestionsStyle.mutedText)
                                         .textCase(.uppercase)
                                         .kerning(1)
                                 } else {
-                                    Text("Spieler \(round.currentPlayerIndex + 1) von \(viewModel.playerCount)")
+                                    Text("PROBAND \(round.currentPlayerIndex + 1) von \(viewModel.playerCount)")
                                         .font(.subheadline)
                                         .foregroundStyle(QuestionsStyle.mutedText)
                                         .textCase(.uppercase)
@@ -55,7 +55,7 @@ struct QuestionsCollectingPhaseView: View {
                                 }
                             } else {
                                 // Anzeige der Frage (Entweder aus RoundState oder aus myPrompt im Multiplayer)
-                                let question = isMultiplayer ? (viewModel.myPrompt ?? "Lade...") : (viewModel.role(for: viewModel.currentPlayer()?.id ?? UUID()) == .spy ? round.promptPair.spyQuestion : round.promptPair.citizenQuestion)
+                                let question = isMultiplayer ? (viewModel.myPrompt ?? "Lade...") : (viewModel.role(for: viewModel.currentPlayer()?.id ?? UUID()) == .spy ? round.promptPair.liarQuestion : round.promptPair.citizenQuestion)
                                 
                                 VStack(spacing: 18) {
                                     if isMultiplayer && hasSubmittedAnswer {
@@ -101,8 +101,8 @@ struct QuestionsCollectingPhaseView: View {
             if !collectingHintSeen {
                 VStack {
                     QuestionsHintBanner(
-                        text: "Sieh dir die Karte an und gib das Geraet weiter.",
-                        actionTitle: "Verstanden",
+                        text: "Lies deine Frage und gib deine Antwort ehrlich (oder auch nicht) ein.",
+                        actionTitle: "Bereit",
                         onDismiss: { collectingHintSeen = true }
                     )
                     .padding(.horizontal, 24)

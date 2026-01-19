@@ -8,31 +8,31 @@ struct QuestionsOnboardingSheet: View {
 
     private let pages: [QuestionsOnboardingPage] = [
         QuestionsOnboardingPage(
-            title: "Baue dein Deck",
-            message: "Waehle Spieler, Spione und eine Kategorie.",
-            detail: "Mindestens 3 Spieler.",
+            title: "Das Team scannen",
+            message: "Waehle die Teilnehmer, die Anzahl der Luegner und das Thema.",
+            detail: "Mindestens 3 Personen benoetigt.",
             systemImage: "person.3.fill",
             accent: Color.blue
         ),
         QuestionsOnboardingPage(
-            title: "Karte geheim halten",
-            message: "Jeder Spieler sieht nur seine Frage.",
-            detail: "Danach Geraet weitergeben.",
+            title: "Die nackte Wahrheit",
+            message: "Jeder sieht geheim seine eigene Frage.",
+            detail: "Keine Einblicke gewaehren.",
             systemImage: "eye.slash.fill",
             accent: Color.orange
         ),
         QuestionsOnboardingPage(
-            title: "Antworten und diskutieren",
-            message: "Jeder gibt eine kurze Antwort.",
-            detail: "Dann gemeinsam beraten.",
+            title: "Aussage und Analyse",
+            message: "Jeder gibt eine Antwort ein. Die Zeit laeuft mit.",
+            detail: "Danach beginnt das Verhoer.",
             systemImage: "bubble.left.and.bubble.right.fill",
             accent: Color.pink
         ),
         QuestionsOnboardingPage(
-            title: "Stimmt ab",
-            message: "Ihr waehlt den Spion.",
-            detail: "Punkte fuer Team oder Spion.",
-            systemImage: "checkmark.circle.fill",
+            title: "Das Urteil",
+            message: "Identifiziert die Luegner im Team.",
+            detail: "Der Luegendetektor deckt alles auf.",
+            systemImage: "waveform.path.ecg",
             accent: Color.green
         )
     ]

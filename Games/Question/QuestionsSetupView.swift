@@ -63,8 +63,8 @@ struct QuestionsSetupView: View {
             missingItems.append(NSLocalizedString("Kategorie wählen", comment: ""))
         }
         
-        if viewModel.numberOfSpies >= playerCount && playerCount > 0 {
-            missingItems.append(NSLocalizedString("Zu viele Spione", comment: ""))
+        if viewModel.numberOfLiars >= playerCount && playerCount > 0 {
+            missingItems.append(NSLocalizedString("Zu viele Lügner", comment: ""))
         }
         
         if mpc.role == .host && !allPlayersReady {
@@ -111,9 +111,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Trophäe
+                            // Statistik (formerly Trophäe)
                             Button { showLeaderboardSheet = true } label: {
-                                Image(systemName: "trophy.fill")
+                                Image(systemName: "chart.bar.xaxis")
                                     .font(.headline)
                                     .foregroundStyle(.yellow)
                                     .frame(width: 36, height: 36)
@@ -121,9 +121,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Ordner (Kategorie)
+                            // Datensatz (Kategorie)
                             Button { showCategorySheet = true } label: {
-                                Image(systemName: "briefcase.fill")
+                                Image(systemName: "doc.text.magnifyingglass")
                                     .font(.headline)
                                     .foregroundStyle(.orange)
                                     .frame(width: 36, height: 36)
@@ -131,9 +131,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Zahnrad (Settings)
+                            // Kalibrierung (Settings)
                             Button { showSettingsSheet = true } label: {
-                                Image(systemName: "gearshape.fill")
+                                Image(systemName: "slider.horizontal.3")
                                     .font(.headline)
                                     .foregroundStyle(.gray)
                                     .frame(width: 36, height: 36)
@@ -141,9 +141,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Fragezeichen (Info)
+                            // Anleitung (Info)
                             Button { showOnboardingSheet = true } label: {
-                                Image(systemName: "questionmark")
+                                Image(systemName: "info.circle")
                                     .font(.headline.bold())
                                     .foregroundStyle(.white)
                                     .frame(width: 36, height: 36)
@@ -172,10 +172,10 @@ struct QuestionsSetupView: View {
                                     )
                                 }
                                 
-                                // Spione Row with Stepper
+                                // Lügner Row with Stepper
                                 HStack(spacing: 12) {
-                                    QuestionsIconBadge(systemName: "eye.slash.fill", tint: .red)
-                                    Text("Spione")
+                                    QuestionsIconBadge(systemName: "brain.head.profile", tint: .red)
+                                    Text("Lügner")
                                         .font(.body)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)
@@ -183,7 +183,7 @@ struct QuestionsSetupView: View {
                                     
                                     HStack(spacing: 8) {
                                         Button {
-                                            if viewModel.numberOfSpies > 1 { viewModel.numberOfSpies -= 1 }
+                                            if viewModel.numberOfLiars > 1 { viewModel.numberOfLiars -= 1 }
                                         } label: {
                                             Image(systemName: "minus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -193,13 +193,13 @@ struct QuestionsSetupView: View {
                                                 .clipShape(Circle())
                                         }
                                         
-                                        Text("\(viewModel.numberOfSpies)")
+                                        Text("\(viewModel.numberOfLiars)")
                                             .font(.callout)
                                             .foregroundColor(.white)
                                             .frame(minWidth: 24)
                                             
                                         Button {
-                                            if viewModel.numberOfSpies < maxSpies { viewModel.numberOfSpies += 1 }
+                                            if viewModel.numberOfLiars < maxSpies { viewModel.numberOfLiars += 1 }
                                         } label: {
                                             Image(systemName: "plus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -331,7 +331,7 @@ struct QuestionsSetupView: View {
         }
         .onChange(of: viewModel.numberOfSpies) { _, newValue in
             broadcastConfig()
-            sendHostActivity("Host stellt Spione auf \(newValue)")
+            sendHostActivity("Host stellt Lügner auf \(newValue)")
         }
         .onChange(of: viewModel.discussionTime) { _, newValue in
             broadcastConfig()

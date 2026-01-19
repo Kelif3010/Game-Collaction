@@ -12,7 +12,7 @@ struct QuestionsAnswerRevealCard: View {
     let showRedX: Bool
     let shakeTrigger: CGFloat
     let isFullWidth: Bool
-    let spyQuestion: String?
+    let liarQuestion: String?
     let isSlowest: Bool
     
     // Voting Props
@@ -23,7 +23,7 @@ struct QuestionsAnswerRevealCard: View {
     
     let onTap: () -> Void
     
-    init(playerName: String, answer: QuestionsAnswer, isSelected: Bool, showSelectionBox: Bool, selectionEnabled: Bool, showGreenCheck: Bool, showRedX: Bool, shakeTrigger: CGFloat, isFullWidth: Bool, spyQuestion: String?, isSlowest: Bool = false, voteCount: Int = 0, canIncrement: Bool = true, onIncrement: (() -> Void)? = nil, onDecrement: (() -> Void)? = nil, onTap: @escaping () -> Void) {
+    init(playerName: String, answer: QuestionsAnswer, isSelected: Bool, showSelectionBox: Bool, selectionEnabled: Bool, showGreenCheck: Bool, showRedX: Bool, shakeTrigger: CGFloat, isFullWidth: Bool, liarQuestion: String?, isSlowest: Bool = false, voteCount: Int = 0, canIncrement: Bool = true, onIncrement: (() -> Void)? = nil, onDecrement: (() -> Void)? = nil, onTap: @escaping () -> Void) {
         self.playerName = playerName
         self.answer = answer
         self.isSelected = isSelected
@@ -33,7 +33,7 @@ struct QuestionsAnswerRevealCard: View {
         self.showRedX = showRedX
         self.shakeTrigger = shakeTrigger
         self.isFullWidth = isFullWidth
-        self.spyQuestion = spyQuestion
+        self.liarQuestion = liarQuestion
         self.isSlowest = isSlowest
         self.voteCount = voteCount
         self.canIncrement = canIncrement
@@ -45,7 +45,7 @@ struct QuestionsAnswerRevealCard: View {
     var body: some View {
         ZStack(alignment: .top) {
             // Hintergrund (Akten-Look)
-            QuestionsChalkboardBackground()
+            QuestionsTerminalBackground()
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(voteCount > 0 ? Color.red.opacity(0.15) : Color.clear)
@@ -66,7 +66,7 @@ struct QuestionsAnswerRevealCard: View {
                                     .foregroundColor(.green)
                                     .font(.title3)
                             } else if showRedX {
-                                Image(systemName: "exclamationmark.triangle.fill") // Spy Symbol
+                                Image(systemName: "brain.head.profile") // Liar Symbol
                                     .foregroundColor(.red)
                                     .font(.title3)
                             } else if answer.timeTaken > 0 {
@@ -95,8 +95,8 @@ struct QuestionsAnswerRevealCard: View {
 
                         // Antwort-Bereich (Zentrum)
                         VStack {
-                            if let spyQuestion {
-                                Text(LocalizedStringKey(spyQuestion))
+                            if let liarQuestion {
+                                Text(LocalizedStringKey(liarQuestion))
                                     .font(.caption.weight(.medium))
                                     .foregroundColor(.red.opacity(0.8))
                                     .multilineTextAlignment(.center)

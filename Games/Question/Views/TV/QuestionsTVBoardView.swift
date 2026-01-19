@@ -82,7 +82,25 @@ private struct TVCinematicRevealView: View {
     @State private var flashOpacity: Double = 0
     
     var body: some View {
-        ZStack {
+        let evaluation = viewModel.revealEvaluation ?? viewModel.lastRevealEvaluation
+        let citizensWon = evaluation?.citizensWon ?? false
+        let suspectID = evaluation?.selected.first
+        
+        let stampText: String
+        let stampColor: Color
+        
+        if citizensWon {
+            stampText = "LÜGE"
+            stampColor = .red
+        } else if suspectID == nil {
+            stampText = "FEHLER"
+            stampColor = .orange
+        } else {
+            stampText = "WAHRHEIT"
+            stampColor = .green
+        }
+
+        return ZStack {
             LinearGradient(
                 colors: [Color.black.opacity(0.95), Color.red.opacity(0.4)],
                 startPoint: .topLeading,
@@ -99,7 +117,7 @@ private struct TVCinematicRevealView: View {
             .ignoresSafeArea()
             
             VStack(spacing: scaled(20)) {
-                Text("AKTE GEÖFFNET")
+                Text("ANALYSE-SYSTEM")
                     .font(.system(size: scaled(22), weight: .bold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.7))
                     .tracking(scaled(6))
@@ -113,7 +131,7 @@ private struct TVCinematicRevealView: View {
                     )
                     .overlay(
                         VStack(spacing: scaled(6)) {
-                            Text("IDENTITÄT PRÜFEN")
+                            Text("WAHRHEITSGEHALT TESTEN")
                                 .font(.system(size: scaled(24), weight: .black))
                                 .foregroundColor(.white)
                             Text(targetLine)
@@ -123,19 +141,19 @@ private struct TVCinematicRevealView: View {
                     )
             }
             
-            Text("ENTTARNT")
+            Text(stampText)
                 .font(.system(size: scaled(120), weight: .black, design: .monospaced))
-                .foregroundColor(.red)
+                .foregroundColor(stampColor)
                 .padding(.horizontal, scaled(30))
                 .padding(.vertical, scaled(12))
                 .overlay(
                     RoundedRectangle(cornerRadius: scaled(10))
-                        .stroke(Color.red, lineWidth: scaled(6))
+                        .stroke(stampColor, lineWidth: scaled(6))
                 )
                 .rotationEffect(.degrees(stampRotation))
                 .scaleEffect(stampScale)
                 .opacity(stampOpacity)
-                .shadow(color: .red.opacity(0.5), radius: scaled(20))
+                .shadow(color: stampColor.opacity(0.5), radius: scaled(20))
             
             Rectangle()
                 .fill(Color.white)
@@ -163,7 +181,7 @@ private struct TVCinematicRevealView: View {
     
     private var targetLine: String {
         let evaluation = viewModel.revealEvaluation ?? viewModel.lastRevealEvaluation
-        let names = evaluation?.imposters.map { viewModel.playerName(for: $0) } ?? []
+        let names = evaluation?.liars.map { viewModel.playerName(for: $0) } ?? []
         if names.isEmpty {
             return "ZIEL UNBEKANNT"
         }
@@ -229,7 +247,7 @@ private struct TVSetupView: View {
             Spacer()
             
             VStack(spacing: scaled(10)) {
-                Text("BÜHNE")
+                Text("WAHRHEITS-MODUS")
                     .font(.system(size: scaled(24), weight: .black, design: .monospaced))
                     .foregroundColor(.white.opacity(0.6))
                     .tracking(scaled(6))
@@ -382,12 +400,12 @@ private struct TVCollectingView: View {
             Spacer()
             
             VStack(spacing: scaled(8)) {
-                Text("LIVE-TICKER")
+                Text("DATEN-SCAN")
                     .font(.system(size: scaled(20), weight: .bold, design: .monospaced))
                     .foregroundColor(.orange)
                     .tracking(scaled(4))
                 
-                Text("ANTWORTEN LAUFEN")
+                Text("ANALYSE LÄUFT")
                     .font(.system(size: scaled(42), weight: .black))
                     .foregroundColor(.white)
             }
@@ -661,23 +679,23 @@ private struct TVResultsView: View {
             Spacer()
             
             if let eval = viewModel.lastRevealEvaluation {
-                Text(eval.citizensWon ? "BEDROHUNG ELIMINIERT" : "MISSION GESCHEITERT")
+                Text(eval.citizensWon ? "LÜGNER ÜBERFÜHRT" : "LÜGNER ENTKOMMEN")
                     .font(.system(size: scaled(60), weight: .black))
                     .foregroundColor(eval.citizensWon ? .green : .red)
                 
                 HStack(spacing: scaled(40)) {
-                    ForEach(Array(viewModel.currentSpyIDs), id: \.self) { spyID in
+                    ForEach(Array(viewModel.currentLiarIDs), id: \.self) { liarID in
                         VStack(spacing: scaled(15)) {
                             Circle()
                                 .fill(Color.red.opacity(0.2))
                                 .frame(width: scaled(120), height: scaled(120))
                                 .overlay(
-                                    Image(systemName: "eye.slash.fill")
+                                    Image(systemName: "brain.head.profile")
                                         .font(.system(size: scaled(50)))
                                         .foregroundColor(.red)
                                 )
                             
-                            Text(viewModel.playerName(for: spyID))
+                            Text(viewModel.playerName(for: liarID))
                                 .font(.system(size: scaled(28), weight: .bold))
                                 .foregroundColor(.white)
                             

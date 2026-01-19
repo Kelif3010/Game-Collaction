@@ -10,7 +10,7 @@ class QuestionsGameViewModel: ObservableObject {
     
     // MARK: - Game Settings (Setup)
     @Published var selectedCategory: QuestionsCategory? = nil
-    @Published var numberOfSpies: Int = 1
+    @Published var numberOfLiars: Int = 1
     @Published var discussionTime: TimeInterval = 180
     
     // MARK: - Multiplayer Specific
@@ -29,10 +29,10 @@ class QuestionsGameViewModel: ObservableObject {
     @Published var voteCounts: [UUID: Int] = [:]
     @Published var revealEvaluation: QuestionsVoteEvaluation? = nil
     @Published var lastRevealEvaluation: QuestionsVoteEvaluation? = nil
-    @Published var foundRevealSpies: Set<UUID> = []
+    @Published var foundRevealLiars: Set<UUID> = []
     @Published var revealShakeTrigger: CGFloat = 0
-    @Published var showSpyDetailsList = false
-    @Published var spyScrollTarget: UUID? = nil
+    @Published var showLiarDetailsList = false
+    @Published var liarScrollTarget: UUID? = nil
     
     // MARK: - Phase State: Sudden Death
     @Published var isSuddenDeathActive = false
@@ -58,8 +58,8 @@ class QuestionsGameViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     var playerCount: Int { appModel.players.count }
-    var maxVotes: Int { playerCount * engine.config.numberOfSpies }
-    var maxVotesPerPlayer: Int { max(1, engine.config.numberOfSpies) }
+    var maxVotes: Int { playerCount * engine.config.numberOfLiars }
+    var maxVotesPerPlayer: Int { max(1, engine.config.numberOfLiars) }
     var currentTotalVotes: Int { voteCounts.values.reduce(0, +) }
     var myTotalVotes: Int { myVotes.values.reduce(0, +) }
     
@@ -94,7 +94,7 @@ class QuestionsGameViewModel: ObservableObject {
         return Set(voteCounts.filter { $0.value == maxVotes }.map { $0.key })
     }
     
-    var currentSpyIDs: Set<UUID> { engine.currentSpyIDs }
+    var currentLiarIDs: Set<UUID> { engine.currentLiarIDs }
 
     private var pendingRoleAcks: Set<String> = []
     
@@ -113,7 +113,7 @@ class QuestionsGameViewModel: ObservableObject {
         if selectedCategory == nil {
             selectedCategory = appModel.selectedQuestionsCategory ?? QuestionsDefaults.all.first
         }
-        numberOfSpies = min(max(1, appModel.numberOfImposters), max(0, playerCount > 1 ? playerCount - 1 : 0))
+        numberOfLiars = min(max(1, appModel.numberOfLiars), max(0, playerCount > 1 ? playerCount - 1 : 0))
     }
     
     // MARK: - Game Lifecycle Logic
@@ -128,12 +128,12 @@ class QuestionsGameViewModel: ObservableObject {
         
         // Update AppModel
         appModel.selectedQuestionsCategory = category
-        appModel.numberOfImposters = numberOfSpies
+        appModel.numberOfLiars = numberOfLiars
         
         // Configure Engine
         engine.configure(
             players: appModel.players,
-            numberOfSpies: numberOfSpies,
+            numberOfLiars: numberOfLiars,
             category: category,
             fairnessPolicy: appModel.fairnessPolicy,
             fairnessState: appModel.fairnessState
@@ -166,7 +166,7 @@ class QuestionsGameViewModel: ObservableObject {
         
         for player in allPlayers {
             let role = engine.role(for: player.id)
-            let prompt = (role == .spy) ? pair.spyQuestion : pair.citizenQuestion
+            let prompt = (role == .liar) ? pair.liarQuestion : pair.citizenQuestion
             
             if player.name == MultipeerManager.shared.myPeerId.displayName {
                 // Selbst setzen
@@ -292,7 +292,7 @@ class QuestionsGameViewModel: ObservableObject {
         guard let peer = MultipeerManager.shared.getPeer(byName: request.playerName) else { return }
         
         let config = QuestionsConfig(
-            numberOfSpies: numberOfSpies,
+            numberOfLiars: numberOfLiars,
             selectedCategory: selectedCategory,
             discussionTime: discussionTime,
             players: appModel.players
@@ -302,7 +302,7 @@ class QuestionsGameViewModel: ObservableObject {
         let rolePayload: QuestionsRolePayload?
         if let roundState, let player = appModel.players.first(where: { $0.id == request.playerID }) {
             let role = engine.role(for: player.id)
-            let prompt = role == .spy ? roundState.promptPair.spyQuestion : roundState.promptPair.citizenQuestion
+            let prompt = role == .liar ? roundState.promptPair.liarQuestion : roundState.promptPair.citizenQuestion
             rolePayload = QuestionsRolePayload(role: role, prompt: prompt)
         } else {
             rolePayload = nil
@@ -338,7 +338,7 @@ class QuestionsGameViewModel: ObservableObject {
     
     func applyRejoinState(_ payload: QuestionsRejoinStatePayload) {
         selectedCategory = payload.config.selectedCategory
-        numberOfSpies = payload.config.numberOfSpies
+        numberOfLiars = payload.config.numberOfLiars
         discussionTime = payload.config.discussionTime
         if !payload.config.players.isEmpty {
             appModel.players = payload.config.players
@@ -500,9 +500,9 @@ class QuestionsGameViewModel: ObservableObject {
                 beginVotingPhase()
             }
             
-            // Special Case: No Spies (Edge Case)
-            if engine.currentSpyIDs.isEmpty {
-                let evaluation = QuestionsVoteEvaluation(selected: [], imposters: engine.currentSpyIDs)
+            // Special Case: No Liars (Edge Case)
+            if engine.currentLiarIDs.isEmpty {
+                let evaluation = QuestionsVoteEvaluation(selected: [], liars: engine.currentLiarIDs)
                 revealEvaluation = evaluation
                 lastRevealEvaluation = evaluation
                 broadcastVotingResult(evaluation)
@@ -543,14 +543,14 @@ class QuestionsGameViewModel: ObservableObject {
     }
     
     private func evaluateVotes(suspects: Set<UUID>) {
-        let evaluation = QuestionsVoteEvaluation(selected: suspects, imposters: engine.currentSpyIDs)
+        let evaluation = QuestionsVoteEvaluation(selected: suspects, liars: engine.currentLiarIDs)
         revealEvaluation = evaluation
         lastRevealEvaluation = evaluation
         
         if !evaluation.incorrect.isEmpty {
-            // Spies Win (Wrong guess)
-            if !engine.currentSpyIDs.isEmpty {
-                appModel.addPoints(to: engine.currentSpyIDs, amount: 3)
+            // Liars Win (Wrong guess)
+            if !engine.currentLiarIDs.isEmpty {
+                appModel.addPoints(to: engine.currentLiarIDs, amount: 3)
             }
             withAnimation(.easeInOut(duration: 0.5)) { revealShakeTrigger += 1 }
             broadcastVotingResult(evaluation)
@@ -559,16 +559,16 @@ class QuestionsGameViewModel: ObservableObject {
             return
         }
         
-        foundRevealSpies.formUnion(evaluation.correct)
-        if foundRevealSpies.count == engine.currentSpyIDs.count {
-            // Citizens Win (All spies found)
-            if !engine.currentSpyIDs.isEmpty {
+        foundRevealLiars.formUnion(evaluation.correct)
+        if foundRevealLiars.count == engine.currentLiarIDs.count {
+            // Citizens Win (All liars found)
+            if !engine.currentLiarIDs.isEmpty {
                 let allIDs = Set(appModel.players.map { $0.id })
-                let citizenIDs = allIDs.subtracting(engine.currentSpyIDs)
+                let citizenIDs = allIDs.subtracting(engine.currentLiarIDs)
                 appModel.addPoints(to: citizenIDs, amount: 1)
             }
             
-            let finalEval = QuestionsVoteEvaluation(selected: foundRevealSpies, imposters: engine.currentSpyIDs)
+            let finalEval = QuestionsVoteEvaluation(selected: foundRevealLiars, liars: engine.currentLiarIDs)
             revealEvaluation = finalEval
             lastRevealEvaluation = finalEval
             broadcastVotingResult(finalEval)
@@ -577,9 +577,9 @@ class QuestionsGameViewModel: ObservableObject {
             return
         }
         
-        // Partial Find / Spies Win Survived
-        if !engine.currentSpyIDs.isEmpty {
-            appModel.addPoints(to: engine.currentSpyIDs, amount: 3)
+        // Partial Find / Liars Win Survived
+        if !engine.currentLiarIDs.isEmpty {
+            appModel.addPoints(to: engine.currentLiarIDs, amount: 3)
         }
         broadcastVotingResult(evaluation)
         engine.finishRound()
@@ -589,7 +589,7 @@ class QuestionsGameViewModel: ObservableObject {
     func applyVotingResult(_ evaluation: QuestionsVoteEvaluation) {
         revealEvaluation = evaluation
         lastRevealEvaluation = evaluation
-        foundRevealSpies.formUnion(evaluation.correct)
+        foundRevealLiars.formUnion(evaluation.correct)
         isRevealVoteActive = true
     }
     
@@ -658,12 +658,12 @@ class QuestionsGameViewModel: ObservableObject {
     // MARK: - Helpers
     
     func handleRevealCardTap(playerID: UUID) {
-        if showSpyDetailsList {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showSpyDetailsList = false }
-            spyScrollTarget = nil
+        if showLiarDetailsList {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showLiarDetailsList = false }
+            liarScrollTarget = nil
         } else {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { showSpyDetailsList = true }
-            spyScrollTarget = playerID
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { showLiarDetailsList = true }
+            liarScrollTarget = playerID
         }
     }
     
@@ -674,9 +674,9 @@ class QuestionsGameViewModel: ObservableObject {
         votesByVoter.removeAll()
         revealEvaluation = nil
         revealShakeTrigger = 0
-        showSpyDetailsList = false
-        spyScrollTarget = nil
-        foundRevealSpies.removeAll()
+        showLiarDetailsList = false
+        liarScrollTarget = nil
+        foundRevealLiars.removeAll()
         if clearLast { lastRevealEvaluation = nil }
         broadcastVotingStatus(resetVotes: true)
     }

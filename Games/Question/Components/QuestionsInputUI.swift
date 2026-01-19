@@ -46,7 +46,7 @@ struct QuestionsPromptBoard: View {
     let question: String
 
     var body: some View {
-        QuestionsChalkboardBackground()
+        QuestionsTerminalBackground()
             .frame(height: 220)
             .overlay(
                 VStack(spacing: 20) {
@@ -66,7 +66,7 @@ struct QuestionsAnswerBoard: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            QuestionsChalkboardBackground()
+            QuestionsTerminalBackground()
                 .frame(maxWidth: .infinity)
             TextEditor(text: $text)
                 .focused(focus)

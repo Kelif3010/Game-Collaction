@@ -147,18 +147,34 @@ struct QuestionsFlipCard: View {
     }
 }
 
-struct QuestionsChalkboardBackground: View {
+struct QuestionsTerminalBackground: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
             .fill(
                 LinearGradient(
                     colors: [
-                        Color(red: 0.02, green: 0.02, blue: 0.05),
-                        Color(red: 0.08, green: 0.08, blue: 0.16)
+                        Color(red: 0.05, green: 0.05, blue: 0.1),
+                        Color(red: 0.02, green: 0.02, blue: 0.05)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
+            )
+            .overlay(
+                // Subtle Grid Effect
+                ZStack {
+                    VStack(spacing: 4) {
+                        ForEach(0..<40) { _ in
+                            Divider().background(Color.white.opacity(0.03))
+                        }
+                    }
+                    HStack(spacing: 4) {
+                        ForEach(0..<40) { _ in
+                            Divider().background(Color.white.opacity(0.03))
+                        }
+                    }
+                }
+                .clipped()
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
