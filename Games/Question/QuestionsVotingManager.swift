@@ -8,13 +8,13 @@ public final class QuestionsVotingManager: ObservableObject {
     @Published public private(set) var evaluation: QuestionsVoteEvaluation? = nil
     
     private let players: [UUID]
-    private let liars: Set<UUID>
+    private let imposters: Set<UUID>
     private let requiredSelections: Int
     
-    public init(players: [UUID], liars: Set<UUID>) {
+    public init(players: [UUID], imposters: Set<UUID>) {
         self.players = players
-        self.liars = liars
-        self.requiredSelections = liars.count
+        self.imposters = imposters
+        self.requiredSelections = imposters.count
     }
     
     public func start() {
@@ -44,7 +44,7 @@ public final class QuestionsVotingManager: ObservableObject {
     @discardableResult
     public func confirm() -> QuestionsVoteEvaluation? {
         guard canConfirm else { return nil }
-        let result = QuestionsVoteEvaluation(selected: selected, liars: liars)
+        let result = QuestionsVoteEvaluation(selected: selected, imposters: imposters)
         evaluation = result
         isActive = false
         hasResults = true
@@ -60,6 +60,6 @@ public final class QuestionsVotingManager: ObservableObject {
     
     public var resultText: String {
         guard let evaluation = evaluation else { return "" }
-        return evaluation.citizensWon ? "Bewohner haben gewonnen" : "Lügner haben gewonnen"
+        return evaluation.citizensWon ? "Bewohner haben gewonnen" : "Imposter haben gewonnen"
     }
 }

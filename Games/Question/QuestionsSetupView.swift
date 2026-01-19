@@ -2,80 +2,25 @@ import SwiftUI
 
 struct QuestionsSetupView: View {
     @ObservedObject var appModel: AppModel
-    @ObservedObject var viewModel: QuestionsGameViewModel
+    @Binding var selectedCategory: QuestionsCategory?
+    @Binding var numberOfSpies: Int
+    @Binding var discussionTime: TimeInterval
     var onStartGame: () -> Void
-    @ObservedObject private var mpc = MultipeerManager.shared
     
     // Navigation State
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     @State private var showPlayerSheet = false
     @State private var showCategorySheet = false
     @State private var showSettingsSheet = false
     @State private var showLeaderboardSheet = false
-    @State private var showOnboardingSheet = false
-    @State private var showTimerSheet = false
-    @State private var showMultiplayerSheet = false
-    @AppStorage("question.onboardingSeen") private var onboardingSeen = false
-    
-    @State var route: SetupRoute? // For consistency with MPC logic
+    @State private var showInfoSheet = false
     
     // Validierung
     private var playerCount: Int { appModel.players.count }
     private var maxSpies: Int { max(0, playerCount > 1 ? playerCount - 1 : 0) }
-    
-    private var minimumPlayersRequired: Int {
-        switch mpc.role {
-        case .host, .peer: return 2
-        case .unknown: return 3
-        }
-    }
-    
-    private var allPlayersReady: Bool {
-        guard mpc.role == .host else { return true }
-        let lobby = Set(mpc.lobbyPeers)
-        guard !lobby.isEmpty else { return false }
-        return lobby.isSubset(of: mpc.readyPlayers)
-    }
-
     private var canStart: Bool {
-        if mpc.role == .peer { return false }
-        guard let cat = viewModel.selectedCategory else { return false }
-        
-        let baseReady = playerCount >= minimumPlayersRequired && 
-                       viewModel.numberOfSpies >= 1 && 
-                       viewModel.numberOfSpies <= maxSpies && 
-                       !cat.promptPairs.isEmpty
-        
-        return baseReady && allPlayersReady
-    }
-    
-    private var startButtonHintText: String {
-        if mpc.role == .peer {
-            return NSLocalizedString("Warte auf den Host...", comment: "")
-        }
-        
-        var missingItems: [String] = []
-        if playerCount < minimumPlayersRequired {
-            missingItems.append(String(format: NSLocalizedString("Noch %d Spieler benötigt", comment: ""), minimumPlayersRequired - playerCount))
-        }
-        
-        if viewModel.selectedCategory == nil {
-            missingItems.append(NSLocalizedString("Kategorie wählen", comment: ""))
-        }
-        
-        if viewModel.numberOfLiars >= playerCount && playerCount > 0 {
-            missingItems.append(NSLocalizedString("Zu viele Lügner", comment: ""))
-        }
-        
-        if mpc.role == .host && !allPlayersReady {
-            let lobby = Set(mpc.lobbyPeers)
-            let missingReady = max(0, lobby.count - mpc.readyPlayers.intersection(lobby).count)
-            if missingReady > 0 {
-                missingItems.append(String(format: NSLocalizedString("Warten auf %d Spieler", comment: ""), missingReady))
-            }
-        }
-        
-        return missingItems.isEmpty ? "" : missingItems.joined(separator: " • ")
+        guard let cat = selectedCategory else { return false }
+        return playerCount >= 3 && numberOfSpies >= 1 && numberOfSpies <= maxSpies && !cat.promptPairs.isEmpty
     }
 
     var body: some View {
@@ -101,19 +46,9 @@ struct QuestionsSetupView: View {
                         Spacer()
                         
                         HStack(spacing: 12) {
-                            // Multiplayer
-                            Button { showMultiplayerSheet = true } label: {
-                                Image(systemName: "person.2.wave.2.fill")
-                                    .font(.headline)
-                                    .foregroundStyle(.cyan)
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
-                            }
-                            
-                            // Statistik (formerly Trophäe)
+                            // Trophäe
                             Button { showLeaderboardSheet = true } label: {
-                                Image(systemName: "chart.bar.xaxis")
+                                Image(systemName: "trophy.fill")
                                     .font(.headline)
                                     .foregroundStyle(.yellow)
                                     .frame(width: 36, height: 36)
@@ -121,9 +56,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Datensatz (Kategorie)
+                            // Ordner (Kategorie)
                             Button { showCategorySheet = true } label: {
-                                Image(systemName: "doc.text.magnifyingglass")
+                                Image(systemName: "folder.fill")
                                     .font(.headline)
                                     .foregroundStyle(.orange)
                                     .frame(width: 36, height: 36)
@@ -131,9 +66,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Kalibrierung (Settings)
+                            // Zahnrad (Settings)
                             Button { showSettingsSheet = true } label: {
-                                Image(systemName: "slider.horizontal.3")
+                                Image(systemName: "gearshape.fill")
                                     .font(.headline)
                                     .foregroundStyle(.gray)
                                     .frame(width: 36, height: 36)
@@ -141,9 +76,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Anleitung (Info)
-                            Button { showOnboardingSheet = true } label: {
-                                Image(systemName: "info.circle")
+                            // Fragezeichen (Info)
+                            Button { showInfoSheet = true } label: {
+                                Image(systemName: "questionmark")
                                     .font(.headline.bold())
                                     .foregroundStyle(.white)
                                     .frame(width: 36, height: 36)
@@ -172,10 +107,10 @@ struct QuestionsSetupView: View {
                                     )
                                 }
                                 
-                                // Lügner Row with Stepper
+                                // Spione Row with Stepper
                                 HStack(spacing: 12) {
-                                    QuestionsIconBadge(systemName: "brain.head.profile", tint: .red)
-                                    Text("Lügner")
+                                    QuestionsIconBadge(systemName: "eye.slash.fill", tint: .red)
+                                    Text("Spione")
                                         .font(.body)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)
@@ -183,7 +118,7 @@ struct QuestionsSetupView: View {
                                     
                                     HStack(spacing: 8) {
                                         Button {
-                                            if viewModel.numberOfLiars > 1 { viewModel.numberOfLiars -= 1 }
+                                            if numberOfSpies > 1 { numberOfSpies -= 1 }
                                         } label: {
                                             Image(systemName: "minus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -193,13 +128,13 @@ struct QuestionsSetupView: View {
                                                 .clipShape(Circle())
                                         }
                                         
-                                        Text("\(viewModel.numberOfLiars)")
+                                        Text("\(numberOfSpies)")
                                             .font(.callout)
                                             .foregroundColor(.white)
                                             .frame(minWidth: 24)
                                             
                                         Button {
-                                            if viewModel.numberOfLiars < maxSpies { viewModel.numberOfLiars += 1 }
+                                            if numberOfSpies < maxSpies { numberOfSpies += 1 }
                                         } label: {
                                             Image(systemName: "plus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -212,26 +147,36 @@ struct QuestionsSetupView: View {
                                 }
                                 .questionsRowStyle()
                                 
-                                // Timer Row
-                                Button {
-                                    showTimerSheet = true
-                                } label: {
-                                    QuestionsRowCell(
-                                        icon: "timer",
-                                        title: "Diskussion",
-                                        value: timeString,
-                                        tint: .green
-                                    )
+                                // Timer Row (Slider)
+                                VStack(spacing: 10) {
+                                    HStack(spacing: 12) {
+                                        QuestionsIconBadge(systemName: "timer", tint: .green)
+                                        Text("Diskussion")
+                                            .font(.body)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Text(timeString)
+                                            .font(.callout)
+                                            .foregroundStyle(QuestionsStyle.mutedText)
+                                    }
+
+                                    Slider(value: Binding(
+                                        get: { Double(discussionTime) },
+                                        set: { discussionTime = TimeInterval($0) }
+                                    ), in: 60...1800, step: 60)
+                                    .tint(.green)
                                 }
+                                .questionsRowStyle()
                                 
                                 // Kategorie Row
                                 Button {
                                     showCategorySheet = true
                                 } label: {
                                     QuestionsRowCell(
-                                        icon: "briefcase.fill",
+                                        icon: "folder.fill",
                                         title: "Kategorie",
-                                        value: viewModel.selectedCategory?.name ?? "Wählen",
+                                        value: selectedCategory?.name ?? "Wählen",
                                         tint: .orange
                                     )
                                 }
@@ -247,16 +192,12 @@ struct QuestionsSetupView: View {
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 10) {
                     QuestionsPrimaryButton(title: "Spiel starten") {
-                        if mpc.role == .host {
-                            startMPCGame()
-                        } else {
-                            onStartGame()
-                        }
+                        onStartGame()
                     }
                     .disabled(!canStart)
                     
                     if !canStart {
-                        Text(startButtonHintText)
+                        Text(validationMessage)
                             .font(.footnote)
                             .foregroundStyle(QuestionsStyle.mutedText)
                             .multilineTextAlignment(.center)
@@ -273,7 +214,7 @@ struct QuestionsSetupView: View {
                     .presentationBackground(.clear)
             }
             .sheet(isPresented: $showCategorySheet) {
-                QuestionsCategorySheet(selectedCategory: $viewModel.selectedCategory)
+                QuestionsCategorySheet(selectedCategory: $selectedCategory)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
@@ -293,76 +234,22 @@ struct QuestionsSetupView: View {
                     .presentationCornerRadius(28)
                     .presentationBackground(.clear)
             }
-            .sheet(isPresented: $showOnboardingSheet, onDismiss: {
-                onboardingSeen = true
-            }) {
-                QuestionsOnboardingSheet(onFinish: {
-                    onboardingSeen = true
-                })
+            .sheet(isPresented: $showInfoSheet) {
+                QuestionsPlaceholderSheet(title: "Anleitung", icon: "book.fill")
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
                     .presentationBackground(.clear)
             }
-            .sheet(isPresented: $showTimerSheet) {
-                QuestionsTimerSheet(discussionTime: $viewModel.discussionTime)
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
-                    .presentationCornerRadius(28)
-                    .presentationBackground(.clear)
-            }
-            .sheet(isPresented: $showMultiplayerSheet) {
-                QuestionsMultiplayerSheet()
-            }
-        }
-        .onAppear {
-            setupMPCListeners(viewModel: viewModel, route: $route)
-            if !onboardingSeen && !showOnboardingSheet {
-                DispatchQueue.main.async {
-                    showOnboardingSheet = true
-                }
-            }
-        }
-        .onChange(of: viewModel.selectedCategory) { _, newValue in
-            broadcastConfig()
-            if let name = newValue?.name {
-                sendHostActivity("Host waehlt Kategorie: \(name)")
-            }
-        }
-        .onChange(of: viewModel.numberOfSpies) { _, newValue in
-            broadcastConfig()
-            sendHostActivity("Host stellt Lügner auf \(newValue)")
-        }
-        .onChange(of: viewModel.discussionTime) { _, newValue in
-            broadcastConfig()
-            if newValue == 0 {
-                sendHostActivity("Host stellt Diskussion auf unbegrenzt")
-            } else {
-                let minutes = Int(newValue) / 60
-                sendHostActivity("Host stellt Diskussion auf \(minutes) Min")
-            }
-        }
-        .onChange(of: mpc.lobbyPeers) { _, newPeers in
-            guard mpc.role != .unknown else { return }
-            if mpc.role == .host {
-                appModel.players = mergePlayers(existing: appModel.players, names: newPeers)
-                let validPlayers = Set(newPeers)
-                let filteredReady = mpc.readyPlayers.intersection(validPlayers)
-                if filteredReady != mpc.readyPlayers {
-                    mpc.readyPlayers = filteredReady
-                }
-                mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(filteredReady))
-                broadcastConfig()
-            }
         }
     }
     
     private var timeString: String {
-        if viewModel.discussionTime == 0 {
+        if discussionTime == 0 {
             return NSLocalizedString("Unbegrenzt", comment: "")
         } else {
-            let minutes = Int(viewModel.discussionTime) / 60
-            let seconds = Int(viewModel.discussionTime) % 60
+            let minutes = Int(discussionTime) / 60
+            let seconds = Int(discussionTime) % 60
             if seconds == 0 {
                 return "\(minutes) Min"
             } else {
@@ -373,19 +260,276 @@ struct QuestionsSetupView: View {
     
     private var validationMessage: LocalizedStringKey {
         if playerCount < 3 { return "Mindestens 3 Spieler benötigt." }
-        if viewModel.selectedCategory == nil { return "Bitte eine Kategorie wählen." }
+        if selectedCategory == nil { return "Bitte eine Kategorie wählen." }
         return ""
     }
+}
 
-    private func mergePlayers(existing: [Player], names: [String]) -> [Player] {
-        var merged: [Player] = []
-        for name in names {
-            if let match = existing.first(where: { $0.name == name }) {
-                merged.append(match)
-            } else {
-                merged.append(Player(name: name))
+struct QuestionsTimerSheet: View {
+    @Binding var discussionTime: TimeInterval
+    @Environment(\.dismiss) var dismiss
+    
+    private let timeOptions: [TimeInterval] = [
+        0, 30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480, 540, 600
+    ]
+    
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                QuestionsSheetHeader(title: "Zeitlimit wählen") {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(timeOptions, id: \.self) { time in
+                            Button {
+                                discussionTime = time
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    QuestionsIconBadge(systemName: "timer", tint: .green)
+                                    
+                                    Text(time == 0 ? "Unbegrenzt" : formatTime(time))
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                    
+                                    Spacer()
+                                    
+                                    if discussionTime == time {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                                .questionsRowStyle()
+                            }
+                        }
+                    }
+                    .padding(QuestionsStyle.padding)
+                }
             }
         }
-        return merged
+    }
+    
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        if seconds == 0 {
+            return "\(minutes) Minuten"
+        } else {
+            return "\(minutes) Min \(seconds) Sek"
+        }
+    }
+}
+
+// MARK: - Helper Sheets
+
+struct QuestionsPlayerManagementSheet: View {
+    @ObservedObject var appModel: AppModel
+    @Environment(\.dismiss) var dismiss
+    @AppStorage("myPlayerName") private var myPlayerName = ""
+    @State private var newPlayerName = ""
+    @FocusState private var isInputFocused: Bool
+
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                QuestionsSheetHeader(title: "Spieler verwalten") {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                VStack(spacing: 16) {
+                    // Input
+                    HStack(spacing: 10) {
+                        TextField("Neuer Spieler...", text: $newPlayerName)
+                            .textFieldStyle(.plain)
+                            .font(.body)
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1)))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                            .foregroundStyle(.white)
+                            .submitLabel(.done)
+                            .focused($isInputFocused)
+                            .onSubmit { addPlayer() }
+                            .autocorrectionDisabled()
+                        
+                        Button(action: addPlayer) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 48, height: 48)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(!newPlayerName.isEmpty ? Color.green : Color.gray.opacity(0.3))
+                                )
+                        }
+                        .disabled(newPlayerName.isEmpty)
+                    }
+                    .padding(.top, 20)
+                    
+                    // List
+                    List {
+                        Section {
+                            ForEach(appModel.players, id: \.id) { player in
+                                Text(player.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                    .listRowBackground(Color.white.opacity(0.08))
+                                    .listRowSeparatorTint(Color.white.opacity(0.1))
+                            }
+                            .onDelete(perform: deletePlayer)
+                            .onMove(perform: movePlayer)
+                        } header: {
+                            Text("\(appModel.players.count) Spieler")
+                                .foregroundStyle(QuestionsStyle.mutedText)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .environment(\.editMode, .constant(.active))
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+            }
+        }
+        .onAppear {
+            if !myPlayerName.isEmpty {
+                // Automatisch hinzufügen, wenn noch nicht vorhanden
+                if !appModel.players.contains(where: { $0.name == myPlayerName }) {
+                    appModel.players.append(Player(name: myPlayerName))
+                }
+            }
+        }
+    }
+    
+    private func addPlayer() {
+        let name = newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        withAnimation {
+            appModel.players.append(Player(name: name))
+        }
+        newPlayerName = ""
+        isInputFocused = true
+    }
+    
+    private func deletePlayer(at offsets: IndexSet) {
+        appModel.players.remove(atOffsets: offsets)
+    }
+    
+    private func movePlayer(from source: IndexSet, to destination: Int) {
+        appModel.players.move(fromOffsets: source, toOffset: destination)
+    }
+}
+
+struct QuestionsCategorySheet: View {
+    @Binding var selectedCategory: QuestionsCategory?
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                QuestionsSheetHeader(title: "Kategorie wählen") {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(QuestionsDefaults.all) { category in
+                            Button {
+                                selectedCategory = category
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    QuestionsIconBadge(systemName: "folder.fill", tint: .orange)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(LocalizedStringKey(category.name))
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        Text("\(category.promptPairs.count) Fragen")
+                                            .font(.caption)
+                                            .foregroundStyle(QuestionsStyle.mutedText)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    if selectedCategory?.id == category.id {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                            .font(.headline)
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundStyle(.white.opacity(0.3))
+                                            .font(.headline)
+                                    }
+                                }
+                                .questionsRowStyle()
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(QuestionsStyle.padding)
+                }
+            }
+        }
+    }
+}
+
+struct QuestionsSettingsSheet: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            VStack {
+                QuestionsSheetHeader(title: "Einstellungen") {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                Spacer()
+                Text(LocalizedStringKey("Hier könnten Spieleinstellungen sein."))
+                    .foregroundColor(QuestionsStyle.mutedText)
+                Spacer()
+            }
+        }
+    }
+}
+
+struct QuestionsPlaceholderSheet: View {
+    let title: String
+    let icon: String
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        ZStack {
+            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            VStack(spacing: 20) {
+                QuestionsSheetHeader(title: title) {
+                    dismiss()
+                }
+                .padding(.horizontal, QuestionsStyle.padding)
+                
+                Spacer()
+                
+                Image(systemName: icon)
+                    .font(.system(size: 60))
+                    .foregroundColor(.white.opacity(0.2))
+                
+                Text(LocalizedStringKey(title))
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                
+                Spacer()
+            }
+        }
     }
 }

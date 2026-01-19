@@ -11,11 +11,11 @@ final class QuestionsEngine: ObservableObject {
 
     // Players (injected)
     private(set) var players: [Player] = []
-    private var liars: Set<UUID> = [] // player ids
+    private var spies: Set<UUID> = [] // player ids
     private var fairnessState: FairnessState?
     private var fairnessPolicy: FairnessPolicy?
-    // Expose current liar IDs as read-only for consumers like voting UI
-    var currentLiarIDs: Set<UUID> { liars }
+    // Expose current spy IDs as read-only for consumers like voting UI
+    var currentSpyIDs: Set<UUID> { spies }
 
     // Internals
     private var cancellables = Set<AnyCancellable>()
@@ -25,37 +25,17 @@ final class QuestionsEngine: ObservableObject {
         self.config = config
     }
 
-    // MARK: - Multiplayer Sync Helpers
-    
-    func syncRoundState(_ newState: QuestionsRoundState) {
-        self.round = newState
-        self.phase = newState.phase
-    }
-    
-    func addExternalAnswer(_ answer: QuestionsAnswer) {
-        guard var r = round else { return }
-        r.answers[answer.playerID] = answer
-        print("🧪 [ENGINE] Externe Antwort hinzugefügt. Stand: \(r.answers.count)/\(players.count)")
-        self.round = r
-        
-        // Check if all players answered (including remote ones)
-        if r.answers.count >= players.count {
-            print("🧪 [ENGINE] Alle Antworten da! Wechsel zu Reveal.")
-            revealCitizenQuestion()
-        }
-    }
-
     // MARK: Configuration
 
     func configure(
         players: [Player],
-        numberOfLiars: Int,
+        numberOfSpies: Int,
         category: QuestionsCategory,
         fairnessPolicy: FairnessPolicy? = nil,
         fairnessState: FairnessState? = nil
     ) {
         self.players = players
-        self.config.numberOfLiars = max(0, min(numberOfLiars, max(0, players.count - 1)))
+        self.config.numberOfSpies = max(0, min(numberOfSpies, max(0, players.count - 1)))
         self.config.selectedCategory = category
         self.fairnessPolicy = fairnessPolicy
         self.fairnessState = fairnessState
@@ -63,18 +43,18 @@ final class QuestionsEngine: ObservableObject {
         usedPromptIndices.removeAll()
     }
 
-    // Randomly assign liars for this mode (separate from base game, if desired)
-    func assignLiarsRandomly(seed: UInt64? = nil) {
+    // Randomly assign spies for this mode (separate from base game, if desired)
+    func assignSpiesRandomly(seed: UInt64? = nil) {
         guard players.count > 0 else { return }
-        liars.removeAll()
-        let liarCount = min(config.numberOfLiars, max(0, players.count - 1))
-        guard liarCount > 0 else { return }
+        spies.removeAll()
+        let spyCount = min(config.numberOfSpies, max(0, players.count - 1))
+        guard spyCount > 0 else { return }
         
         if let fairnessState, let fairnessPolicy {
             var rng: any RandomNumberGeneratorLike = SystemRNGAdapter()
-            let identifiedLiars = LiarPicker.pickLiars(
+            let picked = ImposterPicker.pickImposters(
                 players: players.map { $0.id },
-                count: liarCount,
+                count: spyCount,
                 policy: fairnessPolicy,
                 state: fairnessState,
                 rng: &rng,
@@ -84,23 +64,23 @@ final class QuestionsEngine: ObservableObject {
                     state: fairnessState
                 )
             )
-            liars = Set(identifiedLiars)
+            spies = Set(picked)
             let round = fairnessState.currentRound
-            fairnessState.recordLiars(identifiedLiars)
-            for id in identifiedLiars {
+            fairnessState.recordImposters(picked)
+            for id in picked {
                 fairnessState.updateStats(for: id) { s in
                     s.cooldownUntilRound = round + fairnessPolicy.minCooldownRounds
                 }
             }
-            let identifiedSet = Set(identifiedLiars)
-            for id in players.map({ $0.id }) where !identifiedSet.contains(id) {
+            let pickedSet = Set(picked)
+            for id in players.map({ $0.id }) where !pickedSet.contains(id) {
                 fairnessState.updateStats(for: id) { s in
                     if s.currentStreak > 0 { s.currentStreak = 0 }
                 }
             }
         } else {
             var rng = seed.map { SeededGenerator(seed: $0) } ?? SeededGenerator()
-            liars = Set(players.shuffled(using: &rng).prefix(liarCount).map { $0.id })
+            spies = Set(players.shuffled(using: &rng).prefix(spyCount).map { $0.id })
         }
     }
 
@@ -108,7 +88,7 @@ final class QuestionsEngine: ObservableObject {
 
     func startNewRound(roundIndex: Int = 0) {
         guard let category = config.selectedCategory else { return }
-        assignLiarsRandomly()
+        assignSpiesRandomly()
         guard category.promptPairs.isEmpty == false else { return }
 
         // pick an unused prompt pair if possible
@@ -128,37 +108,23 @@ final class QuestionsEngine: ObservableObject {
     }
 
     func role(for playerID: UUID) -> QuestionsRole {
-        liars.contains(playerID) ? .liar : .citizen
+        spies.contains(playerID) ? .spy : .citizen
     }
 
     // Player submits an answer; returns true if accepted
     @discardableResult
     func submitAnswer(text: String, timeTaken: TimeInterval = 0) -> Bool {
-        guard let r = round else { return false }
-        guard players.indices.contains(r.currentPlayerIndex) else { return false }
-        let player = players[r.currentPlayerIndex]
-        return submitAnswer(for: player.id, text: text, timeTaken: timeTaken)
-    }
-    
-    @discardableResult
-    func submitAnswer(for playerID: UUID, text: String, timeTaken: TimeInterval = 0) -> Bool {
         guard var r = round else { return false }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        
-        let answer = QuestionsAnswer(playerID: playerID, role: role(for: playerID), text: text, timeTaken: timeTaken)
-        r.answers[playerID] = answer
-        
-        print("🧪 [ENGINE] Antwort gespeichert für ID: \(playerID). Gesamt: \(r.answers.count)/\(players.count)")
-        
-        // Im Single Device Modus rücken wir den Index weiter
-        if MultipeerManager.shared.role == .unknown {
-            r.currentPlayerIndex += 1
-        }
-        
-        self.round = r
-        
-        // Prüfung auf Vollständigkeit: Haben alle geantwortet?
-        if r.answers.count >= players.count {
+        guard players.indices.contains(r.currentPlayerIndex) else { return false }
+        let player = players[r.currentPlayerIndex]
+        let answer = QuestionsAnswer(playerID: player.id, role: role(for: player.id), text: text, timeTaken: timeTaken)
+        r.answers[player.id] = answer
+        r.currentPlayerIndex += 1
+        round = r
+
+        // if all players answered, reveal phase
+        if r.currentPlayerIndex >= players.count {
             revealCitizenQuestion()
         }
         return true

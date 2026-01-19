@@ -31,10 +31,3 @@ struct MPCGameEndEvent: Codable {
     let reason: String // "timeout", "voting", "victory"
     let winners: [String] // Liste der Gewinner-Namen
 }
-
-// MARK: - Questions Specific Payloads
-
-struct QuestionsRolePayload: Codable {
-    let role: QuestionsRole
-    let prompt: String
-}

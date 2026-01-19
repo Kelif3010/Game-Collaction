@@ -12,7 +12,6 @@ struct MainSettingsView: View {
     
     // Globaler Spieler-Manager
     @StateObject private var playerManager = GlobalPlayerManager.shared
-    @ObservedObject private var displayManager = ExternalDisplayManager.shared
     @State private var newPlayerName = ""
     @State private var isAddingPlayer = false
     @State private var showResetAlert = false
@@ -114,14 +113,6 @@ struct MainSettingsView: View {
                                         color: isHapticsEnabled ? .green : .gray
                                     )
                                 }
-                                
-                                // AirPlay Status
-                                DashboardCard(
-                                    icon: "airplayvideo",
-                                    title: LocalizedStringKey("AirPlay TV"),
-                                    subtitle: displayManager.isExternalDisplayConnected ? LocalizedStringKey("Verbunden") : LocalizedStringKey("Bereit"),
-                                    color: displayManager.isExternalDisplayConnected ? .green : .blue
-                                )
                                 
                                 // 4. Sound (Global)
                                 Button {

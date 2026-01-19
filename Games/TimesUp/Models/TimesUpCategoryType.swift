@@ -7,8 +7,6 @@ enum TimesUpCategoryType: String, CaseIterable, Codable {
     case yellow = "Leichte Kategorie"
     case red = "Mittel Kategorie"
     case blue = "Schwere Kategorie"
-    case kids = "Kinder (7-12)"
-    case teens = "Jugendliche (13-17)"
     case custom = "Eigene Kategorie"
     
     var color: Color {
@@ -17,8 +15,6 @@ enum TimesUpCategoryType: String, CaseIterable, Codable {
         case .yellow: return .yellow
         case .red: return .red
         case .blue: return .blue
-        case .kids: return .orange
-        case .teens: return .cyan
         case .custom: return .purple
         }
     }
@@ -29,8 +25,6 @@ enum TimesUpCategoryType: String, CaseIterable, Codable {
         case .yellow: return "sun.max.fill"
         case .red: return "flame.fill"
         case .blue: return "drop.fill"
-        case .kids: return "figure.child"
-        case .teens: return "headphones"
         case .custom: return "star.fill"
         }
     }
