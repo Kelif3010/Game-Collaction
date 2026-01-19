@@ -25,7 +25,7 @@ extension QuestionsSetupView {
                        let config = try? JSONDecoder().decode(QuestionsConfig.self, from: data) {
                         print("🧪 [CLIENT] Konfiguration und Spielerliste synchronisiert")
                         viewModel.selectedCategory = config.selectedCategory
-                        viewModel.numberOfSpies = config.numberOfSpies
+                        viewModel.numberOfLiars = config.numberOfLiars
                         viewModel.discussionTime = config.discussionTime
                         
                         if !config.players.isEmpty {
@@ -184,7 +184,7 @@ extension QuestionsSetupView {
     func broadcastConfig() {
         guard MultipeerManager.shared.role == .host else { return }
         let config = QuestionsConfig(
-            numberOfSpies: viewModel.numberOfSpies,
+            numberOfLiars: viewModel.numberOfLiars,
             selectedCategory: viewModel.selectedCategory,
             discussionTime: viewModel.discussionTime,
             players: appModel.players
