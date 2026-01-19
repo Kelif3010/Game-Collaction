@@ -60,16 +60,71 @@ public enum QuestionsPhase: String, Codable, Hashable {
     case finished
 }
 
-public struct QuestionsConfig: Hashable, Codable {
-    public var numberOfSpies: Int
-    public var selectedCategory: QuestionsCategory?
-    public var discussionTime: TimeInterval // 0 = Unlimited
+struct QuestionsConfig: Codable {
+    var numberOfSpies: Int
+    var selectedCategory: QuestionsCategory?
+    var discussionTime: TimeInterval // 0 = Unlimited
+    var players: [Player]
 
-    public init(numberOfSpies: Int = 1, selectedCategory: QuestionsCategory? = nil, discussionTime: TimeInterval = 180) {
+    init(numberOfSpies: Int = 1, selectedCategory: QuestionsCategory? = nil, discussionTime: TimeInterval = 180, players: [Player] = []) {
         self.numberOfSpies = numberOfSpies
         self.selectedCategory = selectedCategory
         self.discussionTime = discussionTime
+        self.players = players
     }
+}
+
+struct QuestionsVoteCastPayload: Codable {
+    let voterID: UUID
+    let votes: [UUID: Int]
+}
+
+struct QuestionsVotingStatusPayload: Codable {
+    let isActive: Bool
+    let resetVotes: Bool
+    let voteCounts: [UUID: Int]
+}
+
+struct QuestionsTimerSyncPayload: Codable {
+    let timeRemaining: TimeInterval
+    let isTimerPaused: Bool
+    let hostUptime: TimeInterval
+}
+
+struct QuestionsTimeSyncPingPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+}
+
+struct QuestionsTimeSyncPongPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+    let hostReceiveUptime: TimeInterval
+    let hostSendUptime: TimeInterval
+}
+
+struct QuestionsRoleAckPayload: Codable {
+    let playerName: String
+}
+
+struct QuestionsRejoinRequestPayload: Codable {
+    let playerName: String
+    let playerID: UUID
+}
+
+struct QuestionsRejoinStatePayload: Codable {
+    let config: QuestionsConfig
+    let roundState: QuestionsRoundState?
+    let role: QuestionsRolePayload?
+    let votingStatus: QuestionsVotingStatusPayload?
+    let evaluation: QuestionsVoteEvaluation?
+    let timerSync: QuestionsTimerSyncPayload?
+}
+
+struct QuestionsHostActivityPayload: Codable {
+    let message: String
 }
 
 public struct QuestionsRoundState: Hashable, Codable {

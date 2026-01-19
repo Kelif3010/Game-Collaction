@@ -57,7 +57,7 @@ struct CategoryDefaultData {
             "Berlin", "Paris", "London", "Rom", "New York", "Tokio", "Mallorca", "Hawaii", "Las Vegas", "Hollywood",
             "Ägypten", "Türkei", "Griechenland", "Schweden", "Schweiz", "Österreich", "Kanada", "Indien", "Mexiko", "Polen",
             "Eiffelturm", "Freiheitsstatue", "Kolosseum", "Chinesische Mauer", "Pyramiden", "Big Ben", "Brandenburger Tor", "Schiefer Turm von Pisa", "Taj Mahal", "Mount Everest",
-            "Niagarafälle", "Grand Canyon", "Amazonas", "Nordpol", "Südpol", "Sahara", "Atlantik", "Pazifik", "Venedig", "Alpen",
+            "Niagarafälle", "Grand Canyon", "Amazonas", "Nordpol", "Südpol", "Sahara", "Atlantik", "Pazifik", "Venedig", "Alps",
             "Angela Merkel", "Donald Trump", "Barack Obama", "Albert Einstein", "Mozart", "Beethoven", "Michael Jackson", "Elvis Presley", "Madonna", "Beyoncé",
             "Cristiano Ronaldo", "Lionel Messi", "Arnold Schwarzenegger", "Brad Pitt", "Angelina Jolie", "Leonardo DiCaprio", "Bill Gates", "Mark Zuckerberg", "Steve Jobs", "Elon Musk",
             "Papst", "Queen Elizabeth", "Kleopatra", "Caesar", "Napoleon", "Hitler", "Jesus", "Buddha", "Ghandi", "Martin Luther King",
@@ -79,6 +79,33 @@ struct CategoryDefaultData {
             "Kaleidoskop", "Labyrinth", "Oase", "Fata Morgana", "Echo", "Schatten", "Silhouette", "Horizont", "Vulkanasche", "Stalaktit",
             "Hieroglyphen", "Mumifizierung", "Sarkophag", "Obelisk", "Kathedrale", "Moschee", "Synagoge", "Tempel", "Pagode", "Wolkenkratzer"
         ].map { Term(text: $0) }
+        
+        let kids = [
+            "Schokolade", "Ferien", "Spielplatz", "Taschengeld", "Weihnachtsmarkt", "Ostern", "Zahnfee", "Geburtstag", "Schwimmbad", "Zoo",
+            "Zirkus", "Clown", "Zauberer", "Hexe", "Gespenst", "Pirat", "Ritter", "Burg", "Prinzessin", "Drache",
+            "Einhorn", "Dinosaurier", "Lego", "Playmobil", "Nintendo", "Minecraft", "Pokémon", "Harry Potter", "Die Eiskönigin", "Minions",
+            "Paw Patrol", "Micky Maus", "Tom & Jerry", "Löwenzahn", "Sendung mit der Maus", "Sandmännchen", "Bibi & Tina", "Die drei ???", "TKKG", "Fußball",
+            "Reiten", "Tanzen", "Verstecken", "Fangen", "Blinde Kuh", "Gummitwist", "Seilspringen", "Skateboard", "Inliner", "Fahrrad",
+            "Roller", "Kettcar", "Bobbycar", "Schaukel", "Rutsche", "Wippe", "Sandkasten", "Klettergerüst", "Baumhaus", "Murmeln",
+            "Flummi", "Jo-Jo", "Drachen steigen lassen", "Schneemann", "Schneeballschlacht", "Schlitten fahren", "Schlittschuh laufen", "Schwimmflügel", "Luftmatratze", "Wasserpistole",
+            "Taucherbrille", "Schnorchel", "Flossen", "Badehose", "Badeanzug", "Bikini", "Sonnencreme", "Sonnenbrille", "Sonnenhut", "Kappe",
+            "Mütze", "Schal", "Handschuhe", "Gummistiefel", "Regenjacke", "Regenschirm", "Schulranzen", "Mäppchen", "Füller", "Buntstifte",
+            "Radiergummi", "Spitzer", "Lineal", "Schere", "Kleber", "Pinsel", "Malkasten", "Block", "Heft", "Buch", "Comic"
+        ].map { Term(text: $0) }
+        
+        let teens = [
+            "Smartphone", "WLAN", "Akku leer", "Ladekabel", "Kopfhörer", "Bluetooth", "Streaming", "Netflix", "Spotify", "YouTube",
+            "TikTok", "Instagram", "Snapchat", "WhatsApp", "Emoji", "Selfie", "Filter", "Story", "Status", "Post",
+            "Like", "Follower", "Influencer", "Youtuber", "Prank", "Challenge", "Trend", "Meme", "GIF", "Sticker",
+            "Hashtag", "Verlinkung", "Markierung", "Kommentar", "Nachricht", "Sprachnachricht", "Gruppenchat", "Admin", "Blockieren", "Stummschalten",
+            "Screenshot", "Bildschirmaufnahme", "Update", "App", "Download", "Upload", "Online", "Offline", "Gaming", "Zocken",
+            "Konsole", "Controller", "Headset", "Tastatur", "Maus", "Monitor", "Laptop", "Tablet", "Fernseher", "Serie",
+            "Film", "Kino", "Popcorn", "Nachos", "Cola", "Energy Drink", "Pizza", "Döner", "Burger", "Pommes",
+            "Sushi", "Bubble Tea", "Starbucks", "Mäces", "Schule", "Hausaufgaben", "Klausur", "Note", "Zeugnis", "Ferien",
+            "Abschluss", "Ausbildung", "Studium", "Nebenjob", "Taschengeld", "Führerschein", "Auto", "Roller", "Moped", "Bus",
+            "Bahn", "Ticket", "Schwarzfahren", "Party", "Feiern", "Tanzen", "Musik", "Konzert", "Festival", "Freunde",
+            "Clique", "Beziehung", "Kuss", "Liebe", "Liebeskummer", "Trennung", "Ex", "Schwarm", "Date", "Kompliment"
+        ].map { Term(text: $0) }
 
         let fsk18 = [
             "Koks", "Hure", "Stripper", "Stripclub", "Dildo", "Penis", "Brüste", "Arsch", "Blowjob", "Orgasmus",
@@ -96,6 +123,8 @@ struct CategoryDefaultData {
             TimesUpCategory(name: "Leicht", type: .yellow, terms: yellow),
             TimesUpCategory(name: "Mittel", type: .red, terms: red),
             TimesUpCategory(name: "Schwere Kategorie", type: .blue, terms: blue),
+            TimesUpCategory(name: "Kinder (7-12)", type: .kids, terms: kids),
+            TimesUpCategory(name: "Jugendliche (13-17)", type: .teens, terms: teens),
             TimesUpCategory(name: "FSK 18", type: .custom, terms: fsk18)
         ]
     }
@@ -159,6 +188,33 @@ struct CategoryDefaultData {
             "Kaleidoscope", "Labyrinth", "Oasis", "Mirage", "Echo", "Shadow", "Silhouette", "Horizon", "Volcanic Ash", "Stalactite",
             "Hieroglyphics", "Mummification", "Sarcophagus", "Obelisk", "Cathedral", "Mosque", "Synagogue", "Temple", "Pagoda", "Skyscraper"
         ].map { Term(text: $0) }
+        
+        let kids = [
+            "Chocolate", "Vacation", "Playground", "Pocket money", "Christmas market", "Easter", "Tooth fairy", "Birthday", "Swimming pool", "Zoo",
+            "Circus", "Clown", "Magician", "Witch", "Ghost", "Pirate", "Knight", "Castle", "Princess", "Dragon",
+            "Unicorn", "Dinosaur", "Lego", "Playmobil", "Nintendo", "Minecraft", "Pokémon", "Harry Potter", "Frozen", "Minions",
+            "Paw Patrol", "Mickey Mouse", "Tom & Jerry", "Sesame Street", "SpongeBob", "Sandman", "Peppa Pig", "Scooby Doo", "Looney Tunes", "Soccer",
+            "Horse riding", "Dancing", "Hide and seek", "Tag", "Blind man's buff", "Hopscotch", "Jump rope", "Skateboard", "Rollerblades", "Bicycle",
+            "Scooter", "Go-kart", "Bobby car", "Swing", "Slide", "Seesaw", "Sandbox", "Climbing frame", "Tree house", "Marbles",
+            "Bouncy ball", "Yo-yo", "Flying a kite", "Snowman", "Snowball fight", "Sledding", "Ice skating", "Water wings", "Air mattress", "Water pistol",
+            "Goggles", "Snorkel", "Fins", "Swimming trunks", "Swimsuit", "Bikini", "Sunscreen", "Sunglasses", "Sun hat", "Cap",
+            "Beanie", "Scarf", "Gloves", "Rubber boots", "Rain jacket", "Umbrella", "School bag", "Pencil case", "Fountain pen", "Colored pencils",
+            "Eraser", "Sharpener", "Ruler", "Scissors", "Glue", "Brush", "Paint box", "Pad", "Notebook", "Book", "Comic"
+        ].map { Term(text: $0) }
+        
+        let teens = [
+            "Smartphone", "WiFi", "Battery empty", "Charging cable", "Headphones", "Bluetooth", "Streaming", "Netflix", "Spotify", "YouTube",
+            "TikTok", "Instagram", "Snapchat", "WhatsApp", "Emoji", "Selfie", "Filter", "Story", "Status", "Post",
+            "Like", "Follower", "Influencer", "Youtuber", "Prank", "Challenge", "Trend", "Meme", "GIF", "Sticker",
+            "Hashtag", "Tag", "Mention", "Comment", "Message", "Voice message", "Group chat", "Admin", "Block", "Mute",
+            "Screenshot", "Screen recording", "Update", "App", "Download", "Upload", "Online", "Offline", "Gaming", "Gambling",
+            "Console", "Controller", "Headset", "Keyboard", "Mouse", "Monitor", "Laptop", "Tablet", "TV", "Series",
+            "Movie", "Cinema", "Popcorn", "Nachos", "Coke", "Energy Drink", "Pizza", "Kebab", "Burger", "Fries",
+            "Sushi", "Bubble Tea", "Starbucks", "McDonalds", "School", "Homework", "Exam", "Grade", "Report card", "Holidays",
+            "Graduation", "Apprenticeship", "University", "Part-time job", "Allowance", "Driver's license", "Car", "Scooter", "Moped", "Bus",
+            "Train", "Ticket", "Fare dodging", "Party", "Celebrating", "Dancing", "Music", "Concert", "Festival", "Friends",
+            "Squad", "Relationship", "Kiss", "Love", "Heartbreak", "Breakup", "Ex", "Crush", "Date", "Compliment"
+        ].map { Term(text: $0) }
 
         let fsk18 = [
             "Cocaine", "Whore", "Stripper", "Strip club", "Dildo", "Penis", "Breasts", "Ass", "Blowjob", "Orgasm",
@@ -176,6 +232,8 @@ struct CategoryDefaultData {
             TimesUpCategory(name: "Easy", type: .yellow, terms: yellow),
             TimesUpCategory(name: "Medium", type: .red, terms: red),
             TimesUpCategory(name: "Hard category", type: .blue, terms: blue),
+            TimesUpCategory(name: "Kids (7-12)", type: .kids, terms: kids),
+            TimesUpCategory(name: "Teens (13-17)", type: .teens, terms: teens),
             TimesUpCategory(name: "18+", type: .custom, terms: fsk18)
         ]
     }

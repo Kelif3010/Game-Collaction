@@ -1025,3 +1025,11 @@
 "Haptik" = "Haptics";
 "Vibrationen an" = "Vibrations on";
 "Vibrationen aus" = "Vibrations off";
+
+/* AirPlay */
+"AirPlay TV" = "AirPlay TV";
+"Verbunden" = "Connected";
+"Bereit" = "Ready for TV";
+"BEREIT FÜR DAS NÄCHSTE SPIEL" = "READY FOR THE NEXT GAME";
+"GAMES COLLECTION" = "GAMES COLLECTION";
+

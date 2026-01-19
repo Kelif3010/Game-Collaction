@@ -206,9 +206,7 @@ class TimesUpHapticsManager {
             
             // Crescendo: 0.3s kontinuierlicher Anstieg
             let intensityStart = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.2)
-            let intensityEnd = CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0)
             let sharpnessStart = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.4)
-            let sharpnessEnd = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.9)
             
             let crescendo = CHHapticEvent(eventType: .hapticContinuous, parameters: [intensityStart, sharpnessStart], relativeTime: 0, duration: 0.3)
             events.append(crescendo)

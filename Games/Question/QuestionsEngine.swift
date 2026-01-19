@@ -25,6 +25,26 @@ final class QuestionsEngine: ObservableObject {
         self.config = config
     }
 
+    // MARK: - Multiplayer Sync Helpers
+    
+    func syncRoundState(_ newState: QuestionsRoundState) {
+        self.round = newState
+        self.phase = newState.phase
+    }
+    
+    func addExternalAnswer(_ answer: QuestionsAnswer) {
+        guard var r = round else { return }
+        r.answers[answer.playerID] = answer
+        print("🧪 [ENGINE] Externe Antwort hinzugefügt. Stand: \(r.answers.count)/\(players.count)")
+        self.round = r
+        
+        // Check if all players answered (including remote ones)
+        if r.answers.count >= players.count {
+            print("🧪 [ENGINE] Alle Antworten da! Wechsel zu Reveal.")
+            revealCitizenQuestion()
+        }
+    }
+
     // MARK: Configuration
 
     func configure(
@@ -114,17 +134,31 @@ final class QuestionsEngine: ObservableObject {
     // Player submits an answer; returns true if accepted
     @discardableResult
     func submitAnswer(text: String, timeTaken: TimeInterval = 0) -> Bool {
-        guard var r = round else { return false }
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        guard let r = round else { return false }
         guard players.indices.contains(r.currentPlayerIndex) else { return false }
         let player = players[r.currentPlayerIndex]
-        let answer = QuestionsAnswer(playerID: player.id, role: role(for: player.id), text: text, timeTaken: timeTaken)
-        r.answers[player.id] = answer
-        r.currentPlayerIndex += 1
-        round = r
-
-        // if all players answered, reveal phase
-        if r.currentPlayerIndex >= players.count {
+        return submitAnswer(for: player.id, text: text, timeTaken: timeTaken)
+    }
+    
+    @discardableResult
+    func submitAnswer(for playerID: UUID, text: String, timeTaken: TimeInterval = 0) -> Bool {
+        guard var r = round else { return false }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        
+        let answer = QuestionsAnswer(playerID: playerID, role: role(for: playerID), text: text, timeTaken: timeTaken)
+        r.answers[playerID] = answer
+        
+        print("🧪 [ENGINE] Antwort gespeichert für ID: \(playerID). Gesamt: \(r.answers.count)/\(players.count)")
+        
+        // Im Single Device Modus rücken wir den Index weiter
+        if MultipeerManager.shared.role == .unknown {
+            r.currentPlayerIndex += 1
+        }
+        
+        self.round = r
+        
+        // Prüfung auf Vollständigkeit: Haben alle geantwortet?
+        if r.answers.count >= players.count {
             revealCitizenQuestion()
         }
         return true
