@@ -3,7 +3,7 @@ import SwiftUI
 struct QuestionsSetupView: View {
     @ObservedObject var appModel: AppModel
     @Binding var selectedCategory: QuestionsCategory?
-    @Binding var numberOfSpies: Int
+    @Binding var numberOfLiars: Int
     @Binding var discussionTime: TimeInterval
     var onStartGame: () -> Void
     
@@ -17,17 +17,17 @@ struct QuestionsSetupView: View {
     
     // Validierung
     private var playerCount: Int { appModel.players.count }
-    private var maxSpies: Int { max(0, playerCount > 1 ? playerCount - 1 : 0) }
+    private var maxLiars: Int { max(0, playerCount > 1 ? playerCount - 1 : 0) }
     private var canStart: Bool {
         guard let cat = selectedCategory else { return false }
-        return playerCount >= 3 && numberOfSpies >= 1 && numberOfSpies <= maxSpies && !cat.promptPairs.isEmpty
+        return playerCount >= 3 && numberOfLiars >= 1 && numberOfLiars <= maxLiars && !cat.promptPairs.isEmpty
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 // Hintergrund
-                QuestionsStyle.backgroundGradient.ignoresSafeArea()
+                QuestionsBackgroundView().ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // MARK: - Top Bar
@@ -46,9 +46,9 @@ struct QuestionsSetupView: View {
                         Spacer()
                         
                         HStack(spacing: 12) {
-                            // Trophäe
+                            // Auswertung
                             Button { showLeaderboardSheet = true } label: {
-                                Image(systemName: "trophy.fill")
+                                Image(systemName: "chart.line.uptrend.xyaxis")
                                     .font(.headline)
                                     .foregroundStyle(.yellow)
                                     .frame(width: 36, height: 36)
@@ -56,9 +56,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Ordner (Kategorie)
+                            // Akte (Kategorie)
                             Button { showCategorySheet = true } label: {
-                                Image(systemName: "folder.fill")
+                                Image(systemName: "doc.text.magnifyingglass")
                                     .font(.headline)
                                     .foregroundStyle(.orange)
                                     .frame(width: 36, height: 36)
@@ -68,7 +68,7 @@ struct QuestionsSetupView: View {
                             
                             // Zahnrad (Settings)
                             Button { showSettingsSheet = true } label: {
-                                Image(systemName: "gearshape.fill")
+                                Image(systemName: "slider.horizontal.3")
                                     .font(.headline)
                                     .foregroundStyle(.gray)
                                     .frame(width: 36, height: 36)
@@ -76,9 +76,9 @@ struct QuestionsSetupView: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Fragezeichen (Info)
+                            // Info
                             Button { showInfoSheet = true } label: {
-                                Image(systemName: "questionmark")
+                                Image(systemName: "info.circle.fill")
                                     .font(.headline.bold())
                                     .foregroundStyle(.white)
                                     .frame(width: 36, height: 36)
@@ -101,16 +101,16 @@ struct QuestionsSetupView: View {
                                 } label: {
                                     QuestionsRowCell(
                                         icon: "person.3.fill",
-                                        title: "Spieler",
+                                        title: "Verdächtige",
                                         value: "\(playerCount)",
                                         tint: .blue
                                     )
                                 }
                                 
-                                // Spione Row with Stepper
+                                // Lügner Row with Stepper
                                 HStack(spacing: 12) {
-                                    QuestionsIconBadge(systemName: "eye.slash.fill", tint: .red)
-                                    Text("Spione")
+                                    QuestionsIconBadge(systemName: "waveform.path.ecg", tint: .red)
+                                    Text("Lügner")
                                         .font(.body)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)
@@ -118,7 +118,7 @@ struct QuestionsSetupView: View {
                                     
                                     HStack(spacing: 8) {
                                         Button {
-                                            if numberOfSpies > 1 { numberOfSpies -= 1 }
+                                            if numberOfLiars > 1 { numberOfLiars -= 1 }
                                         } label: {
                                             Image(systemName: "minus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -128,13 +128,13 @@ struct QuestionsSetupView: View {
                                                 .clipShape(Circle())
                                         }
                                         
-                                        Text("\(numberOfSpies)")
+                                        Text("\(numberOfLiars)")
                                             .font(.callout)
                                             .foregroundColor(.white)
                                             .frame(minWidth: 24)
                                             
                                         Button {
-                                            if numberOfSpies < maxSpies { numberOfSpies += 1 }
+                                            if numberOfLiars < maxLiars { numberOfLiars += 1 }
                                         } label: {
                                             Image(systemName: "plus")
                                                 .font(.system(size: 16, weight: .semibold))
@@ -151,10 +151,10 @@ struct QuestionsSetupView: View {
                                 VStack(spacing: 10) {
                                     HStack(spacing: 12) {
                                         QuestionsIconBadge(systemName: "timer", tint: .green)
-                                        Text("Diskussion")
-                                            .font(.body)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.white)
+                                    Text("Befragung")
+                                        .font(.body)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
                                         Spacer()
                                         Text(timeString)
                                             .font(.callout)
@@ -175,7 +175,7 @@ struct QuestionsSetupView: View {
                                 } label: {
                                     QuestionsRowCell(
                                         icon: "folder.fill",
-                                        title: "Kategorie",
+                                        title: "Fallakte",
                                         value: selectedCategory?.name ?? "Wählen",
                                         tint: .orange
                                     )
@@ -191,7 +191,7 @@ struct QuestionsSetupView: View {
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 10) {
-                    QuestionsPrimaryButton(title: "Spiel starten") {
+                    QuestionsPrimaryButton(title: "Test starten") {
                         onStartGame()
                     }
                     .disabled(!canStart)
@@ -228,14 +228,14 @@ struct QuestionsSetupView: View {
                     .presentationBackground(.clear)
             }
             .sheet(isPresented: $showLeaderboardSheet) {
-                QuestionsPlaceholderSheet(title: "Bestenliste", icon: "trophy.fill")
+                QuestionsPlaceholderSheet(title: "Messprotokoll", icon: "chart.line.uptrend.xyaxis")
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
                     .presentationBackground(.clear)
             }
             .sheet(isPresented: $showInfoSheet) {
-                QuestionsPlaceholderSheet(title: "Anleitung", icon: "book.fill")
+                QuestionsPlaceholderSheet(title: "Handbuch", icon: "book.fill")
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
@@ -259,8 +259,8 @@ struct QuestionsSetupView: View {
     }
     
     private var validationMessage: LocalizedStringKey {
-        if playerCount < 3 { return "Mindestens 3 Spieler benötigt." }
-        if selectedCategory == nil { return "Bitte eine Kategorie wählen." }
+        if playerCount < 3 { return "Mindestens 3 Verdächtige benötigt." }
+        if selectedCategory == nil { return "Bitte eine Akte wählen." }
         return ""
     }
 }
@@ -275,40 +275,44 @@ struct QuestionsTimerSheet: View {
     
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             
             VStack(spacing: 0) {
-                QuestionsSheetHeader(title: "Zeitlimit wählen") {
-                    dismiss()
-                }
-                .padding(.horizontal, QuestionsStyle.padding)
+                // QuestionsStyle.backgroundGradient.ignoresSafeArea() - Removed duplicate background
                 
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(timeOptions, id: \.self) { time in
-                            Button {
-                                discussionTime = time
-                                dismiss()
-                            } label: {
-                                HStack {
-                                    QuestionsIconBadge(systemName: "timer", tint: .green)
-                                    
-                                    Text(time == 0 ? "Unbegrenzt" : formatTime(time))
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                    
-                                    Spacer()
-                                    
-                                    if discussionTime == time {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.green)
+                VStack(spacing: 0) {
+                    QuestionsSheetHeader(title: "Befragungsdauer wählen") {
+                        dismiss()
+                    }
+                    .padding(.horizontal, QuestionsStyle.padding)
+                    
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(timeOptions, id: \.self) { time in
+                                Button {
+                                    discussionTime = time
+                                    dismiss()
+                                } label: {
+                                    HStack {
+                                        QuestionsIconBadge(systemName: "timer", tint: .green)
+                                        
+                                        Text(time == 0 ? "Unbegrenzt" : formatTime(time))
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        
+                                        Spacer()
+                                        
+                                        if discussionTime == time {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.green)
+                                        }
                                     }
+                                    .questionsRowStyle()
                                 }
-                                .questionsRowStyle()
                             }
                         }
+                        .padding(QuestionsStyle.padding)
                     }
-                    .padding(QuestionsStyle.padding)
                 }
             }
         }
@@ -336,10 +340,10 @@ struct QuestionsPlayerManagementSheet: View {
 
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             
             VStack(spacing: 0) {
-                QuestionsSheetHeader(title: "Spieler verwalten") {
+                QuestionsSheetHeader(title: "Verdächtige verwalten") {
                     dismiss()
                 }
                 .padding(.horizontal, QuestionsStyle.padding)
@@ -347,7 +351,7 @@ struct QuestionsPlayerManagementSheet: View {
                 VStack(spacing: 16) {
                     // Input
                     HStack(spacing: 10) {
-                        TextField("Neuer Spieler...", text: $newPlayerName)
+                        TextField("Neuer Verdächtiger...", text: $newPlayerName)
                             .textFieldStyle(.plain)
                             .font(.body)
                             .padding(12)
@@ -386,7 +390,7 @@ struct QuestionsPlayerManagementSheet: View {
                             .onDelete(perform: deletePlayer)
                             .onMove(perform: movePlayer)
                         } header: {
-                            Text("\(appModel.players.count) Spieler")
+                            Text("\(appModel.players.count) Verdächtige")
                                 .foregroundStyle(QuestionsStyle.mutedText)
                         }
                     }
@@ -401,7 +405,7 @@ struct QuestionsPlayerManagementSheet: View {
             if !myPlayerName.isEmpty {
                 // Automatisch hinzufügen, wenn noch nicht vorhanden
                 if !appModel.players.contains(where: { $0.name == myPlayerName }) {
-                    appModel.players.append(Player(name: myPlayerName))
+                    appModel.players.append(QuestionPlayer(name: myPlayerName))
                 }
             }
         }
@@ -411,7 +415,7 @@ struct QuestionsPlayerManagementSheet: View {
         let name = newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         withAnimation {
-            appModel.players.append(Player(name: name))
+            appModel.players.append(QuestionPlayer(name: name))
         }
         newPlayerName = ""
         isInputFocused = true
@@ -426,16 +430,17 @@ struct QuestionsPlayerManagementSheet: View {
     }
 }
 
+
 struct QuestionsCategorySheet: View {
     @Binding var selectedCategory: QuestionsCategory?
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             
             VStack(spacing: 0) {
-                QuestionsSheetHeader(title: "Kategorie wählen") {
+                QuestionsSheetHeader(title: "Fallakte wählen") {
                     dismiss()
                 }
                 .padding(.horizontal, QuestionsStyle.padding)
@@ -448,7 +453,7 @@ struct QuestionsCategorySheet: View {
                                 dismiss()
                             } label: {
                                 HStack(spacing: 12) {
-                                    QuestionsIconBadge(systemName: "folder.fill", tint: .orange)
+                                    QuestionsIconBadge(systemName: "doc.text.magnifyingglass", tint: .orange)
                                     
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(LocalizedStringKey(category.name))
@@ -488,15 +493,15 @@ struct QuestionsSettingsSheet: View {
     
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             VStack {
-                QuestionsSheetHeader(title: "Einstellungen") {
+                QuestionsSheetHeader(title: "Geräte-Setup") {
                     dismiss()
                 }
                 .padding(.horizontal, QuestionsStyle.padding)
                 
                 Spacer()
-                Text(LocalizedStringKey("Hier könnten Spieleinstellungen sein."))
+                Text(LocalizedStringKey("Hier könnten Geräteeinstellungen sein."))
                     .foregroundColor(QuestionsStyle.mutedText)
                 Spacer()
             }
@@ -511,7 +516,7 @@ struct QuestionsPlaceholderSheet: View {
     
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             VStack(spacing: 20) {
                 QuestionsSheetHeader(title: title) {
                     dismiss()

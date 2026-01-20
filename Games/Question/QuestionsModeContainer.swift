@@ -6,11 +6,12 @@ struct QuestionsModeContainer: View {
     @ObservedObject var appModel: AppModel
 
     // Engine for Questions mode
-    @StateObject private var engine = QuestionsEngine()
+    @StateObject private var engine: QuestionsEngine
+    @StateObject private var tvViewModel: QuestionsGameViewModel
 
     // Setup state
     @State private var selectedCategory: QuestionsCategory? = nil
-    @State private var numberOfSpies: Int = 1
+    @State private var numberOfLiars: Int = 1
     @State private var discussionTime: TimeInterval = 180
 
     // UI State & Navigation
@@ -28,10 +29,10 @@ struct QuestionsModeContainer: View {
     @State private var voteCounts: [UUID: Int] = [:] // Changed from Set to Dictionary
     @State private var revealEvaluation: QuestionsVoteEvaluation? = nil
     @State private var lastRevealEvaluation: QuestionsVoteEvaluation? = nil
-    @State private var foundRevealSpies: Set<UUID> = []
+    @State private var foundRevealLiars: Set<UUID> = []
     @State private var revealShakeTrigger: CGFloat = 0
-    @State private var showSpyDetailsList = false
-    @State private var spyScrollTarget: UUID? = nil
+    @State private var showLiarDetailsList = false
+    @State private var liarScrollTarget: UUID? = nil
     
     // Timer State
     @State private var timeRemaining: TimeInterval = 0
@@ -60,16 +61,28 @@ struct QuestionsModeContainer: View {
     private var playerCount: Int { appModel.players.count }
     
     private var maxVotes: Int {
-        playerCount * engine.config.numberOfSpies
+        playerCount * engine.config.numberOfLiars
     }
     
     private var currentTotalVotes: Int {
         voteCounts.values.reduce(0, +)
     }
 
+    init(appModel: AppModel) {
+        self.appModel = appModel
+        let engine = QuestionsEngine()
+        _engine = StateObject(wrappedValue: engine)
+        _tvViewModel = StateObject(wrappedValue: QuestionsGameViewModel(appModel: appModel, engine: engine))
+    }
+
     // MARK: - Body (Der Traffic Controller)
     var body: some View {
         ZStack(alignment: .top) {
+            
+            // LAYER 0: Background
+            QuestionsBackgroundView()
+                .ignoresSafeArea()
+                .zIndex(-1)
             
             // LAYER 1: INHALT (Wechselt je nach Phase)
             Group {
@@ -78,7 +91,7 @@ struct QuestionsModeContainer: View {
                     QuestionsSetupView(
                         appModel: appModel,
                         selectedCategory: $selectedCategory,
-                        numberOfSpies: $numberOfSpies,
+                        numberOfLiars: $numberOfLiars,
                         discussionTime: $discussionTime,
                         onStartGame: startRound
                     )
@@ -124,13 +137,6 @@ struct QuestionsModeContainer: View {
                             // COIN FLIP MODE
                             let c1 = suddenDeathCandidates[0]
                             let c2 = suddenDeathCandidates[1]
-                            // Random winner was determined by shuffle at start (index 0 is winner)
-                            // Wait, if shuffle is random, index 0 is random. So let's say index 0 is the winner.
-                            // Front (0 deg) = c1. Back (180 deg) = c2.
-                            // To make c1 win, end at 360*N + 0.
-                            // To make c2 win, end at 360*N + 180.
-                            // Let's pick a random boolean here for the visual flip to match logic?
-                            // Actually, simpler: Let's pick the winner NOW.
                             let winnerIndex = Int.random(in: 0...1)
                             let winnerID = suddenDeathCandidates[winnerIndex]
                             let rotation = Double(5 * 360) + (winnerIndex == 0 ? 0.0 : 180.0)
@@ -162,25 +168,37 @@ struct QuestionsModeContainer: View {
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
-        .alert("Spiel abbrechen?", isPresented: $showAbortConfirmation) {
+        .alert("Test abbrechen?", isPresented: $showAbortConfirmation) {
             Button("Abbrechen", role: .cancel) { }
             Button("Ja", role: .destructive) { dismiss() }
-        } message: { Text("Bist du dir sicher das du abbrechen willst?") }
-        .alert("Kategorie ohne Fragen", isPresented: $showEmptyCategoryAlert) {
+        } message: { Text("Bist du sicher, dass du den Test abbrechen willst?") }
+        .alert("Akte ohne Fragen", isPresented: $showEmptyCategoryAlert) {
             Button("OK", role: .cancel) { }
-        } message: { Text("Diese Kategorie enthält keine Fragen.") }
-        .onAppear(perform: setupDefaults)
+        } message: { Text("Diese Akte enthält keine Fragen.") }
+        .onAppear {
+            setupDefaults()
+            attachTVBoard()
+        }
+        .onDisappear(perform: detachTVBoard)
         .onReceive(timer) { _ in
             guard timerActive && timeRemaining > 0 else { return }
             if engine.phase == .overview || engine.phase == .voting {
                 timeRemaining -= 1
+                syncTVViewModel()
             }
         }
+        .onChange(of: selectedCategory) { _, _ in syncTVViewModel() }
+        .onChange(of: discussionTime) { _, _ in syncTVViewModel() }
+        .onChange(of: timeRemaining) { _, _ in syncTVViewModel() }
+        .onChange(of: isRevealVoteActive) { _, _ in syncTVViewModel() }
+        .onChange(of: voteCounts) { _, _ in syncTVViewModel() }
+        .onChange(of: revealEvaluation) { _, _ in syncTVViewModel() }
+        .onChange(of: lastRevealEvaluation) { _, _ in syncTVViewModel() }
         .sheet(isPresented: $showLeaderboardSheet) {
             ZStack {
-                QuestionsStyle.backgroundGradient.ignoresSafeArea()
+                QuestionsBackgroundView().ignoresSafeArea()
                 VStack {
-                    QuestionsSheetHeader(title: "Rangliste") { showLeaderboardSheet = false }
+                    QuestionsSheetHeader(title: "Auswertung") { showLeaderboardSheet = false }
                         .padding(.horizontal, QuestionsStyle.padding)
                     ScrollView {
                         QuestionsScoreboardView(appModel: appModel)
@@ -208,7 +226,29 @@ struct QuestionsModeContainer: View {
         if selectedCategory == nil {
             selectedCategory = appModel.selectedQuestionsCategory ?? QuestionsDefaults.all.first
         }
-        numberOfSpies = min(max(1, appModel.numberOfImposters), max(0, playerCount > 1 ? playerCount - 1 : 0))
+        numberOfLiars = min(max(1, appModel.numberOfLiars), max(0, playerCount > 1 ? playerCount - 1 : 0))
+        syncTVViewModel()
+    }
+
+    private func attachTVBoard() {
+        ExternalDisplayManager.shared.activeQuestionsViewModel = tvViewModel
+        syncTVViewModel()
+    }
+
+    private func detachTVBoard() {
+        if ExternalDisplayManager.shared.activeQuestionsViewModel === tvViewModel {
+            ExternalDisplayManager.shared.activeQuestionsViewModel = nil
+        }
+    }
+
+    private func syncTVViewModel() {
+        tvViewModel.selectedCategory = selectedCategory
+        tvViewModel.discussionTime = discussionTime
+        tvViewModel.timeRemaining = timeRemaining
+        tvViewModel.isRevealVoteActive = isRevealVoteActive
+        tvViewModel.voteCounts = voteCounts
+        tvViewModel.revealEvaluation = revealEvaluation
+        tvViewModel.lastRevealEvaluation = lastRevealEvaluation
     }
 
     private func startRound() {
@@ -219,11 +259,11 @@ struct QuestionsModeContainer: View {
             return
         }
         appModel.selectedQuestionsCategory = category
-        appModel.numberOfImposters = numberOfSpies
+        appModel.numberOfLiars = numberOfLiars
         
         engine.configure(
             players: appModel.players,
-            numberOfSpies: numberOfSpies,
+            numberOfLiars: numberOfLiars,
             category: category,
             fairnessPolicy: appModel.fairnessPolicy,
             fairnessState: appModel.fairnessState
@@ -256,7 +296,7 @@ struct QuestionsModeContainer: View {
             
             // Phase Title (optional, or remove if too crowded)
             if engine.phase != .setup {
-                Text("Finde den Lügner")
+                Text("Lügendetektor-Test")
                     .font(.headline.weight(.bold))
                     .foregroundColor(.white)
                     .opacity(0.8)
@@ -281,7 +321,6 @@ extension QuestionsModeContainer {
     // Phase: Collecting (Fragen beantworten)
     var collectingView: some View {
         ZStack {
-            brandGradient.ignoresSafeArea()
             VStack(spacing: 20) {
                 Color.clear.frame(height: 110)
                 Spacer(minLength: 0)
@@ -290,7 +329,7 @@ extension QuestionsModeContainer {
                     if let round = engine.round, let player = engine.currentPlayer() {
                         let pair = round.promptPair
                         VStack(spacing: 22) {
-                            Text("Spieler \(round.currentPlayerIndex + 1) von \(playerCount)")
+                            Text("Verdächtiger \(round.currentPlayerIndex + 1) von \(playerCount)")
                                 .font(.system(size: 22, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
@@ -302,11 +341,11 @@ extension QuestionsModeContainer {
                                 .padding(.top, 20)
                             } else {
                                 let role = engine.role(for: player.id)
-                                let question = role == .spy ? pair.spyQuestion : pair.citizenQuestion
+                                let question = role == .liar ? pair.liarQuestion : pair.citizenQuestion
                                 VStack(spacing: 18) {
                                     QuestionsPromptBoard(question: question)
                                     QuestionsAnswerBoard(text: $answerText, focus: $isAnswerFocused)
-                                    Button(action: submitCurrentAnswer) { Text("Antwort speichern").font(.headline) }
+                                    Button(action: submitCurrentAnswer) { Text("Aussage speichern").font(.headline) }
                                         .buttonStyle(QuestionsPrimaryButtonStyle(disabled: !isAnswerValid))
                                         .disabled(!isAnswerValid)
                                 }
@@ -315,7 +354,7 @@ extension QuestionsModeContainer {
                         .frame(maxWidth: 520)
                         .padding(.horizontal, 24)
                     } else {
-                        ProgressView("Runde wird vorbereitet…").tint(.white)
+                        ProgressView("Test wird vorbereitet…").tint(.white)
                     }
                 }
                 Spacer(minLength: 0)
@@ -352,7 +391,6 @@ extension QuestionsModeContainer {
     // Phase: Revealed (Zwischenstand)
     var revealedView: some View {
         ZStack {
-            brandGradient.ignoresSafeArea()
             VStack(spacing: 24) {
                 Color.clear.frame(height: 110)
                 Spacer(minLength: 0)
@@ -360,12 +398,12 @@ extension QuestionsModeContainer {
                     QuestionsPromptBoard(question: round.promptPair.citizenQuestion)
                         .padding(.horizontal, 24)
                 }
-                Text("Los geht’s! Gleich seht ihr alle Antworten – danach diskutiert ihr die Frage oben.")
+                Text("Kalibrierung abgeschlossen. Gleich seht ihr alle Aussagen – danach vergleicht ihr die Aussagen oben.")
                     .font(.body)
                     .foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 30)
-                Button("Runde starten") { 
+                Button("Befragung starten") { 
                     engine.showOverview()
                     timerActive = true
                 }
@@ -380,7 +418,6 @@ extension QuestionsModeContainer {
     // Phase: Overview & Voting
     var overviewView: some View {
         ZStack {
-            brandGradient.ignoresSafeArea()
             VStack(spacing: 20) {
                 Color.clear.frame(height: 80)
                 
@@ -408,14 +445,14 @@ extension QuestionsModeContainer {
                         .padding(.horizontal, 24)
                 }
                 if answersInOrder.isEmpty {
-                    Text("Es wurden noch keine Antworten erfasst.")
+                    Text("Es wurden noch keine Aussagen erfasst.")
                         .font(.subheadline).foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center).padding(.horizontal, 24)
                     Spacer()
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
-                            LazyVGrid(columns: revealGridColumns, spacing: showSpyDetailsList ? 18 : 12) {
+                            LazyVGrid(columns: revealGridColumns, spacing: showLiarDetailsList ? 18 : 12) {
                                 ForEach(answersInOrder, id: \.id) { answer in
                                     let playerID = answer.playerID
                                     let name = playerName(for: playerID)
@@ -423,11 +460,11 @@ extension QuestionsModeContainer {
                                     
                                     // Voting Logic
                                     let voteCount = voteCounts[playerID] ?? 0
-                                    let showSelectionBox = isRevealVoteActive && evaluation == nil && !foundRevealSpies.contains(playerID)
+                                    let showSelectionBox = isRevealVoteActive && evaluation == nil && !foundRevealLiars.contains(playerID)
                                     
-                                    let showGreenCheck = evaluation?.correct.contains(playerID) == true || foundRevealSpies.contains(playerID)
+                                    let showGreenCheck = evaluation?.correct.contains(playerID) == true || foundRevealLiars.contains(playerID)
                                     let revealRoundOver = evaluation.map { $0.citizensWon || !$0.incorrect.isEmpty } ?? false
-                                    let highlightAsSpy = revealRoundOver && engine.currentSpyIDs.contains(playerID)
+                                    let highlightAsLiar = revealRoundOver && engine.currentLiarIDs.contains(playerID)
                                     
                                     QuestionsAnswerRevealCard(
                                         playerName: name,
@@ -436,10 +473,10 @@ extension QuestionsModeContainer {
                                         showSelectionBox: showSelectionBox,
                                         selectionEnabled: showSelectionBox,
                                         showGreenCheck: showGreenCheck,
-                                        showRedX: highlightAsSpy,
-                                        shakeTrigger: highlightAsSpy ? revealShakeTrigger : 0,
-                                        isFullWidth: showSpyDetailsList,
-                                        spyQuestion: spyQuestion(for: playerID),
+                                        showRedX: highlightAsLiar,
+                                        shakeTrigger: highlightAsLiar ? revealShakeTrigger : 0,
+                                        isFullWidth: showLiarDetailsList,
+                                        liarQuestion: liarQuestion(for: playerID),
                                         voteCount: voteCount,
                                         canIncrement: currentTotalVotes < maxVotes,
                                         onIncrement: { incrementVote(for: playerID) },
@@ -452,7 +489,7 @@ extension QuestionsModeContainer {
                             Color.clear.frame(height: 140)
                         }
                         .frame(maxHeight: .infinity, alignment: .top)
-                        .onChange(of: spyScrollTarget) { oldValue, target in
+                        .onChange(of: liarScrollTarget) { oldValue, target in
                             guard let target else { return }
                             DispatchQueue.main.async {
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { proxy.scrollTo(target, anchor: .top) }
@@ -472,7 +509,7 @@ extension QuestionsModeContainer {
         return appModel.players.compactMap { answersDict[$0.id] }
     }
     private var revealGridColumns: [GridItem] {
-        showSpyDetailsList ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())]
+        showLiarDetailsList ? [GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible())]
     }
     private var canRevealNow: Bool {
         if !isRevealVoteActive { return !answersInOrder.isEmpty }
@@ -484,19 +521,19 @@ extension QuestionsModeContainer {
     }
     
     private var revealButtonTitle: LocalizedStringKey {
-        if !isRevealVoteActive { return "Lügner aufdecken" }
-        if revealEvaluation == nil { return "Aufdecken" }
-        return "Runde abschließen"
+        if !isRevealVoteActive { return "Polygraph starten" }
+        if revealEvaluation == nil { return "Auswerten" }
+        return "Test abschließen"
     }
     
     private var revealStatusMessage: LocalizedStringKey? {
-        if !isRevealVoteActive { return !answersInOrder.isEmpty ? "Diskutiert und verteilt dann die Stimmen." : nil }
+        if !isRevealVoteActive { return !answersInOrder.isEmpty ? "Vergleicht die Aussagen und verteilt dann die Stimmen." : nil }
         if let evaluation = revealEvaluation {
-            if evaluation.citizensWon { return "Treffer! Alle Lügner wurden enttarnt." }
-            if !evaluation.incorrect.isEmpty { return "Daneben! Die Lügner bleiben verborgen." }
-            return "Richtiger Treffer – es sind noch Lügner übrig."
+            if evaluation.citizensWon { return "Treffer! Alle Lügner wurden entlarvt." }
+            if !evaluation.incorrect.isEmpty { return "Fehlalarm! Die Lügner bleiben verborgen." }
+            return "Teiltreffer – es sind noch Lügner übrig."
         }
-        if engine.currentSpyIDs.isEmpty { return "Keine Spione in dieser Runde." }
+        if engine.currentLiarIDs.isEmpty { return "Keine Lügner in diesem Test." }
         
         // Voting Phase Status
         if currentTotalVotes < maxVotes {
@@ -506,12 +543,12 @@ extension QuestionsModeContainer {
         
         let leadingIDs = currentLeaders
         if leadingIDs.isEmpty {
-            return "Bereit zum Aufdecken."
+            return "Bereit für die Auswertung."
         } else if leadingIDs.count == 1, let leaderID = leadingIDs.first {
              let name = playerName(for: leaderID)
              return "Hauptverdächtiger: \(name)"
         } else {
-            return "Gleichstand zwischen \(leadingIDs.count) Spielern."
+            return "Gleichstand zwischen \(leadingIDs.count) Verdächtigen."
         }
     }
     
@@ -563,8 +600,8 @@ extension QuestionsModeContainer {
                 revealEvaluation = nil
                 revealShakeTrigger = 0
             }
-            if engine.currentSpyIDs.isEmpty {
-                let evaluation = QuestionsVoteEvaluation(selected: [], imposters: engine.currentSpyIDs)
+            if engine.currentLiarIDs.isEmpty {
+                let evaluation = QuestionsVoteEvaluation(selected: [], liars: engine.currentLiarIDs)
                 revealEvaluation = evaluation
                 lastRevealEvaluation = evaluation
                 engine.finishRound()
@@ -581,14 +618,14 @@ extension QuestionsModeContainer {
                 return
             }
             
-            let evaluation = QuestionsVoteEvaluation(selected: suspects, imposters: engine.currentSpyIDs)
+            let evaluation = QuestionsVoteEvaluation(selected: suspects, liars: engine.currentLiarIDs)
             revealEvaluation = evaluation
             lastRevealEvaluation = evaluation
             
             if !evaluation.incorrect.isEmpty {
-                // Spies Win (Wrong guess)
-                if !engine.currentSpyIDs.isEmpty {
-                    appModel.addPoints(to: engine.currentSpyIDs, amount: 3)
+                // Liars Win (Wrong guess)
+                if !engine.currentLiarIDs.isEmpty {
+                    appModel.addPoints(to: engine.currentLiarIDs, amount: 3)
                 }
                 withAnimation(.easeInOut(duration: 0.5)) { revealShakeTrigger += 1 }
                 engine.finishRound()
@@ -596,16 +633,16 @@ extension QuestionsModeContainer {
                 return
             }
             
-            foundRevealSpies.formUnion(evaluation.correct)
-            if foundRevealSpies.count == engine.currentSpyIDs.count {
-                // Citizens Win (All spies found)
-                if !engine.currentSpyIDs.isEmpty {
+            foundRevealLiars.formUnion(evaluation.correct)
+            if foundRevealLiars.count == engine.currentLiarIDs.count {
+                // Citizens Win (All liars found)
+                if !engine.currentLiarIDs.isEmpty {
                     let allIDs = Set(appModel.players.map { $0.id })
-                    let citizenIDs = allIDs.subtracting(engine.currentSpyIDs)
+                    let citizenIDs = allIDs.subtracting(engine.currentLiarIDs)
                     appModel.addPoints(to: citizenIDs, amount: 1)
                 }
                 
-                let finalEval = QuestionsVoteEvaluation(selected: foundRevealSpies, imposters: engine.currentSpyIDs)
+                let finalEval = QuestionsVoteEvaluation(selected: foundRevealLiars, liars: engine.currentLiarIDs)
                 revealEvaluation = finalEval
                 lastRevealEvaluation = finalEval
                 engine.finishRound()
@@ -613,9 +650,9 @@ extension QuestionsModeContainer {
                 return
             }
             
-            // Spies Win (Survived / Partial find ends round)
-            if !engine.currentSpyIDs.isEmpty {
-                appModel.addPoints(to: engine.currentSpyIDs, amount: 3)
+            // Liars Win (Survived / Partial find ends round)
+            if !engine.currentLiarIDs.isEmpty {
+                appModel.addPoints(to: engine.currentLiarIDs, amount: 3)
             }
             engine.finishRound()
             appModel.fairnessState.advanceRound()
@@ -688,17 +725,17 @@ extension QuestionsModeContainer {
     }
     
     private func handleRevealCardTap(playerID: UUID) {
-        if showSpyDetailsList {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showSpyDetailsList = false }
-            spyScrollTarget = nil
+        if showLiarDetailsList {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showLiarDetailsList = false }
+            liarScrollTarget = nil
         } else {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { showSpyDetailsList = true }
-            spyScrollTarget = playerID
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { showLiarDetailsList = true }
+            liarScrollTarget = playerID
         }
     }
     
     private func resetRevealState(clearLast: Bool = false) {
-        isRevealVoteActive = false; voteCounts.removeAll(); revealEvaluation = nil; revealShakeTrigger = 0; showSpyDetailsList = false; spyScrollTarget = nil; foundRevealSpies.removeAll()
+        isRevealVoteActive = false; voteCounts.removeAll(); revealEvaluation = nil; revealShakeTrigger = 0; showLiarDetailsList = false; liarScrollTarget = nil; foundRevealLiars.removeAll()
         if clearLast { lastRevealEvaluation = nil }
     }
     
@@ -710,28 +747,25 @@ extension QuestionsModeContainer {
     
     private func playerName(for id: UUID) -> String { appModel.players.first(where: { $0.id == id })?.name ?? "Unbekannt" }
     
-    // HIER DIE ANPASSUNG: Immer nil während des Spiels
-    private func spyQuestion(for id: UUID) -> String? {
-        // Die Spion-Frage soll während der Voting/Overview-Phase NIE angezeigt werden.
-        // Nur am Ende im ResultOverlay.
+    private func liarQuestion(for id: UUID) -> String? {
         return nil
     }
     
     // Phase: Result Overlay
     var questionsResultOverlay: some View {
         let evaluation = lastRevealEvaluation
-        let spies = appModel.players.filter { engine.currentSpyIDs.contains($0.id) }
+        let liars = appModel.players.filter { engine.currentLiarIDs.contains($0.id) }
         
-        let spyQuestionText = engine.round?.promptPair.spyQuestion ?? "Unbekannt"
+        let liarQuestionText = engine.round?.promptPair.liarQuestion ?? "Unbekannt"
         
         // Data for animation
         let suspectID = evaluation?.selected.first // Assuming single selection for drama, or handle multiple
         let suspectName = suspectID != nil ? playerName(for: suspectID!) : "Niemand"
-        let isSpy = suspectID != nil && engine.currentSpyIDs.contains(suspectID!)
+        let isLiar = suspectID != nil && engine.currentLiarIDs.contains(suspectID!)
         let citizensWon = evaluation?.citizensWon ?? false
         
         return ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            QuestionsBackgroundView().ignoresSafeArea()
             
             if revealStage == 0 {
                 Text("Das Urteil...")
@@ -760,14 +794,14 @@ extension QuestionsModeContainer {
                 // STAMP
                 ZStack {
                     if let _ = suspectID {
-                        Text(isSpy ? "SPION" : "BÜRGER")
+                        Text(isLiar ? "LÜGNER" : "PROBAND")
                             .font(.system(size: 60, weight: .black, design: .rounded))
-                            .foregroundColor(isSpy ? .red : .green)
+                            .foregroundColor(isLiar ? .red : .green)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(isSpy ? Color.red : Color.green, lineWidth: 8)
+                                    .stroke(isLiar ? Color.red : Color.green, lineWidth: 8)
                             )
                             .rotationEffect(.degrees(-15))
                             .scaleEffect(revealStage == 2 ? 1.2 : 1.0) // Bounce effect needs specific state trigger
@@ -786,23 +820,23 @@ extension QuestionsModeContainer {
                     Spacer().frame(height: 180) // Push content down below the stamp
                     
                     VStack(spacing: 8) {
-                        Text(citizensWon ? "Bewohner haben gewonnen" : "Spione haben gewonnen")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                        Text(citizensWon ? "Alle Lügner wurden enttarnt." : "Die Lügner bleiben im Verborgenen.")
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .multilineTextAlignment(.center)
+                    Text(citizensWon ? "Probanden haben gewonnen" : "Lügner haben gewonnen")
+                        .font(.title2.bold())
+                        .foregroundColor(.white)
+                    Text(citizensWon ? "Alle Lügner wurden entlarvt." : "Die Lügner bleiben im Verborgenen.")
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
                     }
                     .padding(.top, 40)
                     
                     VStack(spacing: 8) {
-                        Text("Frage der Spione:")
+                        Text("Lügner-Frage:")
                             .font(.caption.weight(.bold))
                             .textCase(.uppercase)
                             .foregroundStyle(.white.opacity(0.6))
                         
-                        Text(LocalizedStringKey(spyQuestionText))
+                        Text(LocalizedStringKey(liarQuestionText))
                             .font(.title3.weight(.bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
@@ -817,14 +851,14 @@ extension QuestionsModeContainer {
                     }
                     .padding(.horizontal, 24)
                     
-                    if !spies.isEmpty {
+                    if !liars.isEmpty {
                         VStack(spacing: 12) {
                             Text("Tatsächliche Lügner")
                                 .font(.headline)
                                 .foregroundColor(.white.opacity(0.9))
                             
                             VStack(spacing: 8) {
-                                ForEach(spies, id: \.id) { p in
+                                ForEach(liars, id: \.id) { p in
                                     HStack {
                                         Image(systemName: "person.fill.questionmark")
                                             .font(.title3)
@@ -837,7 +871,7 @@ extension QuestionsModeContainer {
                                         
                                         Spacer()
                                         
-                                        Text("SPION")
+                                        Text("LÜGNER")
                                             .font(.caption.bold())
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
@@ -864,13 +898,11 @@ extension QuestionsModeContainer {
                         .padding(.horizontal, 24)
                     }
                     
-                    // Scoreboard removed from here - moved to header sheet
-                    
                     Spacer()
                     
                     VStack(spacing: 12) {
                         Button { startRound() } label: {
-                            Text("Neue Runde")
+                            Text("Neuer Test")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -924,14 +956,14 @@ extension QuestionsModeContainer {
 struct QuestionsScoreboardView: View {
     @ObservedObject var appModel: AppModel
     
-    var sortedPlayers: [(player: Player, score: Int)] {
+    var sortedPlayers: [(player: QuestionPlayer, score: Int)] {
         appModel.players.map { ($0, appModel.getScore(for: $0.id)) }
             .sorted { $0.score > $1.score }
     }
     
     var body: some View {
         VStack(spacing: 12) {
-            Text("Rangliste")
+            Text("Auswertung")
                 .font(.headline)
                 .foregroundStyle(QuestionsStyle.mutedText)
                 .textCase(.uppercase)

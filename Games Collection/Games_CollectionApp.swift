@@ -15,6 +15,7 @@ struct Games_CollectionApp: App {
     
     // Lifecycle Manager State
     @StateObject private var lifecycleManager = AppLifecycleManager.shared
+    @StateObject private var externalDisplayManager = ExternalDisplayManager.shared
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     private var activeLocale: Locale {

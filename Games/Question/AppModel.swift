@@ -3,7 +3,7 @@ import SwiftUI
 import Combine
 
 class AppModel: ObservableObject {
-    @Published var players: [Player] = [] {
+    @Published var players: [QuestionPlayer] = [] {
         didSet {
             if let data = try? JSONEncoder().encode(players) {
                 UserDefaults.standard.set(data, forKey: "question.players")
@@ -17,12 +17,11 @@ class AppModel: ObservableObject {
             }
         }
     }
-    @Published var numberOfImposters: Int = 1 {
-        didSet { UserDefaults.standard.set(numberOfImposters, forKey: "question.numberOfImposters") }
+    @Published var numberOfLiars: Int = 1 {
+        didSet { UserDefaults.standard.set(numberOfLiars, forKey: "question.numberOfLiars") }
     }
     
-    // WICHTIG: Hier speichern wir den Fairness-Zustand
-    @Published var fairnessState = FairnessState() {
+    @Published var fairnessState = QuestionFairnessState() {
         didSet {
             if let data = try? JSONEncoder().encode(fairnessState) {
                 UserDefaults.standard.set(data, forKey: "question.fairnessState")
@@ -39,8 +38,7 @@ class AppModel: ObservableObject {
         }
     }
     
-    // HIER WAR DAS PROBLEM: Wir müssen die Regeln explizit setzen!
-    @Published var fairnessPolicy: FairnessPolicy {
+    @Published var fairnessPolicy: QuestionFairnessPolicy {
         didSet {
             if let data = try? JSONEncoder().encode(fairnessPolicy) {
                 UserDefaults.standard.set(data, forKey: "question.fairnessPolicy")
@@ -53,14 +51,11 @@ class AppModel: ObservableObject {
         
         // 1. Players
         if let data = defaults.data(forKey: "question.players"),
-           let savedPlayers = try? JSONDecoder().decode([Player].self, from: data),
+           let savedPlayers = try? JSONDecoder().decode([QuestionPlayer].self, from: data),
            !savedPlayers.isEmpty {
             self.players = savedPlayers
         } else {
-            // Default players
             self.players = []
-            // Helper function logic for default players is below, but we can't call instance method easily before init finishes self.
-            // We'll init empty and then populate if needed.
         }
         
         // 2. Category
@@ -72,33 +67,24 @@ class AppModel: ObservableObject {
             self.selectedQuestionsCategory = QuestionsDefaults.all.first
         }
         
-        // 3. Imposters
-        let savedImposters = defaults.integer(forKey: "question.numberOfImposters")
-        self.numberOfImposters = savedImposters > 0 ? savedImposters : 1
+        // 3. Liars
+        let savedLiars = defaults.integer(forKey: "question.numberOfLiars")
+        self.numberOfLiars = savedLiars > 0 ? savedLiars : 1
         
         // 4. Fairness State
         if let data = defaults.data(forKey: "question.fairnessState"),
-           let state = try? JSONDecoder().decode(FairnessState.self, from: data) {
+           let state = try? JSONDecoder().decode(QuestionFairnessState.self, from: data) {
             self.fairnessState = state
         } else {
-            self.fairnessState = FairnessState()
+            self.fairnessState = QuestionFairnessState()
         }
         
         // 5. Fairness Policy
         if let data = defaults.data(forKey: "question.fairnessPolicy"),
-           let policy = try? JSONDecoder().decode(FairnessPolicy.self, from: data) {
+           let policy = try? JSONDecoder().decode(QuestionFairnessPolicy.self, from: data) {
             self.fairnessPolicy = policy
         } else {
-            self.fairnessPolicy = FairnessPolicy(
-                maxConsecutive: 2,
-                minCooldownRounds: 1,
-                recentWindow: 3,
-                alphaFrequencyPenalty: 0.6,
-                betaDistanceBonus: 0.2,
-                newPlayerHardCooldownRounds: 0,
-                newPlayerSoftPenaltyRounds: 2,
-                newPlayerPenaltyFactor: 0.4
-            )
+            self.fairnessPolicy = QuestionFairnessPolicy()
         }
         
         // 6. Scores
@@ -111,7 +97,7 @@ class AppModel: ObservableObject {
         
         // Populate default players if empty
         if self.players.isEmpty {
-             self.players = (1...4).map { Player(name: defaultPlayerName(for: $0)) }
+             self.players = (1...4).map { QuestionPlayer(name: defaultPlayerName(for: $0)) }
         }
         
         // Reset Listener
@@ -121,16 +107,15 @@ class AppModel: ObservableObject {
     }
     
     private func resetToDefaults() {
-        players = (1...4).map { Player(name: defaultPlayerName(for: $0)) }
+        players = (1...4).map { QuestionPlayer(name: defaultPlayerName(for: $0)) }
         selectedQuestionsCategory = QuestionsDefaults.all.first
-        numberOfImposters = 1
-        fairnessState = FairnessState()
+        numberOfLiars = 1
+        fairnessState = QuestionFairnessState()
         scores = [:]
-        // Policy reset if needed, but usually static defaults are fine or re-init policy
     }
 
     func defaultPlayerName(for index: Int) -> String {
-        let format = localizedString("Spieler %d")
+        let format = localizedString("Verdächtiger %d")
         return String(format: format, index)
     }
 
@@ -161,7 +146,7 @@ class AppModel: ObservableObject {
         return NSLocalizedString(key, comment: "")
     }
     
-    func pickFairSpies() -> Set<UUID> {
+    func pickFairLiars() -> Set<UUID> {
         return []
     }
     

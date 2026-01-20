@@ -13,7 +13,7 @@ struct Player: Identifiable, Codable, Equatable {
     var isImposter: Bool
     var word: String
     var hasSeenCard: Bool
-    /// Marks a player as eliminated from the current game (e.g., correctly voted spy)
+    /// Marks a player as eliminated from the current game (e.g., correctly voted imposter)
     var isEliminated: Bool
     /// Role assigned to the player (used in roles game mode)
     var role: String?

@@ -212,7 +212,7 @@ class VotingManager: ObservableObject {
                     _ = gameSettings.players.filter { $0.roleType == .fool }.map { $0.name }
                     let losers = spyNames + citizenNames
                     StatsService.shared.recordLoss(playerNames: losers, asImposter: false) // Zählt als Niederlage
-                    // TODO: Record Jester Win explicitly if needed in StatsService
+                    // TODO: Record Jester Win explicitly if needed in StatsSJa ervice
                 } else if playersWon {
                     let isFast = (Double(gameSettings.timeRemaining) > (Double(gameSettings.timeLimit) / 2.0)) || votingRound == 1
                     StatsService.shared.recordCitizenWin(citizenNames: citizenNames, isFast: isFast)

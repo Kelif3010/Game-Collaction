@@ -23,11 +23,52 @@ enum QuestionsTheme {
     static let textAccent = Color(red: 0.22, green: 0.02, blue: 0.14)
 }
 
-// MARK: - Shared Style Constants (Matches Imposter/BetBuddy)
+// MARK: - Animated Background
+struct QuestionsBackgroundView: View {
+    @State private var pulse1 = false
+    @State private var pulse2 = false
+    
+    var body: some View {
+        ZStack {
+            QuestionsTheme.gradient
+                .ignoresSafeArea()
+            
+            // Subtiler Radar-Puls / Stress-Wellen
+            GeometryReader { geo in
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.03), lineWidth: 1)
+                        .scaleEffect(pulse1 ? 1.5 : 0.5)
+                        .opacity(pulse1 ? 0.0 : 0.3)
+                        .position(x: geo.size.width / 2, y: geo.size.height * 0.4)
+                    
+                    Circle()
+                        .stroke(Color.white.opacity(0.03), lineWidth: 1)
+                        .scaleEffect(pulse2 ? 1.5 : 0.5)
+                        .opacity(pulse2 ? 0.0 : 0.2)
+                        .position(x: geo.size.width / 2, y: geo.size.height * 0.4)
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                pulse1 = true
+            }
+            // Versetzter Start für zweiten Ring
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                    pulse2 = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Shared Style Constants (Matches other modes)
 enum QuestionsStyle {
     static let backgroundGradient = QuestionsTheme.gradient
     
-    // Using the same "dark glass" constants as Imposter for consistency
+    // Using the same "dark glass" constants as other modes for consistency
     static let containerBackground = Color.black.opacity(0.25)
     static let rowBackground = Color.black.opacity(0.25)
     static let cardStroke = Color.white.opacity(0.08)
@@ -37,12 +78,12 @@ enum QuestionsStyle {
     static let mutedText = Color.white.opacity(0.7)
     
     static let primaryGradient = LinearGradient(
-        colors: [Color(red: 1.0, green: 0.41, blue: 0.23), Color(red: 0.94, green: 0.16, blue: 0.47)], // Keep Imposter orange/pink or custom? Let's use custom for Questions identity
+        colors: [Color(red: 1.0, green: 0.41, blue: 0.23), Color(red: 0.94, green: 0.16, blue: 0.47)], // Keep warm orange/pink or custom? Let's use custom for Questions identity
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     
-    // Custom button gradient for Questions (Red/Purple) to distinguish from Imposter (Orange)
+    // Custom button gradient for Questions (Red/Pink) to distinguish from other modes (Orange)
     static let buttonGradient = LinearGradient(
          colors: [Color(red: 0.99, green: 0.35, blue: 0.38), Color(red: 0.78, green: 0.12, blue: 0.42)],
          startPoint: .topLeading,
@@ -50,7 +91,7 @@ enum QuestionsStyle {
     )
 }
 
-// MARK: - Shared Components (Matches Imposter/BetBuddy)
+// MARK: - Shared Components (Matches other modes)
 
 struct QuestionsPrimaryButton: View {
     let title: String
@@ -226,14 +267,15 @@ struct QuestionsPromptBoard: View {
     let question: String
 
     var body: some View {
-        QuestionsChalkboardBackground()
-            .frame(height: 220)
+        QuestionsGlassCard()
+            .frame(height: 200)
             .overlay(
                 VStack(spacing: 20) {
                     Text(LocalizedStringKey(question))
-                        .font(.title2.weight(.bold))
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
+                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                 }
                 .padding(24)
             )
@@ -246,13 +288,13 @@ struct QuestionsAnswerBoard: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            QuestionsChalkboardBackground()
+            QuestionsGlassCard()
                 .frame(maxWidth: .infinity)
             TextEditor(text: $text)
                 .focused(focus)
                 .scrollContentBackground(.hidden)
                 .foregroundColor(.white)
-                .font(.body)
+                .font(.system(size: 18, weight: .medium, design: .default))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
@@ -272,36 +314,42 @@ struct QuestionsAnswerBoard: View {
                     }
                 }
             if text.isEmpty {
-                Text(LocalizedStringKey("Tippe deine Antwort…"))
-                    .foregroundColor(.white.opacity(0.35))
+                Text(LocalizedStringKey("Tippe deine Aussage…"))
+                    .foregroundColor(.white.opacity(0.4))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 14)
             }
         }
-        .frame(minHeight: 150, maxHeight: 210)
+        .frame(minHeight: 140, maxHeight: 180)
     }
 }
 
-struct QuestionsChalkboardBackground: View {
+struct QuestionsGlassCard: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.02, green: 0.02, blue: 0.05),
-                        Color(red: 0.08, green: 0.08, blue: 0.16)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+        ZStack {
+            // 1. Dunkler Grundton für Lesbarkeit
+            Color.black.opacity(0.5)
+            
+            // 2. Blur Effekt (iOS Glass)
+            Rectangle()
+                .foregroundStyle(.ultraThinMaterial)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            // 3. Subtiler Gradient Border (Lichtkante oben links)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.white.opacity(0.25), .white.opacity(0.05)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
                 )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1.2)
-            )
-            .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
+        )
+        .shadow(color: .black.opacity(0.2), radius: 15, y: 10)
     }
 }
 
@@ -332,7 +380,7 @@ struct QuestionsAnswerRevealCard: View {
     let showRedX: Bool
     let shakeTrigger: CGFloat
     let isFullWidth: Bool
-    let spyQuestion: String?
+    let liarQuestion: String?
     
     // Voting Props
     var voteCount: Int = 0
@@ -344,25 +392,28 @@ struct QuestionsAnswerRevealCard: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            QuestionsChalkboardBackground()
+            QuestionsGlassCard()
                 .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill((isSelected && selectionEnabled && voteCount == 0) ? Color.white.opacity(0.08) : Color.clear)
                 )
                 .overlay(
-                    VStack(spacing: 10) {
-                        HStack(spacing: 8) {
+                    VStack(spacing: 8) {
+                        // Header: Name & Time
+                        HStack(spacing: 6) {
                             Text(LocalizedStringKey(playerName))
-                                .font(.headline)
-                                .foregroundColor(.white)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.8))
                                 .multilineTextAlignment(.center)
                             
+                            Spacer()
+                            
                             if answer.timeTaken > 0 {
-                                Text(String(format: NSLocalizedString("Zeit: %.1fs", comment: ""), answer.timeTaken))
-                                    .font(.caption2.monospacedDigit())
+                                Text(String(format: "%.1fs", answer.timeTaken))
+                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
                                     .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(answer.timeTaken > 20 ? Color.orange.opacity(0.8) : Color.white.opacity(0.2))
+                                    .padding(.vertical, 3)
+                                    .background(answer.timeTaken > 20 ? Color.red.opacity(0.6) : Color.white.opacity(0.1))
                                     .cornerRadius(4)
                                     .foregroundColor(.white)
                             }
@@ -375,28 +426,28 @@ struct QuestionsAnswerRevealCard: View {
                                     .foregroundColor(.red)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
-                        if let spyQuestion {
-                            Text(LocalizedStringKey(spyQuestion))
-                                .font(.callout.weight(.medium))
-                                .foregroundColor(.white.opacity(0.9))
+                        if let liarQuestion {
+                            Text(LocalizedStringKey(liarQuestion))
+                                .font(.caption.weight(.medium))
+                                .foregroundColor(.red.opacity(0.9))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 4)
                         }
 
                         Text(answer.text)
-                            .font(.body)
+                            .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .lineLimit(4)
                             .minimumScaleFactor(0.85)
+                            .padding(.top, 4)
 
                         Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.top, 26)
-                    .padding(.bottom, showSelectionBox ? 50 : 18) // Platz für Stepper machen
+                    .padding(.bottom, showSelectionBox ? 50 : 16)
                 )
 
             if showSelectionBox {
@@ -412,14 +463,14 @@ struct QuestionsAnswerRevealCard: View {
                 }
             }
         }
-        .frame(height: isFullWidth ? 210 : 170) // Etwas höher für Stepper
+        .frame(height: isFullWidth ? 180 : 160)
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(
                     (voteCount > 0)
                     ? AnyShapeStyle(QuestionsStyle.buttonGradient)
-                    : AnyShapeStyle(Color.white.opacity(0.25)),
-                    lineWidth: (voteCount > 0) ? 3 : 1
+                    : AnyShapeStyle(Color.clear),
+                    lineWidth: (voteCount > 0) ? 2 : 0
                 )
         )
         .modifier(ShakeEffect(animatableData: showRedX ? shakeTrigger : 0))

@@ -10,12 +10,12 @@ final class QuestionsEngine: ObservableObject {
     @Published private(set) var round: QuestionsRoundState?
 
     // Players (injected)
-    private(set) var players: [Player] = []
-    private var spies: Set<UUID> = [] // player ids
-    private var fairnessState: FairnessState?
-    private var fairnessPolicy: FairnessPolicy?
-    // Expose current spy IDs as read-only for consumers like voting UI
-    var currentSpyIDs: Set<UUID> { spies }
+    private(set) var players: [QuestionPlayer] = []
+    private var liars: Set<UUID> = [] // player ids
+    private var fairnessState: QuestionFairnessState?
+    private var fairnessPolicy: QuestionFairnessPolicy?
+    // Expose current liar IDs as read-only for consumers like voting UI
+    var currentLiarIDs: Set<UUID> { liars }
 
     // Internals
     private var cancellables = Set<AnyCancellable>()
@@ -28,14 +28,14 @@ final class QuestionsEngine: ObservableObject {
     // MARK: Configuration
 
     func configure(
-        players: [Player],
-        numberOfSpies: Int,
+        players: [QuestionPlayer],
+        numberOfLiars: Int,
         category: QuestionsCategory,
-        fairnessPolicy: FairnessPolicy? = nil,
-        fairnessState: FairnessState? = nil
+        fairnessPolicy: QuestionFairnessPolicy? = nil,
+        fairnessState: QuestionFairnessState? = nil
     ) {
         self.players = players
-        self.config.numberOfSpies = max(0, min(numberOfSpies, max(0, players.count - 1)))
+        self.config.numberOfLiars = max(0, min(numberOfLiars, max(0, players.count - 1)))
         self.config.selectedCategory = category
         self.fairnessPolicy = fairnessPolicy
         self.fairnessState = fairnessState
@@ -43,44 +43,25 @@ final class QuestionsEngine: ObservableObject {
         usedPromptIndices.removeAll()
     }
 
-    // Randomly assign spies for this mode (separate from base game, if desired)
-    func assignSpiesRandomly(seed: UInt64? = nil) {
+    // Randomly assign liars for this mode (separate from base game, if desired)
+    func assignLiarsRandomly(seed: UInt64? = nil) {
         guard players.count > 0 else { return }
-        spies.removeAll()
-        let spyCount = min(config.numberOfSpies, max(0, players.count - 1))
-        guard spyCount > 0 else { return }
+        liars.removeAll()
+        let liarCount = min(config.numberOfLiars, max(0, players.count - 1))
+        guard liarCount > 0 else { return }
         
         if let fairnessState, let fairnessPolicy {
-            var rng: any RandomNumberGeneratorLike = SystemRNGAdapter()
-            let picked = ImposterPicker.pickImposters(
+            let picked = QuestionLiarPicker.pickLiars(
                 players: players.map { $0.id },
-                count: spyCount,
+                count: liarCount,
                 policy: fairnessPolicy,
-                state: fairnessState,
-                rng: &rng,
-                weightMultipliers: AITuner.shared.suggestWeightMultipliers(
-                    players: players.map { $0.id },
-                    policy: fairnessPolicy,
-                    state: fairnessState
-                )
+                state: fairnessState
             )
-            spies = Set(picked)
-            let round = fairnessState.currentRound
-            fairnessState.recordImposters(picked)
-            for id in picked {
-                fairnessState.updateStats(for: id) { s in
-                    s.cooldownUntilRound = round + fairnessPolicy.minCooldownRounds
-                }
-            }
-            let pickedSet = Set(picked)
-            for id in players.map({ $0.id }) where !pickedSet.contains(id) {
-                fairnessState.updateStats(for: id) { s in
-                    if s.currentStreak > 0 { s.currentStreak = 0 }
-                }
-            }
+            liars = Set(picked)
+            fairnessState.recordLiars(picked)
         } else {
             var rng = seed.map { SeededGenerator(seed: $0) } ?? SeededGenerator()
-            spies = Set(players.shuffled(using: &rng).prefix(spyCount).map { $0.id })
+            liars = Set(players.shuffled(using: &rng).prefix(liarCount).map { $0.id })
         }
     }
 
@@ -88,7 +69,7 @@ final class QuestionsEngine: ObservableObject {
 
     func startNewRound(roundIndex: Int = 0) {
         guard let category = config.selectedCategory else { return }
-        assignSpiesRandomly()
+        assignLiarsRandomly()
         guard category.promptPairs.isEmpty == false else { return }
 
         // pick an unused prompt pair if possible
@@ -101,14 +82,14 @@ final class QuestionsEngine: ObservableObject {
         self.phase = .collecting
     }
 
-    func currentPlayer() -> Player? {
+    func currentPlayer() -> QuestionPlayer? {
         guard let r = round else { return nil }
         guard players.indices.contains(r.currentPlayerIndex) else { return nil }
         return players[r.currentPlayerIndex]
     }
 
     func role(for playerID: UUID) -> QuestionsRole {
-        spies.contains(playerID) ? .spy : .citizen
+        liars.contains(playerID) ? .liar : .citizen
     }
 
     // Player submits an answer; returns true if accepted
