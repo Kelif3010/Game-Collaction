@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct Games_CollectionApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("selectedLanguageCode") private var selectedLanguageCode = "de"
     @AppStorage("useSystemLanguage") private var useSystemLanguage = true
@@ -44,12 +45,14 @@ struct Games_CollectionApp: App {
             .animation(.easeInOut, value: hasSeenOnboarding)
             .onAppear {
                 lifecycleManager.onAppLaunch()
+                QuickActionManager.shared.updateQuickActions()
             }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .background || newPhase == .inactive {
                     lifecycleManager.onAppBackgroundOrExit()
                 } else if newPhase == .active {
                     lifecycleManager.onAppForeground()
+                    QuickActionManager.shared.updateQuickActions()
                 }
             }
         }

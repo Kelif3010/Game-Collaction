@@ -11,10 +11,18 @@ struct GameRecommenderView: View {
     
     // MARK: - Definitions
     enum PlayMode: String, CaseIterable, Identifiable {
-        case singleDevice = "Ein Gerät"
-        case multiplayer = "Multiplayer"
+        case singleDevice
+        case multiplayer
+
         var id: String { rawValue }
-        
+
+        var label: LocalizedStringKey {
+            switch self {
+            case .singleDevice: return "Ein Gerät"
+            case .multiplayer: return "Multiplayer"
+            }
+        }
+
         var icon: String {
             switch self {
             case .singleDevice: return "iphone"
@@ -22,15 +30,24 @@ struct GameRecommenderView: View {
             }
         }
     }
-    
+
     enum GameMood: String, CaseIterable, Identifiable {
-        case funny = "Lustig"
-        case intense = "Spannend"
-        case active = "Aktiv"
-        case communication = "Reden"
-        
+        case funny
+        case intense
+        case active
+        case communication
+
         var id: String { rawValue }
-        
+
+        var label: LocalizedStringKey {
+            switch self {
+            case .funny: return "Lustig"
+            case .intense: return "Spannend"
+            case .active: return "Aktiv"
+            case .communication: return "Reden"
+            }
+        }
+
         var emoji: String {
             switch self {
             case .funny: return "😂"
@@ -39,7 +56,7 @@ struct GameRecommenderView: View {
             case .communication: return "💬"
             }
         }
-        
+
         var color: Color {
             switch self {
             case .funny: return .yellow
@@ -68,13 +85,13 @@ struct GameRecommenderView: View {
     
     struct GameRecommendation: Identifiable {
         let id: String
-        let name: String
-        let description: String
+        let name: LocalizedStringKey
+        let description: LocalizedStringKey
         let imageName: String
         let matchScore: Int // 0-100
         let targetView: AnyView
-        let reasons: [String]
-        
+        let reasons: [LocalizedStringKey]
+
         var isPlayableNow: Bool { reasons.isEmpty }
     }
     
@@ -153,7 +170,7 @@ struct GameRecommenderView: View {
                                         .pickerStyle(.segmented)
                                         .colorScheme(.dark) // Force dark appearance for picker
                                         
-                                        Text(LocalizedStringKey(playMode.rawValue))
+                                        Text(playMode.label)
                                             .font(.caption2)
                                             .foregroundStyle(.white)
                                     }
@@ -276,8 +293,8 @@ struct GameRecommenderView: View {
             min(max(score, 0), 100)
         }
         
-        func reasonsForGame(minPlayers: Int, maxPlayers: Int? = nil, minMinutes: Int? = nil, supportsMultiplayer: Bool) -> [String] {
-            var reasons: [String] = []
+        func reasonsForGame(minPlayers: Int, maxPlayers: Int? = nil, minMinutes: Int? = nil, supportsMultiplayer: Bool) -> [LocalizedStringKey] {
+            var reasons: [LocalizedStringKey] = []
             if isMultiplayer && !supportsMultiplayer {
                 reasons.append("Nur 1 Gerät")
             }
@@ -409,7 +426,7 @@ struct MoodButton: View {
             VStack {
                 Text(mood.emoji)
                     .font(.largeTitle)
-                Text(LocalizedStringKey(mood.rawValue))
+                Text(mood.label)
                     .font(.caption2)
                     .fontWeight(.bold)
                     .lineLimit(1)
@@ -496,7 +513,7 @@ struct HeroRecommendationCard: View {
                 
                 if !game.reasons.isEmpty {
                     VStack(alignment: .leading) {
-                        ForEach(game.reasons, id: \.self) { reason in
+                        ForEach(Array(game.reasons.enumerated()), id: \.offset) { _, reason in
                             HStack {
                                 Image(systemName: "exclamationmark.triangle")
                                     .foregroundColor(.orange)

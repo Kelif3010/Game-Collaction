@@ -4,6 +4,7 @@ import Combine
 // MARK: - Hauptansicht
 struct ContentView: View {
     @StateObject private var statsManager = GlobalStatsManager.shared
+    @ObservedObject private var quickActionManager = QuickActionManager.shared
     
     // Steuerung für die Spiele
     @State private var isBetBuddyPresented = false
@@ -160,6 +161,40 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $isTimesUpPresented) {
             TimesUpWrapper()
         }
+        .onAppear {
+            handleQuickActionIfNeeded()
+        }
+        .onChange(of: quickActionManager.pendingAction) { _, _ in
+            handleQuickActionIfNeeded()
+        }
+    }
+
+    private func handleQuickActionIfNeeded() {
+        guard let action = quickActionManager.pendingAction else { return }
+        openGame(for: action)
+        quickActionManager.pendingAction = nil
+    }
+
+    private func openGame(for action: QuickActionType) {
+        isBetBuddyPresented = false
+        isTimesUpPresented = false
+        isQuestionGamePresented = false
+        isImposterPresented = false
+
+        switch action {
+        case .betBuddy:
+            statsManager.markGameAsPlayed(action.gameId)
+            isBetBuddyPresented = true
+        case .timesUp:
+            statsManager.markGameAsPlayed(action.gameId)
+            isTimesUpPresented = true
+        case .question:
+            statsManager.markGameAsPlayed(action.gameId)
+            isQuestionGamePresented = true
+        case .imposter:
+            statsManager.markGameAsPlayed(action.gameId)
+            isImposterPresented = true
+        }
     }
 }
 
@@ -210,11 +245,18 @@ struct MenuGameCard: View {
 }
 
 struct SnowView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var particles: [SnowParticle] = []
-    
+    @State private var isAnimating = true
+
+    // Timer nur wenn App aktiv ist (spart Batterie im Hintergrund)
+    private var timer: Publishers.Autoconnect<Timer.TimerPublisher>? {
+        isAnimating ? Timer.publish(every: 0.02, on: .main, in: .common).autoconnect() : nil
+    }
+
     var body: some View {
         GeometryReader { geometry in
-            TimelineView(.animation) { timeline in
+            TimelineView(.animation(paused: !isAnimating)) { timeline in
                 Canvas { context, size in
                     for particle in particles {
                         let rect = CGRect(x: particle.x * size.width, y: particle.y * size.height, width: particle.size, height: particle.size)
@@ -229,7 +271,12 @@ struct SnowView: View {
                 }
             }
             .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
+                guard isAnimating else { return }
                 updateParticles()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                // Timer stoppen wenn App in Hintergrund geht
+                isAnimating = (newPhase == .active)
             }
         }
         .ignoresSafeArea()

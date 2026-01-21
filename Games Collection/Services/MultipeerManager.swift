@@ -50,9 +50,15 @@ class MultipeerManager: NSObject, ObservableObject {
     private var targetRoomCode: String?
     private var disconnectTasks: [String: Task<Void, Never>] = [:]
     private let disconnectGraceInterval: TimeInterval = 30
-    
-    // Publishers für spezifische Events (damit ViewModels lauschen können)
-    // Key: EventType (String), Value: Payload (Data)
+
+    // MARK: - Event System (Combine-basiert für mehrere Zuhörer)
+
+    /// Publisher für MPC Events - mehrere Views/ViewModels können sich subscriben
+    /// Tuple: (eventType: String, payload: Data?)
+    let eventPublisher = PassthroughSubject<(type: String, payload: Data?), Never>()
+
+    /// Legacy Callback für Abwärtskompatibilität (wird zusätzlich zum Publisher aufgerufen)
+    /// DEPRECATED: Bitte eventPublisher.sink verwenden
     var onEventReceived: ((String, Data?) -> Void)?
     
     override init() {
@@ -236,8 +242,16 @@ class MultipeerManager: NSObject, ObservableObject {
         let task = Task { [weak self] in
             let nanoseconds = UInt64(self?.disconnectGraceInterval ?? 30) * 1_000_000_000
             try? await Task.sleep(nanoseconds: nanoseconds)
+
+            // Prüfen ob Task abgebrochen wurde (z.B. durch stop() oder Reconnect)
+            guard !Task.isCancelled else { return }
+
             await MainActor.run {
                 guard let self else { return }
+
+                // Nochmal prüfen - Task könnte zwischen sleep und MainActor.run abgebrochen worden sein
+                guard !Task.isCancelled else { return }
+
                 guard self.disconnectedPeers.contains(name) else { return }
                 self.disconnectedPeers.remove(name)
                 self.disconnectTasks.removeValue(forKey: name)
@@ -275,101 +289,135 @@ class MultipeerManager: NSObject, ObservableObject {
 // MARK: - Delegates
 
 extension MultipeerManager: MCSessionDelegate {
-    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        DispatchQueue.main.async {
-            self.connectedPeers = session.connectedPeers
-            
+    nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        // WICHTIG: Snapshot der Peers erstellen BEVOR wir auf MainActor wechseln
+        // So vermeiden wir Race Conditions wenn sich die Liste während des Wechsels ändert
+        let currentPeers = session.connectedPeers
+        let peerDisplayName = peerID.displayName
+
+        Task { @MainActor in
+            self.connectedPeers = currentPeers
+
             // Wenn Host: Lobby updaten und verteilen (mit kurzer Verzögerung für Stabilität)
             if self.role == .host {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     self.broadcastLobbyState()
                 }
             }
-            
+
             switch state {
             case .connected:
-                print("MPC: Verbunden mit \(peerID.displayName)")
-                self.lastReconnectedPlayerName = peerID.displayName
-                self.clearPeerDisconnected(peerID.displayName)
-            case .connecting: print("MPC: Verbinde mit \(peerID.displayName)...")
+                print("MPC: Verbunden mit \(peerDisplayName)")
+                self.lastReconnectedPlayerName = peerDisplayName
+                self.clearPeerDisconnected(peerDisplayName)
+            case .connecting:
+                print("MPC: Verbinde mit \(peerDisplayName)...")
             case .notConnected:
-                print("MPC: Getrennt von \(peerID.displayName)")
-                self.lastDisconnectedPlayerName = peerID.displayName
-                self.markPeerDisconnected(peerID.displayName)
-            @unknown default: break
+                print("MPC: Getrennt von \(peerDisplayName)")
+                self.lastDisconnectedPlayerName = peerDisplayName
+                self.markPeerDisconnected(peerDisplayName)
+            @unknown default:
+                break
             }
         }
     }
     
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        // Dekodieren auf Background-Thread (entlastet MainActor)
+        let message: MPCMessage
         do {
-            let message = try JSONDecoder().decode(MPCMessage.self, from: data)
-            DispatchQueue.main.async {
-                // Interne Events abfangen
-                if message.type == "LOBBY_UPDATE", let payload = message.payload {
-                    if let names = try? JSONDecoder().decode([String].self, from: payload) {
-                        print("MPC Gast: Lobby-Update empfangen: \(names)")
-                        self.lobbyPeers = names
-                        return // Nicht weiterleiten, ist intern
-                    }
-                }
-                if message.type == MPCEventType.lobbyDisconnected, let payload = message.payload {
-                    if let names = try? JSONDecoder().decode([String].self, from: payload) {
-                        self.disconnectedPeers = Set(names)
-                        return
-                    }
-                }
-                
-                self.receivedMessages.append(message)
-                // Event weiterleiten
-                self.onEventReceived?(message.type, message.payload)
-            }
+            message = try JSONDecoder().decode(MPCMessage.self, from: data)
         } catch {
             print("MPC: Fehler beim Dekodieren: \(error)")
+            return
+        }
+
+        Task { @MainActor in
+            // Interne Events abfangen
+            if message.type == "LOBBY_UPDATE", let payload = message.payload {
+                if let names = try? JSONDecoder().decode([String].self, from: payload) {
+                    print("MPC Gast: Lobby-Update empfangen: \(names)")
+                    self.lobbyPeers = names
+                    return // Nicht weiterleiten, ist intern
+                }
+            }
+            if message.type == MPCEventType.lobbyDisconnected, let payload = message.payload {
+                if let names = try? JSONDecoder().decode([String].self, from: payload) {
+                    self.disconnectedPeers = Set(names)
+                    return
+                }
+            }
+
+            self.receivedMessages.append(message)
+
+            // Event an alle Subscriber weiterleiten (neues System)
+            self.eventPublisher.send((type: message.type, payload: message.payload))
+
+            // Legacy Callback für Abwärtskompatibilität
+            self.onEventReceived?(message.type, message.payload)
         }
     }
-    
-    // Boilerplate
-    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+
+    // Boilerplate - müssen nonisolated sein da Delegate auf Background-Thread läuft
+    nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
+    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
+    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
 }
 
 extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         print("MPC: Einladung von \(peerID.displayName) erhalten. Akzeptiere automatisch.")
-        invitationHandler(true, self.session)
+        // Session-Zugriff muss auf MainActor passieren
+        Task { @MainActor in
+            invitationHandler(true, self.session)
+        }
     }
-    
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        print("MPC Error Advertising: \(error.localizedDescription)")
-        DispatchQueue.main.async { self.lastError = "Host Error: \(error.localizedDescription)" }
+
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        let errorMessage = error.localizedDescription
+        print("MPC Error Advertising: \(errorMessage)")
+        Task { @MainActor in
+            self.lastError = "Host Error: \(errorMessage)"
+        }
     }
 }
 
 extension MultipeerManager: MCNearbyServiceBrowserDelegate {
-    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
-        // Prüfen, ob wir einen Ziel-Code haben
-        guard let targetCode = self.targetRoomCode else {
-            print("MPC: Ignoriere Peer \(peerID.displayName) (kein Zielcode gesetzt)")
-            return
-        }
-        
-        // Prüfen, ob der Peer den richtigen Code hat
-        if let peerCode = info?["code"], peerCode == targetCode {
-            print("MPC: Peer gefunden: \(peerID.displayName) mit Code \(peerCode). Einladung senden...")
-            browser.invitePeer(peerID, to: self.session!, withContext: nil, timeout: 10)
-        } else {
-            print("MPC: Ignoriere Peer \(peerID.displayName) (Falscher Code: \(info?["code"] ?? "nil"))")
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
+        let peerDisplayName = peerID.displayName
+        let peerCode = info?["code"]
+
+        Task { @MainActor in
+            // Prüfen, ob wir einen Ziel-Code haben
+            guard let targetCode = self.targetRoomCode else {
+                print("MPC: Ignoriere Peer \(peerDisplayName) (kein Zielcode gesetzt)")
+                return
+            }
+
+            // Prüfen, ob der Peer den richtigen Code hat
+            if peerCode == targetCode {
+                // Sicherstellen, dass Session noch existiert (verhindert Crash bei schnellem Stop/Start)
+                guard let session = self.session else {
+                    print("MPC: Keine aktive Session - Einladung abgebrochen")
+                    return
+                }
+                print("MPC: Peer gefunden: \(peerDisplayName) mit Code \(peerCode ?? ""). Einladung senden...")
+                browser.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
+            } else {
+                print("MPC: Ignoriere Peer \(peerDisplayName) (Falscher Code: \(peerCode ?? "nil"))")
+            }
         }
     }
-    
-    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         print("MPC: Peer verloren: \(peerID.displayName)")
     }
-    
-    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        print("MPC Error Browsing: \(error.localizedDescription)")
-        DispatchQueue.main.async { self.lastError = "Join Error: \(error.localizedDescription)" }
+
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        let errorMessage = error.localizedDescription
+        print("MPC Error Browsing: \(errorMessage)")
+        Task { @MainActor in
+            self.lastError = "Join Error: \(errorMessage)"
+        }
     }
 }

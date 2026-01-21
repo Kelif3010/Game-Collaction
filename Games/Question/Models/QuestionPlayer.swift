@@ -1,6 +1,6 @@
 import Foundation
 
-struct QuestionPlayer: Identifiable, Codable, Equatable {
+struct QuestionPlayer: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var isLiar: Bool

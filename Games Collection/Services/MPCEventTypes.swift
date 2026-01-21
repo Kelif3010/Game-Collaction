@@ -39,4 +39,20 @@ public enum MPCEventType {
     // Rematch Events
     static let imposterRematchOffer = "IMPOSTER_REMATCH_OFFER" // Payload: ImposterRematchOfferPayload
     static let imposterRematchResponse = "IMPOSTER_REMATCH_RESPONSE" // Payload: ImposterRematchResponsePayload
+
+    // Questions Specific Events
+    static let questionsSyncConfig = "QUESTIONS_SYNC_CONFIG" // Payload: QuestionsConfig
+    static let questionsRoleAssignment = "QUESTIONS_ROLE_ASSIGNMENT" // Payload: QuestionsRolePayload
+    static let questionsRoleAck = "QUESTIONS_ROLE_ACK" // Payload: QuestionsRoleAckPayload
+    static let questionsStateSync = "QUESTIONS_STATE_SYNC" // Payload: QuestionsRoundState
+    static let questionsAnswerSubmitted = "QUESTIONS_ANSWER_SUBMITTED" // Payload: QuestionsAnswer
+    static let questionsVoteCast = "QUESTIONS_VOTE_CAST" // Payload: QuestionsVoteCastPayload
+    static let questionsVotingStatus = "QUESTIONS_VOTING_STATUS" // Payload: QuestionsVotingStatusPayload
+    static let questionsVotingResult = "QUESTIONS_VOTING_RESULT" // Payload: QuestionsVoteEvaluation
+    static let questionsTimerSync = "QUESTIONS_TIMER_SYNC" // Payload: QuestionsTimerSyncPayload
+    static let questionsTimeSyncPing = "QUESTIONS_TIME_SYNC_PING" // Payload: QuestionsTimeSyncPingPayload
+    static let questionsTimeSyncPong = "QUESTIONS_TIME_SYNC_PONG" // Payload: QuestionsTimeSyncPongPayload
+    static let questionsRejoinRequest = "QUESTIONS_REJOIN_REQUEST" // Payload: QuestionsRejoinRequestPayload
+    static let questionsRejoinState = "QUESTIONS_REJOIN_STATE" // Payload: QuestionsRejoinStatePayload
+    static let questionsHostActivity = "QUESTIONS_HOST_ACTIVITY" // Payload: QuestionsHostActivityPayload
 }

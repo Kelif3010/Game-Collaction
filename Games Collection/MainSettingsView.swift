@@ -32,6 +32,11 @@ struct MainSettingsView: View {
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
+
+    // App Version (automatisch aus Bundle)
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
     
     var body: some View {
         NavigationStack {
@@ -138,7 +143,7 @@ struct MainSettingsView: View {
                                 }
                                 
                                 // 4. App Icon (Placeholder)
-                                NavigationLink(destination: Text("App Icons Coming Soon")) {
+                                NavigationLink(destination: AppIconPickerView()) {
                                     DashboardCard(
                                         icon: "app.badge",
                                         title: LocalizedStringKey("App Icon"),
@@ -199,7 +204,7 @@ struct MainSettingsView: View {
                             // Footer Info
                             VStack(spacing: 4) {
                                 Text("Made with ❤️ by KELIF")
-                                Text("Version 1.0.0")
+                                Text("Version \(appVersion)")
                             }
                             .font(.caption2)
                             .foregroundStyle(.white.opacity(0.3))

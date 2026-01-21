@@ -64,11 +64,13 @@ public struct QuestionsConfig: Hashable, Codable {
     public var numberOfLiars: Int
     public var selectedCategory: QuestionsCategory?
     public var discussionTime: TimeInterval // 0 = Unlimited
+    var players: [QuestionPlayer]
 
-    public init(numberOfLiars: Int = 1, selectedCategory: QuestionsCategory? = nil, discussionTime: TimeInterval = 180) {
+    init(numberOfLiars: Int = 1, selectedCategory: QuestionsCategory? = nil, discussionTime: TimeInterval = 180, players: [QuestionPlayer] = []) {
         self.numberOfLiars = numberOfLiars
         self.selectedCategory = selectedCategory
         self.discussionTime = discussionTime
+        self.players = players
     }
 }
 
@@ -88,6 +90,67 @@ public struct QuestionsRoundState: Hashable, Codable {
         self.answers = answers
         self.votes = votes
     }
+}
+
+// MARK: - MPC Payloads
+
+struct QuestionsRolePayload: Codable {
+    let role: QuestionsRole
+    let prompt: String
+}
+
+struct QuestionsRoleAckPayload: Codable {
+    let playerName: String
+}
+
+struct QuestionsVoteCastPayload: Codable {
+    let voterName: String
+    let targetId: UUID
+    let delta: Int
+}
+
+struct QuestionsVotingStatusPayload: Codable {
+    let votesReceived: Int
+    let totalVotes: Int
+    let tally: [String: Int]?
+}
+
+struct QuestionsTimerSyncPayload: Codable {
+    let timeRemaining: TimeInterval
+    let isActive: Bool
+    let hostUptime: TimeInterval
+}
+
+struct QuestionsTimeSyncPingPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+}
+
+struct QuestionsTimeSyncPongPayload: Codable {
+    let clientName: String
+    let pingId: UUID
+    let clientSendUptime: TimeInterval
+    let hostReceiveUptime: TimeInterval
+    let hostSendUptime: TimeInterval
+}
+
+struct QuestionsRejoinRequestPayload: Codable {
+    let playerName: String
+    let playerId: UUID
+}
+
+struct QuestionsRejoinStatePayload: Codable {
+    let playerName: String
+    let roundState: QuestionsRoundState?
+    let votingEvaluation: QuestionsVoteEvaluation?
+    let timeRemaining: TimeInterval
+    let isTimerActive: Bool
+    let config: QuestionsConfig
+}
+
+struct QuestionsHostActivityPayload: Codable {
+    let message: String
 }
 
 public enum QuestionsDefaults {

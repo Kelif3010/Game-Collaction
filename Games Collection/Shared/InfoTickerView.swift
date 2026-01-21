@@ -2,17 +2,19 @@ import SwiftUI
 import Combine
 
 struct InfoTickerView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var statsManager = GlobalStatsManager.shared
-    
+
     // Animation State
     @State private var offset: CGFloat = 0
     @State private var textWidth: CGFloat = 0
     @State private var containerWidth: CGFloat = 0
     @State private var tickerText: String = ""
-    
-    // Timer für flüssige 60fps Animation
-    let timer = Timer.publish(every: 0.016, on: .main, in: .common).autoconnect()
-    
+    @State private var isAnimating = true
+
+    // Timer für Animation (30fps reicht für Ticker, spart CPU)
+    let timer = Timer.publish(every: 0.033, on: .main, in: .common).autoconnect()
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
@@ -29,7 +31,7 @@ struct InfoTickerView: View {
                         Rectangle()
                             .stroke(LinearGradient(colors: [.clear, .white.opacity(0.2), .clear], startPoint: .leading, endPoint: .trailing), lineWidth: 1)
                     )
-                
+
                 // Der scrollende Text
                 Text(tickerText)
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
@@ -54,19 +56,24 @@ struct InfoTickerView: View {
             }
             .clipped()
             .onReceive(timer) { _ in
+                guard isAnimating else { return }
                 animateTicker()
             }
             .onChange(of: geo.size.width) { _, newWidth in
                 containerWidth = newWidth
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                // Timer stoppen wenn App in Hintergrund geht
+                isAnimating = (newPhase == .active)
             }
         }
         .frame(height: 32) // Etwas kompakter
     }
     
     private func animateTicker() {
-        // Bewegung nach links
+        // Bewegung nach links (2.4 bei 30fps = gleiche Geschwindigkeit wie 1.2 bei 60fps)
         if textWidth > 0 {
-            offset -= 1.2 // Geschwindigkeit
+            offset -= 2.4 // Geschwindigkeit
             
             // Wenn Text komplett links raus ist -> Reset nach rechts
             // Fix: Wir setzen ihn auf containerWidth (Bildschirmbreite), damit er von rechts reinläuft

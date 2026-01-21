@@ -125,6 +125,11 @@ final class QuestionsEngine: ObservableObject {
         phase = .overview
     }
 
+    func applyRoundState(_ state: QuestionsRoundState) {
+        round = state
+        phase = state.phase
+    }
+
     func startVoting() {
         guard var r = round else { return }
         r.phase = .voting

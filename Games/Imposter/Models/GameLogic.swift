@@ -27,6 +27,10 @@ class GameLogic: ObservableObject {
     private let timerSyncInterval: TimeInterval = 1.2
     private let softSyncThreshold: TimeInterval = 0.7
     private let softSyncFactor: TimeInterval = 0.25
+
+    // Periodische Uhren-Synchronisation für Clients (verhindert Drift über Zeit)
+    private var lastClientPingUptime: TimeInterval?
+    private let clientPingSyncInterval: TimeInterval = 10.0  // Alle 10 Sekunden synchronisieren
     
     init(gameSettings: GameSettings) {
         self.gameSettings = gameSettings
@@ -602,6 +606,9 @@ class GameLogic: ObservableObject {
 
         if MultipeerManager.shared.role == .host {
             maybeSyncTimer(now: now)
+        } else if MultipeerManager.shared.role == .peer {
+            // Clients: Periodisch Ping senden um Uhren-Drift zu korrigieren
+            maybeClientPing(now: now)
         }
 
         if updatedRemaining <= 0, gameSettings.gamePhase != .finished {
@@ -643,11 +650,34 @@ class GameLogic: ObservableObject {
         broadcastGameState()
     }
 
+    /// Client sendet periodisch Pings an Host um Uhren-Drift zu korrigieren
+    private func maybeClientPing(now: TimeInterval) {
+        // Nur wenn Spiel läuft (nicht pausiert)
+        guard !gameSettings.isTimerPaused else { return }
+
+        // Prüfen ob genug Zeit seit letztem Ping vergangen ist
+        if let lastPing = lastClientPingUptime, (now - lastPing) < clientPingSyncInterval {
+            return
+        }
+
+        lastClientPingUptime = now
+
+        // Ping an Host senden
+        let mpc = MultipeerManager.shared
+        let ping = ImposterTimeSyncPingPayload(
+            clientName: mpc.myPeerId.displayName,
+            pingId: UUID(),
+            clientSendUptime: now
+        )
+        mpc.sendToHost(event: MPCEventType.imposterTimeSyncPing, object: ping)
+    }
+
     func stopGameTimer() {
         gameTimer?.invalidate()
         gameTimer = nil
         lastTickUptime = nil
         lastTimerSyncUptime = nil
+        lastClientPingUptime = nil  // Reset Client-Ping-Timer
         preciseTimeRemaining = nil
         lastRemotePauseState = nil
         scheduledStartWorkItem?.cancel()

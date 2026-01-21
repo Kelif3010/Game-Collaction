@@ -9,9 +9,11 @@
 import AVFoundation
 import UIKit
 
+/// Thread-sicherer Audio-Manager - alle Zugriffe laufen über MainActor
+@MainActor
 class SoundManager {
     static let shared = SoundManager()
-    
+
     private var player: AVAudioPlayer?
     var isSoundEnabled: Bool {
         get {

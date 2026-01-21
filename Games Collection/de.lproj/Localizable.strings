@@ -9,6 +9,35 @@
 "Sieg" = "Sieg";
 "Siege" = "Siege";
 
+/* GameRecommenderView */
+"Was spielen wir?" = "Was spielen wir?";
+"Spieler" = "Spieler";
+"Modus" = "Modus";
+"Ein Gerät" = "Ein Gerät";
+"Multiplayer" = "Multiplayer";
+"Vibe" = "Stimmung";
+"Lustig" = "Lustig";
+"Spannend" = "Spannend";
+"Aktiv" = "Aktiv";
+"Reden" = "Reden";
+"Zeit" = "Zeit";
+"Schnell (5m)" = "Schnell (5m)";
+"Mittel (20m)" = "Mittel (20m)";
+"Lang (45m+)" = "Lang (45m+)";
+"Bester Treffer" = "Bester Treffer";
+"Kein perfekter Treffer..." = "Kein perfekter Treffer...";
+"Alternativen" = "Alternativen";
+"Bedingungen prüfen" = "Bedingungen prüfen";
+"Jetzt Starten" = "Jetzt Starten";
+"Nur 1 Gerät" = "Nur 1 Gerät";
+"Braucht %lld+ Spieler" = "Braucht %lld+ Spieler";
+"Max %lld Spieler" = "Max %lld Spieler";
+"Dauert länger (%lld+ min)" = "Dauert länger (%lld+ min)";
+"Wettet aufeinander. Wer kennt die Gruppe am besten?" = "Wettet aufeinander. Wer kennt die Gruppe am besten?";
+"Findet den Spion, bevor die Zeit abläuft!" = "Findet den Spion, bevor die Zeit abläuft!";
+"Erklären, Pantomime, Zeichnen. Pures Chaos." = "Erklären, Pantomime, Zeichnen. Pures Chaos.";
+"Deep Talk oder lustige Fragen." = "Deep Talk oder lustige Fragen.";
+
 /* MainSettingsView */
 "Allgemein" = "Allgemein";
 "Sprache" = "Sprache";
@@ -26,6 +55,38 @@
 "System" = "System";
 "Deutsch" = "Deutsch";
 "English" = "English";
+"Deine Crew" = "Deine Crew";
+"Dashboard" = "Dashboard";
+"Statistik & Recap" = "Statistik & Recap";
+"Deine Highlights" = "Deine Highlights";
+"Customize" = "Anpassen";
+"Follow us" = "Folge uns";
+"Alle Daten löschen" = "Alle Daten löschen";
+"Einstellungen zurücksetzen?" = "Einstellungen zurücksetzen?";
+"Dies löscht alle gespeicherten Daten (Spieler, Highscores, Einstellungen). Diese Aktion kann nicht rückgängig gemacht werden." = "Dies löscht alle gespeicherten Daten (Spieler, Highscores, Einstellungen). Diese Aktion kann nicht rückgängig gemacht werden.";
+"HALLO" = "HALLO";
+"Neu" = "Neu";
+"Enter..." = "Eingabe...";
+"Löschen" = "Löschen";
+"App Icons" = "App Icons";
+"Default Icon" = "Standard-Icon";
+"Alternate Icon" = "Alternatives Icon";
+"The classic look" = "Der klassische Look";
+"Preview / placeholder" = "Vorschau / Platzhalter";
+"Alternate icons are not supported on this device." = "Alternative App-Icons werden auf diesem Gerät nicht unterstützt.";
+"OK" = "OK";
+"Bet Buddy" = "Bet Buddy";
+"Imposter" = "Imposter";
+"Time's Up!" = "Time's Up!";
+
+/* GlobalRecapView */
+"Session Recap" = "Session Recap";
+"MVP" = "MVP";
+"Pechvogel" = "Pechvogel";
+"Niederlagen" = "Niederlagen";
+"Rangliste" = "Rangliste";
+"Win Rate" = "Siegesrate";
+"Statistik zurücksetzen" = "Statistik zurücksetzen";
 
 /* LanguageSelectionView */
 "Systemsprache verwenden" = "Systemsprache verwenden";
