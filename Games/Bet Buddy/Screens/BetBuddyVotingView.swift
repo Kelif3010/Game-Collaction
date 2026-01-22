@@ -19,7 +19,7 @@ struct BetBuddyVotingView: View {
 
     var body: some View {
         ZStack {
-            Theme.background.ignoresSafeArea()
+            BetBuddyBackgroundView(intensity: 0.6)
 
             VStack(spacing: 0) {
                 
@@ -91,43 +91,103 @@ struct BetBuddyVotingView: View {
         HStack {
             Color.clear.frame(width: 36, height: 36)
             Spacer()
-            Text("Bet Buddy").foregroundStyle(.white).font(.headline)
+
+            // Casino-Style Titel
+            HStack(spacing: 8) {
+                Image(systemName: "suit.spade.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
+
+                Text("PLACE YOUR BETS")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(BetBuddyTheme.textGold)
+                    .tracking(2)
+
+                Image(systemName: "suit.diamond.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
+            }
+
             Spacer()
-            
-            // NEU: Button löst jetzt den Alert aus, statt direkt zu schließen
+
             Button {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                Circle()
+                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
         }
     }
 
     private var questionText: some View {
-        Text(appModel.currentChallenge.text)
-            .foregroundStyle(.white)
-            .font(.headline.weight(.semibold))
-            .multilineTextAlignment(.center)
-            .padding(.top, 8)
+        VStack(spacing: 8) {
+            // Challenge Label
+            Text("CHALLENGE")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.7))
+                .tracking(2)
+
+            // Question Text in Casino-Card
+            Text(appModel.currentChallenge.text)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(BetBuddyTheme.textChampagne)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.4))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(BetBuddyTheme.accentGold.opacity(0.15), lineWidth: 1)
+                        )
+                )
+        }
+        .padding(.top, 8)
     }
 
     private var voteGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-            ForEach(appModel.activeGroups) { group in
-                GroupVoteCard(
-                    group: group,
-                    onIncrement: { appModel.incrementVote(for: group) },
-                    onDecrement: { appModel.decrementVote(for: group) },
-                    locked: appModel.votesLocked,
-                    isLeader: leaderGroup?.id == group.id,
-                    showLeader: leadingScore > 0
-                )
+        VStack(spacing: 12) {
+            // Poker Table Label
+            HStack {
+                Rectangle()
+                    .fill(BetBuddyTheme.accentGold.opacity(0.3))
+                    .frame(height: 1)
+
+                Text("BETTING TABLE")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(BetBuddyTheme.textSilver)
+                    .tracking(2)
+
+                Rectangle()
+                    .fill(BetBuddyTheme.accentGold.opacity(0.3))
+                    .frame(height: 1)
+            }
+            .padding(.horizontal, 8)
+
+            // Vote Cards Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                ForEach(appModel.activeGroups) { group in
+                    GroupVoteCard(
+                        group: group,
+                        onIncrement: { appModel.incrementVote(for: group) },
+                        onDecrement: { appModel.decrementVote(for: group) },
+                        locked: appModel.votesLocked,
+                        isLeader: leaderGroup?.id == group.id,
+                        showLeader: leadingScore > 0
+                    )
+                }
             }
         }
     }

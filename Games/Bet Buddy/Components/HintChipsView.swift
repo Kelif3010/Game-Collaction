@@ -17,13 +17,34 @@ struct HintChipsView: View {
                     HapticsService.impact(.light)
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: item.isChecked ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 16))
-                            .foregroundStyle(item.isChecked ? Color.green : Color.white.opacity(0.5))
-                        
+                        // Casino-Chip-Style Checkbox
+                        ZStack {
+                            Circle()
+                                .fill(item.isChecked ? BetBuddyTheme.accentEmerald : Color.clear)
+                                .frame(width: 20, height: 20)
+                            Circle()
+                                .stroke(
+                                    item.isChecked
+                                        ? BetBuddyTheme.accentEmerald
+                                        : BetBuddyTheme.textSilver.opacity(0.4),
+                                    lineWidth: 1.5
+                                )
+                                .frame(width: 20, height: 20)
+                            if item.isChecked {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+
                         Text(item.text)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(
+                                item.isChecked
+                                    ? BetBuddyTheme.textChampagne
+                                    : BetBuddyTheme.textSilver
+                            )
+                            .strikethrough(item.isChecked, color: BetBuddyTheme.textSilver)
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
                     }
@@ -31,12 +52,21 @@ struct HintChipsView: View {
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(item.isChecked ? Color.white.opacity(0.15) : Color.white.opacity(0.08))
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                item.isChecked
+                                    ? BetBuddyTheme.accentEmerald.opacity(0.15)
+                                    : Color.black.opacity(0.3)
+                            )
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(item.isChecked ? Color.green.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(
+                                item.isChecked
+                                    ? BetBuddyTheme.accentEmerald.opacity(0.5)
+                                    : BetBuddyTheme.accentGold.opacity(0.1),
+                                lineWidth: 1
+                            )
                     )
                 }
                 .buttonStyle(.plain)

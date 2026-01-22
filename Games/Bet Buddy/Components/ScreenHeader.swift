@@ -15,10 +15,16 @@ struct ScreenHeader: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.headline.bold())
-                        .foregroundStyle(.white)
+                        .foregroundStyle(BetBuddyTheme.textChampagne)
                         .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    Circle()
+                                        .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
             } else {
                 Color.clear.frame(width: 36, height: 36)
@@ -27,8 +33,9 @@ struct ScreenHeader: View {
             Spacer()
 
             Text(LocalizedStringKey(title))
-                .font(.title3.bold())
-                .foregroundStyle(.white)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(BetBuddyTheme.textGold)
+                .tracking(1)
 
             Spacer()
 

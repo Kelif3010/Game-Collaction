@@ -10,7 +10,7 @@ struct BetBuddyLeaderboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                BetBuddyBackgroundView(intensity: 0.6)
                 
                 // Wir prüfen jetzt auf Ewige Daten ODER Aktuelle Daten
                 if appModel.activeGroups.isEmpty && !hasAnyHighlights {
@@ -72,7 +72,7 @@ struct BetBuddyLeaderboardView: View {
                         .foregroundStyle(.white)
                 }
             }
-            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(BetBuddyTheme.gradient, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .alert("Statistik löschen?", isPresented: $showResetStatsAlert) {
                 Button("Abbrechen", role: .cancel) { }

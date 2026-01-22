@@ -13,7 +13,7 @@ struct BetBuddyInfoSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.background.ignoresSafeArea()
+                BetBuddyBackgroundView(intensity: 0.4)
 
                 VStack(spacing: 0) {
                     // Der Inhalt als Swipe-View (TabView)
@@ -146,7 +146,7 @@ struct BetBuddyInfoSheet: View {
                         .foregroundStyle(.white.opacity(0.7))
                 }
             }
-            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(BetBuddyTheme.gradient, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
     }
@@ -196,7 +196,7 @@ struct BulletPoint: View {
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
-                .foregroundStyle(.cyan)
+                .foregroundStyle(BetBuddyTheme.accentGold)
                 .font(.body)
                 .frame(width: 24)
                 .padding(.top, 2)

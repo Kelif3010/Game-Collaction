@@ -6,7 +6,7 @@ struct GroupSelectionView: View {
 
     var body: some View {
         ZStack {
-            Theme.background.ignoresSafeArea()
+            BetBuddyBackgroundView(intensity: 0.4)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {

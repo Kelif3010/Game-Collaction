@@ -20,25 +20,37 @@ struct SettingsRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Casino-Style Icon Badge
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.08))
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                BetBuddyTheme.accentGold.opacity(0.2),
+                                BetBuddyTheme.accentGold.opacity(0.08)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 44, height: 44)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 1)
+                    )
                 Image(systemName: icon)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BetBuddyTheme.accentGold)
                     .font(.headline)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(LocalizedStringKey(title))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BetBuddyTheme.textChampagne)
                     .font(.headline)
-                
-                // ÄNDERUNG: Detailtext hier ausblenden, wenn es Gruppen ODER Kategorien sind.
-                // Dadurch steht der Text nur noch auf der rechten Seite.
+
                 if let detail, !detail.isEmpty, rowType != .groups, rowType != .categories {
                     Text(LocalizedStringKey(detail))
-                        .foregroundStyle(Theme.mutedText)
+                        .foregroundStyle(BetBuddyTheme.textSilver)
                         .font(.subheadline)
                 }
             }
@@ -48,27 +60,29 @@ struct SettingsRow: View {
             case .timer, .hints, .partyMode, .penalty:
                 Toggle("", isOn: Binding(get: { isToggleOn }, set: { onToggle?($0) }))
                     .labelsHidden()
+                    .tint(BetBuddyTheme.accentEmerald)
             default:
                 HStack(spacing: 6) {
-                    // Hier wird das Detail für Gruppen und Kategorien angezeigt (rechts)
                     if let detail, !detail.isEmpty {
                         Text(LocalizedStringKey(detail))
-                            .foregroundStyle(Theme.mutedText)
+                            .foregroundStyle(BetBuddyTheme.textSilver)
                             .font(.subheadline.weight(.semibold))
                     }
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
                         .font(.subheadline)
                 }
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.25))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.35))
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(BetBuddyTheme.accentGold.opacity(0.12), lineWidth: 1)
         )
         .contentShape(Rectangle())
         .onTapGesture {

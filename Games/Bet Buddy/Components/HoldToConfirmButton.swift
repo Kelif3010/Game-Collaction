@@ -9,42 +9,96 @@ struct HoldToConfirmButton: View {
     @State private var isPressing = false
     @State private var progress: CGFloat = 0
     @State private var timer: Timer?
+    @State private var glowPulse = false
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Hintergrund
+            // Casino-Hintergrund
             Capsule()
-                .fill(Color.white.opacity(0.08))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.08, green: 0.10, blue: 0.08),
+                            Color(red: 0.05, green: 0.06, blue: 0.05)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
 
-            // Füllstand (Grün)
+            // Fortschritts-Füllung (Smaragd-Gold)
             Capsule()
-                .fill(disabled ? Color.gray : Color.green) // Grau wenn deaktiviert
+                .fill(
+                    LinearGradient(
+                        colors: disabled
+                            ? [Color.gray.opacity(0.3), Color.gray.opacity(0.2)]
+                            : [BetBuddyTheme.accentEmerald, BetBuddyTheme.accentGold.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .scaleEffect(x: progress, y: 1, anchor: .leading)
+                .shadow(color: disabled ? .clear : BetBuddyTheme.accentEmerald.opacity(0.5), radius: 8)
 
+            // Inhalt
             HStack {
-                Image(systemName: "hand.point.up.left.fill")
-                    .foregroundStyle(disabled ? .white.opacity(0.3) : .white)
+                // Chip-Icon
+                ZStack {
+                    Circle()
+                        .fill(disabled ? Color.gray.opacity(0.3) : BetBuddyTheme.accentGold.opacity(0.2))
+                        .frame(width: 32, height: 32)
+                    Circle()
+                        .stroke(disabled ? Color.gray.opacity(0.3) : BetBuddyTheme.accentGold.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "hand.point.up.left.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(disabled ? Color.gray : BetBuddyTheme.accentGold)
+                }
+
                 Text(LocalizedStringKey(title))
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(disabled ? .white.opacity(0.3) : .white)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(disabled ? BetBuddyTheme.textSilver.opacity(0.5) : BetBuddyTheme.textChampagne)
+
                 Spacer()
+
                 if !disabled {
-                    Text("Halten")
-                        .foregroundStyle(.white.opacity(0.7))
-                        .font(.subheadline)
+                    Text("ALL IN")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(BetBuddyTheme.accentGold)
+                        .tracking(1)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(BetBuddyTheme.accentGold.opacity(0.15))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(BetBuddyTheme.accentGold.opacity(0.4), lineWidth: 1)
+                                )
+                        )
+                        .scaleEffect(glowPulse ? 1.05 : 1.0)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
-        .frame(height: 52)
+        .frame(height: 56)
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: disabled
+                            ? [Color.gray.opacity(0.2), Color.gray.opacity(0.1)]
+                            : [BetBuddyTheme.accentGold.opacity(0.4), BetBuddyTheme.accentGold.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
         )
-        // WICHTIG: DragGesture erkennt Touch Down und Up sofort
+        .shadow(color: disabled ? .clear : BetBuddyTheme.accentGold.opacity(0.15), radius: 10, y: 4)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -58,10 +112,16 @@ struct HoldToConfirmButton: View {
                     stopProgress()
                 }
         )
+        .onAppear {
+            if !disabled {
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                    glowPulse = true
+                }
+            }
+        }
         .onDisappear {
             stopProgress()
         }
-        .opacity(disabled ? 0.6 : 1.0) // Visueller Hinweis, dass deaktiviert
         .animation(.easeInOut, value: disabled)
     }
 
@@ -69,14 +129,12 @@ struct HoldToConfirmButton: View {
         isPressing = true
         progress = 0
         timer?.invalidate()
-        
-        // Timer feuert alle 0.02 Sekunden
+
         timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
             withAnimation(.linear(duration: 0.02)) {
                 progress += 0.02 / duration
             }
-            
-            // Wenn voll -> Aktion auslösen
+
             if progress >= 1.0 {
                 completeAction()
             }
@@ -87,18 +145,17 @@ struct HoldToConfirmButton: View {
         isPressing = false
         timer?.invalidate()
         timer = nil
-        
-        // Sofort zurücksetzen wenn losgelassen
+
         withAnimation(.easeOut(duration: 0.2)) {
             progress = 0
         }
     }
-    
+
     private func completeAction() {
         isPressing = false
         timer?.invalidate()
         timer = nil
-        progress = 1.0 // Bleibt kurz voll für Feedback
+        progress = 1.0
         HapticsService.success()
         action()
     }

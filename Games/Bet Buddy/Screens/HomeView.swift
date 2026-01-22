@@ -22,7 +22,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            Theme.background.ignoresSafeArea()
+            BetBuddyBackgroundView(intensity: 0.5)
 
             VStack(alignment: .leading, spacing: 20) {
                 topBar
@@ -112,12 +112,15 @@ struct HomeView: View {
                     )
                 }
                 .padding()
-                .background(Color.black.opacity(0.25))
-                .clipShape(RoundedRectangle(cornerRadius: 22))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.black.opacity(0.35))
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(BetBuddyTheme.accentGold.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.3), radius: 12, y: 6)
 
                 Spacer()
 
@@ -159,37 +162,55 @@ struct HomeView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                Circle()
+                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
 
             Spacer()
-            
+
             Button {
                 HapticsService.impact(.light)
                 showLeaderboardSheet = true
             } label: {
                 Image(systemName: "trophy.fill")
                     .font(.headline)
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(BetBuddyTheme.accentGold)
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(BetBuddyTheme.accentGold.opacity(0.15))
+                            .overlay(
+                                Circle()
+                                    .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 1)
+                            )
+                    )
             }
             .padding(.trailing, 8)
-            
+
             Button {
                 HapticsService.impact(.light)
                 showInfoSheet = true
             } label: {
                 Image(systemName: "questionmark")
                     .font(.headline.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                Circle()
+                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
         }
     }
@@ -217,7 +238,7 @@ struct HomeView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .background(BetBuddyTheme.gradient)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { showTimerSheet = false }
@@ -249,7 +270,7 @@ struct HomeView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .background(BetBuddyTheme.gradient)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { showPenaltySheet = false }

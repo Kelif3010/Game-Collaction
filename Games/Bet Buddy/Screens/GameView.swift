@@ -51,7 +51,7 @@ struct GameView: View {
 
     var body: some View {
         ZStack {
-            Theme.background.ignoresSafeArea()
+            BetBuddyBackgroundView(intensity: 0.8)
 
             VStack(spacing: 0) {
                 VStack(spacing: 0) {
@@ -92,29 +92,54 @@ struct GameView: View {
                             HapticsService.selection()
                         } label: {
                             HStack(spacing: 12) {
-                                Image(systemName: gameTimer.isPaused ? "play.fill" : "pause.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(
-                                        gameTimer.isPaused ? Color.orange :
-                                        (gameTimer.remaining <= 10 ? Color.red : Theme.mutedText)
-                                    )
-                                
+                                // Timer Icon
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            gameTimer.isPaused
+                                                ? BetBuddyTheme.accentGold.opacity(0.2)
+                                                : (gameTimer.remaining <= 10 ? BetBuddyTheme.accentRuby.opacity(0.2) : Color.white.opacity(0.1))
+                                        )
+                                        .frame(width: 32, height: 32)
+
+                                    Image(systemName: gameTimer.isPaused ? "play.fill" : "pause.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(
+                                            gameTimer.isPaused
+                                                ? BetBuddyTheme.accentGold
+                                                : (gameTimer.remaining <= 10 ? BetBuddyTheme.accentRuby : BetBuddyTheme.textSilver)
+                                        )
+                                }
+
                                 Text(formatTime(gameTimer.remaining))
-                                    .font(.system(size: 28, weight: .bold, design: .monospaced))
-                                    .foregroundStyle(gameTimer.isPaused ? Color.orange : .white)
+                                    .font(.system(size: 26, weight: .black, design: .monospaced))
+                                    .foregroundStyle(
+                                        gameTimer.isPaused
+                                            ? BetBuddyTheme.accentGold
+                                            : (gameTimer.remaining <= 10 ? BetBuddyTheme.accentRuby : BetBuddyTheme.textChampagne)
+                                    )
                                     .contentTransition(.numericText())
                             }
                             .padding(.vertical, 10)
-                            .padding(.horizontal, 24)
-                            .background(gameTimer.isPaused ? Color.orange.opacity(0.15) : Color.white.opacity(0.08))
-                            .clipShape(Capsule())
+                            .padding(.horizontal, 20)
+                            .background(
+                                Capsule()
+                                    .fill(Color.black.opacity(0.5))
+                            )
                             .overlay(
                                 Capsule()
                                     .stroke(
-                                        gameTimer.isPaused ? Color.orange.opacity(0.8) :
-                                        (gameTimer.remaining <= 10 ? Color.red.opacity(0.8) : Color.white.opacity(0.1)),
-                                        lineWidth: 1
+                                        gameTimer.isPaused
+                                            ? BetBuddyTheme.accentGold.opacity(0.6)
+                                            : (gameTimer.remaining <= 10 ? BetBuddyTheme.accentRuby.opacity(0.6) : BetBuddyTheme.accentGold.opacity(0.2)),
+                                        lineWidth: 1.5
                                     )
+                            )
+                            .shadow(
+                                color: gameTimer.remaining <= 10 && !gameTimer.isPaused
+                                    ? BetBuddyTheme.accentRuby.opacity(0.3)
+                                    : Color.clear,
+                                radius: 8
                             )
                         }
                         .padding(.bottom, 10)
@@ -124,24 +149,49 @@ struct GameView: View {
 
                 if appModel.isHintsEnabled && !hintItems.isEmpty {
                     VStack(spacing: 0) {
-                        HStack(spacing: 6) {
+                        // Header
+                        HStack(spacing: 8) {
                             Image(systemName: "lightbulb.fill")
-                                .font(.caption).foregroundStyle(Theme.mutedText)
-                            Text("LÖSUNGEN / HINWEISE")
-                                .font(.caption.weight(.bold)).foregroundStyle(Theme.mutedText).textCase(.uppercase)
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(BetBuddyTheme.accentGold)
+
+                            Text("LÖSUNGEN")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundStyle(BetBuddyTheme.textSilver)
+                                .tracking(2)
+
+                            Spacer()
+
+                            Text("\(hintItems.filter { $0.isChecked }.count)/\(hintItems.count)")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundStyle(BetBuddyTheme.accentEmerald)
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 8)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                        .padding(.bottom, 8)
+
+                        // Divider
+                        Rectangle()
+                            .fill(BetBuddyTheme.accentGold.opacity(0.15))
+                            .frame(height: 1)
+                            .padding(.horizontal, 16)
 
                         ScrollView(.vertical, showsIndicators: true) {
                             HintChipsView(items: $hintItems)
-                                .padding(.horizontal, 16).padding(.bottom, 16)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
                         }
                     }
-                    .background(Color.black.opacity(0.25))
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-                    .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.08), lineWidth: 1))
-                    .padding(.horizontal, Theme.padding).padding(.top, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.4))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(BetBuddyTheme.accentGold.opacity(0.15), lineWidth: 1)
+                    )
+                    .padding(.horizontal, Theme.padding)
+                    .padding(.top, 10)
                 } else {
                     Spacer()
                 }
@@ -150,41 +200,89 @@ struct GameView: View {
 
                 VStack(spacing: 20) {
                     HStack(spacing: 30) {
-                        // Linker Button (Zurück)
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.down" : "chevron.up")
-                                    .font(.title).foregroundStyle(Color.white.opacity(0.7))
-                            )
-                            .onTapGesture {
-                                gameValue += 1
-                                HapticsService.impact(.light)
-                            }
+                        // Linker Button (Korrektur / Zurück)
+                        ZStack {
+                            Circle()
+                                .fill(Color.black.opacity(0.5))
+                                .frame(width: 76, height: 76)
 
-                        // Rechter Button (Weiter / Geschafft)
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.up" : "chevron.down")
-                                    .font(.title).foregroundStyle(Color.black)
-                            )
-                            .shadow(color: Color.black.opacity(0.3), radius: 10, y: 4)
-                            .onTapGesture {
-                                gameValue = max(0, gameValue - 1)
-                                HapticsService.impact(.medium)
-                                
-                                if !appModel.isPartyMode {
-                                    startTimer()
-                                }
+                            Circle()
+                                .stroke(BetBuddyTheme.accentRuby.opacity(0.4), lineWidth: 2)
+                                .frame(width: 76, height: 76)
+
+                            Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.down" : "chevron.up")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(BetBuddyTheme.textChampagne.opacity(0.8))
+                        }
+                        .onTapGesture {
+                            gameValue += 1
+                            HapticsService.impact(.light)
+                        }
+
+                        // Rechter Button (Geschafft!)
+                        ZStack {
+                            // Outer Glow
+                            Circle()
+                                .fill(BetBuddyTheme.accentEmerald.opacity(0.2))
+                                .frame(width: 88, height: 88)
+
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            BetBuddyTheme.accentGoldLight,
+                                            BetBuddyTheme.accentGold
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 76, height: 76)
+
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.4), Color.clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 2
+                                )
+                                .frame(width: 76, height: 76)
+
+                            Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(BetBuddyTheme.textOnLight)
+                        }
+                        .shadow(color: BetBuddyTheme.accentGold.opacity(0.4), radius: 12, y: 4)
+                        .onTapGesture {
+                            gameValue = max(0, gameValue - 1)
+                            HapticsService.impact(.medium)
+
+                            if !appModel.isPartyMode {
+                                startTimer()
                             }
+                        }
                     }
 
-                    PrimaryButton(title: "Aufgeben") {
+                    // Give Up Button (Ruby Style)
+                    Button {
                         HapticsService.warning()
                         showGiveUpAlert = true
+                    } label: {
+                        Text("Aufgeben")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(BetBuddyTheme.accentRuby)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                Capsule()
+                                    .fill(BetBuddyTheme.accentRuby.opacity(0.15))
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(BetBuddyTheme.accentRuby.opacity(0.4), lineWidth: 1)
+                            )
                     }
                 }
                 .padding(.horizontal, Theme.padding).padding(.bottom, 12)
@@ -236,15 +334,40 @@ struct GameView: View {
 
     private var topBar: some View {
         HStack {
-            Text("Bet Buddy").foregroundStyle(.white).font(.headline)
+            // Casino-Style Header
+            HStack(spacing: 6) {
+                Image(systemName: "suit.club.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
+
+                Text("SHOWDOWN")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(BetBuddyTheme.textGold)
+                    .tracking(2)
+
+                Image(systemName: "suit.heart.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(BetBuddyTheme.accentRuby.opacity(0.6))
+            }
+
             Spacer()
+
             Button {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemName: "xmark").font(.headline.bold()).foregroundStyle(.white)
-                    .frame(width: 36, height: 36).background(Color.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                Image(systemName: "xmark")
+                    .font(.headline.bold())
+                    .foregroundStyle(BetBuddyTheme.textChampagne)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                Circle()
+                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
         }
     }

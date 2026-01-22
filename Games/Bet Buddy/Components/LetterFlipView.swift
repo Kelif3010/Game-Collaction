@@ -2,51 +2,127 @@ import SwiftUI
 
 struct LetterFlipView: View {
     let value: Int
-    // NEU: Optionaler Countdown (Standard ist nil, damit es im Voting/Ergebnis nicht angezeigt wird)
     var remaining: Int? = nil
     var color: Color = .white
-    
+
     var body: some View {
         ZStack {
-            // Hintergrund-Box
+            // Casino-Karten-Hintergrund
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(red: 0.15, green: 0.15, blue: 0.15))
-                .frame(width: 100, height: 120)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.14, green: 0.14, blue: 0.12),
+                            Color(red: 0.08, green: 0.08, blue: 0.06)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
-                .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 5)
-            
+                .frame(width: 110, height: 130)
+
+            // Gold-Rahmen (wie Spielkarte)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            BetBuddyTheme.accentGoldLight.opacity(0.6),
+                            BetBuddyTheme.accentGold.opacity(0.25),
+                            BetBuddyTheme.accentGoldLight.opacity(0.4)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 3
+                )
+                .frame(width: 110, height: 130)
+
+            // Innerer Schimmer
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.08), Color.clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    ),
+                    lineWidth: 1
+                )
+                .frame(width: 104, height: 124)
+
+            // Karten-Ecken-Dekoration (oben links)
+            VStack {
+                HStack {
+                    Text("♠")
+                        .font(.system(size: 12))
+                        .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.4))
+                        .padding(8)
+                    Spacer()
+                }
+                Spacer()
+                HStack {
+                    Spacer()
+                    Text("♠")
+                        .font(.system(size: 12))
+                        .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.4))
+                        .rotationEffect(.degrees(180))
+                        .padding(8)
+                }
+            }
+            .frame(width: 110, height: 130)
+
             // Der Buchstabe
             Text(value.asAlphabet)
-                .font(.system(size: 70, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
+                .font(.system(size: 64, weight: .black, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [color, color.opacity(0.85)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .shadow(color: color.opacity(0.5), radius: 8, y: 3)
                 .contentTransition(.interpolate)
                 .animation(.spring(response: 0.4, dampingFraction: 0.7), value: value)
-            
-            // NEU: Der Badge oben rechts (nur wenn 'remaining' gesetzt ist)
+
+            // Remaining Badge (Poker-Chip-Style)
             if let remaining = remaining, remaining > 0 {
                 VStack {
                     HStack {
                         Spacer()
-                        
-                        Text("\(remaining)")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 24, height: 24)
-                            .background(Color.red) // Roter Badge für "Noch zu tun"
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().stroke(Color.white, lineWidth: 1.5)
-                            )
-                            .shadow(radius: 2)
-                            .offset(x: 8, y: -8) // Leicht über die Ecke hängen lassen
+                        ZStack {
+                            // Chip-Basis
+                            Circle()
+                                .fill(BetBuddyTheme.accentRuby)
+                                .frame(width: 28, height: 28)
+
+                            // Chip-Ring
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.4),
+                                            Color.white.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2
+                                )
+                                .frame(width: 28, height: 28)
+
+                            Text("\(remaining)")
+                                .font(.system(size: 13, weight: .black))
+                                .foregroundStyle(.white)
+                        }
+                        .shadow(color: BetBuddyTheme.accentRuby.opacity(0.5), radius: 4)
+                        .offset(x: 10, y: -10)
                     }
                     Spacer()
                 }
-                .frame(width: 100, height: 120) // Orientiert sich an der Kartengröße
+                .frame(width: 110, height: 130)
             }
         }
+        .shadow(color: BetBuddyTheme.accentGold.opacity(0.1), radius: 12, y: 6)
+        .shadow(color: Color.black.opacity(0.4), radius: 8, y: 4)
     }
 }
