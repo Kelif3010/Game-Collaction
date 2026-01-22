@@ -99,19 +99,6 @@ struct QuestionsCollectingPhaseView: View {
                 Spacer(minLength: 0)
             }
             .padding(.bottom, 32)
-            if !collectingHintSeen {
-                VStack {
-                    QuestionsHintBanner(
-                        text: "Lies deine Frage und gib deine Antwort ehrlich (oder auch nicht) ein.",
-                        actionTitle: "Bereit",
-                        onDismiss: { collectingHintSeen = true }
-                    )
-                    .padding(.horizontal, 24)
-                    .padding(.top, 8)
-                    Spacer()
-                }
-                .transition(.opacity)
-            }
         }
         .onTapGesture { isAnswerFocused = false }
         .onChange(of: viewModel.currentRound?.roundIndex) { _, _ in

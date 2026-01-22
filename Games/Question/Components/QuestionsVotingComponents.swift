@@ -14,15 +14,15 @@ struct QuestionsAnswerRevealCard: View {
     let isFullWidth: Bool
     let liarQuestion: String?
     let isSlowest: Bool
-    
+
     // Voting Props
     var voteCount: Int = 0
     var canIncrement: Bool = true
     var onIncrement: (() -> Void)? = nil
     var onDecrement: (() -> Void)? = nil
-    
+
     let onTap: () -> Void
-    
+
     init(playerName: String, answer: QuestionsAnswer, isSelected: Bool, showSelectionBox: Bool, selectionEnabled: Bool, showGreenCheck: Bool, showRedX: Bool, shakeTrigger: CGFloat, isFullWidth: Bool, liarQuestion: String?, isSlowest: Bool = false, voteCount: Int = 0, canIncrement: Bool = true, onIncrement: (() -> Void)? = nil, onDecrement: (() -> Void)? = nil, onTap: @escaping () -> Void) {
         self.playerName = playerName
         self.answer = answer
@@ -44,157 +44,253 @@ struct QuestionsAnswerRevealCard: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Hintergrund (Akten-Look)
-            QuestionsTerminalBackground()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(voteCount > 0 ? Color.red.opacity(0.15) : Color.clear)
-                )
-                .overlay(
-                    VStack(spacing: 0) {
-                        // Header: Name & Zeit
-                        HStack {
-                            Text(LocalizedStringKey(playerName))
-                                .font(.headline.weight(.bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                            
-                            Spacer()
-                            
-                            if showGreenCheck {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                    .font(.title3)
-                            } else if showRedX {
-                                Image(systemName: "brain.head.profile") // Liar Symbol
-                                    .foregroundColor(.red)
-                                    .font(.title3)
-                            } else if answer.timeTaken > 0 {
-                                // Subtile Zeitanzeige
-                                HStack(spacing: 2) {
-                                    Image(systemName: isSlowest ? "exclamationmark.circle" : "clock")
-                                    Text(String(format: "%.0fs", answer.timeTaken))
-                                }
-                                .font(.caption2.weight(.medium))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(isSlowest ? Color.red.opacity(0.8) : Color.white.opacity(0.1))
-                                .cornerRadius(4)
-                                .foregroundColor(.white.opacity(isSlowest ? 1.0 : 0.7))
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 12)
+            // Dossier-Hintergrund
+            cardBackground
 
-                        // Divider
-                        Rectangle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 1)
-                            .padding(.horizontal, 16)
+            VStack(spacing: 0) {
+                // Header: Subjekt & Status
+                headerSection
+                    .padding(.horizontal, 14)
+                    .padding(.top, 14)
+                    .padding(.bottom, 10)
 
-                        // Antwort-Bereich (Zentrum)
-                        VStack {
-                            if let liarQuestion {
-                                Text(LocalizedStringKey(liarQuestion))
-                                    .font(.caption.weight(.medium))
-                                    .foregroundColor(.red.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.bottom, 4)
-                            }
+                // Divider
+                Rectangle()
+                    .fill(QuestionsTheme.accentGreen.opacity(0.15))
+                    .frame(height: 1)
+                    .padding(.horizontal, 14)
 
-                            Text(answer.text)
-                                .font(.system(.body, design: .serif)) // Handschrift/Akten-Look
-                                .italic()
-                                .foregroundColor(.white.opacity(0.95))
-                                .multilineTextAlignment(.center)
-                                .lineLimit(isFullWidth ? nil : 5)
-                                .minimumScaleFactor(0.85)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
-                        .padding(16)
-                        
-                        // Footer: Voting Stepper (Zentriert)
-                        if showSelectionBox {
-                            VStack {
-                                VoteStepper(
-                                    count: voteCount,
-                                    canIncrement: canIncrement,
-                                    onIncrement: onIncrement,
-                                    onDecrement: onDecrement
-                                )
-                            }
-                            .padding(.bottom, 16)
-                        } else {
-                            // Platzhalter damit Layout stabil bleibt oder leer wenn nur Anzeige
-                            Spacer().frame(height: 16)
-                        }
-                    }
-                )
+                // Antwort-Bereich
+                answerSection
+                    .padding(14)
 
+                // Footer: Voting Stepper
+                if showSelectionBox {
+                    VoteStepper(
+                        count: voteCount,
+                        canIncrement: canIncrement,
+                        onIncrement: onIncrement,
+                        onDecrement: onDecrement
+                    )
+                    .padding(.bottom, 14)
+                } else {
+                    Spacer().frame(height: 14)
+                }
+            }
         }
-        .frame(height: isFullWidth ? 240 : 200) // Etwas höher für besseres Layout
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(
-                    voteCount > 0 ? Color.red : Color.white.opacity(0.15),
-                    lineWidth: voteCount > 0 ? 3 : 1
-                )
-                .shadow(color: voteCount > 0 ? Color.red.opacity(0.5) : .clear, radius: 10)
-        )
+        .frame(height: isFullWidth ? 240 : 200)
+        .overlay(cardBorder)
         .modifier(ShakeEffect(animatableData: showRedX ? shakeTrigger : 0))
-        .onTapGesture { onTap() }
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onTap()
+        }
+    }
+
+    // MARK: - Card Background
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.08, green: 0.07, blue: 0.05),
+                        Color(red: 0.05, green: 0.04, blue: 0.03)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                // Verdächtigen-Markierung
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(voteCount > 0 ? QuestionsTheme.accentDanger.opacity(0.1) : Color.clear)
+            )
+            .overlay(
+                // Scanlines
+                ScanLinesOverlay()
+                    .opacity(0.015)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            )
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(
+                voteCount > 0 ? QuestionsTheme.accentDanger : QuestionsTheme.accentGreen.opacity(0.15),
+                lineWidth: voteCount > 0 ? 2 : 1
+            )
+            .shadow(color: voteCount > 0 ? QuestionsTheme.accentDanger.opacity(0.3) : .clear, radius: 8)
+    }
+
+    // MARK: - Header Section
+
+    private var headerSection: some View {
+        HStack {
+            // Subjekt-Label + Name
+            VStack(alignment: .leading, spacing: 2) {
+                Text("SUBJEKT")
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textMuted)
+                    .tracking(1.5)
+
+                Text(playerName.uppercased())
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textTypewriter)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            // Status-Icons
+            statusIcon
+        }
+    }
+
+    @ViewBuilder
+    private var statusIcon: some View {
+        if showGreenCheck {
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(QuestionsTheme.accentSuccess)
+                Text("VERIFIZIERT")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentSuccess)
+            }
+        } else if showRedX {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(QuestionsTheme.accentDanger)
+                Text("LÜGNER")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentDanger)
+            }
+        } else if answer.timeTaken > 0 {
+            timeIndicator
+        }
+    }
+
+    private var timeIndicator: some View {
+        HStack(spacing: 3) {
+            Image(systemName: isSlowest ? "exclamationmark.circle.fill" : "clock")
+                .font(.system(size: 10))
+            Text(String(format: "%.0fs", answer.timeTaken))
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+        }
+        .foregroundStyle(isSlowest ? QuestionsTheme.accentDanger : QuestionsTheme.textMuted)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(isSlowest ? QuestionsTheme.accentDanger.opacity(0.2) : Color.white.opacity(0.05))
+        )
+    }
+
+    // MARK: - Answer Section
+
+    private var answerSection: some View {
+        VStack(spacing: 6) {
+            if let liarQuestion {
+                Text(LocalizedStringKey(liarQuestion))
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentDanger.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 2)
+            }
+
+            Text(answer.text)
+                .font(.system(.body, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textTypewriter)
+                .multilineTextAlignment(.center)
+                .lineLimit(isFullWidth ? nil : 4)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 }
+
+// MARK: - Vote Stepper
 
 struct VoteStepper: View {
     let count: Int
     let canIncrement: Bool
     let onIncrement: (() -> Void)?
     let onDecrement: (() -> Void)?
-    
+
     var body: some View {
-        HStack(spacing: 20) { // Breiteres Spacing für besseres Treffen
-            Button(action: { onDecrement?() }) {
+        HStack(spacing: 16) {
+            // Minus Button
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onDecrement?()
+            } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.1))
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .frame(width: 36, height: 36)
+                    .foregroundStyle(count == 0 ? QuestionsTheme.textMuted.opacity(0.3) : QuestionsTheme.textPrimary)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.05))
+                            .overlay(
+                                Circle()
+                                    .stroke(QuestionsTheme.textMuted.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(count == 0)
-            .opacity(count == 0 ? 0.3 : 1.0)
-            
-            // Zentrale Anzeige (Fingerabdruck oder Zahl)
+
+            // Zentrale Anzeige
             ZStack {
                 if count > 0 {
                     Text("\(count)")
-                        .font(.title2.weight(.heavy))
-                        .foregroundColor(.red)
-                        .transition(.scale)
+                        .font(.system(size: 20, weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.accentDanger)
+                        .shadow(color: QuestionsTheme.accentDanger.opacity(0.5), radius: 4)
+                        .transition(.scale.combined(with: .opacity))
                 } else {
                     Image(systemName: "fingerprint")
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.3))
+                        .font(.system(size: 22))
+                        .foregroundStyle(QuestionsTheme.textMuted.opacity(0.4))
                 }
             }
-            .frame(width: 40)
-            
-            Button(action: { if canIncrement { onIncrement?() } }) {
+            .frame(width: 36)
+            .animation(.spring(response: 0.3), value: count)
+
+            // Plus Button
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onIncrement?()
+            } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .background(canIncrement ? Color.white.opacity(0.2) : Color.white.opacity(0.05))
-                    .foregroundColor(canIncrement ? .white : .white.opacity(0.3))
-                    .clipShape(Circle())
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .frame(width: 36, height: 36)
+                    .foregroundStyle(canIncrement ? QuestionsTheme.accentGreen : QuestionsTheme.textMuted.opacity(0.3))
+                    .background(
+                        Circle()
+                            .fill(canIncrement ? QuestionsTheme.accentGreen.opacity(0.15) : Color.white.opacity(0.05))
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        canIncrement ? QuestionsTheme.accentGreen.opacity(0.4) : QuestionsTheme.textMuted.opacity(0.2),
+                                        lineWidth: 1
+                                    )
+                            )
+                    )
+                    .shadow(color: canIncrement ? QuestionsTheme.accentGreen.opacity(0.3) : .clear, radius: 4)
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(!canIncrement)
         }
-        .padding(6)
-        .background(Color.black.opacity(0.3))
-        .clipShape(Capsule())
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .overlay(
+                    Capsule()
+                        .stroke(QuestionsTheme.textMuted.opacity(0.1), lineWidth: 1)
+                )
+        )
     }
 }

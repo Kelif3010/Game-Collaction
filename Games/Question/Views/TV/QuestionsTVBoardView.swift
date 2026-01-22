@@ -2,7 +2,7 @@
 //  QuestionsTVBoardView.swift
 //  Games Collection
 //
-//  Created by Gemini on 17.01.2026.
+//  Redesigned: Verhörraum / Lügendetektor Theme
 //
 
 import SwiftUI
@@ -12,21 +12,20 @@ struct QuestionsTVBoardView: View {
     @Environment(\.tvScale) private var tvScale
     @State private var showCinematicReveal = false
     @State private var cinematicRevealID = UUID()
-    
+
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
-            
+            // Verhörraum-Hintergrund
+            QuestionsBackgroundView(stressLevel: stressLevel)
+                .ignoresSafeArea()
+
             VStack(spacing: scaled(30)) {
-                // Header mit Timer (wenn aktiv)
                 TVHeaderView(viewModel: viewModel)
-                
                 mainContent
-                
                 Spacer(minLength: 0)
             }
             .padding(scaled(40))
-            
+
             if showCinematicReveal {
                 TVCinematicRevealView(viewModel: viewModel)
                     .id(cinematicRevealID)
@@ -41,19 +40,28 @@ struct QuestionsTVBoardView: View {
         }
     }
 
+    private var stressLevel: CGFloat {
+        switch viewModel.currentPhase {
+        case .setup: return 0.2
+        case .collecting: return 0.4
+        case .overview, .voting: return 0.6
+        case .revealed, .finished: return 0.9
+        }
+    }
+
     private func triggerCinematicReveal() {
         guard !showCinematicReveal else { return }
         cinematicRevealID = UUID()
         withAnimation(.easeOut(duration: 0.2)) {
             showCinematicReveal = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             withAnimation(.easeInOut(duration: 0.4)) {
                 showCinematicReveal = false
             }
         }
     }
-    
+
     @ViewBuilder
     private var mainContent: some View {
         switch viewModel.currentPhase {
@@ -73,102 +81,155 @@ struct QuestionsTVBoardView: View {
     }
 }
 
+// MARK: - Cinematic Reveal (Stempel-Animation)
+
 private struct TVCinematicRevealView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @Environment(\.tvScale) private var tvScale
-    @State private var stampScale: CGFloat = 1.5
+    @State private var stampScale: CGFloat = 2.0
     @State private var stampOpacity: Double = 0
-    @State private var stampRotation: Double = -10
+    @State private var stampRotation: Double = -20
     @State private var flashOpacity: Double = 0
-    
+    @State private var shakeOffset: CGFloat = 0
+
+    private var evaluation: QuestionsVoteEvaluation? {
+        viewModel.revealEvaluation ?? viewModel.lastRevealEvaluation
+    }
+
+    private var citizensWon: Bool {
+        evaluation?.citizensWon ?? false
+    }
+
     var body: some View {
         ZStack {
+            // Dunkler Overlay mit Farbton
             LinearGradient(
-                colors: [Color.black.opacity(0.95), Color.red.opacity(0.4)],
+                colors: [
+                    Color.black.opacity(0.95),
+                    citizensWon
+                        ? QuestionsTheme.accentSuccess.opacity(0.3)
+                        : QuestionsTheme.accentDanger.opacity(0.3)
+                ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
+            // Vignette
             RadialGradient(
-                colors: [Color.white.opacity(0.12), Color.clear],
+                colors: [Color.clear, Color.black.opacity(0.6)],
                 center: .center,
-                startRadius: scaled(50),
-                endRadius: scaled(420)
+                startRadius: scaled(100),
+                endRadius: scaled(500)
             )
             .ignoresSafeArea()
-            
-            VStack(spacing: scaled(20)) {
+
+            // Content
+            VStack(spacing: scaled(30)) {
+                // Header
                 Text("AKTE GEÖFFNET")
-                    .font(.system(size: scaled(22), weight: .bold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.7))
-                    .tracking(scaled(6))
-                
-                RoundedRectangle(cornerRadius: scaled(18))
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: scaled(140))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: scaled(18))
-                            .stroke(Color.white.opacity(0.2), lineWidth: scaled(2))
-                    )
-                    .overlay(
-                        VStack(spacing: scaled(6)) {
-                            Text("IDENTITÄT PRÜFEN")
-                                .font(.system(size: scaled(24), weight: .black))
-                                .foregroundColor(.white)
-                            Text(targetLine)
-                                .font(.system(size: scaled(16), weight: .semibold, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    )
-            }
-            
-            Text("ENTTARNT")
-                .font(.system(size: scaled(120), weight: .black, design: .monospaced))
-                .foregroundColor(.red)
-                .padding(.horizontal, scaled(30))
-                .padding(.vertical, scaled(12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: scaled(10))
-                        .stroke(Color.red, lineWidth: scaled(6))
+                    .font(.system(size: scaled(24), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+                    .tracking(scaled(8))
+
+                // Dossier-Box
+                dossierBox
+
+                // Stempel
+                StampView(
+                    text: citizensWon ? "LÜGNER" : "ENTKOMMEN",
+                    type: citizensWon ? .guilty : .escaped,
+                    rotation: stampRotation
                 )
-                .rotationEffect(.degrees(stampRotation))
-                .scaleEffect(stampScale)
+                .scaleEffect(stampScale * tvScale)
                 .opacity(stampOpacity)
-                .shadow(color: .red.opacity(0.5), radius: scaled(20))
-            
+                .offset(x: shakeOffset)
+            }
+
+            // Flash
             Rectangle()
                 .fill(Color.white)
                 .opacity(flashOpacity)
                 .ignoresSafeArea()
         }
         .onAppear {
-            stampScale = 1.6
-            stampOpacity = 0
-            stampRotation = -12
-            flashOpacity = 0
-            withAnimation(.easeOut(duration: 0.25)) {
-                stampScale = 1.0
-                stampOpacity = 1.0
-                stampRotation = 0
-            }
-            withAnimation(.easeOut(duration: 0.2)) {
-                flashOpacity = 0.5
-            }
-            withAnimation(.easeIn(duration: 0.4).delay(0.15)) {
-                flashOpacity = 0
-            }
+            runAnimation()
         }
     }
-    
+
+    private var dossierBox: some View {
+        RoundedRectangle(cornerRadius: scaled(12))
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.06),
+                        Color(red: 0.06, green: 0.05, blue: 0.03)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .frame(width: scaled(500), height: scaled(120))
+            .overlay(
+                RoundedRectangle(cornerRadius: scaled(12))
+                    .stroke(QuestionsTheme.accentGreen.opacity(0.3), lineWidth: scaled(1))
+            )
+            .overlay(
+                VStack(spacing: scaled(8)) {
+                    Text("IDENTITÄT VERIFIZIERT")
+                        .font(.system(size: scaled(14), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textMuted)
+                        .tracking(scaled(3))
+
+                    Text(targetLine)
+                        .font(.system(size: scaled(28), weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
+                }
+            )
+    }
+
     private var targetLine: String {
-        let evaluation = viewModel.revealEvaluation ?? viewModel.lastRevealEvaluation
         let names = evaluation?.liars.map { viewModel.playerName(for: $0) } ?? []
         if names.isEmpty {
-            return "ZIEL UNBEKANNT"
+            return "UNBEKANNT"
         }
-        let label = names.count > 1 ? "ZIELE" : "ZIEL"
-        return "\(label): \(names.sorted().joined(separator: " • "))"
+        return names.sorted().joined(separator: " • ").uppercased()
+    }
+
+    private func runAnimation() {
+        // Flash
+        withAnimation(.easeOut(duration: 0.15)) {
+            flashOpacity = 0.6
+        }
+        withAnimation(.easeIn(duration: 0.3).delay(0.15)) {
+            flashOpacity = 0
+        }
+
+        // Stamp slam
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.4)) {
+                stampScale = 1.0
+                stampOpacity = 1.0
+                stampRotation = citizensWon ? -12 : -8
+            }
+
+            // Shake
+            withAnimation(.easeOut(duration: 0.05)) {
+                shakeOffset = 15
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.easeOut(duration: 0.05)) {
+                    shakeOffset = -12
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeOut(duration: 0.1)) {
+                    shakeOffset = 0
+                }
+            }
+
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        }
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
@@ -176,95 +237,140 @@ private struct TVCinematicRevealView: View {
     }
 }
 
-// MARK: - Sub-Views für den TV
+// MARK: - Header
 
 private struct TVHeaderView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: scaled(5)) {
-                Text("FINDE DEN LÜGNER")
-                    .font(.system(size: scaled(20), weight: .black, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.5))
-                
+            // Titel
+            VStack(alignment: .leading, spacing: scaled(6)) {
+                Text("LÜGENDETEKTOR")
+                    .font(.system(size: scaled(18), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+                    .tracking(scaled(4))
+
                 if let category = viewModel.selectedCategory {
                     Text(category.name.uppercased())
-                        .font(.system(size: scaled(32), weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .font(.system(size: scaled(28), weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
                 }
             }
-            
+
             Spacer()
-            
+
+            // Timer
             if viewModel.discussionTime > 0 && (viewModel.currentPhase == .overview || viewModel.currentPhase == .voting) {
-                HStack(spacing: scaled(15)) {
-                    Image(systemName: "timer")
-                        .font(.system(size: scaled(40)))
-                    Text(viewModel.timeString(from: viewModel.timeRemaining))
-                        .font(.system(size: scaled(60), weight: .bold, design: .monospaced))
-                }
-                .foregroundColor(viewModel.timeRemaining < 30 ? .red : .white)
-                .padding(.horizontal, scaled(30))
-                .padding(.vertical, scaled(10))
-                .background(Color.white.opacity(0.05))
-                .clipShape(Capsule())
+                timerDisplay
             }
         }
+    }
+
+    private var timerDisplay: some View {
+        HStack(spacing: scaled(12)) {
+            // LED
+            Circle()
+                .fill(timerColor)
+                .frame(width: scaled(12), height: scaled(12))
+                .shadow(color: timerColor, radius: scaled(6))
+
+            Text("VERBLEIBEND")
+                .font(.system(size: scaled(14), weight: .medium, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textMuted)
+                .tracking(scaled(2))
+
+            Text(viewModel.timeString(from: viewModel.timeRemaining))
+                .font(.system(size: scaled(48), weight: .bold, design: .monospaced))
+                .foregroundStyle(timerColor)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, scaled(24))
+        .padding(.vertical, scaled(12))
+        .background(
+            RoundedRectangle(cornerRadius: scaled(12))
+                .fill(Color.black.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: scaled(12))
+                        .stroke(timerColor.opacity(0.3), lineWidth: scaled(1))
+                )
+        )
+    }
+
+    private var timerColor: Color {
+        if viewModel.timeRemaining < 10 {
+            return QuestionsTheme.accentDanger
+        } else if viewModel.timeRemaining < 30 {
+            return QuestionsTheme.accentAmber
+        }
+        return QuestionsTheme.accentGreen
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
         value * tvScale
     }
 }
+
+// MARK: - Setup View
 
 private struct TVSetupView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @ObservedObject private var mpc = MultipeerManager.shared
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
-        VStack(spacing: scaled(35)) {
+        VStack(spacing: scaled(40)) {
             Spacer()
-            
-            VStack(spacing: scaled(10)) {
-                Text("BÜHNE")
-                    .font(.system(size: scaled(24), weight: .black, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.6))
-                    .tracking(scaled(6))
-                
-                Text("VERBINDE DEIN HANDY")
-                    .font(.system(size: scaled(40), weight: .black))
-                    .foregroundColor(.white)
-            }
-            
+
+            // Header
             VStack(spacing: scaled(12)) {
-                Text("RAUM-CODE")
-                    .font(.system(size: scaled(16), weight: .bold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.6))
-                    .tracking(scaled(4))
-                
-                Text(displayRoomCode)
-                    .font(.system(size: scaled(120), weight: .heavy, design: .monospaced))
-                    .foregroundStyle(
-                        LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
-                    .shadow(color: .red.opacity(0.5), radius: scaled(20))
+                Text("SYSTEM INITIALISIERUNG")
+                    .font(.system(size: scaled(18), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+                    .tracking(scaled(6))
+
+                Text("VERBINDE DEIN GERÄT")
+                    .font(.system(size: scaled(36), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textTypewriter)
             }
-            .padding(.vertical, scaled(10))
-            
-            TVStageTickerBand(
+
+            // Raum-Code
+            VStack(spacing: scaled(16)) {
+                Text("ZUGANGS-CODE")
+                    .font(.system(size: scaled(14), weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textMuted)
+                    .tracking(scaled(4))
+
+                Text(displayRoomCode)
+                    .font(.system(size: scaled(100), weight: .heavy, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+                    .shadow(color: QuestionsTheme.accentGreen.opacity(0.5), radius: scaled(20))
+                    .tracking(scaled(20))
+            }
+            .padding(.vertical, scaled(20))
+
+            // Spieler-Ticker
+            TVPlayerTickerBand(
                 players: viewModel.appModel.players,
                 readyPlayers: mpc.readyPlayers,
                 disconnectedPlayers: mpc.disconnectedPeers
             )
             .frame(height: scaled(70))
-            
-            Text("\(readyCount) von \(playerCount) bereit")
-                .font(.system(size: scaled(20), weight: .semibold, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
-            
+
+            // Status
+            HStack(spacing: scaled(8)) {
+                Circle()
+                    .fill(readyCount == playerCount ? QuestionsTheme.accentGreen : QuestionsTheme.accentAmber)
+                    .frame(width: scaled(10), height: scaled(10))
+                    .shadow(color: readyCount == playerCount ? QuestionsTheme.accentGreen : QuestionsTheme.accentAmber, radius: scaled(4))
+
+                Text("\(readyCount) VON \(playerCount) AUTORISIERT")
+                    .font(.system(size: scaled(18), weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textMuted)
+                    .tracking(scaled(2))
+            }
+
             Spacer()
         }
     }
@@ -288,23 +394,25 @@ private struct TVSetupView: View {
     }
 }
 
-private struct TVStageTickerBand: View {
+// MARK: - Player Ticker Band
+
+private struct TVPlayerTickerBand: View {
     let players: [QuestionPlayer]
     let readyPlayers: Set<String>
     let disconnectedPlayers: Set<String>
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: scaled(16)) {
+            HStack(spacing: scaled(14)) {
                 if players.isEmpty {
-                    Text("WARTEN AUF SPIELER...")
-                        .font(.system(size: scaled(18), weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("WARTEN AUF SUBJEKTE...")
+                        .font(.system(size: scaled(16), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textMuted)
                         .padding(.horizontal, scaled(20))
                 } else {
                     ForEach(players) { player in
-                        TVStageTickerChip(
+                        TVPlayerChip(
                             name: player.name,
                             isReady: readyPlayers.contains(player.name),
                             isDisconnected: disconnectedPlayers.contains(player.name)
@@ -315,12 +423,14 @@ private struct TVStageTickerBand: View {
             .padding(.horizontal, scaled(20))
             .padding(.vertical, scaled(10))
         }
-        .background(Color.white.opacity(0.06))
-        .overlay(
-            RoundedRectangle(cornerRadius: scaled(20))
-                .stroke(Color.white.opacity(0.12), lineWidth: scaled(1))
+        .background(
+            RoundedRectangle(cornerRadius: scaled(12))
+                .fill(Color.black.opacity(0.4))
+                .overlay(
+                    RoundedRectangle(cornerRadius: scaled(12))
+                        .stroke(QuestionsTheme.accentGreen.opacity(0.15), lineWidth: scaled(1))
+                )
         )
-        .clipShape(RoundedRectangle(cornerRadius: scaled(20)))
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
@@ -328,23 +438,19 @@ private struct TVStageTickerBand: View {
     }
 }
 
-private struct TVStageTickerChip: View {
+private struct TVPlayerChip: View {
     let name: String
     let isReady: Bool
     let isDisconnected: Bool
     @Environment(\.tvScale) private var tvScale
 
     private var statusColor: Color {
-        if isDisconnected {
-            return .orange
-        }
-        return isReady ? .green : .white.opacity(0.4)
+        if isDisconnected { return QuestionsTheme.accentAmber }
+        return isReady ? QuestionsTheme.accentGreen : QuestionsTheme.textMuted
     }
 
     private var statusText: String {
-        if isDisconnected {
-            return "OFFLINE"
-        }
+        if isDisconnected { return "OFFLINE" }
         return isReady ? "BEREIT" : "WARTE"
     }
 
@@ -353,19 +459,26 @@ private struct TVStageTickerChip: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: scaled(10), height: scaled(10))
-            
+                .shadow(color: statusColor.opacity(0.5), radius: scaled(4))
+
             Text(name.uppercased())
-                .font(.system(size: scaled(18), weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
-            
+                .font(.system(size: scaled(16), weight: .bold, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textTypewriter)
+
             Text(statusText)
-                .font(.system(size: scaled(14), weight: .bold, design: .monospaced))
-                .foregroundColor(statusColor)
+                .font(.system(size: scaled(12), weight: .bold, design: .monospaced))
+                .foregroundStyle(statusColor)
         }
-        .padding(.horizontal, scaled(16))
+        .padding(.horizontal, scaled(14))
         .padding(.vertical, scaled(8))
-        .background(Color.white.opacity(0.08))
-        .clipShape(Capsule())
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    Capsule()
+                        .stroke(statusColor.opacity(0.3), lineWidth: scaled(1))
+                )
+        )
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
@@ -373,52 +486,72 @@ private struct TVStageTickerChip: View {
     }
 }
 
+// MARK: - Collecting View
+
 private struct TVCollectingView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
-        VStack(spacing: scaled(32)) {
+        VStack(spacing: scaled(36)) {
             Spacer()
-            
-            VStack(spacing: scaled(8)) {
-                Text("LIVE-TICKER")
-                    .font(.system(size: scaled(20), weight: .bold, design: .monospaced))
-                    .foregroundColor(.orange)
-                    .tracking(scaled(4))
-                
-                Text("ANTWORTEN LAUFEN")
-                    .font(.system(size: scaled(42), weight: .black))
-                    .foregroundColor(.white)
-            }
-            
-            if let round = viewModel.currentRound, let currentPlayer = viewModel.currentPlayer() {
-                VStack(spacing: scaled(12)) {
-                    Text(currentPlayer.name.uppercased())
-                        .font(.system(size: scaled(70), weight: .black, design: .rounded))
-                        .foregroundColor(.white)
-                    
-                    Text("tippt gerade...")
-                        .font(.system(size: scaled(24), weight: .semibold))
-                        .foregroundColor(.white.opacity(0.6))
+
+            // Header
+            VStack(spacing: scaled(10)) {
+                HStack(spacing: scaled(10)) {
+                    Circle()
+                        .fill(QuestionsTheme.accentGreen)
+                        .frame(width: scaled(12), height: scaled(12))
+                        .shadow(color: QuestionsTheme.accentGreen, radius: scaled(6))
+
+                    Text("LIVE-ERFASSUNG")
+                        .font(.system(size: scaled(18), weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.accentGreen)
+                        .tracking(scaled(4))
                 }
-                
-                TVSignalTickerLine()
-                    .frame(height: scaled(18))
-                    .padding(.horizontal, scaled(40))
-                
+
+                Text("DATENAUFNAHME AKTIV")
+                    .font(.system(size: scaled(38), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textTypewriter)
+            }
+
+            if let round = viewModel.currentRound, let currentPlayer = viewModel.currentPlayer() {
+                // Aktueller Spieler
+                VStack(spacing: scaled(14)) {
+                    Text("AKTIVES SUBJEKT")
+                        .font(.system(size: scaled(14), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textMuted)
+                        .tracking(scaled(3))
+
+                    Text(currentPlayer.name.uppercased())
+                        .font(.system(size: scaled(60), weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
+
+                    Text("EINGABE LÄUFT...")
+                        .font(.system(size: scaled(20), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.accentGreen.opacity(0.8))
+                }
+
+                // EKG-Linie
+                TVSignalLine()
+                    .frame(height: scaled(20))
+                    .padding(.horizontal, scaled(60))
+
+                // Status-Chips
                 TVCollectingStatusRow(
                     players: viewModel.appModel.players,
                     currentPlayerID: currentPlayer.id,
                     answeredIDs: Set(round.answers.keys)
                 )
                 .padding(.horizontal, scaled(40))
-                
-                Text("\(round.answers.count) von \(viewModel.playerCount) Antworten eingegangen")
-                    .font(.system(size: scaled(18), weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.6))
+
+                // Fortschritt
+                Text("\(round.answers.count) VON \(viewModel.playerCount) ERFASST")
+                    .font(.system(size: scaled(16), weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textMuted)
+                    .tracking(scaled(2))
             }
-            
+
             Spacer()
         }
     }
@@ -428,30 +561,33 @@ private struct TVCollectingView: View {
     }
 }
 
-private struct TVSignalTickerLine: View {
+// MARK: - Signal Line (EKG-Style)
+
+private struct TVSignalLine: View {
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
         GeometryReader { proxy in
             TimelineView(.animation) { context in
                 let width = proxy.size.width
-                let segment = max(scaled(36), 1)
+                let segment = max(scaled(40), 1)
                 let count = max(14, Int(width / segment) + 12)
                 let cycle = CGFloat(count) * segment
-                let speed = max(scaled(40), 1)
+                let speed = max(scaled(50), 1)
                 let time = CGFloat(context.date.timeIntervalSinceReferenceDate)
                 let offset = -(time * speed).truncatingRemainder(dividingBy: cycle)
-                
-                HStack(spacing: scaled(16)) {
+
+                HStack(spacing: scaled(20)) {
                     ForEach(0..<count, id: \.self) { index in
                         if index.isMultiple(of: 2) {
                             Capsule()
-                                .fill(Color.white.opacity(0.18))
+                                .fill(QuestionsTheme.accentGreen.opacity(0.4))
                                 .frame(width: scaled(30), height: scaled(4))
                         } else {
                             Circle()
-                                .fill(Color.white.opacity(0.35))
-                                .frame(width: scaled(6), height: scaled(6))
+                                .fill(QuestionsTheme.accentGreen.opacity(0.6))
+                                .frame(width: scaled(8), height: scaled(8))
+                                .shadow(color: QuestionsTheme.accentGreen.opacity(0.5), radius: scaled(4))
                         }
                     }
                 }
@@ -459,14 +595,18 @@ private struct TVSignalTickerLine: View {
             }
         }
         .clipped()
-        .background(Color.white.opacity(0.05))
-        .clipShape(Capsule())
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.3))
+        )
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
         value * tvScale
     }
 }
+
+// MARK: - Collecting Status Row
 
 private struct TVCollectingStatusRow: View {
     let players: [QuestionPlayer]
@@ -478,30 +618,28 @@ private struct TVCollectingStatusRow: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: scaled(12)) {
                 ForEach(players) { player in
-                    TVCollectingStatusChip(
+                    TVCollectingChip(
                         name: player.name,
                         status: status(for: player.id)
                     )
                 }
             }
-            .padding(.horizontal, scaled(10))
-            .padding(.vertical, scaled(8))
+            .padding(.horizontal, scaled(14))
+            .padding(.vertical, scaled(10))
         }
-        .background(Color.white.opacity(0.06))
-        .overlay(
-            RoundedRectangle(cornerRadius: scaled(16))
-                .stroke(Color.white.opacity(0.1), lineWidth: scaled(1))
+        .background(
+            RoundedRectangle(cornerRadius: scaled(12))
+                .fill(Color.black.opacity(0.4))
+                .overlay(
+                    RoundedRectangle(cornerRadius: scaled(12))
+                        .stroke(QuestionsTheme.accentGreen.opacity(0.15), lineWidth: scaled(1))
+                )
         )
-        .clipShape(RoundedRectangle(cornerRadius: scaled(16)))
     }
 
     private func status(for playerID: UUID) -> CollectingStatus {
-        if answeredIDs.contains(playerID) {
-            return .done
-        }
-        if playerID == currentPlayerID {
-            return .active
-        }
+        if answeredIDs.contains(playerID) { return .done }
+        if playerID == currentPlayerID { return .active }
         return .waiting
     }
 
@@ -511,29 +649,27 @@ private struct TVCollectingStatusRow: View {
 }
 
 private enum CollectingStatus {
-    case active
-    case done
-    case waiting
+    case active, done, waiting
 }
 
-private struct TVCollectingStatusChip: View {
+private struct TVCollectingChip: View {
     let name: String
     let status: CollectingStatus
     @Environment(\.tvScale) private var tvScale
 
     private var statusColor: Color {
         switch status {
-        case .active: return .orange
-        case .done: return .green
-        case .waiting: return .white.opacity(0.4)
+        case .active: return QuestionsTheme.accentAmber
+        case .done: return QuestionsTheme.accentGreen
+        case .waiting: return QuestionsTheme.textMuted
         }
     }
 
     private var statusText: String {
         switch status {
         case .active: return "LIVE"
-        case .done: return "FERTIG"
-        case .waiting: return "WARTE"
+        case .done: return "OK"
+        case .waiting: return "—"
         }
     }
 
@@ -542,19 +678,26 @@ private struct TVCollectingStatusChip: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: scaled(10), height: scaled(10))
-            
+                .shadow(color: statusColor.opacity(0.5), radius: scaled(3))
+
             Text(name.uppercased())
-                .font(.system(size: scaled(16), weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
-            
+                .font(.system(size: scaled(14), weight: .bold, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textTypewriter)
+
             Text(statusText)
-                .font(.system(size: scaled(12), weight: .bold, design: .monospaced))
-                .foregroundColor(statusColor)
+                .font(.system(size: scaled(11), weight: .bold, design: .monospaced))
+                .foregroundStyle(statusColor)
         }
         .padding(.horizontal, scaled(12))
         .padding(.vertical, scaled(6))
-        .background(Color.white.opacity(0.08))
-        .clipShape(Capsule())
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    Capsule()
+                        .stroke(statusColor.opacity(0.3), lineWidth: scaled(1))
+                )
+        )
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
@@ -562,20 +705,31 @@ private struct TVCollectingStatusChip: View {
     }
 }
 
+// MARK: - Overview View
+
 private struct TVOverviewView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @Environment(\.tvScale) private var tvScale
-    
+
     var body: some View {
-        VStack(spacing: scaled(30)) {
+        VStack(spacing: scaled(28)) {
+            // Frage
             if let round = viewModel.currentRound {
-                Text(round.promptPair.citizenQuestion)
-                    .font(.system(size: scaled(40), weight: .heavy))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, scaled(60))
+                VStack(spacing: scaled(8)) {
+                    Text("AKTIVE ABFRAGE")
+                        .font(.system(size: scaled(12), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.accentGreen)
+                        .tracking(scaled(3))
+
+                    Text(round.promptPair.citizenQuestion)
+                        .font(.system(size: scaled(32), weight: .bold, design: .monospaced))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
+                        .padding(.horizontal, scaled(40))
+                }
             }
-            
+
+            // Antwort-Grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: scaled(20)) {
                 ForEach(viewModel.answersInOrder, id: \.id) { answer in
                     TVAnswerCard(
@@ -595,6 +749,8 @@ private struct TVOverviewView: View {
     }
 }
 
+// MARK: - Answer Card
+
 private struct TVAnswerCard: View {
     let playerName: String
     let answer: QuestionsAnswer
@@ -602,49 +758,90 @@ private struct TVAnswerCard: View {
     let isCaught: Bool
     let voteCount: Int
     @Environment(\.tvScale) private var tvScale
-    
+
+    private var borderColor: Color {
+        if isCaught { return QuestionsTheme.accentSuccess }
+        if isLiar { return QuestionsTheme.accentDanger }
+        if voteCount > 0 { return QuestionsTheme.accentDanger.opacity(0.6) }
+        return QuestionsTheme.accentGreen.opacity(0.2)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: scaled(15)) {
+        VStack(alignment: .leading, spacing: scaled(12)) {
+            // Header
             HStack {
-                Text(playerName)
-                    .font(.system(size: scaled(22), weight: .bold))
+                VStack(alignment: .leading, spacing: scaled(2)) {
+                    Text("SUBJEKT")
+                        .font(.system(size: scaled(9), weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textMuted)
+                        .tracking(scaled(1.5))
+
+                    Text(playerName.uppercased())
+                        .font(.system(size: scaled(16), weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
+                }
+
                 Spacer()
+
                 if voteCount > 0 {
-                    HStack(spacing: scaled(5)) {
-                        Image(systemName: "hand.point.up.fill")
+                    HStack(spacing: scaled(4)) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: scaled(12)))
                         Text("\(voteCount)")
+                            .font(.system(size: scaled(16), weight: .bold, design: .monospaced))
                     }
-                    .font(.system(size: scaled(18), weight: .bold))
-                    .foregroundColor(.red)
+                    .foregroundStyle(QuestionsTheme.accentDanger)
                 }
             }
-            
-            Divider().background(Color.white.opacity(0.2))
-            
+
+            // Divider
+            Rectangle()
+                .fill(QuestionsTheme.accentGreen.opacity(0.15))
+                .frame(height: scaled(1))
+
+            // Antwort
             Text(answer.text)
-                .font(.system(size: scaled(22)))
-                .italic()
-                .foregroundColor(.white.opacity(0.9))
+                .font(.system(size: scaled(18), design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textTypewriter)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .multilineTextAlignment(.center)
-                .frame(height: scaled(100))
-            
+                .frame(height: scaled(80))
+
+            // Status-Badge
             if isCaught {
-                Text("ENTTARNT")
-                    .font(.system(size: scaled(12), weight: .bold))
-                    .padding(.horizontal, scaled(10))
-                    .padding(.vertical, scaled(5))
-                    .background(Color.green)
-                    .cornerRadius(scaled(5))
+                HStack(spacing: scaled(4)) {
+                    Image(systemName: "checkmark.seal.fill")
+                    Text("VERIFIZIERT")
+                }
+                .font(.system(size: scaled(10), weight: .bold, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.accentSuccess)
+                .padding(.horizontal, scaled(10))
+                .padding(.vertical, scaled(5))
+                .background(
+                    Capsule()
+                        .fill(QuestionsTheme.accentSuccess.opacity(0.2))
+                )
             }
         }
-        .padding(scaled(20))
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(scaled(20))
-        .overlay(
-            RoundedRectangle(cornerRadius: scaled(20))
-                .stroke(isCaught ? Color.green : (isLiar ? Color.red : Color.white.opacity(0.1)), lineWidth: scaled(2))
+        .padding(scaled(16))
+        .background(
+            RoundedRectangle(cornerRadius: scaled(12))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.08, green: 0.07, blue: 0.05),
+                            Color(red: 0.05, green: 0.04, blue: 0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: scaled(12))
+                .stroke(borderColor, lineWidth: scaled(isCaught || isLiar || voteCount > 0 ? 2 : 1))
+        )
+        .shadow(color: borderColor.opacity(0.3), radius: scaled(8))
     }
 
     private func scaled(_ value: CGFloat) -> CGFloat {
@@ -652,44 +849,72 @@ private struct TVAnswerCard: View {
     }
 }
 
+// MARK: - Results View
+
 private struct TVResultsView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
     @Environment(\.tvScale) private var tvScale
-    
+
+    private var citizensWon: Bool {
+        viewModel.lastRevealEvaluation?.citizensWon ?? false
+    }
+
     var body: some View {
-        VStack(spacing: scaled(40)) {
+        VStack(spacing: scaled(50)) {
             Spacer()
-            
-            if let eval = viewModel.lastRevealEvaluation {
-                Text(eval.citizensWon ? "BEDROHUNG ELIMINIERT" : "MISSION GESCHEITERT")
-                    .font(.system(size: scaled(60), weight: .black))
-                    .foregroundColor(eval.citizensWon ? .green : .red)
-                
-                HStack(spacing: scaled(40)) {
-                    ForEach(Array(viewModel.currentLiarIDs), id: \.self) { spyID in
-                        VStack(spacing: scaled(15)) {
-                            Circle()
-                                .fill(Color.red.opacity(0.2))
-                                .frame(width: scaled(120), height: scaled(120))
-                                .overlay(
-                                    Image(systemName: "eye.slash.fill")
-                                        .font(.system(size: scaled(50)))
-                                        .foregroundColor(.red)
-                                )
-                            
-                            Text(viewModel.playerName(for: spyID))
-                                .font(.system(size: scaled(28), weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Text("DER LÜGNER")
-                                .font(.system(size: scaled(12), weight: .bold))
-                                .foregroundColor(.red)
-                        }
-                    }
+
+            // Ergebnis-Header
+            VStack(spacing: scaled(16)) {
+                Text(citizensWon ? "LÜGE VERIFIZIERT" : "LÜGNER ENTKOMMEN")
+                    .font(.system(size: scaled(50), weight: .black, design: .monospaced))
+                    .foregroundStyle(citizensWon ? QuestionsTheme.accentGreen : QuestionsTheme.accentDanger)
+                    .shadow(color: citizensWon ? QuestionsTheme.accentGreen.opacity(0.5) : QuestionsTheme.accentDanger.opacity(0.5), radius: scaled(20))
+
+                Text(citizensWon ? "SUBJEKT ÜBERFÜHRT" : "MISSION GESCHEITERT")
+                    .font(.system(size: scaled(20), weight: .medium, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textMuted)
+                    .tracking(scaled(4))
+            }
+
+            // Lügner-Anzeige
+            HStack(spacing: scaled(50)) {
+                ForEach(Array(viewModel.currentLiarIDs), id: \.self) { liarID in
+                    liarRevealCard(for: liarID)
                 }
             }
-            
+
             Spacer()
+        }
+    }
+
+    private func liarRevealCard(for liarID: UUID) -> some View {
+        VStack(spacing: scaled(16)) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(QuestionsTheme.accentDanger.opacity(0.15))
+                    .frame(width: scaled(120), height: scaled(120))
+                    .overlay(
+                        Circle()
+                            .stroke(QuestionsTheme.accentDanger.opacity(0.4), lineWidth: scaled(2))
+                    )
+
+                Image(systemName: "eye.slash.fill")
+                    .font(.system(size: scaled(50)))
+                    .foregroundStyle(QuestionsTheme.accentDanger)
+            }
+
+            // Name
+            VStack(spacing: scaled(6)) {
+                Text(viewModel.playerName(for: liarID).uppercased())
+                    .font(.system(size: scaled(28), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textTypewriter)
+
+                Text("LÜGNER")
+                    .font(.system(size: scaled(12), weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentDanger)
+                    .tracking(scaled(3))
+            }
         }
     }
 

@@ -8,20 +8,30 @@ struct QuestionsSheetHeader: View {
 
     var body: some View {
         HStack {
-            Button(action: onBack) {
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onBack()
+            }) {
                 Image(systemName: "chevron.left")
-                    .font(.headline.bold())
-                    .foregroundStyle(.white)
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textPrimary)
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                Circle()
+                                    .stroke(QuestionsTheme.accentGreen.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
 
             Spacer()
 
-            Text(title)
-                .font(.title3.bold())
-                .foregroundStyle(.white)
+            Text(title.uppercased())
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textTypewriter)
+                .tracking(2)
 
             Spacer()
 
@@ -39,19 +49,24 @@ struct QuestionsIconBadge: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(
                     LinearGradient(
-                        colors: [tint.opacity(0.35), tint.opacity(0.15)],
+                        colors: [tint.opacity(0.25), tint.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(tint.opacity(0.3), lineWidth: 1)
+                )
+
             Image(systemName: systemName)
-                .foregroundColor(tint)
-                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(tint)
+                .font(.system(size: 16, weight: .semibold))
         }
-        .frame(width: 44, height: 44)
+        .frame(width: 40, height: 40)
     }
 }
 
@@ -66,14 +81,23 @@ struct QuestionsGroupedCard<Content: View>: View {
         VStack(spacing: 12) {
             content
         }
-        .padding(20)
+        .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.containerBackground)
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.06, green: 0.05, blue: 0.04),
+                            Color(red: 0.04, green: 0.03, blue: 0.02)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(QuestionsTheme.accentGreen.opacity(0.12), lineWidth: 1)
         )
     }
 }
@@ -82,24 +106,27 @@ struct QuestionsRowCell: View {
     let icon: String
     let title: String
     let value: String
-    var tint: Color = .white
+    var tint: Color = QuestionsTheme.accentGreen
     var showsChevron: Bool = true
 
     var body: some View {
         HStack(spacing: 12) {
             QuestionsIconBadge(systemName: icon, tint: tint)
+
             Text(title)
-                .font(.body)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .font(.system(.body, design: .monospaced).weight(.medium))
+                .foregroundStyle(QuestionsTheme.textPrimary)
+
             Spacer()
+
             Text(value)
-                .font(.callout)
-                .foregroundStyle(QuestionsStyle.mutedText)
+                .font(.system(.callout, design: .monospaced))
+                .foregroundStyle(QuestionsTheme.textMuted)
+
             if showsChevron {
                 Image(systemName: "chevron.right")
-                    .font(.footnote)
-                    .foregroundStyle(QuestionsStyle.mutedText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(QuestionsTheme.textMuted.opacity(0.6))
             }
         }
         .questionsRowStyle()
@@ -112,12 +139,12 @@ extension View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                    .fill(QuestionsStyle.rowBackground)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.black.opacity(0.3))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                    .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(QuestionsTheme.accentGreen.opacity(0.1), lineWidth: 1)
             )
     }
 }
@@ -126,61 +153,86 @@ struct QuestionsFlipCard: View {
     let title: String
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 32, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.99, green: 0.35, blue: 0.38),
-                        Color(red: 0.78, green: 0.12, blue: 0.42)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+        ZStack {
+            // Dossier-Hintergrund
+            RoundedRectangle(cornerRadius: 16)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.12, green: 0.10, blue: 0.08),
+                            Color(red: 0.08, green: 0.06, blue: 0.04)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
-            )
-            .overlay(
-                Text(title)
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
-            )
-            .frame(height: 200)
-            .shadow(color: Color.black.opacity(0.3), radius: 20, y: 10)
+
+            // Scanlines
+            ScanLinesOverlay()
+                .opacity(0.02)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            // Content
+            VStack(spacing: 12) {
+                // "GEHEIM" Header
+                Text("GEHEIM")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentDanger)
+                    .tracking(3)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .overlay(
+                        Rectangle()
+                            .stroke(QuestionsTheme.accentDanger.opacity(0.5), lineWidth: 1)
+                    )
+
+                // Titel
+                Text(title.uppercased())
+                    .font(.system(size: 28, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.textTypewriter)
+                    .tracking(2)
+                    .multilineTextAlignment(.center)
+
+                // Dekoration
+                Rectangle()
+                    .fill(QuestionsTheme.accentGreen.opacity(0.3))
+                    .frame(width: 60, height: 2)
+            }
+            .padding(24)
+        }
+        .frame(height: 200)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(QuestionsTheme.accentGreen.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.4), radius: 20, y: 10)
     }
 }
 
 struct QuestionsTerminalBackground: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
+        RoundedRectangle(cornerRadius: 12)
             .fill(
                 LinearGradient(
                     colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.1),
-                        Color(red: 0.02, green: 0.02, blue: 0.05)
+                        Color(red: 0.06, green: 0.05, blue: 0.04),
+                        Color(red: 0.03, green: 0.03, blue: 0.02)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
             .overlay(
-                // Subtle Grid Effect
-                ZStack {
-                    VStack(spacing: 4) {
-                        ForEach(0..<40) { _ in
-                            Divider().background(Color.white.opacity(0.03))
-                        }
-                    }
-                    HStack(spacing: 4) {
-                        ForEach(0..<40) { _ in
-                            Divider().background(Color.white.opacity(0.03))
-                        }
-                    }
-                }
-                .clipped()
+                // Scanlines statt Grid
+                ScanLinesOverlay()
+                    .opacity(0.02)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1.2)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(QuestionsTheme.accentGreen.opacity(0.15), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
+            .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
     }
 }
 
@@ -190,36 +242,53 @@ struct QuestionsHintBanner: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        Button(action: onDismiss) {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onDismiss()
+        }) {
             HStack(spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(QuestionsStyle.primaryGradient)
-                    )
-                Text(text)
-                    .font(.callout)
-                    .foregroundStyle(.white)
+                // System-Icon
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+
+                // Text
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SYSTEM")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.accentGreen)
+                        .tracking(2)
+
+                    Text(text)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textPrimary)
+                        .lineLimit(2)
+                }
+
                 Spacer(minLength: 0)
-                Text(actionTitle)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(QuestionsStyle.mutedText)
+
+                // Action
+                Text(actionTitle.uppercased())
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(QuestionsTheme.accentGreen)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .stroke(QuestionsTheme.accentGreen.opacity(0.4), lineWidth: 1)
+                    )
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(14)
         }
         .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.rowBackground)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.black.opacity(0.7))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(QuestionsTheme.accentGreen.opacity(0.2), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.2), radius: 16, y: 8)
+        .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
     }
 }
