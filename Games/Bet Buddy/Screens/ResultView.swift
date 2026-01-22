@@ -1,6 +1,7 @@
 import SwiftUI
 import StoreKit
 import Foundation
+import Lottie
 
 struct ResultView: View {
     let result: GameResult
@@ -33,9 +34,11 @@ struct ResultView: View {
         ZStack {
             BetBuddyBackgroundView(intensity: 1.0)
 
-            // Casino Chip Rain (Win) or Subtle Rain (Lose)
+            // Lottie Money Rain (Win) or Subtle Rain (Lose)
             if result.outcome == .win {
-                CasinoChipRainView()
+                MoneyRainLottieView()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             } else {
                 ParticleEffectView(type: .rain)
             }
@@ -479,91 +482,25 @@ struct LeaderboardRowView: View {
     }
 }
 
-// MARK: - Casino Chip Rain
-struct CasinoChipRainView: View {
+// MARK: - Money Rain Lottie Animation
+struct MoneyRainLottieView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                ForEach(0..<30, id: \.self) { index in
-                    CasinoChipParticle(screenSize: geometry.size, index: index)
-                }
-            }
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-    }
-}
-
-struct CasinoChipParticle: View {
-    let screenSize: CGSize
-    let index: Int
-
-    @State private var position: CGPoint = .zero
-    @State private var rotation: Double = 0
-    @State private var opacity: Double = 0
-
-    private let chipColors: [Color] = [
-        BetBuddyTheme.accentGold,
-        BetBuddyTheme.accentEmerald,
-        BetBuddyTheme.accentRuby,
-        Color(red: 0.2, green: 0.4, blue: 0.8),
-        Color.purple
-    ]
-
-    private var chipColor: Color {
-        chipColors[index % chipColors.count]
-    }
-
-    private var size: CGFloat {
-        CGFloat.random(in: 20...35)
-    }
-
-    private var delay: Double {
-        Double(index) * 0.1
-    }
-
-    private var duration: Double {
-        Double.random(in: 3.0...5.0)
-    }
-
-    var body: some View {
-        ZStack {
-            // Chip base
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [chipColor, chipColor.opacity(0.7)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                // Mehrere Lottie-Animationen für volle Abdeckung
+                ForEach(0..<6, id: \.self) { index in
+                    LottieView(
+                        filename: "Money rain",
+                        loopMode: .loop,
+                        isPlaying: true,
+                        animationSpeed: 0.8 + Double(index % 3) * 0.1
                     )
-                )
-
-            // Chip ring
-            Circle()
-                .stroke(Color.white.opacity(0.4), lineWidth: 2)
-
-            // Inner detail
-            Circle()
-                .stroke(chipColor.opacity(0.5), lineWidth: 1)
-                .padding(4)
-        }
-        .frame(width: size, height: size)
-        .rotation3DEffect(.degrees(rotation), axis: (x: 1, y: 0.5, z: 0))
-        .position(position)
-        .opacity(opacity)
-        .onAppear {
-            let startX = CGFloat.random(in: 0...screenSize.width)
-            position = CGPoint(x: startX, y: -50)
-            opacity = 1.0
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
-                    position.y = screenSize.height + 100
-                    position.x += CGFloat.random(in: -50...50)
-                }
-
-                withAnimation(.linear(duration: 0.5).repeatForever(autoreverses: false)) {
-                    rotation = 360
+                        .frame(width: geometry.size.width * 0.6, height: geometry.size.height * 0.5)
+                        .offset(
+                            x: CGFloat(index % 3) * geometry.size.width * 0.35 - geometry.size.width * 0.15,
+                            y: CGFloat(index / 3) * geometry.size.height * 0.4
+                        )
+                        .opacity(0.9)
                 }
             }
         }

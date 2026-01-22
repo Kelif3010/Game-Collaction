@@ -15,6 +15,16 @@ struct LottieView: UIViewRepresentable {
     var loopMode: LoopMode = .loop
     var isPlaying: Bool = true
     var contentMode: UIView.ContentMode = .scaleAspectFit
+    var animationSpeed: CGFloat = 1.0
+
+    private var resolvedName: String {
+        let name = filename.replacingOccurrences(of: ".lottie", with: "")
+        return name.replacingOccurrences(of: ".json", with: "")
+    }
+
+    private var hasDotLottieResource: Bool {
+        Bundle.main.path(forResource: resolvedName, ofType: "lottie") != nil
+    }
     
     enum LoopMode {
         case playOnce
@@ -27,9 +37,12 @@ struct LottieView: UIViewRepresentable {
         view.backgroundColor = .clear
         
         #if canImport(Lottie)
-        let animationView = LottieAnimationView()
-        // Versucht die Datei zu laden
-        animationView.animation = LottieAnimation.named(filename)
+        let animationView: LottieAnimationView
+        if hasDotLottieResource {
+            animationView = LottieAnimationView(dotLottieName: resolvedName)
+        } else {
+            animationView = LottieAnimationView(name: resolvedName)
+        }
         animationView.contentMode = contentMode
         
         switch loopMode {
@@ -37,6 +50,7 @@ struct LottieView: UIViewRepresentable {
         case .loop: animationView.loopMode = .loop
         case .autoReverse: animationView.loopMode = .autoReverse
         }
+        animationView.animationSpeed = animationSpeed
         
         animationView.backgroundBehavior = .pauseAndRestore
         animationView.translatesAutoresizingMaskIntoConstraints = false
@@ -92,13 +106,9 @@ struct LottieView: UIViewRepresentable {
         #if canImport(Lottie)
         guard let animationView = uiView.subviews.first(where: { $0 is LottieAnimationView }) as? LottieAnimationView else { return }
         
-        // Animation aktualisieren, falls sie sich geändert hat
-        // Hinweis: LottieAnimation.named(filename) ist gecacht und sehr performant.
-        // Wir setzen sie hier erneut, damit der Wechsel von "selectedAnimation" 
-        // auch im UI ankommt.
+        animationView.animationSpeed = animationSpeed
         if isPlaying {
-            if animationView.animation == nil || !animationView.isAnimationPlaying {
-                animationView.animation = LottieAnimation.named(filename)
+            if !animationView.isAnimationPlaying {
                 animationView.play()
             }
         } else {

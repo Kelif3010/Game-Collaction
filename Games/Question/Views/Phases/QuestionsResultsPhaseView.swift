@@ -25,6 +25,7 @@ struct QuestionsResultsPhaseView: View {
         let liars = evaluation?.liars ?? viewModel.currentLiarIDs
         let isLiar = suspectID != nil && liars.contains(suspectID!)
         let citizensWon = evaluation?.citizensWon ?? false
+        let liarQuestionText = viewModel.currentRound?.promptPair.liarQuestion ?? "Unbekannt"
 
         // Stempel-Typ bestimmen
         let stampType: StampView.StampType
@@ -63,6 +64,7 @@ struct QuestionsResultsPhaseView: View {
                     // Die Akte
                     DossierView(
                         suspectName: suspectName,
+                        liarQuestion: liarQuestionText,
                         showName: revealStage >= 1,
                         showStamp: revealStage >= 2,
                         stampText: stampText,
@@ -215,6 +217,7 @@ private struct ScanningBar: View {
 // MARK: - Dossier (Akte) View
 private struct DossierView: View {
     let suspectName: String
+    let liarQuestion: String
     let showName: Bool
     let showStamp: Bool
     let stampText: String
@@ -285,19 +288,20 @@ private struct DossierView: View {
                         .foregroundStyle(QuestionsTheme.textMuted)
                         .tracking(2)
 
-                    // Typewriter-Name
                     HStack(spacing: 0) {
                         Text(displayedName)
-                            .font(.system(size: 32, weight: .bold, design: .monospaced))
-                            .foregroundStyle(QuestionsTheme.textTypewriter)
+                        .font(.system(size: 30, weight: .bold, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
 
                         if displayedName.count < suspectName.count {
                             Text("▌")
-                                .font(.system(size: 32, weight: .bold, design: .monospaced))
+                                .font(.system(size: 30, weight: .bold, design: .monospaced))
                                 .foregroundStyle(QuestionsTheme.accentGreen)
                                 .opacity(cursorVisible ? 1 : 0)
                         }
                     }
+                    .opacity(showName ? 1 : 0)
+                    .animation(.easeOut(duration: 0.3), value: showName)
                 }
 
                 // Status-Zeile
@@ -313,14 +317,44 @@ private struct DossierView: View {
                 }
                 .opacity(showStamp ? 1 : 0)
 
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("SPION-FRAGE:")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textMuted)
+                        .tracking(2)
+
+                    Text(LocalizedStringKey(liarQuestion))
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(QuestionsTheme.textTypewriter)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.black.opacity(0.18))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(QuestionsTheme.textMuted.opacity(0.2), lineWidth: 1)
+                        )
+                }
+
                 Spacer()
 
                 // Unterschrift-Linie
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Rectangle()
-                            .fill(QuestionsTheme.textMuted.opacity(0.3))
-                            .frame(width: 120, height: 1)
+                        ZStack(alignment: .leading) {
+                            Rectangle()
+                                .fill(QuestionsTheme.textMuted.opacity(0.3))
+                                .frame(width: 120, height: 1)
+                            Text("K. Prüfer")
+                                .font(.system(size: 11, design: .monospaced))
+                                .italic()
+                                .foregroundStyle(QuestionsTheme.textTypewriter.opacity(0.7))
+                                .offset(y: -8)
+                                .rotationEffect(.degrees(-2))
+                        }
                         Text("PRÜFER")
                             .font(.system(size: 8, design: .monospaced))
                             .foregroundStyle(QuestionsTheme.textMuted)
@@ -340,7 +374,7 @@ private struct DossierView: View {
                 StampView(text: stampText, type: stampType, rotation: stampRotation)
                     .scaleEffect(stampScale)
                     .opacity(stampOpacity)
-                    .offset(x: 40, y: 20)
+                    .offset(x: 40, y: -32)
             }
 
             // Büroklammer
@@ -353,6 +387,12 @@ private struct DossierView: View {
         .frame(width: 320, height: 380)
         .onChange(of: showName) { _, show in
             if show {
+                typewriterEffect()
+                startCursorBlink()
+            }
+        }
+        .onAppear {
+            if showName && displayedName.isEmpty {
                 typewriterEffect()
                 startCursorBlink()
             }
@@ -493,4 +533,3 @@ private struct ResultsFooterView: View {
         }
     }
 }
-

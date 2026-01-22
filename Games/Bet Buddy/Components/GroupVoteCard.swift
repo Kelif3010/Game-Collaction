@@ -1,4 +1,5 @@
 import SwiftUI
+import Lottie
 
 struct GroupVoteCard: View {
     let group: GroupInfo
@@ -10,6 +11,8 @@ struct GroupVoteCard: View {
 
     @State private var animate = false
     @State private var chipPulse = false
+    @State private var showCoinAnimation = false
+    @State private var coinAnimationID = UUID()
 
     var body: some View {
         ZStack {
@@ -37,6 +40,13 @@ struct GroupVoteCard: View {
                 // Chip-Stack Indicator
                 chipIndicator
                     .padding(.bottom, 14)
+            }
+
+            // Coin Fall Animation Overlay
+            if showCoinAnimation {
+                CoinFallAnimationView()
+                    .id(coinAnimationID)
+                    .allowsHitTesting(false)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 170)
@@ -202,6 +212,16 @@ struct GroupVoteCard: View {
                 guard !locked else { return }
                 onIncrement()
                 HapticsService.impact(.medium)
+
+                // Trigger coin animation
+                coinAnimationID = UUID()
+                showCoinAnimation = true
+
+                // Reset animation after it plays
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    showCoinAnimation = false
+                }
+
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
                     animate.toggle()
                 }
@@ -270,5 +290,18 @@ struct GroupVoteCard: View {
                 .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(BetBuddyTheme.accentEmerald.opacity(0.6))
         }
+    }
+}
+
+// MARK: - Coin Fall Animation
+struct CoinFallAnimationView: View {
+    var body: some View {
+        LottieView(
+            filename: "3D coin flip",
+            loopMode: .playOnce,
+            isPlaying: true,
+            animationSpeed: 1.2
+        )
+            .frame(width: 120, height: 120)
     }
 }
