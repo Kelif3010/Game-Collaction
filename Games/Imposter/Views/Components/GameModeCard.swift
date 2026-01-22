@@ -10,31 +10,34 @@ import SwiftUI
 struct GameModeCard: View {
     let mode: ImposterGameMode
     let isSelected: Bool
-    @Environment(\.colorScheme) var colorScheme
-    
+
+    // Imposter Theme Colors
+    private let accentPrimary = Color(red: 1.0, green: 0.41, blue: 0.23)
+    private let accentSecondary = Color(red: 0.94, green: 0.16, blue: 0.47)
+
     var body: some View {
         HStack(spacing: 12) {
             // Icon
             Image(systemName: mode.icon)
                 .font(.title2)
-                .foregroundColor(isSelected ? .white : .purple)
+                .foregroundColor(isSelected ? .white : accentPrimary)
                 .frame(width: 30)
-            
+
             // Inhalt
             VStack(alignment: .leading, spacing: 4) {
                 Text(mode.displayName)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(isSelected ? .white : .primary)
-                
+                    .foregroundColor(.white)
+
                 Text(mode.description)
                     .font(.caption)
-                    .foregroundColor(isSelected ? .white.opacity(0.9) : .secondary)
+                    .foregroundColor(isSelected ? .white.opacity(0.9) : .white.opacity(0.6))
                     .multilineTextAlignment(.leading)
             }
-            
+
             Spacer()
-            
+
             // Auswahl-Indikator
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
@@ -42,26 +45,26 @@ struct GameModeCard: View {
                     .foregroundColor(.white)
             } else {
                 Circle()
-                    .strokeBorder(Color.purple.opacity(0.5), lineWidth: 2)
+                    .strokeBorder(accentPrimary.opacity(0.5), lineWidth: 2)
                     .frame(width: 24, height: 24)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: ImposterStyle.rowCornerRadius)
                 .fill(
-                    isSelected ?
-                        LinearGradient(colors: [.purple, .purple.opacity(0.8)], startPoint: .leading, endPoint: .trailing) :
-                        LinearGradient(colors: [Color(.systemGray6), Color(.systemGray6)], startPoint: .leading, endPoint: .trailing)
+                    isSelected
+                        ? ImposterStyle.primaryGradient
+                        : LinearGradient(colors: [ImposterStyle.rowBackground, ImposterStyle.rowBackground], startPoint: .leading, endPoint: .trailing)
                 )
-                .shadow(color: .black.opacity(isSelected ? 0.3 : 0.1), radius: isSelected ? 5 : 2, x: 0, y: isSelected ? 3 : 1)
+                .shadow(color: isSelected ? accentSecondary.opacity(0.4) : .black.opacity(0.2), radius: isSelected ? 8 : 4, x: 0, y: isSelected ? 4 : 2)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: ImposterStyle.rowCornerRadius)
                 .stroke(
-                    isSelected ? Color.clear : Color.purple.opacity(0.3),
-                    lineWidth: isSelected ? 0 : 1
+                    isSelected ? Color.clear : accentPrimary.opacity(0.25),
+                    lineWidth: 1
                 )
         )
         .scaleEffect(isSelected ? 1.02 : 1.0)
@@ -75,11 +78,5 @@ struct GameModeCard: View {
         GameModeCard(mode: .twoWords, isSelected: false)
     }
     .padding(20)
-    .background(
-        LinearGradient(
-            colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    )
+    .background(ImposterStyle.backgroundGradient)
 }

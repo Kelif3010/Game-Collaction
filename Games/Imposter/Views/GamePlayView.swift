@@ -624,46 +624,50 @@ struct MultiplayerWaitingView: View {
     }
 }
 
-// MARK: - Game Header View (Modern HUD)
+// MARK: - Game Header View (Spy/Terminal HUD)
 struct ImposterGameHeaderView: View {
     @EnvironmentObject var gameSettings: GameSettings
 
     private var isMultiplayerActive: Bool {
         MultipeerManager.shared.role != .unknown
     }
-    
+
     var body: some View {
         HStack {
-            // Links: Bedrohungs-Level (Spione)
+            // Links: Agenten-Bedrohungslevel
             if !gameSettings.randomSpyCount {
                 HStack(spacing: 8) {
                     ZStack {
-                        Circle()
-                            .fill(Color.red.opacity(0.2))
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(ImposterStyle.spyRed.opacity(0.2))
                             .frame(width: 32, height: 32)
-                        Image(systemName: "eye.slash.fill")
-                            .font(.caption.bold())
-                            .foregroundColor(.red)
+                        Image(systemName: "person.fill.viewfinder")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(ImposterStyle.spyRed)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(gameSettings.numberOfImposters)")
-                            .font(.system(size: 14, weight: .black))
+                            .font(.system(size: 14, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
-                        Text(gameSettings.numberOfImposters == 1 ? "SPION" : "SPIONE")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white.opacity(0.6))
+                        Text(gameSettings.numberOfImposters == 1 ? "AGENT" : "AGENTEN")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .tracking(1)
+                            .foregroundColor(ImposterStyle.spyRed.opacity(0.8))
                     }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .background(Color.black.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(ImposterStyle.spyRed.opacity(0.3), lineWidth: 1)
+                )
             }
-            
+
             Spacer()
-            
+
             // Rechts: Fortschritt (Runde)
             if gameSettings.gamePhase == .cardReveal && !isMultiplayerActive {
                 HStack(spacing: 8) {
@@ -671,20 +675,22 @@ struct ImposterGameHeaderView: View {
                         Text("\(gameSettings.currentPlayerIndex + 1)/\(gameSettings.players.count)")
                             .font(.system(size: 14, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
-                        Text("VERTEILT")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white.opacity(0.6))
+                        Text("DOSSIERS")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .tracking(1)
+                            .foregroundColor(.white.opacity(0.5))
                     }
-                    
+
+                    // Progress Ring
                     ZStack {
                         Circle()
                             .stroke(Color.white.opacity(0.1), lineWidth: 3)
                             .frame(width: 24, height: 24)
-                        
+
                         let progress = Double(gameSettings.currentPlayerIndex + 1) / Double(max(1, gameSettings.players.count))
                         Circle()
                             .trim(from: 0, to: progress)
-                            .stroke(Color.blue, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .stroke(ImposterStyle.terminalAmber, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                             .frame(width: 24, height: 24)
                             .rotationEffect(.degrees(-90))
                             .animation(.spring(), value: progress)
@@ -692,9 +698,12 @@ struct ImposterGameHeaderView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .background(Color.black.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
             }
         }
         .padding(.horizontal, 20)
@@ -790,13 +799,17 @@ struct StartingPlayerAnnouncementView: View {
 struct GameTimerView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @EnvironmentObject var gameLogic: GameLogic
-    
+
     @State private var showVotingView = false
     @State private var showWordGuessingView = false
     @State private var showWordGuessConfirm = false
     @State private var startWordGuessImmediateWin = false
     @State private var wasTimerPausedBeforeWordGuess = false
     @State private var showSelfCard = false
+
+    // Kritische Zeit Animation States
+    @State private var criticalPulse = false
+    @State private var criticalGlow = false
 
     private var isHostOrLocal: Bool {
         let role = MultipeerManager.shared.role
@@ -813,104 +826,183 @@ struct GameTimerView: View {
         guard let category = gameSettings.roundCategory ?? gameSettings.selectedCategory else { return nil }
         return GameCard(player: player, category: category)
     }
-    
+
+    // Kritische Zeit Schwellwerte
+    private var isCriticalTime: Bool {
+        gameSettings.timeRemaining <= 30 && !gameSettings.isTimerPaused
+    }
+
+    private var isWarningTime: Bool {
+        gameSettings.timeRemaining <= 60 && gameSettings.timeRemaining > 30
+    }
+
+    private var timerColor: Color {
+        if isCriticalTime {
+            return ImposterStyle.spyRed
+        } else if isWarningTime {
+            return ImposterStyle.terminalAmber
+        }
+        return .white
+    }
+
     var body: some View {
-        VStack(spacing: 40) {
-            
-            Spacer()
-            
-            // 1. TIMER & PAUSE CONTROL (Zentrales Element)
-            VStack(spacing: 20) {
-                // Timer Circle mit Pause-Indikator
-                ZStack {
-                    // Pulsierender Ring wenn aktiv
-                    if !gameSettings.isTimerPaused {
-                        Circle()
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                            .frame(width: 260, height: 260)
-                            .scaleEffect(1.1)
-                            .opacity(0.5)
-                            .animation(.easeInOut(duration: 1).repeatForever(), value: gameSettings.isTimerPaused)
-                    }
-                    
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 240, height: 240)
-                        .shadow(color: .black.opacity(0.3), radius: 20)
-                    
-                    VStack(spacing: 4) {
-                        Text(timeString)
-                            .font(.system(size: 70, weight: .heavy, design: .monospaced))
-                            .foregroundStyle(gameSettings.timeRemaining <= 60 ? .red : .white)
-                            .contentTransition(.numericText())
-                        
-                        Text(gameSettings.isTimerPaused ? "PAUSIERT" : "LÄUFT")
-                            .font(.caption.bold())
-                            .tracking(2)
-                            .foregroundStyle(gameSettings.isTimerPaused ? .orange : .green)
-                    }
-                }
-                .onTapGesture {
-                    togglePause()
-                }
-                
-                // Kleiner Hinweis
-                if isHostOrLocal {
-                    Text("Tippen zum Pausieren")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.4))
-                }
-            }
-            
-            Spacer()
-            
-            // 2. ACTION BUTTONS (Vertikal statt Grid)
-            VStack(spacing: 16) {
-                if isGuest {
-                    GameControlBtn(
-                        title: "Karte sehen",
-                        subtitle: "Deine Rolle & Hinweise",
-                        icon: "person.text.rectangle",
-                        color: Color.teal,
-                        isEnabled: true,
-                        action: {
-                            showSelfCard = true
-                        }
+        ZStack {
+            // Scanlines Overlay für Terminal-Effekt
+            ScanlineOverlay(lineSpacing: 4, opacity: 0.03)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // MARK: - Header: Mission Status
+                HStack {
+                    MissionStatusIndicator(
+                        status: gameSettings.isTimerPaused ? "Pausiert" : "Aktiv",
+                        isActive: !gameSettings.isTimerPaused,
+                        activeColor: isCriticalTime ? ImposterStyle.spyRed : ImposterStyle.terminalAmber
                     )
-                } else {
-                    // Abstimmen Button
-                    GameControlBtn(
-                        title: "Jetzt Abstimmen",
-                        subtitle: "Verdächtigen wählen",
-                        icon: "hand.point.up.left.fill",
-                        color: Color.blue,
-                        isEnabled: isHostOrLocal,
-                        action: {
-                            if isHostOrLocal {
-                                if MultipeerManager.shared.role == .host {
-                                    gameLogic.startMultiplayerVoting()
-                                } else {
-                                    showVotingView = true
-                                }
+
+                    Spacer()
+
+                    ClassifiedBadge(
+                        text: isCriticalTime ? "KRITISCH" : "GEHEIM",
+                        color: isCriticalTime ? ImposterStyle.spyRed : ImposterStyle.spyRed.opacity(0.7)
+                    )
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+
+                Spacer()
+
+                // MARK: - Timer Display (Terminal Style)
+                VStack(spacing: 24) {
+                    // Timer Container
+                    ZStack {
+                        // Äußerer Rahmen mit Glow bei kritischer Zeit
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.7))
+                            .frame(width: 280, height: 160)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        isCriticalTime ? ImposterStyle.spyRed.opacity(0.8) :
+                                            (isWarningTime ? ImposterStyle.terminalAmber.opacity(0.5) : Color.white.opacity(0.15)),
+                                        lineWidth: isCriticalTime ? 2 : 1
+                                    )
+                            )
+                            .shadow(color: isCriticalTime ? ImposterStyle.spyRed.opacity(0.4) : .clear, radius: 20)
+
+                        // Inner Scanlines
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.clear)
+                            .frame(width: 280, height: 160)
+                            .overlay(
+                                ScanlineOverlay(lineSpacing: 3, opacity: 0.06)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                            )
+
+                        VStack(spacing: 8) {
+                            // Zeit Label
+                            Text("VERBLEIBENDE ZEIT")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .tracking(3)
+                                .foregroundColor(Color.white.opacity(0.4))
+
+                            // Timer
+                            Text(timeString)
+                                .font(.system(size: 64, weight: .bold, design: .monospaced))
+                                .foregroundStyle(timerColor)
+                                .contentTransition(.numericText())
+                                .scaleEffect(isCriticalTime && criticalPulse ? 1.03 : 1.0)
+                                .shadow(color: isCriticalTime ? ImposterStyle.spyRed.opacity(0.5) : .clear, radius: 10)
+
+                            // Status
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(gameSettings.isTimerPaused ? ImposterStyle.terminalAmber : (isCriticalTime ? ImposterStyle.spyRed : Color.green))
+                                    .frame(width: 6, height: 6)
+
+                                Text(gameSettings.isTimerPaused ? "MISSION PAUSIERT" : (isCriticalTime ? "ZEIT KRITISCH" : "MISSION LÄUFT"))
+                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                    .tracking(1)
+                                    .foregroundColor(gameSettings.isTimerPaused ? ImposterStyle.terminalAmber : (isCriticalTime ? ImposterStyle.spyRed : Color.green.opacity(0.8)))
                             }
                         }
-                    )
-                    
-                    // Wort lösen Button
-                    GameControlBtn(
-                        title: "Wort lösen",
-                        subtitle: "Nur für Spione",
-                        icon: "lightbulb.max.fill",
-                        color: Color.orange,
-                        isEnabled: isHostOrLocal,
-                        action: {
-                            if isHostOrLocal { showWordGuessConfirm = true }
+                    }
+                    .onTapGesture {
+                        togglePause()
+                    }
+                    .onChange(of: isCriticalTime) { _, newValue in
+                        if newValue {
+                            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                                criticalPulse = true
+                            }
+                            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                                criticalGlow = true
+                            }
+                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                        } else {
+                            criticalPulse = false
+                            criticalGlow = false
                         }
-                    )
+                    }
+
+                    // Pause-Hinweis
+                    if isHostOrLocal {
+                        Text(isCriticalTime ? "⚠ ZEITDRUCK" : "[ ANTIPPEN ZUM PAUSIEREN ]")
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .tracking(1)
+                            .foregroundStyle(isCriticalTime ? ImposterStyle.spyRed.opacity(0.7) : Color.white.opacity(0.3))
+                    }
                 }
+
+                Spacer()
+
+                // MARK: - Action Buttons (Spy-Terminologie)
+                VStack(spacing: 14) {
+                    if isGuest {
+                        SpyActionButton(
+                            title: "DOSSIER EINSEHEN",
+                            subtitle: "Deine Rolle & Hinweise",
+                            icon: "doc.text.magnifyingglass",
+                            style: .secondary,
+                            action: {
+                                showSelfCard = true
+                            }
+                        )
+                    } else {
+                        // Abstimmung einleiten
+                        SpyActionButton(
+                            title: "ABSTIMMUNG EINLEITEN",
+                            subtitle: "Verdächtigen identifizieren",
+                            icon: "target",
+                            style: .primary,
+                            isEnabled: isHostOrLocal,
+                            action: {
+                                if isHostOrLocal {
+                                    if MultipeerManager.shared.role == .host {
+                                        gameLogic.startMultiplayerVoting()
+                                    } else {
+                                        showVotingView = true
+                                    }
+                                }
+                            }
+                        )
+
+                        // Wort kompromittieren
+                        SpyActionButton(
+                            title: "INTEL KOMPROMITTIEREN",
+                            subtitle: "Nur für Agenten",
+                            icon: "key.fill",
+                            style: .danger,
+                            isEnabled: isHostOrLocal,
+                            action: {
+                                if isHostOrLocal { showWordGuessConfirm = true }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 30)
             }
-            .padding(.horizontal, 30)
-            .padding(.bottom, 40)
         }
         // Modals
         .sheet(isPresented: $showVotingView) {
@@ -1076,6 +1168,90 @@ struct GameControlBtn: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.6)
+    }
+}
+
+// MARK: - Spy Action Button (Terminal/Geheimdienst Style)
+struct SpyActionButton: View {
+    enum Style {
+        case primary    // Rot - Hauptaktion
+        case secondary  // Grau - Sekundär
+        case danger     // Orange - Gefährliche Aktion
+    }
+
+    let title: String
+    let subtitle: String
+    let icon: String
+    var style: Style = .primary
+    var isEnabled: Bool = true
+    let action: () -> Void
+
+    private var accentColor: Color {
+        switch style {
+        case .primary: return ImposterStyle.spyRed
+        case .secondary: return Color.white.opacity(0.6)
+        case .danger: return ImposterStyle.terminalAmber
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch style {
+        case .primary: return ImposterStyle.spyRed.opacity(0.15)
+        case .secondary: return Color.white.opacity(0.05)
+        case .danger: return ImposterStyle.terminalAmber.opacity(0.1)
+        }
+    }
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 16) {
+                // Icon Container
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(accentColor.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(accentColor)
+                }
+
+                // Text
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .tracking(0.5)
+                        .foregroundColor(.white)
+
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+
+                Spacer()
+
+                // Arrow
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(accentColor.opacity(0.6))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(backgroundColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(accentColor.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.5)
     }
 }
 

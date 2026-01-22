@@ -208,27 +208,20 @@ struct VotingView: View {
     @ToolbarContentBuilder
     private var votingToolbar: some ToolbarContent {
         ToolbarItem(placement: .principal) {
-            VStack(spacing: 2) {
-                Text("Abstimmung")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.red, .orange],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .shadow(color: .red.opacity(0.2), radius: 2, y: 1)
+            VStack(spacing: 4) {
+                Text("ABSTIMMUNG")
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .tracking(2)
+                    .foregroundColor(ImposterStyle.spyRed)
 
                 if isMultiplayer {
-                    Text("\(votesReceivedCount)/\(totalVotersCount) Stimmen")
-                        .font(.caption2.bold())
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("\(votesReceivedCount)/\(totalVotersCount) STIMMEN")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5))
                 }
             }
         }
 
-        // MARK: - Punkt 1: Schließen Button (X) oben rechts
         if !votingManager.showResults {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -358,57 +351,65 @@ struct VotingView: View {
     }
 }
 
-// MARK: - Aktive Abstimmung
+// MARK: - Aktive Abstimmung (Spy-Theme)
 struct VotingActiveView: View {
     @ObservedObject var votingManager: VotingManager
     let gameSettings: GameSettings
     let isMultiplayer: Bool
     let maxSelections: Int
     let onVoteSubmitted: () -> Void
-    
+
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color.black,
-                    Color.red.opacity(0.1),
-                    Color.black
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+            // Background
+            Color.black.ignoresSafeArea()
+
+            // Subtle red gradient
+            RadialGradient(
+                colors: [ImposterStyle.spyRed.opacity(0.1), Color.black],
+                center: .top,
+                startRadius: 100,
+                endRadius: 500
             )
             .ignoresSafeArea()
-            
+
+            // Scanlines
+            ScanlineOverlay(lineSpacing: 4, opacity: 0.025)
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                
-                // Fixierter Header Bereich
-                VStack(spacing: 6) {
-                    Text(isMultiplayer ? "Wen verdächtigst du?" : "Wer ist der Imposter?")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
+                // Header
+                VStack(spacing: 10) {
+                    // Title with badge
+                    HStack {
+                        Spacer()
+                        ClassifiedBadge(text: "ABSTIMMUNG", color: ImposterStyle.spyRed)
+                        Spacer()
+                    }
+
+                    Text(isMultiplayer ? "WEN VERDÄCHTIGST DU?" : "WER IST DER AGENT?")
+                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .tracking(1)
                         .foregroundColor(.white)
-                    
-                    Text(isMultiplayer 
-                         ? "Deine Stimme bleibt geheim, bis alle gewählt haben."
-                         : "Besprecht in der Gruppe und stimmt für die Eliminierung von genau einem Spieler ab.")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
                         .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 20)
+
+                    Text(isMultiplayer
+                         ? "Deine Stimme bleibt geheim bis alle gewählt haben."
+                         : "Wählt gemeinsam einen Verdächtigen zur Eliminierung.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
                 }
-                .padding(.top, 20)
+                .padding(.top, 16)
                 .padding(.bottom, 20)
-                .background(Color.black.opacity(0.01))
-                
-                // Scrollbarer Bereich
+
+                // Player Grid
                 ScrollView {
                     LazyVGrid(columns: [
-                        GridItem(.flexible(), spacing: 16),
-                        GridItem(.flexible(), spacing: 16)
-                    ], spacing: 16) {
-                        // Im Multiplayer kann man sich selbst nicht wählen (optional, hier erlaubt)
+                        GridItem(.flexible(), spacing: 14),
+                        GridItem(.flexible(), spacing: 14)
+                    ], spacing: 14) {
                         ForEach(gameSettings.players.filter { !votingManager.foundSpies.contains($0.id) }) { player in
                             let voteCount = isMultiplayer ? (gameSettings.multiplayerVoteTally[player.name] ?? 0) : 0
                             VotingPlayerCard(
@@ -426,90 +427,105 @@ struct VotingActiveView: View {
                 }
             }
         }
-        // Button bleibt unten fixiert
+        // Bottom Button
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 10) {
-                Button {
-                    onVoteSubmitted()
-                } label: {
-                    Text(isMultiplayer ? "Meine Stimme abgeben" : "Abstimmen")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .foregroundColor(.white)
-                        .background(
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.red, Color.red.opacity(0.85)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .shadow(color: .red.opacity(0.4), radius: 10, y: 5)
-                        )
-                }
-                .disabled(!votingManager.canVote)
-                .opacity(votingManager.canVote ? 1.0 : 0.6)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+            VStack(spacing: 0) {
+                SpyActionButton(
+                    title: isMultiplayer ? "STIMME ABGEBEN" : "ABSTIMMEN",
+                    subtitle: votingManager.canVote ? "Auswahl bestätigen" : "Wähle einen Verdächtigen",
+                    icon: "checkmark.seal.fill",
+                    style: .primary,
+                    isEnabled: votingManager.canVote,
+                    action: { onVoteSubmitted() }
+                )
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
             }
-            .padding(.top, 8)
+            .padding(.top, 12)
             .background(
-                LinearGradient(colors: [.black.opacity(0), .black.opacity(0.8), .black], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [.black.opacity(0), .black.opacity(0.95), .black], startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
             )
         }
     }
 }
 
-// MARK: - Multiplayer Warte Screen
+// MARK: - Multiplayer Warte Screen (Spy-Theme)
 struct MultiplayerVotingWaitView: View {
     let votesReceived: Int
     let totalVoters: Int
-    
+
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            ZStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                    .frame(width: 140, height: 140)
-                
-                Circle()
-                    .trim(from: 0, to: totalVoters > 0 ? CGFloat(votesReceived) / CGFloat(totalVoters) : 0)
-                    .stroke(Color.red, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 140, height: 140)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.spring(), value: votesReceived)
-                
-                VStack {
-                    Text("\(votesReceived)/\(totalVoters)")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            // Scanlines
+            ScanlineOverlay(lineSpacing: 4, opacity: 0.03)
+                .ignoresSafeArea()
+
+            VStack(spacing: 40) {
+                Spacer()
+
+                // Status Badge
+                ClassifiedBadge(text: "ÜBERTRAGUNG", color: ImposterStyle.terminalAmber)
+
+                // Progress Ring
+                ZStack {
+                    // Outer ring
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 6)
+                        .frame(width: 140, height: 140)
+
+                    // Progress
+                    Circle()
+                        .trim(from: 0, to: totalVoters > 0 ? CGFloat(votesReceived) / CGFloat(totalVoters) : 0)
+                        .stroke(ImposterStyle.spyRed, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .frame(width: 140, height: 140)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.spring(), value: votesReceived)
+
+                    // Inner content
+                    VStack(spacing: 4) {
+                        Text("\(votesReceived)/\(totalVoters)")
+                            .font(.system(size: 32, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+
+                        Text("STIMMEN")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .tracking(2)
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                }
+
+                // Text
+                VStack(spacing: 12) {
+                    Text("STIMME REGISTRIERT")
+                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .tracking(2)
                         .foregroundColor(.white)
-                    Text("STIMMEN")
-                        .font(.caption.bold())
+
+                    Text("Warte auf Ergebnis der Gruppe...")
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
                 }
+
+                Spacer()
+
+                // Animated dots
+                HStack(spacing: 8) {
+                    ForEach(0..<3, id: \.self) { index in
+                        Circle()
+                            .fill(ImposterStyle.spyRed.opacity(0.6))
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                .padding(.bottom, 40)
             }
-            
-            Text("Stimme akzeptiert")
-                .font(.title2.bold())
-                .foregroundColor(.white)
-            
-            Text("Warte auf das Ergebnis der Gruppe...")
-                .font(.body)
-                .foregroundColor(.white.opacity(0.6))
-            
-            Spacer()
         }
-        .background(Color.black.opacity(0.8))
     }
 }
 
-// MARK: - Spieler-Karte für Abstimmung
+// MARK: - Spieler-Karte für Abstimmung (Spy-Theme)
 struct VotingPlayerCard: View {
     let player: Player
     @ObservedObject var votingManager: VotingManager
@@ -518,146 +534,126 @@ struct VotingPlayerCard: View {
     let voteCount: Int
     let showVoteCount: Bool
     @State private var isPressed = false
-    
+
     private var isSelected: Bool {
         votingManager.selectedPlayers.contains(player.id)
     }
-    
+
     private var isSpyAlreadyFound: Bool {
         votingManager.foundSpies.contains(player.id)
     }
-    
+
     private var canBeSelected: Bool {
         if isSpyAlreadyFound { return false }
         if isSelected { return true }
-        if maxSelections <= 1 {
-            return true
-        }
+        if maxSelections <= 1 { return true }
         return votingManager.selectedPlayers.count < maxSelections
     }
-    
-    private var circleGradientColors: [Color] {
-        if isSpyAlreadyFound {
-            return [Color.green, Color.green.opacity(0.7)]
-        } else if isSelected {
-            return [Color.red, Color.red.opacity(0.7)]
-        } else {
-            return [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
-        }
-    }
 
-    private var circleShadowColor: Color {
-        if isSelected { return .red.opacity(0.5) }
-        if isSpyAlreadyFound { return .green.opacity(0.5) }
-        return .clear
-    }
-
-    private var strokeColor: Color {
+    private var accentColor: Color {
         if isSpyAlreadyFound { return .green }
-        if isSelected { return .red }
-        return Color.white.opacity(0.3)
+        if isSelected { return ImposterStyle.spyRed }
+        return Color.white.opacity(0.4)
     }
 
-    private var strokeLineWidth: CGFloat {
-        (isSelected || isSpyAlreadyFound) ? 2 : 1
+    private var backgroundColor: Color {
+        if isSelected { return ImposterStyle.spyRed.opacity(0.15) }
+        if isSpyAlreadyFound { return Color.green.opacity(0.1) }
+        return Color.white.opacity(0.05)
     }
 
-    private var cardShadowColor: Color {
-        if isSelected { return Color.red.opacity(0.35) }
-        if isSpyAlreadyFound { return Color.green.opacity(0.35) }
-        return Color.black.opacity(0.2)
-    }
-
-    private var cardShadowRadius: CGFloat { (isSelected || isSpyAlreadyFound) ? 10 : 6 }
-    private var cardShadowY: CGFloat { (isSelected || isSpyAlreadyFound) ? 6 : 4 }
-    private var circleShadowRadius: CGFloat { (isSelected || isSpyAlreadyFound) ? 8 : 0 }
-    private var circleShadowY: CGFloat { (isSelected || isSpyAlreadyFound) ? 4 : 0 }
-
-    @ViewBuilder
-    private var avatarView: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: circleGradientColors,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 72, height: 72)
-                .shadow(color: circleShadowColor, radius: circleShadowRadius, y: circleShadowY)
-
-            if isSpyAlreadyFound {
-                Image(systemName: "checkmark")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.green)
-            } else {
-                Text(String(player.name.prefix(1)).uppercased())
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-            }
-        }
-    }
-    
     var body: some View {
         Button(action: {
             if canBeSelected {
-                // Schweres haptisches Feedback für die "schwerwiegende" Entscheidung
                 ImposterHapticsManager.shared.playHeavyThud()
-                
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                     votingManager.togglePlayerSelection(player.id, maxSelections: maxSelections)
                 }
             }
         }) {
             ZStack(alignment: .topTrailing) {
-                VStack(spacing: 12) {
-                    avatarView
+                VStack(spacing: 0) {
+                    // Header strip
+                    HStack {
+                        Text("VERDÄCHTIG")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .tracking(1)
+                            .foregroundColor(isSelected ? ImposterStyle.spyRed : .white.opacity(0.3))
 
-                    Text(player.name)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        Spacer()
+
+                        if isSelected {
+                            Image(systemName: "target")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(ImposterStyle.spyRed)
+                        } else if isSpyAlreadyFound {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.green)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(accentColor.opacity(0.1))
+
+                    // Content
+                    VStack(spacing: 10) {
+                        // Avatar
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(accentColor.opacity(0.15))
+                                .frame(width: 56, height: 56)
+
+                            if isSpyAlreadyFound {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.green)
+                            } else {
+                                Text(String(player.name.prefix(1)).uppercased())
+                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.white)
+                            }
+                        }
+
+                        // Name
+                        Text(player.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 12)
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, minHeight: 140)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.1))
-                )
+                .frame(maxWidth: .infinity, minHeight: 130)
+                .background(backgroundColor)
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(strokeColor, lineWidth: strokeLineWidth)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(accentColor.opacity(isSelected ? 0.6 : 0.2), lineWidth: isSelected ? 2 : 1)
                 )
-                .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
                 .scaleEffect(isPressed ? 0.97 : 1.0)
-                .animation(.easeInOut(duration: 0.12), value: isPressed)
+                .animation(.easeInOut(duration: 0.1), value: isPressed)
 
-                if showVoteCount {
+                // Vote count badge
+                if showVoteCount && voteCount > 0 {
                     Text("\(voteCount)")
-                        .font(.caption.bold())
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                         .padding(6)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(ImposterStyle.spyRed)
                         )
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .padding(10)
+                        .padding(8)
                 }
             }
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(!canBeSelected)
+        .opacity(canBeSelected ? 1 : 0.5)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.12)) {
+            withAnimation(.easeInOut(duration: 0.1)) {
                 isPressed = pressing
             }
         }, perform: {})

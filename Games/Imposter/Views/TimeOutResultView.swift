@@ -3,6 +3,7 @@
 //  Imposter
 //
 //  Created by Ken on 06.01.2026.
+//  Redesigned for Premium Spy-Theme on 2026-01-22
 //
 
 import SwiftUI
@@ -12,11 +13,11 @@ struct TimeOutResultView: View {
     @EnvironmentObject var gameSettings: GameSettings
     @EnvironmentObject var gameLogic: GameLogic
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var showContent = false
-    @State private var showStamp = false
-    
-    // Logic Reuse
+    @State private var showBadge = false
+
+    // Logic
     private var isMultiplayer: Bool {
         MultipeerManager.shared.role != .unknown
     }
@@ -33,206 +34,220 @@ struct TimeOutResultView: View {
         }
         return false
     }
-    
-    // Theme Config (Time Out is ALWAYS Spy Win)
+
+    // Theme (Time Out = Spy Win)
     private var theme: ResultTheme {
         if isMultiplayer && !localPlayerIsSpy {
-            // Citizen perspective: FAILURE
+            // Citizen: FAILURE
             return ResultTheme(
                 title: "ZEIT ABGELAUFEN",
-                subtitle: "Die Spione konnten nicht rechtzeitig identifiziert werden. Das System ist gefallen.",
-                stampText: "VERSAGT",
-                icon: "hourglass.bottomhalf.filled",
-                color: .red,
-                isGlitchy: true
+                subtitle: "Die Agenten konnten nicht rechtzeitig identifiziert werden.",
+                badgeText: "TIMEOUT",
+                icon: "clock.badge.xmark.fill",
+                accentColor: ImposterStyle.spyRed,
+                isVictory: false
             )
         } else {
-            // Spy perspective (or Shared): VICTORY
+            // Spy (or Single Device): VICTORY
             return ResultTheme(
                 title: "MISSION ERFOLGREICH",
-                subtitle: "Die Zeit hat für uns gespielt. Perfekte Tarnung.",
-                stampText: "GEWONNEN",
-                icon: "hourglass.tophalf.filled", // Or something cooler
-                color: .red,
-                isGlitchy: false
+                subtitle: "Die Zeit hat für euch gespielt. Perfekte Tarnung.",
+                badgeText: "ERFOLG",
+                icon: "clock.badge.checkmark.fill",
+                accentColor: ImposterStyle.terminalAmber,
+                isVictory: true
             )
         }
     }
-    
+
     struct ResultTheme {
         let title: String
         let subtitle: String
-        let stampText: String
+        let badgeText: String
         let icon: String
-        let color: Color
-        let isGlitchy: Bool
+        let accentColor: Color
+        let isVictory: Bool
     }
-    
+
     var body: some View {
         ZStack {
+            // Background
             Color.black.ignoresSafeArea()
-            
-            // BG
-            if theme.isGlitchy {
-                LinearGradient(colors: [.black, theme.color.opacity(0.2), .black], startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea()
-            } else {
-                RadialGradient(colors: [theme.color.opacity(0.3), .black], center: .center, startRadius: 5, endRadius: 500)
-                    .ignoresSafeArea()
-            }
-            
+
+            // Subtle gradient
+            RadialGradient(
+                colors: [theme.accentColor.opacity(0.15), Color.black],
+                center: .center,
+                startRadius: 50,
+                endRadius: 400
+            )
+            .ignoresSafeArea()
+
+            // Scanlines
+            ScanlineOverlay(lineSpacing: 4, opacity: 0.025)
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Header
+                // Top Status Bar
                 HStack {
-                    Text("STATUS // TIMEOUT")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(theme.color.opacity(0.8))
-                        .padding(8)
-                        .background(theme.color.opacity(0.1))
-                        .cornerRadius(4)
+                    MissionStatusIndicator(
+                        status: "Timeout",
+                        isActive: true,
+                        activeColor: theme.accentColor
+                    )
+
+                    Spacer()
+
+                    ClassifiedBadge(
+                        text: theme.badgeText,
+                        color: theme.accentColor
+                    )
+                    .scaleEffect(showBadge ? 1 : 0.8)
+                    .opacity(showBadge ? 1 : 0)
                 }
+                .padding(.horizontal, 24)
                 .padding(.top, 20)
-                
+
                 Spacer()
-                
-                // Icon Area
-                ZStack {
-                    Image(systemName: theme.icon)
-                        .font(.system(size: 100))
-                        .foregroundColor(theme.color.opacity(0.2))
-                        .blur(radius: 20)
-                    
-                    Image(systemName: theme.icon)
-                        .font(.system(size: 90))
-                        .foregroundColor(theme.color)
-                        .shadow(color: theme.color.opacity(0.8), radius: 30)
-                        .glitchEffect(intensity: 2.0, active: theme.isGlitchy)
-                    
-                    if showStamp {
-                        Text(theme.stampText)
-                            .font(.system(size: 42, weight: .black, design: .rounded))
-                            .foregroundColor(theme.color)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(theme.color, lineWidth: 8)
-                            )
-                            .background(Color.black.opacity(0.6))
-                            .rotationEffect(.degrees(-8))
-                            .scaleEffect(1.2)
-                            .transition(.scale.combined(with: .opacity))
+
+                // Main Content
+                VStack(spacing: 32) {
+                    // Icon
+                    ZStack {
+                        Circle()
+                            .fill(theme.accentColor.opacity(0.1))
+                            .frame(width: 100, height: 100)
+
+                        Circle()
+                            .stroke(theme.accentColor.opacity(0.3), lineWidth: 2)
+                            .frame(width: 100, height: 100)
+
+                        Image(systemName: theme.icon)
+                            .font(.system(size: 40, weight: .medium))
+                            .foregroundColor(theme.accentColor)
                     }
-                }
-                .frame(height: 240)
-                
-                // Text
-                VStack(spacing: 16) {
-                    Text(theme.title)
-                        .font(.system(size: 28, weight: .black))
-                        .foregroundColor(.white)
-                        .tracking(1)
-                        .shadow(color: theme.color.opacity(0.5), radius: 10)
-                    
-                    Text(theme.subtitle)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .padding(.horizontal, 40)
-                }
-                .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 20)
-                
-                Spacer()
-                
-                // Revealed Spies
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "eye.slash.fill")
-                            .foregroundColor(theme.color)
-                        Text("ENTTARNTE SPIONE")
-                            .font(.system(size: 10, weight: .bold))
+                    .scaleEffect(showContent ? 1 : 0.8)
+                    .opacity(showContent ? 1 : 0)
+
+                    // Text
+                    VStack(spacing: 12) {
+                        Text(theme.title)
+                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+
+                        Text(theme.subtitle)
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 40)
                     }
-                    .padding(.horizontal, 30)
-                    
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 15)
+                }
+
+                Spacer()
+
+                // Revealed Spies
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 8) {
+                        Rectangle()
+                            .fill(theme.accentColor)
+                            .frame(width: 3, height: 14)
+
+                        Text("ENTTARNTE AGENTEN")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .tracking(2)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .padding(.horizontal, 24)
+
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(gameSettings.players.filter { $0.isImposter || $0.roleType?.team == .imposter }) { player in
-                                ImposterResultCard(
+                                DossierCard(
                                     player: player,
-                                    isRevealed: true,
-                                    isVictory: true, // Spione haben gewonnen
-                                    themeColor: theme.color
+                                    accentColor: theme.accentColor
                                 )
-                                .frame(width: 140)
                             }
                         }
-                        .padding(.horizontal, 30)
+                        .padding(.horizontal, 24)
                     }
                 }
                 .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 30)
-                .padding(.bottom, 30)
-                
+                .offset(y: showContent ? 0 : 20)
+                .padding(.bottom, 24)
+
                 // Buttons
-                VStack(spacing: 16) {
+                VStack(spacing: 14) {
                     if isMultiplayer {
                         if isHost {
                             if gameSettings.multiplayerRematchWaiting {
-                                Text("Warte auf Antworten...")
-                                    .font(.caption.bold())
-                                    .foregroundColor(.white.opacity(0.6))
+                                waitingIndicator
                             } else {
-                                ImposterPrimaryButton(title: "NEUES SPIEL") {
-                                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                                    gameLogic.startMultiplayerRematchOffer()
-                                }
+                                SpyActionButton(
+                                    title: "NEUE MISSION",
+                                    subtitle: "Rematch starten",
+                                    icon: "arrow.counterclockwise",
+                                    style: .primary,
+                                    action: {
+                                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                        gameLogic.startMultiplayerRematchOffer()
+                                    }
+                                )
                             }
                         } else {
-                            Text("Warte auf den Host...")
-                                .font(.caption.bold())
-                                .foregroundColor(.white.opacity(0.6))
+                            waitingIndicator
                         }
                     } else {
-                        ImposterPrimaryButton(title: "NEUES SPIEL") {
-                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                            Task { @MainActor in
-                                await gameLogic.restartGame()
+                        SpyActionButton(
+                            title: "NEUE MISSION",
+                            subtitle: "Nochmal spielen",
+                            icon: "arrow.counterclockwise",
+                            style: .primary,
+                            action: {
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                Task { @MainActor in
+                                    await gameLogic.restartGame()
+                                }
                             }
-                        }
+                        )
                     }
-                    
+
                     Button {
                         endGameAndExit()
                     } label: {
-                        HStack {
+                        HStack(spacing: 6) {
                             Image(systemName: "chevron.left")
-                            Text("SPIEL BEENDEN")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("BEENDEN")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .tracking(1)
                         }
-                        .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(10)
+                        .foregroundColor(.white.opacity(0.4))
+                        .padding(.vertical, 12)
                     }
                 }
-                .padding(.horizontal, 25)
-                .padding(.bottom, 20)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
                 .opacity(showContent ? 1 : 0)
             }
         }
         .onAppear {
-            if isMultiplayer && !localPlayerIsSpy {
-                UINotificationFeedbackGenerator().notificationOccurred(.error)
-            } else {
+            if theme.isVictory {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } else {
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
             }
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
+
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1)) {
                 showContent = true
             }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.5).delay(0.8)) {
-                showStamp = true
+
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6).delay(0.4)) {
+                showBadge = true
             }
         }
         .alert("Neue Runde?", isPresented: Binding(
@@ -252,6 +267,19 @@ struct TimeOutResultView: View {
         } message: {
             Text("Der Host möchte eine neue Runde starten.")
         }
+    }
+
+    private var waitingIndicator: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
+                .scaleEffect(0.8)
+
+            Text(isHost ? "Warte auf Antworten..." : "Warte auf Host...")
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.5))
+        }
+        .padding(.vertical, 16)
     }
 
     private func endGameAndExit() {
