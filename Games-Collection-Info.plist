@@ -23,5 +23,9 @@
 		<string>_gc-party._tcp</string>
 		<string>_gc-party._udp</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Games Collection benötigt Zugriff auf das lokale Netzwerk, um Multiplayer-Spiele mit anderen Geräten in deiner Nähe zu ermöglichen.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

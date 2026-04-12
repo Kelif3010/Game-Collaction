@@ -75,7 +75,12 @@ class MultipeerManager: NSObject, ObservableObject {
         // Name aus UserDefaults oder Gerät
         let savedName = UserDefaults.standard.string(forKey: "myPlayerName")
         let deviceName = UIDevice.current.name
-        let displayName = (savedName?.isEmpty == false) ? savedName! : deviceName
+        let displayName: String
+        if let saved = savedName, !saved.isEmpty {
+            displayName = saved
+        } else {
+            displayName = deviceName
+        }
         
         self.myPeerId = MCPeerID(displayName: displayName)
         super.init()
@@ -168,10 +173,12 @@ class MultipeerManager: NSObject, ObservableObject {
             
             try session.send(data, toPeers: session.connectedPeers, with: .reliable)
         } catch {
-            print("MPC Error sending: \(error.localizedDescription)")
+            let errorMsg = "MPC Error sending: \(error.localizedDescription)"
+            print(errorMsg)
+            lastError = errorMsg
         }
     }
-    
+
     func sendToPeer(event: String, object: Codable? = nil, to peer: MCPeerID) {
         guard let session = session else { return }
         
@@ -186,7 +193,9 @@ class MultipeerManager: NSObject, ObservableObject {
             
             try session.send(data, toPeers: [peer], with: .reliable)
         } catch {
-            print("MPC Error sending to \(peer.displayName): \(error.localizedDescription)")
+            let errorMsg = "MPC Error sending to \(peer.displayName): \(error.localizedDescription)"
+            print(errorMsg)
+            lastError = errorMsg
         }
     }
     
@@ -349,6 +358,9 @@ extension MultipeerManager: MCSessionDelegate {
             }
 
             self.receivedMessages.append(message)
+            if self.receivedMessages.count > 100 {
+                self.receivedMessages.removeFirst(self.receivedMessages.count - 100)
+            }
 
             // Event an alle Subscriber weiterleiten (neues System)
             self.eventPublisher.send((type: message.type, payload: message.payload))

@@ -42,17 +42,17 @@ final class GlobalStatsManager: ObservableObject {
         if !trimmed.isEmpty {
             sessionWins[trimmed, default: 0] += 1
         }
-        
+
         updateStat(for: playerName) { stats in
             stats.wins += 1
-            stats.timesPlayed += 1
+            // timesPlayed wird nur in recordParticipation gezählt
         }
     }
-    
+
     func recordLoss(for playerName: String) {
         updateStat(for: playerName) { stats in
             stats.losses += 1
-            stats.timesPlayed += 1
+            // timesPlayed wird nur in recordParticipation gezählt
         }
     }
     

@@ -153,23 +153,27 @@ struct MainSettingsView: View {
                                 }
                                 
                                 // 4. Community (YouTube)
-                                Link(destination: URL(string: "https://www.youtube.com/@elfiandken")!) {
-                                    DashboardCard(
-                                        imageName: "Youtube",
-                                        title: LocalizedStringKey("YouTube"),
-                                        subtitle: LocalizedStringKey("@elfiandken"),
-                                        color: .red
-                                    )
+                                if let youtubeURL = URL(string: "https://www.youtube.com/@elfiandken") {
+                                    Link(destination: youtubeURL) {
+                                        DashboardCard(
+                                            imageName: "Youtube",
+                                            title: LocalizedStringKey("YouTube"),
+                                            subtitle: LocalizedStringKey("@elfiandken"),
+                                            color: .red
+                                        )
+                                    }
                                 }
-                                
+
                                 // 5. Community (Insta)
-                                Link(destination: URL(string: "https://www.instagram.com/elfiandken/")!) {
-                                    DashboardCard(
-                                        imageName: "Instagram",
-                                        title: LocalizedStringKey("Instagram"),
-                                        subtitle: LocalizedStringKey("Follow us"),
-                                        color: .pink
-                                    )
+                                if let instagramURL = URL(string: "https://www.instagram.com/elfiandken/") {
+                                    Link(destination: instagramURL) {
+                                        DashboardCard(
+                                            imageName: "Instagram",
+                                            title: LocalizedStringKey("Instagram"),
+                                            subtitle: LocalizedStringKey("Follow us"),
+                                            color: .pink
+                                        )
+                                    }
                                 }
                             }
                             .padding(.horizontal)
@@ -178,26 +182,28 @@ struct MainSettingsView: View {
                         // MARK: - Support & Danger Zone
                         VStack(spacing: 16) {
                             // Support Link
-                            Link(destination: URL(string: "mailto:elfiandken@icloud.com")!) {
-                                HStack {
-                                    Image(systemName: "envelope.fill")
-                                    Text(LocalizedStringKey("Feedback senden"))
+                            if let mailURL = URL(string: "mailto:elfiandken@icloud.com") {
+                                Link(destination: mailURL) {
+                                    HStack {
+                                        Image(systemName: "envelope.fill")
+                                        Text(LocalizedStringKey("Feedback senden"))
+                                    }
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.white.opacity(0.1))
+                                    .cornerRadius(12)
                                 }
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.white.opacity(0.1))
-                                .cornerRadius(12)
                             }
-                            
+
                             // Reset
                             Button(role: .destructive) {
                                 showResetAlert = true
                             } label: {
                                 Text(LocalizedStringKey("Alle Daten löschen"))
                                     .font(.caption)
-                                    .foregroundColor(.red.opacity(0.8))
+                                    .foregroundStyle(.red.opacity(0.8))
                             }
                             .padding(.top, 8)
                             
@@ -285,7 +291,7 @@ struct GamerIDCard: View {
                 
                 Image(systemName: "person.fill")
                     .font(.largeTitle)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -342,7 +348,7 @@ struct CrewCarousel: View {
                                 .overlay(
                                     Text(String(player.name.prefix(1)))
                                         .font(.title3.bold())
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                 )
                                 .shadow(radius: 3)
                             
@@ -379,12 +385,12 @@ struct CrewCarousel: View {
                             VStack {
                                 Circle()
                                     .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                                    .foregroundColor(.white.opacity(0.5))
+                                    .foregroundStyle(.white.opacity(0.5))
                                     .frame(width: 60, height: 60)
                                     .overlay(
                                         Image(systemName: "plus")
                                             .font(.title2)
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundStyle(.white.opacity(0.5))
                                     )
                                 
                                 Text(LocalizedStringKey("Neu"))
@@ -471,7 +477,7 @@ private struct LanguageSelectionView: View {
                                 Text(LocalizedStringKey("Deutsch"))
                                 Spacer()
                                 if selectedLanguageCode == "de" {
-                                    Image(systemName: "checkmark").foregroundColor(.blue)
+                                    Image(systemName: "checkmark").foregroundStyle(.blue)
                                 }
                             }
                         }
@@ -484,7 +490,7 @@ private struct LanguageSelectionView: View {
                                 Text(LocalizedStringKey("English"))
                                 Spacer()
                                 if selectedLanguageCode == "en" {
-                                    Image(systemName: "checkmark").foregroundColor(.blue)
+                                    Image(systemName: "checkmark").foregroundStyle(.blue)
                                 }
                             }
                         }

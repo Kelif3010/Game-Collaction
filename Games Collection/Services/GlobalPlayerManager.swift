@@ -20,7 +20,7 @@ final class GlobalPlayerManager: ObservableObject {
     
     private init() {
         loadPlayers()
-        
+
         // iCloud Sync Setup
         NotificationCenter.default.addObserver(
             self,
@@ -29,6 +29,10 @@ final class GlobalPlayerManager: ObservableObject {
             object: iCloudStore
         )
         iCloudStore.synchronize()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Actions
@@ -77,10 +81,12 @@ final class GlobalPlayerManager: ObservableObject {
         // 1. Save Local
         if let data = try? JSONEncoder().encode(players) {
             UserDefaults.standard.set(data, forKey: storageKey)
-            
-            // 2. Save to iCloud
-            iCloudStore.set(data, forKey: storageKey)
-            iCloudStore.synchronize()
+
+            // 2. Save to iCloud (nur wenn unter 900KB Limit)
+            if data.count < 900_000 {
+                iCloudStore.set(data, forKey: storageKey)
+                iCloudStore.synchronize()
+            }
         }
     }
     

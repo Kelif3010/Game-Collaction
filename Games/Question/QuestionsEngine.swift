@@ -74,7 +74,7 @@ final class QuestionsEngine: ObservableObject {
 
         // pick an unused prompt pair if possible
         let availableIndices = category.promptPairs.indices.filter { !usedPromptIndices.contains($0) }
-        let pickIndex = availableIndices.randomElement() ?? category.promptPairs.indices.randomElement()!
+        guard let pickIndex = availableIndices.randomElement() ?? category.promptPairs.indices.randomElement() else { return }
         usedPromptIndices.insert(pickIndex)
         let pair = category.promptPairs[pickIndex]
 

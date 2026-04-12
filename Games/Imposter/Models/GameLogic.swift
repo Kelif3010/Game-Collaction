@@ -69,11 +69,11 @@ class GameLogic: ObservableObject {
         }
         
         // 2. Begriffe wählen
-        let gameWords = selectWordsForGameMode(from: roundCategory)
-        
+        guard let gameWords = selectWordsForGameMode(from: roundCategory) else { return }
+
         // 3. Rollen verteilen (Core Logic)
         distributeRoles(playersCount: gameSettings.players.count)
-        
+
         // 4. Texte generieren und zuweisen
         await assignWordsToPlayers(gameWords: gameWords)
         
@@ -311,9 +311,9 @@ class GameLogic: ObservableObject {
             // Spezialfall: Zwillinge brauchen 2 Spieler
             if role == .twins {
                 guard availableIds.count >= 2 else { continue }
-                let twin1 = availableIds.randomElement()!
+                guard let twin1 = availableIds.randomElement() else { continue }
                 availableIds.remove(twin1)
-                let twin2 = availableIds.randomElement()!
+                guard let twin2 = availableIds.randomElement() else { continue }
                 availableIds.remove(twin2)
                 
                 assignRole(role, to: twin1)
@@ -423,24 +423,25 @@ class GameLogic: ObservableObject {
     // MARK: - Helper Methods
     
     /// Wählt Begriffe basierend auf dem aktuellen Spielmodus
-    private func selectWordsForGameMode(from category: Category) -> GameWords {
+    private func selectWordsForGameMode(from category: Category) -> GameWords? {
+        guard !category.words.isEmpty else { return nil }
         switch gameSettings.gameMode {
         case .classic:
-            let word = category.words.randomElement()!
+            guard let word = category.words.randomElement() else { return nil }
             return GameWords(primary: word, secondary: nil)
-            
+
         case .twoWords:
             // Zwei verschiedene Begriffe aus derselben Kategorie
             let shuffledWords = category.words.shuffled()
             let primary = shuffledWords[0]
             let secondary = shuffledWords.count > 1 ? shuffledWords[1] : primary
             return GameWords(primary: primary, secondary: secondary)
-            
+
         case .roles:
-            let word = category.words.randomElement()!
+            guard let word = category.words.randomElement() else { return nil }
             return GameWords(primary: word, secondary: nil)
         case .questions:
-            let word = category.words.randomElement()!
+            guard let word = category.words.randomElement() else { return nil }
             return GameWords(primary: word, secondary: nil)
         }
     }

@@ -94,7 +94,9 @@ class GameManager: ObservableObject {
         gameState.settings.perkPartyMode ? 3 : 2
     }
 
-    private var appLocale: Locale {
+    private lazy var appLocale: Locale = Self.resolveAppLocale()
+
+    private static func resolveAppLocale() -> Locale {
         let defaults = UserDefaults.standard
         let useSystem: Bool
         if defaults.object(forKey: "useSystemLanguage") == nil {
@@ -372,6 +374,29 @@ class GameManager: ObservableObject {
     
     func startRound() {
         startTurn() // Erster Zug der Runde
+    }
+
+    /// Quick Restart: Gleiche Teams, Punkte auf 0, Runde 1 neu – ohne Setup-Screen zu verlassen
+    func restartWithSameTeams() {
+        // Teams und Einstellungen behalten, Punkte zurücksetzen
+        for i in gameState.settings.teams.indices {
+            gameState.settings.teams[i].resetScores()
+        }
+        // Alle Begriffe neu mischen
+        gameState.allTerms.shuffle()
+        for i in gameState.allTerms.indices {
+            gameState.allTerms[i].reset()
+        }
+        // Spielzustand auf Runde 1 zurücksetzen
+        gameState.currentRound = .round1
+        gameState.currentTeamIndex = 0
+        gameState.currentTermIndex = 0
+        gameState.phase = .setup
+        gameState.turnTimeRemaining = gameState.settings.turnTimeLimit
+        scoreRevealSnapshots = [:]
+        timerValueBursts.removeAll()
+        slotSpinCredits.removeAll()
+        pendingSlotSpinCredits.removeAll()
     }
     
     func correctGuess() {

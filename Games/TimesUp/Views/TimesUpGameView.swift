@@ -2,11 +2,11 @@ import SwiftUI
 
 struct TimesUpGameView: View {
     @ObservedObject var gameManager: GameManager
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @State private var showingEndGame = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 switch gameManager.gameState.phase {
                 case .setup:
@@ -36,7 +36,7 @@ struct TimesUpGameView: View {
                     Button("Beenden") {
                         showingEndGame = true
                     }
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -47,13 +47,13 @@ struct TimesUpGameView: View {
                     Text(gameManager.gameState.currentRound.shortDescription)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
             }
             .alert("Spiel beenden?", isPresented: $showingEndGame) {
                 Button("Abbrechen", role: .cancel) { }
                 Button("Beenden", role: .destructive) {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
             } message: {
                 Text("Möchtest du das aktuelle Spiel wirklich beenden?")
@@ -63,119 +63,103 @@ struct TimesUpGameView: View {
             if !gameManager.scoreBursts.isEmpty {
                 ScoreBurstBar(gameManager: gameManager)
                     .padding(.top, 64)
-                    .offset(x: 20)
+                    .padding(.trailing, 8)
+                    .clipped()
             }
         }
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
 // MARK: - Setup Phase
 struct SetupPhaseView: View {
     @ObservedObject var gameManager: GameManager
-    
+
     var body: some View {
         ZStack {
-            // Gleicher dunkler Hintergrund
-            LinearGradient(
-                colors: [
-                    Color.black,
-                    Color(.systemGray6).opacity(0.3),
-                    Color.blue.opacity(0.15),
-                    Color.purple.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
+            // Background
+            TimesUpStyle.backgroundGradient
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Header Area - leer, da Team-Anzeige jetzt in Toolbar
                 Spacer()
                     .frame(height: 20)
-                
+
                 Spacer()
-                
+
                 // Team Info - Neon Style
                 VStack(spacing: 15) {
-                    // Team: Team Name - Zusammen in einer Zeile mit Neon-Effekt
                     if let team = gameManager.gameState.currentTeam {
                         Text("Team: \(team.name)")
                             .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.blue, .purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .foregroundStyle(TimesUpStyle.primaryGradient)
                             .shadow(color: .blue, radius: 20, x: 0, y: 0)
                             .shadow(color: .white.opacity(0.5), radius: 2, x: 0, y: 1)
                     }
-                    
-                    // Runde Info
+
                     Text(LocalizedStringKey(gameManager.gameState.currentRound.title))
                         .font(.title2)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                         .fontWeight(.bold)
                 }
-                
+
                 Spacer()
-                
-                // Runden-Beschreibung Banner - Größerer Style
+
+                // Round Description Banner
                 VStack(spacing: 15) {
                     Text(LocalizedStringKey(gameManager.gameState.currentRound.description))
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
-                    
+
                     Text(LocalizedStringKey(gameManager.gameState.currentRound.detailedRules))
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
                 }
                 .padding(.horizontal, 40)
                 .padding(.vertical, 70)
                 .background(
-                    RoundedRectangle(cornerRadius: 15)
+                    RoundedRectangle(cornerRadius: TimesUpStyle.containerCornerRadius)
                         .fill(Color(.systemGray6).opacity(0.7))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 15)
+                            RoundedRectangle(cornerRadius: TimesUpStyle.containerCornerRadius)
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1.5)
                         )
                 )
                 .padding(.horizontal, 15)
-                
+
                 Spacer()
-                
+
+                // Start Button
                 Button(action: {
+                    TimesUpHaptics.impact(.medium)
                     gameManager.startRound()
                 }) {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.green, .blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
+                        .fill(TimesUpStyle.startButtonGradient)
+                        .frame(width: TimesUpStyle.largeButtonSize, height: TimesUpStyle.largeButtonSize)
                         .overlay(
                             VStack(spacing: 5) {
                                 Image(systemName: "play.fill")
                                     .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                                 Text(LocalizedStringKey("Start!"))
                                     .font(.caption)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                         )
-                        .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
+                        .shadow(
+                            color: TimesUpStyle.shadowColor(.green),
+                            radius: TimesUpStyle.largeShadowRadius,
+                            x: 0,
+                            y: 8
+                        )
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, TimesUpStyle.bottomPadding + 18)
             }
         }
     }
@@ -215,11 +199,11 @@ struct SlotRewardFullView: View {
                     Text(LocalizedStringKey("Slot Bonus"))
                         .font(.system(size: 16, weight: .black))
                         .kerning(4)
-                        .foregroundColor(.blue.opacity(0.8))
+                        .foregroundStyle(.blue.opacity(0.8))
                     
                     Text(team.name)
                         .font(.system(size: 44, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .shadow(color: .blue, radius: 10)
                 }
                 .padding(.top, 40)
@@ -233,7 +217,7 @@ struct SlotRewardFullView: View {
                     if gameManager.slotRewardCredits() > 0 {
                         Text(LocalizedStringKey("Verbrauche oder überspringe alle Spins, um fortzufahren."))
                             .font(.footnote)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
                     }
@@ -243,7 +227,7 @@ struct SlotRewardFullView: View {
                     }) {
                         Text(LocalizedStringKey("Weiter"))
                             .font(.title3.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
                             .background(
@@ -285,11 +269,11 @@ struct SlotMachineCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("JACKPOT")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     Text("50 / 50")
                         .font(.system(.title3, design: .monospaced))
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 
                 Spacer()
@@ -299,15 +283,15 @@ struct SlotMachineCard: View {
                     let spinsLabel = String(localized: "SPINS")
                     Text(spinsLabel)
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     Text(String(format: "%02d", credits))
                         .font(.system(.title2, design: .monospaced))
                         .fontWeight(.bold)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
                         .background(Color.blue.opacity(0.2))
-                        .cornerRadius(8)
+                        .cornerRadius(12)
                 }
             }
             .padding(20)
@@ -358,11 +342,11 @@ struct SlotMachineCard: View {
                 Button(action: { gameManager.skipSlotReward() }) {
                     Text(LocalizedStringKey("Überspringen"))
                         .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.6))
                         .padding(.vertical, 12)
                         .padding(.horizontal, 20)
                         .background(Color.white.opacity(0.05))
-                        .cornerRadius(15)
+                        .cornerRadius(18)
                 }
                 .disabled(spinning)
                 
@@ -371,7 +355,7 @@ struct SlotMachineCard: View {
                     let btnText = spinning ? LocalizedStringKey("SPINNING...") : LocalizedStringKey("PUSH")
                     Text(btnText)
                         .font(.system(size: 18, weight: .black))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 54)
                         .background(
@@ -410,7 +394,7 @@ struct SlotMachineCard: View {
     private func startSpin() {
         guard !spinning, gameManager.slotRewardCredits() > 0 else { return }
         
-        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        TimesUpHaptics.impact(.heavy)
         localResultText = nil
         spinning = true
         
@@ -431,7 +415,7 @@ struct SlotMachineCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + spinDuration) {
             stopTimer()
             if let result = gameManager.spinSlotReward() {
-                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                TimesUpHaptics.impact(.medium)
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     reelSymbols = Array(repeating: SlotSymbol(value: result.isWin ? 10 : -15), count: 3)
                     localResultText = result.text
@@ -444,8 +428,11 @@ struct SlotMachineCard: View {
     private func startTimer() {
         stopTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            guard !symbolPool.isEmpty else { return }
             for i in 0..<3 {
-                reelSymbols[i] = symbolPool.randomElement()!
+                if let symbol = symbolPool.randomElement() {
+                    reelSymbols[i] = symbol
+                }
             }
         }
     }
@@ -470,12 +457,12 @@ private struct SlotReel: View {
         VStack(spacing: 0) {
             Text(symbol.primaryText)
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundColor(symbol.color)
+                .foregroundStyle(symbol.color)
                 .shadow(color: symbol.color.opacity(0.5), radius: 5)
             
             Text(LocalizedStringKey("PKT"))
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(symbol.color.opacity(0.7))
+                .foregroundStyle(symbol.color.opacity(0.7))
         }
         .frame(width: 70, height: 90)
         .background(
@@ -527,182 +514,265 @@ private struct LeverHandle: View {
     }
 }
 
-// MARK: - Playing Phase
+// MARK: - Playing Phase (Redesigned with Fixed Layout)
 struct PlayingPhaseView: View {
     @ObservedObject var gameManager: GameManager
-    
+
+    // Computed properties for cleaner code
+    private var forcedSkipActive: Bool {
+        gameManager.isForcedSkipActiveForCurrentTeam()
+    }
+
+    private var notices: [GameManager.PerkNotice] {
+        gameManager.perkNoticesForCurrentTeam()
+    }
+
+    private var attackNotices: [GameManager.PerkAttackNotice] {
+        gameManager.attackNoticesForCurrentTeam()
+    }
+
+    private var streak: Int {
+        gameManager.currentHitStreakCount()
+    }
+
+    private var skipFrozen: Bool {
+        gameManager.isSkipButtonFrozenForCurrentTeam()
+    }
+
+    private var canSkip: Bool {
+        gameManager.gameState.currentRound.canSkip
+    }
+
+    private var isHardMode: Bool {
+        gameManager.gameState.settings.difficulty == .hard
+    }
+
     var body: some View {
-        let forcedSkipActive = gameManager.isForcedSkipActiveForCurrentTeam()
-        let notices = gameManager.perkNoticesForCurrentTeam()
-        let attackNotices = gameManager.attackNoticesForCurrentTeam()
-        let streak = gameManager.currentHitStreakCount()
-        
-        return ZStack {
-            LinearGradient(
-                colors: [
-                    Color.black,
-                    Color(.systemGray6).opacity(0.3),
-                    Color.blue.opacity(0.15),
-                    Color.purple.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            VStack(spacing: 24) {
+        ZStack {
+            // Background
+            TimesUpStyle.backgroundGradient
+                .ignoresSafeArea()
+
+            // Fixiertes Layout-Skelett: Timer oben, Buttons immer an fixer Position unten
+            VStack(spacing: 0) {
+                topSection
                 Spacer()
-                    .frame(height: 30)
-                
-                TimerView(gameManager: gameManager)
-                
-                if let term = gameManager.gameState.currentTerm {
-                    WordBannerView(
-                        gameManager: gameManager,
-                        term: term
-                    )
-                    .padding(.horizontal, 30)
-                }
-                
-                if !notices.isEmpty || !attackNotices.isEmpty {
-                    PerkNoticeStack(notices: notices, attackNotices: attackNotices)
-                        .padding(.horizontal, 30)
-                }
-                
+                actionButtons
+                    .padding(.bottom, TimesUpStyle.bottomPadding)
+            }
+            .padding(.horizontal, TimesUpStyle.horizontalPadding)
+
+            // Floating Overlay: Streak + Perk-Notices (verschieben die Buttons NICHT)
+            VStack(spacing: 16) {
+                Spacer()
                 if streak > 1 {
                     StreakFlameView(streak: streak)
-                        .padding(.top, -8)
+                        .transition(.scale.combined(with: .opacity))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: streak)
                 }
-                
-                Spacer()
-                
-                VStack(spacing: 20) {
-                    if gameManager.gameState.currentRound.canSkip {
-                        let skipFrozen = gameManager.isSkipButtonFrozenForCurrentTeam()
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                gameManager.skipTerm()
-                            }) {
-                                Circle()
-                                    .fill(Color.blue)
-                                    .frame(width: 80, height: 80)
-                                    .overlay(
-                                        Image(systemName: "arrow.right")
-                                            .font(.system(size: 25, weight: .bold))
-                                            .foregroundColor(.white)
-                                    )
-                                    .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
-                                    .overlay(alignment: .bottomTrailing) {
-                                        if skipFrozen {
-                                            Image(systemName: "lock.fill")
-                                                .font(.caption)
-                                                .foregroundColor(.white)
-                                                .padding(6)
-                                                .background(Color.black.opacity(0.45))
-                                                .clipShape(Circle())
-                                                .offset(x: 20, y: 20)
-                                        }
-                                    }
-                            }
-                            .disabled(skipFrozen)
-                            
-                            if !forcedSkipActive {
-                                Button(action: {
-                                    gameManager.correctGuess()
-                                }) {
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [.green, .green.opacity(0.75)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 120, height: 120)
-                                        .overlay(
-                                            Image(systemName: "checkmark")
-                                                .font(.system(size: 40, weight: .bold))
-                                                .foregroundColor(.white)
-                                        )
-                                        .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        
-                        if forcedSkipActive {
-                            Text("Zwangs-Skip aktiv – zuerst Skip ausführen.")
-                                .font(.footnote)
-                                .foregroundColor(.yellow)
-                        }
-                        
-                        if !forcedSkipActive && gameManager.gameState.settings.difficulty == .hard {
-                            Button(action: {
-                                gameManager.wrongGuess()
-                            }) {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(colors: [.red, .red.opacity(0.8)],
-                                                       startPoint: .topLeading,
-                                                       endPoint: .bottomTrailing)
-                                    )
-                                    .frame(width: 80, height: 80)
-                                    .overlay(
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 25, weight: .bold))
-                                            .foregroundColor(.white)
-                                    )
-                                    .shadow(color: .red.opacity(0.5), radius: 10, x: 0, y: 5)
-                            }
-                            .disabled(skipFrozen)
-                        }
-                    } else if !forcedSkipActive {
-                        Button(action: {
+                if !notices.isEmpty || !attackNotices.isEmpty {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        PerkNoticeStack(notices: notices, attackNotices: attackNotices)
+                    }
+                    .frame(maxHeight: 140)
+                    .padding(.horizontal, 10)
+                }
+                // Platzhalter: Notices bleiben über dem Button-Bereich
+                Color.clear
+                    .frame(height: TimesUpStyle.largeButtonSize + TimesUpStyle.bottomPadding + 16)
+            }
+            .padding(.horizontal, TimesUpStyle.horizontalPadding)
+            .allowsHitTesting(false)
+
+            // Perk-Toast: Oben-zentriert, respektiert Safe Area (kein negativer Offset nötig)
+            if let toast = gameManager.perkToast {
+                VStack {
+                    PerkToastView(toast: toast)
+                        .padding(.top, 16)
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.spring(response: 0.35, dampingFraction: 0.75), value: gameManager.perkToast?.id)
+                .allowsHitTesting(false)
+            }
+
+            // Forced-Skip-Warnung als Overlay – verschiebt Buttons NICHT
+            if forcedSkipActive {
+                VStack {
+                    Spacer()
+                    Text(LocalizedStringKey("Zwangs-Skip aktiv – zuerst Skip ausführen."))
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(.yellow)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.yellow.opacity(0.15))
+                        .clipShape(Capsule())
+                        .padding(.bottom, TimesUpStyle.largeButtonSize + TimesUpStyle.bottomPadding + 20)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .animation(.spring(response: 0.3), value: forcedSkipActive)
+            }
+        }
+    }
+
+    // MARK: - Top Section (Timer + Word Banner)
+
+    private var topSection: some View {
+        VStack(spacing: 20) {
+            Spacer()
+                .frame(height: 24)
+
+            // Timer
+            TimerView(gameManager: gameManager)
+
+            // Word Banner
+            if let term = gameManager.gameState.currentTerm {
+                WordBannerView(gameManager: gameManager, term: term)
+                    .padding(.horizontal, 10)
+            }
+        }
+    }
+
+    // MARK: - Action Buttons
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        if canSkip {
+            // Layout mit Skip-Button
+            VStack(spacing: 16) {
+                // Hauptzeile: Skip + Correct
+                HStack(spacing: 20) {
+                    // Skip Button
+                    PlayingActionButton(
+                        icon: "arrow.right",
+                        size: TimesUpStyle.standardButtonSize,
+                        gradient: LinearGradient(colors: [.blue, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        shadowColor: .blue,
+                        isLocked: skipFrozen
+                    ) {
+                        TimesUpHaptics.impact(.medium)
+                        gameManager.skipTerm()
+                    }
+                    .accessibilityLabel("Überspringen")
+                    .disabled(skipFrozen)
+
+                    // Correct Button (nur wenn kein Forced Skip)
+                    if !forcedSkipActive {
+                        PlayingActionButton(
+                            icon: "checkmark",
+                            size: TimesUpStyle.largeButtonSize,
+                            gradient: TimesUpStyle.successGradient,
+                            shadowColor: .green,
+                            iconSize: 40
+                        ) {
+                            TimesUpHaptics.impact(.medium)
                             gameManager.correctGuess()
-                        }) {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.green, .green.opacity(0.75)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 120, height: 120)
-                                .overlay(
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 40, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
                         }
+                        .accessibilityLabel("Richtig")
                     }
                 }
-                .padding(.bottom, 10)
+
+                // Wrong Button (nur im Hard Mode)
+                if !forcedSkipActive && isHardMode {
+                    PlayingActionButton(
+                        icon: "xmark",
+                        size: TimesUpStyle.standardButtonSize,
+                        gradient: TimesUpStyle.errorGradient,
+                        shadowColor: .red
+                    ) {
+                        TimesUpHaptics.impact(.medium)
+                        gameManager.wrongGuess()
+                    }
+                    .accessibilityLabel("Falsch")
+                    .disabled(skipFrozen)
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
+        } else {
+            // Nur Correct-Button (ohne Skip)
+            if !forcedSkipActive {
+                PlayingActionButton(
+                    icon: "checkmark",
+                    size: TimesUpStyle.largeButtonSize,
+                    gradient: TimesUpStyle.successGradient,
+                    shadowColor: .green,
+                    iconSize: 40
+                ) {
+                    TimesUpHaptics.impact(.medium)
+                    gameManager.correctGuess()
+                }
+                .accessibilityLabel("Richtig")
+            }
         }
+    }
+}
+
+// MARK: - Playing Action Button Component
+
+private struct PlayingActionButton: View {
+    let icon: String
+    let size: CGFloat
+    let gradient: LinearGradient
+    let shadowColor: Color
+    var iconSize: CGFloat = 25
+    var isLocked: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Circle()
+                .fill(gradient)
+                .frame(width: size, height: size)
+                .overlay(
+                    Image(systemName: icon)
+                        .font(.system(size: iconSize, weight: .bold))
+                        .foregroundStyle(.white)
+                )
+                .shadow(
+                    color: shadowColor.opacity(0.4),
+                    radius: size > 100 ? TimesUpStyle.largeShadowRadius : TimesUpStyle.shadowRadius,
+                    x: 0,
+                    y: size > 100 ? 8 : 5
+                )
+                .overlay(alignment: .bottomTrailing) {
+                    if isLocked {
+                        lockBadge
+                    }
+                }
+        }
+    }
+
+    private var lockBadge: some View {
+        Image(systemName: "lock.fill")
+            .font(.caption)
+            .foregroundStyle(.white)
+            .padding(6)
+            .background(Color.black.opacity(0.6))
+            .clipShape(Circle())
+            .offset(x: 8, y: 8)
     }
 }
 
 private struct WordBannerView: View {
     @ObservedObject var gameManager: GameManager
     let term: Term
-    
+
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
+            // Background Card
+            RoundedRectangle(cornerRadius: TimesUpStyle.containerCornerRadius)
                 .fill(Color(.systemBackground).opacity(0.9))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing),
-                            lineWidth: 2
-                        )
+                    RoundedRectangle(cornerRadius: TimesUpStyle.containerCornerRadius)
+                        .stroke(TimesUpStyle.primaryGradient, lineWidth: 2)
                 )
-                .shadow(color: .blue.opacity(0.3), radius: 15, x: 0, y: 5)
-            
+                .shadow(
+                    color: TimesUpStyle.shadowColor(.blue, opacity: 0.3),
+                    radius: TimesUpStyle.largeShadowRadius,
+                    x: 0,
+                    y: 5
+                )
+
+            // Content
             HStack(spacing: 16) {
                 PerkWordText(
                     gameManager: gameManager,
@@ -713,25 +783,25 @@ private struct WordBannerView: View {
                     lineLimit: 2,
                     color: .primary
                 )
-                
+
                 Spacer()
-                
+
+                // Remaining Terms Badge
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.orange, .red],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(TimesUpStyle.termsBadgeGradient)
                     .frame(width: 52, height: 52)
                     .overlay(
                         Text("\(gameManager.gameState.remainingTermsCount)")
                             .font(.headline)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     )
-                    .shadow(color: .orange.opacity(0.6), radius: 10, x: 0, y: 0)
+                    .shadow(
+                        color: TimesUpStyle.shadowColor(.orange, opacity: 0.6),
+                        radius: TimesUpStyle.shadowRadius,
+                        x: 0,
+                        y: 0
+                    )
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 18)
@@ -785,7 +855,7 @@ private struct PerkNoticeGroup: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.caption.bold())
-                .foregroundColor(color.opacity(0.9))
+                .foregroundStyle(color.opacity(0.9))
                 .padding(.leading, 6)
                 .textCase(.uppercase)
             
@@ -797,7 +867,7 @@ private struct PerkNoticeGroup: View {
                         
                         Text(notice.text)
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         
                         Spacer()
                     }
@@ -827,7 +897,7 @@ private struct PerkAttackNoticeGroup: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.caption.bold())
-                .foregroundColor(color.opacity(0.9))
+                .foregroundStyle(color.opacity(0.9))
                 .padding(.leading, 6)
                 .textCase(.uppercase)
 
@@ -839,7 +909,7 @@ private struct PerkAttackNoticeGroup: View {
 
                         Text("An \(notice.targetName), \(notice.label)")
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
 
                         Spacer()
                     }
@@ -862,32 +932,55 @@ private struct PerkAttackNoticeGroup: View {
 
 struct StreakFlameView: View {
     let streak: Int
-    
+
+    @State private var isAnimating = false
+
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "flame.fill")
-                .foregroundColor(.orange)
+        HStack(spacing: 10) {
+            // Animated Flame Icon
+            flameIcon
+
             Text("Streak \(streak)x")
-                .font(.subheadline.bold())
-                .foregroundColor(.white)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+                .contentTransition(.numericText())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .background(
             Capsule()
-                .fill(
-                    LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing)
-                        .opacity(0.25)
-                )
+                .fill(TimesUpStyle.streakGradient.opacity(0.25))
         )
         .overlay(
             Capsule()
-                .stroke(
-                    LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing),
-                    lineWidth: 1
-                )
+                .stroke(TimesUpStyle.streakGradient, lineWidth: 1.5)
         )
-        .shadow(color: .orange.opacity(0.4), radius: 6, x: 0, y: 3)
+        .shadow(
+            color: TimesUpStyle.shadowColor(.orange),
+            radius: 8,
+            x: 0,
+            y: 4
+        )
+        .onAppear {
+            isAnimating = true
+        }
+    }
+
+    @ViewBuilder
+    private var flameIcon: some View {
+        if #available(iOS 18.0, *) {
+            Image(systemName: "flame.fill")
+                .font(.title2)
+                .foregroundStyle(TimesUpStyle.streakGradient)
+                .symbolEffect(.wiggle.byLayer, options: .repeating)
+        } else {
+            Image(systemName: "flame.fill")
+                .font(.title2)
+                .foregroundStyle(TimesUpStyle.streakGradient)
+                .rotationEffect(.degrees(isAnimating ? 8 : -8))
+                .scaleEffect(isAnimating ? 1.06 : 0.96)
+                .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: isAnimating)
+        }
     }
 }
 
@@ -910,28 +1003,42 @@ struct TeamBadgeBar: View {
 private struct TeamBadgeView: View {
     let team: Team
     let isActive: Bool
-    
+
     private var initials: String {
         String(team.name.prefix(2)).uppercased()
     }
-    
+
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(isActive ?
-                      LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing) :
-                        LinearGradient(colors: [.gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
-                )
-                .frame(width: 32, height: 32)
-                .overlay(
-                    Circle()
-                        .stroke(isActive ? Color.blue : Color.gray.opacity(0.5), lineWidth: 1)
-                )
-            
-            Text(initials)
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(isActive ? .white : .gray)
+        VStack(spacing: 2) {
+            ZStack {
+                Circle()
+                    .fill(
+                        isActive
+                        ? AnyShapeStyle(TimesUpStyle.primaryGradient)
+                        : AnyShapeStyle(Color.gray.opacity(0.3))
+                    )
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                isActive ? Color.blue : Color.gray.opacity(0.5),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: isActive ? .blue.opacity(0.5) : .clear, radius: 4)
+
+                Text(initials)
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(isActive ? .white : .gray)
+            }
+
+            // Score unter dem Badge
+            Text("\(team.score)")
+                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                .foregroundStyle(isActive ? .white : .gray.opacity(0.7))
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.3), value: team.score)
         }
     }
 }
@@ -1004,7 +1111,7 @@ struct GameHeaderView: View {
                 Spacer()
                 Text(gameManager.gameState.currentRound.description)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             // Timer und Team
@@ -1014,7 +1121,7 @@ struct GameHeaderView: View {
                     VStack(alignment: .leading) {
                         Text("Team:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         Text(team.name)
                             .font(.headline)
                             .fontWeight(.semibold)
@@ -1027,11 +1134,11 @@ struct GameHeaderView: View {
                 VStack(alignment: .center) {
                     Text("Begriffe übrig:")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     Text("\(gameManager.gameState.remainingTermsCount)")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                 }
                 
                 Spacer()
@@ -1040,11 +1147,11 @@ struct GameHeaderView: View {
                     VStack(alignment: .trailing) {
                         Text("Zeit:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         Text(gameManager.formattedTimeRemaining)
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(gameManager.gameState.turnTimeRemaining < 10 ? .red : .primary)
+                            .foregroundStyle(gameManager.gameState.turnTimeRemaining < 10 ? .red : .primary)
                     }
             }
             .padding()
@@ -1058,102 +1165,137 @@ struct GameHeaderView: View {
 // MARK: - Round End View
 struct RoundEndView: View {
     @ObservedObject var gameManager: GameManager
-    
+
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            Text(LocalizedStringKey("Runde beendet!"))
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            Text(LocalizedStringKey("Zug beendet - Nächstes Team!"))
-                .font(.title3)
-                .foregroundColor(.secondary)
-            
-            // Zwischenstand
-            ScoreboardView(teams: gameManager.gameState.settings.teams)
-            
-            Spacer()
-            
-            Button(action: {
-                gameManager.nextTurn()
-            }) {
-                Text(LocalizedStringKey("Weiter"))
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 60)
-                    .background(Color.blue)
-                    .cornerRadius(15)
+        ZStack {
+            TimesUpStyle.backgroundGradient
+                .ignoresSafeArea()
+
+            VStack(spacing: 30) {
+                Spacer()
+
+                Text(LocalizedStringKey("Runde beendet!"))
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+
+                Text(LocalizedStringKey("Zug beendet - Nächstes Team!"))
+                    .font(.title3)
+                    .foregroundStyle(TimesUpStyle.secondaryText)
+
+                ScoreboardView(teams: gameManager.gameState.settings.teams)
+
+                Spacer()
+
+                Button(action: {
+                    TimesUpHaptics.impact(.medium)
+                    gameManager.nextTurn()
+                }) {
+                    Text(LocalizedStringKey("Weiter"))
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(TimesUpStyle.primaryGradient)
+                        .clipShape(RoundedRectangle(cornerRadius: TimesUpStyle.rowCornerRadius))
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, TimesUpStyle.bottomPadding)
             }
-            .padding(.horizontal, 40)
+            .padding()
         }
-        .padding()
     }
 }
 
 // MARK: - Game End View
 struct GameEndView: View {
     @ObservedObject var gameManager: GameManager
-    @Environment(\.presentationMode) var presentationMode
-    
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            Text(LocalizedStringKey("🎉 Spiel beendet! 🎉"))
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-            
-            if gameManager.scoreRevealSnapshots.isEmpty {
-                ScoreboardView(teams: gameManager.gameState.settings.teams, showFinal: true)
-            } else {
-                PenaltyRevealScoreboardView(
-                    teams: gameManager.gameState.settings.teams,
-                    snapshots: gameManager.scoreRevealSnapshots
-                )
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                // Neues Spiel starten
-                gameManager.startGame()
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Text(LocalizedStringKey("Neues Spiel"))
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 60)
-                    .background(
-                        LinearGradient(
-                            colors: [.green, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+        ZStack {
+            TimesUpStyle.backgroundGradient
+                .ignoresSafeArea()
+
+            VStack(spacing: 30) {
+                Spacer()
+
+                Text(LocalizedStringKey("Spiel beendet!"))
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(TimesUpStyle.primaryGradient)
+                    .multilineTextAlignment(.center)
+
+                if gameManager.scoreRevealSnapshots.isEmpty {
+                    ScoreboardView(teams: gameManager.gameState.settings.teams, showFinal: true)
+                } else {
+                    PenaltyRevealScoreboardView(
+                        teams: gameManager.gameState.settings.teams,
+                        snapshots: gameManager.scoreRevealSnapshots
                     )
-                    .cornerRadius(15)
+                }
+
+                Spacer()
+
+                VStack(spacing: 12) {
+                    // Quick Restart: Gleiche Teams, Runde 1 neu
+                    Button(action: {
+                        TimesUpHaptics.impact(.heavy)
+                        gameManager.restartWithSameTeams()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.counterclockwise.circle.fill")
+                            Text(LocalizedStringKey("Nochmal! (gleiche Teams)"))
+                                .fontWeight(.bold)
+                        }
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(TimesUpStyle.primaryGradient.opacity(0.85))
+                        .clipShape(RoundedRectangle(cornerRadius: TimesUpStyle.rowCornerRadius))
+                    }
+
+                    // Neues Spiel: Setup-Screen öffnen
+                    Button(action: {
+                        TimesUpHaptics.impact(.medium)
+                        gameManager.startGame()
+                        dismiss()
+                    }) {
+                        Text(LocalizedStringKey("Neues Spiel"))
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(TimesUpStyle.startButtonGradient)
+                            .clipShape(RoundedRectangle(cornerRadius: TimesUpStyle.rowCornerRadius))
+                            .shadow(
+                                color: TimesUpStyle.shadowColor(.green),
+                                radius: TimesUpStyle.shadowRadius,
+                                x: 0,
+                                y: 5
+                            )
+                    }
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, TimesUpStyle.bottomPadding)
             }
-            .padding(.horizontal, 40)
+            .padding()
         }
-        .padding()
         .onAppear {
             recordStats()
         }
     }
-    
+
     private func recordStats() {
         let sorted = gameManager.gameState.settings.teams.sorted { $0.score > $1.score }
         guard let topScore = sorted.first?.score, topScore > 0 else { return }
-        
+
         let winners = sorted.filter { $0.score == topScore }
         let others = sorted.filter { $0.score < topScore }
-        
+
         for winner in winners {
             GlobalStatsManager.shared.recordWin(for: winner.name)
         }
@@ -1195,18 +1337,20 @@ struct ScoreboardView: View {
                     Text("\(team.score)")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(index == 0 && showFinal ? .yellow : .primary)
+                        .foregroundStyle(index == 0 && showFinal ? .yellow : .primary)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.4), value: team.score)
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
                 .background(index == 0 && showFinal ? Color.yellow.opacity(0.2) : Color(.systemGray5))
-                .cornerRadius(8)
+                .cornerRadius(12)
                 .shadow(color: .primary.opacity(0.05), radius: 2, x: 0, y: 1)
             }
         }
         .padding()
         .background(Color(.systemGray5))
-        .cornerRadius(15)
+        .cornerRadius(18)
         .shadow(color: .primary.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }
@@ -1358,11 +1502,11 @@ struct PenaltyRevealRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(team.name)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Text(isRevealed ? "Endstand" : "Zwischenstand")
                         .opacity(showFinalScores ? 0.0 : 1.0)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -1468,7 +1612,7 @@ struct PenaltyBadgeView: View {
                     LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing)
                 )
         )
-        .foregroundColor(.white)
+        .foregroundStyle(.white)
         .shadow(color: .red.opacity(0.4), radius: 8, x: 0, y: 4)
     }
 }

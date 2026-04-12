@@ -19,11 +19,11 @@ struct QuestionsResultsPhaseView: View {
 
         // Logik: Wer wurde gewählt?
         let suspectID = evaluation?.selected.first
-        let suspectName = suspectID != nil ? viewModel.playerName(for: suspectID!) : "Niemand"
+        let suspectName = suspectID.map { viewModel.playerName(for: $0) } ?? "Niemand"
 
         // Logik: War er ein Lügner?
         let liars = evaluation?.liars ?? viewModel.currentLiarIDs
-        let isLiar = suspectID != nil && liars.contains(suspectID!)
+        let isLiar = suspectID.map { liars.contains($0) } ?? false
         let citizensWon = evaluation?.citizensWon ?? false
         let liarQuestionText = viewModel.currentRound?.promptPair.liarQuestion ?? "Unbekannt"
 
@@ -108,7 +108,7 @@ struct QuestionsResultsPhaseView: View {
                 documentOpacity = 1
             }
             // Papier-Geräusch-Haptik
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UISelectionFeedbackGenerator().selectionChanged()
         }
 
         // Büroklammer erscheint
@@ -140,7 +140,7 @@ struct QuestionsResultsPhaseView: View {
             }
 
             // Schwerer Impact
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
             }
@@ -404,7 +404,7 @@ private struct DossierView: View {
         for (index, char) in suspectName.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.08) {
                 displayedName += String(char)
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
             }
         }
     }
