@@ -419,3 +419,15 @@
 "Bereit" = "Bereit für TV";
 "BEREIT FUR DAS NACHSTE SPIEL" = "BEREIT FÜR DAS NÄCHSTE SPIEL";
 "GAMES COLLECTION" = "GAMES COLLECTION";
+
+/* Sound Cinema */
+"soundcinema_pack_beginner" = "Anfänger";
+"soundcinema_pack_party" = "Party";
+"soundcinema_pack_wild" = "Krass";
+"soundcinema_pack_beginner_desc" = "Einfache, bekannte Geräusche";
+"soundcinema_pack_party_desc" = "Lustig & mittel schwer";
+"soundcinema_pack_wild_desc" = "Schwer & komplett verrückt";
+"soundcinema_timer_short_desc" = "Blitzschnell – 5 Sekunden";
+"soundcinema_timer_medium_desc" = "Normal – 8 Sekunden";
+"soundcinema_timer_long_desc" = "Entspannt – 10 Sekunden";
+"Geräusch-Kino" = "Geräusch-Kino";

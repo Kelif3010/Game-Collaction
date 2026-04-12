@@ -3,17 +3,19 @@ import SwiftUI
 import Combine
 
 enum QuickActionType: String {
-    case betBuddy = "quickaction.betbuddy"
-    case timesUp = "quickaction.timesup"
-    case question = "quickaction.question"
-    case imposter = "quickaction.imposter"
+    case betBuddy    = "quickaction.betbuddy"
+    case timesUp     = "quickaction.timesup"
+    case question    = "quickaction.question"
+    case imposter    = "quickaction.imposter"
+    case soundCinema = "quickaction.soundcinema"
 
     var gameId: String {
         switch self {
-        case .betBuddy: return "BetBuddy"
-        case .timesUp: return "TimesUp"
-        case .question: return "Question"
-        case .imposter: return "Imposter"
+        case .betBuddy:    return "BetBuddy"
+        case .timesUp:     return "TimesUp"
+        case .question:    return "Question"
+        case .imposter:    return "Imposter"
+        case .soundCinema: return "SoundCinema"
         }
     }
 
@@ -27,6 +29,8 @@ enum QuickActionType: String {
             return NSLocalizedString("Lügner", comment: "Quick action title")
         case .imposter:
             return NSLocalizedString("Imposter", comment: "Quick action title")
+        case .soundCinema:
+            return NSLocalizedString("Geräusch-Kino", comment: "Quick action title")
         }
     }
 
@@ -40,6 +44,8 @@ enum QuickActionType: String {
             return UIApplicationShortcutIcon(systemImageName: "person.fill.questionmark")
         case .imposter:
             return UIApplicationShortcutIcon(systemImageName: "theatermasks.fill")
+        case .soundCinema:
+            return UIApplicationShortcutIcon(systemImageName: "waveform.circle.fill")
         }
     }
 }
@@ -58,7 +64,8 @@ final class QuickActionManager: ObservableObject {
             QuickActionType.betBuddy,
             QuickActionType.timesUp,
             QuickActionType.question,
-            QuickActionType.imposter
+            QuickActionType.imposter,
+            QuickActionType.soundCinema
         ].map { type in
             UIApplicationShortcutItem(
                 type: type.rawValue,

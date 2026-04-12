@@ -1,7 +1,6 @@
 import SwiftUI
 import StoreKit
 import Foundation
-import Lottie
 
 struct ResultView: View {
     let result: GameResult
@@ -17,6 +16,14 @@ struct ResultView: View {
     @State private var showRestartAlert = false
     @State private var showOutcome = false
     @State private var showLeaderboard = false
+    @State private var jackpotPulse = false
+
+    /// Normiert den Top-Score auf 0.6–1.0 — höherer Score = intensiverer Geldregen
+    private var winIntensity: CGFloat {
+        let topScore = result.leaderboard.map(\.score).max() ?? 0
+        guard topScore > 0 else { return 0.8 }
+        return min(1.0, 0.6 + CGFloat(topScore) / 50.0)
+    }
 
     private var animatedLeaderboard: [LeaderboardEntry] {
         result.leaderboard.sorted { lhs, rhs in
@@ -36,9 +43,7 @@ struct ResultView: View {
 
             // Lottie Money Rain (Win) or Subtle Rain (Lose)
             if result.outcome == .win {
-                MoneyRainLottieView()
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
+                MoneyRainLottieView(intensity: winIntensity)
             } else {
                 ParticleEffectView(type: .rain)
             }
@@ -50,8 +55,14 @@ struct ResultView: View {
                 // Outcome Banner
                 outcomeBanner
                     .padding(.bottom, 20)
-                    .scaleEffect(showOutcome ? 1.0 : 0.5)
+                    .scaleEffect(showOutcome ? 1.0 : (result.outcome == .win ? 0.5 : 0.85))
                     .opacity(showOutcome ? 1.0 : 0)
+                    .shadow(
+                        color: result.outcome == .win
+                            ? BetBuddyTheme.accentGold.opacity(jackpotPulse ? 0.6 : 0.0)
+                            : Color.clear,
+                        radius: jackpotPulse ? 20 : 0
+                    )
 
                 // Score Display
                 scoreDisplay
@@ -89,9 +100,19 @@ struct ResultView: View {
             Text("Möchtest du die Punkte behalten oder alles auf 0 setzen?")
         }
         .onAppear {
-            // Staggered animations
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.2)) {
-                showOutcome = true
+            // JACKPOT: federnder Bounce-Eingang + Gold-Glow-Pulse
+            // BUST: schneller, abrupter Eingang ohne Bounce
+            if result.outcome == .win {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.45).delay(0.2)) {
+                    showOutcome = true
+                }
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true).delay(0.7)) {
+                    jackpotPulse = true
+                }
+            } else {
+                withAnimation(.easeIn(duration: 0.22).delay(0.2)) {
+                    showOutcome = true
+                }
             }
             withAnimation(.easeOut(duration: 0.5).delay(0.5)) {
                 showLeaderboard = true
@@ -129,7 +150,7 @@ struct ResultView: View {
                 Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))
@@ -356,7 +377,7 @@ struct ResultView: View {
             currentScores[entry.id] = 0
         }
 
-        Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             var allDone = true
 
             for entry in result.leaderboard {
@@ -364,8 +385,8 @@ struct ResultView: View {
                 let target = entry.score
 
                 if current < target {
-                    let step = max(1, (target - current) / 12)
-                    currentScores[entry.id] = current + step
+                    let step = max(1, (target - current) / 8)
+                    currentScores[entry.id] = min(current + step, target)
                     allDone = false
                 }
             }
@@ -484,26 +505,20 @@ struct LeaderboardRowView: View {
 
 // MARK: - Money Rain Lottie Animation
 struct MoneyRainLottieView: View {
+    /// 0.0 – 1.0: skaliert Sichtbarkeit und Geschwindigkeit der Geldanimation
+    var intensity: CGFloat = 1.0
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Mehrere Lottie-Animationen für volle Abdeckung
-                ForEach(0..<6, id: \.self) { index in
-                    LottieView(
-                        filename: "Money rain",
-                        loopMode: .loop,
-                        isPlaying: true,
-                        animationSpeed: 0.8 + Double(index % 3) * 0.1
-                    )
-                        .frame(width: geometry.size.width * 0.6, height: geometry.size.height * 0.5)
-                        .offset(
-                            x: CGFloat(index % 3) * geometry.size.width * 0.35 - geometry.size.width * 0.15,
-                            y: CGFloat(index / 3) * geometry.size.height * 0.4
-                        )
-                        .opacity(0.9)
-                }
-            }
-        }
+        LottieView(
+            filename: "Money rain",
+            loopMode: .loop,
+            isPlaying: true,
+            contentMode: .scaleAspectFill,
+            animationSpeed: 0.7 + (intensity * 0.5)
+        )
+        .opacity(0.6 + (intensity * 0.4))
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }
 

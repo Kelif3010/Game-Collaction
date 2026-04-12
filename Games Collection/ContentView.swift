@@ -1,9 +1,44 @@
 import SwiftUI
 import Combine
 
+private struct CompatibleGlassEffectContainer<Content: View>: View {
+    private let spacing: CGFloat
+    private let content: () -> Content
+
+    init(spacing: CGFloat = 24, @ViewBuilder content: @escaping () -> Content) {
+        self.spacing = spacing
+        self.content = content
+    }
+
+    @ViewBuilder
+    var body: some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: spacing) {
+                content()
+            }
+        } else {
+            content()
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func compatibleGlassCardEffect(cornerRadius: CGFloat) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.interactive(), in: shape)
+        } else {
+            clipShape(shape)
+                .background(.ultraThinMaterial, in: shape)
+        }
+    }
+}
+
 // MARK: - Hauptansicht
 struct ContentView: View {
-    @StateObject private var statsManager = GlobalStatsManager.shared
+    @ObservedObject private var statsManager = GlobalStatsManager.shared
     @ObservedObject private var quickActionManager = QuickActionManager.shared
     
     // Steuerung für die Spiele
@@ -11,6 +46,14 @@ struct ContentView: View {
     @State private var isTimesUpPresented = false
     @State private var isQuestionGamePresented = false
     @State private var isImposterPresented = false
+    @State private var isSoundCinemaPresented = false
+
+    // Tap-Animation für Karten (Hero-Effekt)
+    @State private var betBuddyTap = false
+    @State private var timesUpTap = false
+    @State private var questionTap = false
+    @State private var imposterTap = false
+    @State private var soundCinemaTap = false
     
     // Steuerung für Einstellungen
     @State private var showSettings = false
@@ -19,17 +62,44 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // HINTERGRUND: Verlauf
-                LinearGradient(
-                    colors: [Color(red: 0.05, green: 0.05, blue: 0.15), Color(red: 0.1, green: 0.1, blue: 0.25)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // HINTERGRUND: MeshGradient (iOS 18+) mit animierten Neon-Akzenten
+                if #available(iOS 18.0, *) {
+                    MeshGradient(
+                        width: 3,
+                        height: 3,
+                        points: [
+                            [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+                            [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+                            [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
+                        ],
+                        colors: [
+                            Color(red: 0.05, green: 0.05, blue: 0.18),
+                            Color(red: 0.08, green: 0.05, blue: 0.22),
+                            Color(red: 0.05, green: 0.05, blue: 0.18),
+                            Color(red: 0.10, green: 0.05, blue: 0.25),
+                            Color(red: 0.12, green: 0.08, blue: 0.30),
+                            Color(red: 0.08, green: 0.05, blue: 0.20),
+                            Color(red: 0.05, green: 0.05, blue: 0.15),
+                            Color(red: 0.10, green: 0.08, blue: 0.22),
+                            Color(red: 0.05, green: 0.05, blue: 0.15)
+                        ]
+                    )
+                    .ignoresSafeArea()
+                } else {
+                    // Fallback für iOS 17
+                    LinearGradient(
+                        colors: [Color(red: 0.05, green: 0.05, blue: 0.15), Color(red: 0.1, green: 0.1, blue: 0.25)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
+                }
                 
-                // SAISONALER EFFEKT: Schnee
-                SnowView()
-                    .opacity(0.6)
+                // SAISONALER EFFEKT: Schnee – nur im Winter (Dez/Jan/Feb)
+                if SnowView.isCurrentlyWinter {
+                    SnowView()
+                        .opacity(0.6)
+                }
                 
                 VStack(spacing: 20) {
                     // HEADER: Einstellungen + Titel
@@ -43,16 +113,17 @@ struct ContentView: View {
                                 .padding(10)
                                 .background(.ultraThinMaterial, in: Circle())
                         }
-                        
+                        .accessibilityLabel(Text("Einstellungen"))
+
                         Spacer()
-                        
+
                         Text("Games Collection")
                             .font(.title2.bold())
                             .foregroundStyle(.white)
                             .shadow(radius: 5)
-                        
+
                         Spacer()
-                        
+
                         // Magic Recommender Button
                         Button {
                             showRecommender = true
@@ -63,6 +134,7 @@ struct ContentView: View {
                                 .padding(10)
                                 .background(.ultraThinMaterial, in: Circle())
                         }
+                        .accessibilityLabel(Text("Spielempfehler"))
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -75,45 +147,84 @@ struct ContentView: View {
                             InfoTickerView()
                                 .padding(.vertical, 10)
                             
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
-                                
-                                // --- SPIEL 1: BET BUDDY ---
-                                Button {
-                                    statsManager.markGameAsPlayed("BetBuddy")
-                                    isBetBuddyPresented = true
-                                } label: {
-                                    BetBuddyGameCard()
+                            CompatibleGlassEffectContainer(spacing: 20) {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
+
+                                    // --- SPIEL 1: BET BUDDY ---
+                                    Button {
+                                        statsManager.markGameAsPlayed("BetBuddy")
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { betBuddyTap = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                            betBuddyTap = false
+                                            isBetBuddyPresented = true
+                                        }
+                                    } label: {
+                                        BetBuddyGameCard()
+                                            .scaleEffect(betBuddyTap ? 0.93 : 1.0)
+                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: betBuddyTap)
+                                    }
+
+                                    // --- SPIEL 2: TIME'S UP ---
+                                    Button {
+                                        statsManager.markGameAsPlayed("TimesUp")
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { timesUpTap = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                            timesUpTap = false
+                                            isTimesUpPresented = true
+                                        }
+                                    } label: {
+                                        MenuGameCard(
+                                            title: "Time's Up",
+                                            subtitle: "Erklären & Raten",
+                                            icon: "hourglass",
+                                            gradient: LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .scaleEffect(timesUpTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: timesUpTap)
+                                    }
+
+                                    // --- SPIEL 3: FINDE DEN LÜGNER ---
+                                    Button {
+                                        statsManager.markGameAsPlayed("Question")
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { questionTap = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                            questionTap = false
+                                            isQuestionGamePresented = true
+                                        }
+                                    } label: {
+                                        LugnerGameCard()
+                                            .scaleEffect(questionTap ? 0.93 : 1.0)
+                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: questionTap)
+                                    }
+
+                                    // --- SPIEL 4: IMPOSTER ---
+                                    Button {
+                                        statsManager.markGameAsPlayed("Imposter")
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { imposterTap = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                            imposterTap = false
+                                            isImposterPresented = true
+                                        }
+                                    } label: {
+                                        ImposterGameCard()
+                                            .scaleEffect(imposterTap ? 0.93 : 1.0)
+                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: imposterTap)
+                                    }
+
+                                    // --- SPIEL 5: GERÄUSCH-KINO ---
+                                    Button {
+                                        statsManager.markGameAsPlayed("SoundCinema")
+                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { soundCinemaTap = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                            soundCinemaTap = false
+                                            isSoundCinemaPresented = true
+                                        }
+                                    } label: {
+                                        SoundCinemaGameCard()
+                                            .scaleEffect(soundCinemaTap ? 0.93 : 1.0)
+                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: soundCinemaTap)
+                                    }
                                 }
-                                
-                                // --- SPIEL 2: TIME'S UP ---
-                                Button { 
-                                    statsManager.markGameAsPlayed("TimesUp")
-                                    isTimesUpPresented = true 
-                                } label: {
-                                    MenuGameCard(
-                                        title: "Time's Up",
-                                        subtitle: "Erklären & Raten",
-                                        icon: "hourglass",
-                                        gradient: LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                    )
-                                }
-                                
-                                // --- SPIEL 3: FINDE DEN LÜGNER ---
-                                Button {
-                                    statsManager.markGameAsPlayed("Question")
-                                    isQuestionGamePresented = true
-                                } label: {
-                                    LugnerGameCard()
-                                }
-                                
-                                // --- SPIEL 4: IMPOSTER ---
-                                Button {
-                                    statsManager.markGameAsPlayed("Imposter")
-                                    isImposterPresented = true
-                                } label: {
-                                    ImposterGameCard()
-                                }
-                                
                             }
                             .padding()
                         }
@@ -134,9 +245,11 @@ struct ContentView: View {
         // MODALS
         .sheet(isPresented: $showSettings) {
             MainSettingsView()
+                .presentationBackground(.ultraThinMaterial)
         }
         .sheet(isPresented: $showRecommender) {
             GameRecommenderView()
+                .presentationBackground(.ultraThinMaterial)
         }
         .fullScreenCover(isPresented: $isBetBuddyPresented) { BetBuddyWrapper() }
         .fullScreenCover(isPresented: $isQuestionGamePresented) { QuestionGameWrapper() }
@@ -145,6 +258,9 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $isTimesUpPresented) {
             TimesUpWrapper()
+        }
+        .fullScreenCover(isPresented: $isSoundCinemaPresented) {
+            SoundCinemaWrapper()
         }
         .onAppear {
             handleQuickActionIfNeeded()
@@ -165,6 +281,7 @@ struct ContentView: View {
         isTimesUpPresented = false
         isQuestionGamePresented = false
         isImposterPresented = false
+        isSoundCinemaPresented = false
 
         switch action {
         case .betBuddy:
@@ -179,6 +296,9 @@ struct ContentView: View {
         case .imposter:
             statsManager.markGameAsPlayed(action.gameId)
             isImposterPresented = true
+        case .soundCinema:
+            statsManager.markGameAsPlayed(action.gameId)
+            isSoundCinemaPresented = true
         }
     }
 }
@@ -190,26 +310,32 @@ struct MenuGameCard: View {
     let subtitle: LocalizedStringKey
     let icon: String
     let gradient: LinearGradient
-    
+
+    @State private var hourglassFlipped = false
+    @State private var hourglassTimer: Timer?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             ZStack {
                 Circle()
                     .fill(.white.opacity(0.2))
                     .frame(width: 50, height: 50)
-                
-                Image(systemName: icon)
+
+                Image(systemName: hourglassFlipped ? "hourglass.bottomhalf.filled" : "hourglass.tophalf.filled")
                     .font(.title2)
                     .foregroundStyle(.white)
+                    .symbolEffect(.bounce, value: hourglassFlipped)
+                    .rotationEffect(.degrees(hourglassFlipped ? 180 : 0))
+                    .animation(.easeInOut(duration: 0.6), value: hourglassFlipped)
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.title3.bold())
                     .foregroundStyle(.white)
-                
+
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.7))
@@ -218,13 +344,17 @@ struct MenuGameCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 160)
         .padding()
-        .background(gradient.opacity(0.8))
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
-        )
+        .onAppear {
+            hourglassTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+                hourglassFlipped.toggle()
+            }
+        }
+        .onDisappear {
+            hourglassTimer?.invalidate()
+            hourglassTimer = nil
+        }
+        .background(gradient.opacity(0.6))
+        .compatibleGlassCardEffect(cornerRadius: 24)
         .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
     }
 }
@@ -624,20 +754,26 @@ struct SnowView: View {
     @State private var particles: [SnowParticle] = []
     @State private var isAnimating = true
 
-    // Timer nur wenn App aktiv ist (spart Batterie im Hintergrund)
-    private var timer: Publishers.Autoconnect<Timer.TimerPublisher>? {
-        isAnimating ? Timer.publish(every: 0.02, on: .main, in: .common).autoconnect() : nil
+    /// Schnee nur im Winter: Dezember (12), Januar (1), Februar (2)
+    static var isCurrentlyWinter: Bool {
+        let month = Calendar.current.component(.month, from: Date())
+        return month == 12 || month == 1 || month == 2
     }
 
     var body: some View {
         GeometryReader { geometry in
-            TimelineView(.animation(paused: !isAnimating)) { timeline in
-                Canvas { context, size in
+            // Einziger Timer: TimelineView steuert Rendering UND Partikel-Update
+            TimelineView(.animation(paused: !isAnimating)) { context in
+                Canvas { drawCtx, size in
                     for particle in particles {
                         let rect = CGRect(x: particle.x * size.width, y: particle.y * size.height, width: particle.size, height: particle.size)
-                        context.opacity = particle.opacity
-                        context.fill(Path(ellipseIn: rect), with: .color(.white))
+                        drawCtx.opacity = particle.opacity
+                        drawCtx.fill(Path(ellipseIn: rect), with: .color(.white))
                     }
+                }
+                .onChange(of: context.date) { _, _ in
+                    guard isAnimating else { return }
+                    updateParticles()
                 }
             }
             .onAppear {
@@ -645,12 +781,8 @@ struct SnowView: View {
                     particles.append(createParticle())
                 }
             }
-            .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
-                guard isAnimating else { return }
-                updateParticles()
-            }
             .onChange(of: scenePhase) { _, newPhase in
-                // Timer stoppen wenn App in Hintergrund geht
+                // Animation stoppen wenn App in Hintergrund geht (Batterie sparen)
                 isAnimating = (newPhase == .active)
             }
         }
@@ -735,6 +867,110 @@ struct SessionKingCard: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(LinearGradient(colors: [.yellow.opacity(0.5), .clear], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Geräusch-Kino Spielkarte
+struct SoundCinemaGameCard: View {
+    private let accentCyan  = Color(red: 0.0,  green: 0.83, blue: 1.0)
+    private let accentBlue  = Color(red: 0.15, green: 0.45, blue: 1.0)
+    private let deepNavy    = Color(red: 0.02, green: 0.06, blue: 0.20)
+
+    @State private var wavePulse = false
+    @State private var glowPulse = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Icon: Waveform
+            ZStack {
+                Circle()
+                    .fill(accentCyan.opacity(0.18))
+                    .frame(width: 52, height: 52)
+                    .scaleEffect(glowPulse ? 1.18 : 1.0)
+                    .opacity(glowPulse ? 0 : 0.7)
+
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [accentCyan, accentBlue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 50, height: 50)
+
+                Image(systemName: "waveform.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.black.opacity(0.85))
+            }
+
+            Spacer()
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Geräusch-Kino")
+                    .font(.system(.title3, design: .rounded).bold())
+                    .foregroundStyle(.white)
+
+                Text("Imitier & Rate")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(accentCyan.opacity(0.85))
+                    .tracking(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 160)
+        .padding()
+        .background(
+            ZStack {
+                LinearGradient(
+                    colors: [deepNavy, Color(red: 0.03, green: 0.10, blue: 0.28)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                // Cyan-Glow von oben links
+                RadialGradient(
+                    colors: [accentCyan.opacity(wavePulse ? 0.14 : 0.07), Color.clear],
+                    center: .topLeading,
+                    startRadius: 0,
+                    endRadius: 180
+                )
+
+                // Mini Waveform Dekoration
+                HStack(alignment: .center, spacing: 3) {
+                    ForEach([0.3, 0.7, 0.5, 1.0, 0.6, 0.8, 0.4, 0.9, 0.5, 0.3], id: \.self) { h in
+                        Capsule()
+                            .fill(accentCyan.opacity(wavePulse ? 0.12 : 0.06))
+                            .frame(width: 3, height: 40 * h)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.trailing, 8)
+                .padding(.bottom, 8)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(
+                        colors: [accentCyan.opacity(0.55), accentBlue.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .shadow(color: accentCyan.opacity(0.18), radius: 12, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                wavePulse = true
+            }
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: false)) {
+                glowPulse = true
+            }
+        }
     }
 }
 

@@ -1092,3 +1092,15 @@
 "Bereit" = "Ready for TV";
 "BEREIT FUR DAS NACHSTE SPIEL" = "READY FOR THE NEXT GAME";
 "GAMES COLLECTION" = "GAMES COLLECTION";
+
+/* Sound Cinema */
+"soundcinema_pack_beginner" = "Beginner";
+"soundcinema_pack_party" = "Party";
+"soundcinema_pack_wild" = "Wild";
+"soundcinema_pack_beginner_desc" = "Easy, familiar sounds";
+"soundcinema_pack_party_desc" = "Fun & medium difficulty";
+"soundcinema_pack_wild_desc" = "Hard & completely crazy";
+"soundcinema_timer_short_desc" = "Lightning fast – 5 seconds";
+"soundcinema_timer_medium_desc" = "Normal – 8 seconds";
+"soundcinema_timer_long_desc" = "Relaxed – 10 seconds";
+"Geräusch-Kino" = "Sound Cinema";

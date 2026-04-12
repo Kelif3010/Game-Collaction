@@ -1,0 +1,762 @@
+[
+  {
+    "id": "sc001",
+    "de": "Startendes Flugzeug",
+    "en": "Airplane taking off",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "✈️"
+  },
+  {
+    "id": "sc002",
+    "de": "Kettensäge im Wald",
+    "en": "Chainsaw in the forest",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🪚"
+  },
+  {
+    "id": "sc003",
+    "de": "Tropfender Wasserhahn",
+    "en": "Dripping faucet",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🚰"
+  },
+  {
+    "id": "sc004",
+    "de": "Mikrowelle beim Aufwärmen",
+    "en": "Microwave warming up",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "📦"
+  },
+  {
+    "id": "sc005",
+    "de": "Piepende Mikrowelle (fertig!)",
+    "en": "Microwave beeping (done!)",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🔔"
+  },
+  {
+    "id": "sc006",
+    "de": "Schnarchen im Schlaf",
+    "en": "Snoring while sleeping",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "😴"
+  },
+  {
+    "id": "sc007",
+    "de": "Frösche am Teich bei Nacht",
+    "en": "Frogs at a pond at night",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐸"
+  },
+  {
+    "id": "sc008",
+    "de": "Hund, der bellt und dann jault",
+    "en": "Dog barking then whining",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐕"
+  },
+  {
+    "id": "sc009",
+    "de": "Katze, die schnurrt",
+    "en": "Cat purring",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐈"
+  },
+  {
+    "id": "sc010",
+    "de": "Baby, das weint",
+    "en": "Baby crying",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "👶"
+  },
+  {
+    "id": "sc011",
+    "de": "Motorsäge, die nicht anspringt",
+    "en": "Chainsaw that won't start",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "😤"
+  },
+  {
+    "id": "sc012",
+    "de": "Regen auf einem Zeltdach",
+    "en": "Rain on a tent roof",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "⛺"
+  },
+  {
+    "id": "sc013",
+    "de": "Kaffeemaschine beim Brühen",
+    "en": "Coffee machine brewing",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "☕"
+  },
+  {
+    "id": "sc014",
+    "de": "Alte Türklingel",
+    "en": "Old doorbell",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🔔"
+  },
+  {
+    "id": "sc015",
+    "de": "Zahnarzt-Bohrer",
+    "en": "Dentist drill",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🦷"
+  },
+  {
+    "id": "sc016",
+    "de": "Violinsolo (sehr schlecht gespielt)",
+    "en": "Violin solo (played very badly)",
+    "pack": "party",
+    "difficulty": "hard",
+    "emoji": "🎻"
+  },
+  {
+    "id": "sc017",
+    "de": "Trompete aus der Nachbarschaft",
+    "en": "Trumpet from the neighbors",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🎺"
+  },
+  {
+    "id": "sc018",
+    "de": "Schlagzeug-Solo",
+    "en": "Drum solo",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🥁"
+  },
+  {
+    "id": "sc019",
+    "de": "Gitarren-Riff (sehr episch)",
+    "en": "Guitar riff (very epic)",
+    "pack": "party",
+    "difficulty": "hard",
+    "emoji": "🎸"
+  },
+  {
+    "id": "sc020",
+    "de": "Toilette beim Spülen",
+    "en": "Toilet flushing",
+    "pack": "wild",
+    "difficulty": "easy",
+    "emoji": "🚽"
+  },
+  {
+    "id": "sc021",
+    "de": "Fahrender Zug, der bremst",
+    "en": "Moving train braking",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🚂"
+  },
+  {
+    "id": "sc022",
+    "de": "Motorrad beim Anfahren",
+    "en": "Motorcycle accelerating",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🏍️"
+  },
+  {
+    "id": "sc023",
+    "de": "Helikopter über dir",
+    "en": "Helicopter above you",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🚁"
+  },
+  {
+    "id": "sc024",
+    "de": "Geräusch eines startenden Raumschiffs",
+    "en": "Spaceship launching sound",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🚀"
+  },
+  {
+    "id": "sc025",
+    "de": "Alter Windows-Startton",
+    "en": "Old Windows startup sound",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "💻"
+  },
+  {
+    "id": "sc026",
+    "de": "Modem beim Einwählen (Dial-Up)",
+    "en": "Dial-up modem connecting",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "📡"
+  },
+  {
+    "id": "sc027",
+    "de": "Laubenpieper-Grill beim Anzünden",
+    "en": "Garden barbecue being lit",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🔥"
+  },
+  {
+    "id": "sc028",
+    "de": "Knisterndes Lagerfeuer",
+    "en": "Crackling campfire",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🏕️"
+  },
+  {
+    "id": "sc029",
+    "de": "Meereswellen am Strand",
+    "en": "Ocean waves on the beach",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🌊"
+  },
+  {
+    "id": "sc030",
+    "de": "Sturm mit Donner und Blitz",
+    "en": "Storm with thunder and lightning",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "⛈️"
+  },
+  {
+    "id": "sc031",
+    "de": "Schnee knirscht unter den Schuhen",
+    "en": "Snow crunching under shoes",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "❄️"
+  },
+  {
+    "id": "sc032",
+    "de": "Ballon, der platzt",
+    "en": "Balloon popping",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🎈"
+  },
+  {
+    "id": "sc033",
+    "de": "Tür, die quietscht und knarzt",
+    "en": "Door squeaking and creaking",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🚪"
+  },
+  {
+    "id": "sc034",
+    "de": "Geister in einem Spukhaus",
+    "en": "Ghosts in a haunted house",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "👻"
+  },
+  {
+    "id": "sc035",
+    "de": "Grunzende Schweine",
+    "en": "Grunting pigs",
+    "pack": "wild",
+    "difficulty": "medium",
+    "emoji": "🐷"
+  },
+  {
+    "id": "sc036",
+    "de": "Pferd im Galopp",
+    "en": "Horse galloping",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🐴"
+  },
+  {
+    "id": "sc037",
+    "de": "Kuh beim Muhen",
+    "en": "Cow mooing",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐄"
+  },
+  {
+    "id": "sc038",
+    "de": "Esel beim Schreien",
+    "en": "Donkey braying",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🫏"
+  },
+  {
+    "id": "sc039",
+    "de": "Löwe brüllt",
+    "en": "Lion roaring",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🦁"
+  },
+  {
+    "id": "sc040",
+    "de": "Elefant trompetet",
+    "en": "Elephant trumpeting",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🐘"
+  },
+  {
+    "id": "sc041",
+    "de": "Schlange zischt",
+    "en": "Snake hissing",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐍"
+  },
+  {
+    "id": "sc042",
+    "de": "Gorilla haut sich auf die Brust",
+    "en": "Gorilla beating its chest",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🦍"
+  },
+  {
+    "id": "sc043",
+    "de": "Delfin kommuniziert",
+    "en": "Dolphin communicating",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🐬"
+  },
+  {
+    "id": "sc044",
+    "de": "Hahn kräht am Morgen",
+    "en": "Rooster crowing in the morning",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🐓"
+  },
+  {
+    "id": "sc045",
+    "de": "Quietschende Turnschuhe auf Parkett",
+    "en": "Sneakers squeaking on hardwood",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "👟"
+  },
+  {
+    "id": "sc046",
+    "de": "Supermarkt-Kasse scannt Artikel",
+    "en": "Supermarket scanner scanning items",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🛒"
+  },
+  {
+    "id": "sc047",
+    "de": "Drucker, der klemmt",
+    "en": "Printer jamming",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🖨️"
+  },
+  {
+    "id": "sc048",
+    "de": "Tastatur-Tippen unter Zeitdruck",
+    "en": "Keyboard typing under time pressure",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "⌨️"
+  },
+  {
+    "id": "sc049",
+    "de": "Telefon klingelt (alter Apparat)",
+    "en": "Phone ringing (old device)",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "📞"
+  },
+  {
+    "id": "sc050",
+    "de": "Fahrstuhl-Musik",
+    "en": "Elevator music",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🛗"
+  },
+  {
+    "id": "sc051",
+    "de": "Biene schwärmt",
+    "en": "Bees swarming",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🐝"
+  },
+  {
+    "id": "sc052",
+    "de": "Mücke am Ohr",
+    "en": "Mosquito near your ear",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🦟"
+  },
+  {
+    "id": "sc053",
+    "de": "Grille in der Nacht",
+    "en": "Cricket at night",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🦗"
+  },
+  {
+    "id": "sc054",
+    "de": "Hummel im Blumentopf",
+    "en": "Bumblebee in a flowerpot",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🌸"
+  },
+  {
+    "id": "sc055",
+    "de": "Fernseher ohne Signal (Rauschen)",
+    "en": "TV with no signal (static)",
+    "pack": "wild",
+    "difficulty": "medium",
+    "emoji": "📺"
+  },
+  {
+    "id": "sc056",
+    "de": "Jemand isst Chips – sehr laut",
+    "en": "Someone eating chips – very loud",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🍟"
+  },
+  {
+    "id": "sc057",
+    "de": "Spaghetti schlürfen",
+    "en": "Slurping spaghetti",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🍝"
+  },
+  {
+    "id": "sc058",
+    "de": "Ketchup-Flasche, die leer ist",
+    "en": "Ketchup bottle being empty",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🍅"
+  },
+  {
+    "id": "sc059",
+    "de": "Champagnerflasche öffnet sich",
+    "en": "Champagne bottle popping",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🍾"
+  },
+  {
+    "id": "sc060",
+    "de": "Bier einschenken",
+    "en": "Pouring beer",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🍺"
+  },
+  {
+    "id": "sc061",
+    "de": "Zug-Durchsage (unverständlich)",
+    "en": "Train announcement (incomprehensible)",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🔊"
+  },
+  {
+    "id": "sc062",
+    "de": "Alarm geht los (Feuermelder)",
+    "en": "Fire alarm going off",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🚨"
+  },
+  {
+    "id": "sc063",
+    "de": "Amboss beim Schmied",
+    "en": "Blacksmith's anvil",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "⚒️"
+  },
+  {
+    "id": "sc064",
+    "de": "Glocken läuten (Kirchturm)",
+    "en": "Church bells ringing",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "⛪"
+  },
+  {
+    "id": "sc065",
+    "de": "Schlüssel im Schloss drehen",
+    "en": "Key turning in a lock",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🔑"
+  },
+  {
+    "id": "sc066",
+    "de": "Reißverschluss öffnen",
+    "en": "Zipper opening",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🤐"
+  },
+  {
+    "id": "sc067",
+    "de": "Klebeband abreißen",
+    "en": "Tearing tape",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🗂️"
+  },
+  {
+    "id": "sc068",
+    "de": "Glasscherben zerbrechen",
+    "en": "Glass shattering",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🔨"
+  },
+  {
+    "id": "sc069",
+    "de": "Auto springt nicht an",
+    "en": "Car not starting",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🚗"
+  },
+  {
+    "id": "sc070",
+    "de": "Reifenpanne auf der Autobahn",
+    "en": "Flat tire on the highway",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🫧"
+  },
+  {
+    "id": "sc071",
+    "de": "Schiffshorn im Nebel",
+    "en": "Ship horn in the fog",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🚢"
+  },
+  {
+    "id": "sc072",
+    "de": "U-Boot taucht auf",
+    "en": "Submarine surfacing",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🤿"
+  },
+  {
+    "id": "sc073",
+    "de": "Vulkan bricht aus",
+    "en": "Volcano erupting",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🌋"
+  },
+  {
+    "id": "sc074",
+    "de": "Erdrutsch im Gebirge",
+    "en": "Landslide in the mountains",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "⛰️"
+  },
+  {
+    "id": "sc075",
+    "de": "Wasserfall",
+    "en": "Waterfall",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "💧"
+  },
+  {
+    "id": "sc076",
+    "de": "Wind pfeift durch die Bergspitzen",
+    "en": "Wind whistling through mountain peaks",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🏔️"
+  },
+  {
+    "id": "sc077",
+    "de": "Sportkommentator beim Elfmeter",
+    "en": "Sports commentator during penalty kick",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "⚽"
+  },
+  {
+    "id": "sc078",
+    "de": "Boxkampf – letzte Runde",
+    "en": "Boxing match – last round",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🥊"
+  },
+  {
+    "id": "sc079",
+    "de": "Roboter aus den 80ern",
+    "en": "80s-style robot",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🤖"
+  },
+  {
+    "id": "sc080",
+    "de": "Lightsaber-Duell",
+    "en": "Lightsaber duel",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "⚔️"
+  },
+  {
+    "id": "sc081",
+    "de": "Opa hustet am Frühstückstisch",
+    "en": "Grandpa coughing at the breakfast table",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "👴"
+  },
+  {
+    "id": "sc082",
+    "de": "Lachen, das ansteckend wird",
+    "en": "Laughter that becomes contagious",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "😂"
+  },
+  {
+    "id": "sc083",
+    "de": "Jemand niest – drei Mal hintereinander",
+    "en": "Someone sneezing – three times in a row",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🤧"
+  },
+  {
+    "id": "sc084",
+    "de": "Schluckauf, der nicht aufhört",
+    "en": "Hiccups that won't stop",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "😮‍💨"
+  },
+  {
+    "id": "sc085",
+    "de": "Jemand gähnt im Meeting",
+    "en": "Someone yawning in a meeting",
+    "pack": "party",
+    "difficulty": "easy",
+    "emoji": "🥱"
+  },
+  {
+    "id": "sc086",
+    "de": "Trillerpfeife beim Schiedsrichter",
+    "en": "Referee's whistle",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🎯"
+  },
+  {
+    "id": "sc087",
+    "de": "Bogenschütze schießt",
+    "en": "Archer shooting",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🏹"
+  },
+  {
+    "id": "sc088",
+    "de": "Dart trifft die Scheibe",
+    "en": "Dart hitting the board",
+    "pack": "beginner",
+    "difficulty": "easy",
+    "emoji": "🎯"
+  },
+  {
+    "id": "sc089",
+    "de": "Bowling – Strike!",
+    "en": "Bowling – Strike!",
+    "pack": "party",
+    "difficulty": "medium",
+    "emoji": "🎳"
+  },
+  {
+    "id": "sc090",
+    "de": "Spieluhr dreht sich",
+    "en": "Music box turning",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🎁"
+  },
+  {
+    "id": "sc091",
+    "de": "Didgeridoo (australisch)",
+    "en": "Didgeridoo (Australian)",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🪗"
+  },
+  {
+    "id": "sc092",
+    "de": "Sitar aus Indien",
+    "en": "Sitar from India",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🎵"
+  },
+  {
+    "id": "sc093",
+    "de": "Dudelsack aus Schottland",
+    "en": "Bagpipes from Scotland",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+  },
+  {
+    "id": "sc094",
+    "de": "Didgeridoo trifft Dudelsack (Fusion)",
+    "en": "Didgeridoo meets bagpipes (fusion)",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🎶"
+  },
+  {
+    "id": "sc095",
+    "de": "Drache speist Feuer",
+    "en": "Dragon breathing fire",
+    "pack": "wild",
+    "difficulty": "hard",
+    "emoji": "🐉"
+  }
+]
