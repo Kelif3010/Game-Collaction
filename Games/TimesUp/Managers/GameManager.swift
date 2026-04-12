@@ -25,10 +25,16 @@ class GameManager: ObservableObject {
     }
     @Published var gameState = GameState() {
         didSet {
-            // Save Settings on change
-            if let data = try? JSONEncoder().encode(gameState.settings) {
-                UserDefaults.standard.set(data, forKey: "timesup.settings")
+            // Nur Settings persistieren, nicht den Runtime-State (TU-01 Fix: verhindert 10x/s Disk-IO)
+            if gameState.settings != oldValue.settings {
+                saveSettings()
             }
+        }
+    }
+
+    private func saveSettings() {
+        if let data = try? JSONEncoder().encode(gameState.settings) {
+            UserDefaults.standard.set(data, forKey: "timesup.settings")
         }
     }
     @Published var scoreRevealSnapshots: [UUID: ScoreRevealSnapshot] = [:]
@@ -211,12 +217,22 @@ class GameManager: ObservableObject {
         }
     }
     
+    /// Explizites Cleanup — muss von der View aufgerufen werden bevor sie dismiss (TU-02 Fix)
+    func cleanup() {
+        turnTimer.invalidate()
+        activeTimeBombTimers.values.forEach { $0.invalidate() }
+        activeTimeBombTimers.removeAll()
+        swapWordTasks.values.forEach { $0.cancel() }
+        swapWordTasks.removeAll()
+        invisibleWordHideTasks.values.forEach { $0.cancel() }
+        invisibleWordHideTasks.removeAll()
+        englishWordExpiryTasks.values.forEach { $0.cancel() }
+        englishWordExpiryTasks.removeAll()
+    }
+
     deinit {
-        // Safe invalidation
-        Task { @MainActor [weak self] in
-            self?.turnTimer.invalidate()
-            self?.activeTimeBombTimers.values.forEach { $0.invalidate() }
-        }
+        // Timer invalidieren sich bei deinit automatisch — cleanup() sollte vorher von der View aufgerufen worden sein
+        turnTimer.invalidate()
     }
     
     // MARK: - Setup

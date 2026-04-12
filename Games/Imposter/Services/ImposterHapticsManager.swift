@@ -21,12 +21,18 @@ class ImposterHapticsManager {
         let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
         return isEnabled && CHHapticEngine.capabilitiesForHardware().supportsHaptics
     }
-    
+
     init() {
         createEngine()
         setupLifecycleObservers()
     }
-    
+
+    /// Engine bei Bedarf erstellen — falls beim App-Start Haptics deaktiviert war
+    private func ensureEngine() {
+        guard engine == nil, isHapticsEnabledAndSupported else { return }
+        createEngine()
+    }
+
     private func createEngine() {
         guard isHapticsEnabledAndSupported else { return }
         
@@ -73,6 +79,7 @@ class ImposterHapticsManager {
     /// Spielt einen schweren, dumpfen Schlag (wie ein Richterhammer)
     /// Ideal für: Voting-Entscheidungen
     func playHeavyThud() {
+        ensureEngine()
         guard isHapticsEnabledAndSupported else {
             // Fallback für alte Geräte (nur wenn Haptik generell an ist)
             let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
@@ -99,6 +106,7 @@ class ImposterHapticsManager {
     /// Spielt einen einzelnen Scan-Tick (Progressiv)
     /// - Parameter progress: Fortschritt von 0.0 bis 1.0
     func playScanTick(progress: Float) {
+        ensureEngine()
         guard isHapticsEnabledAndSupported else {
             // Fallback
             let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
@@ -136,6 +144,7 @@ class ImposterHapticsManager {
     /// Spielt einen Timer-Tick basierend auf der verbleibenden Zeit
     /// Optimiert für: Spürbarkeit auf dem Tisch (Vibration + Sound)
     func playTimerTick(secondsRemaining: Int) {
+        ensureEngine()
         guard isHapticsEnabledAndSupported else {
             let isEnabled = UserDefaults.standard.object(forKey: "isHapticsEnabled") as? Bool ?? true
             if isEnabled && secondsRemaining <= 5 && secondsRemaining > 0 {

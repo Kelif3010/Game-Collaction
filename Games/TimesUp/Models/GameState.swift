@@ -105,7 +105,7 @@ enum TimesUpGamePhase: Codable {
     case gameEnd
 }
 
-struct TimesUpGameSettings: Codable {
+struct TimesUpGameSettings: Codable, Equatable {
     var teams: [Team] = []
     
     // HIER GEÄNDERT: TimesUpCategory statt Category
@@ -184,7 +184,7 @@ struct GameState: Codable {
         }
         
         let teamId = activeTeamId
-        let startIndex = resolvedIndexForCurrentTeam() ?? candidates.first!
+        let startIndex = resolvedIndexForCurrentTeam() ?? (candidates.first ?? 0)
         var iterations = 0
         var nextIndex = startIndex
         let maxIterations = allTerms.count * 2

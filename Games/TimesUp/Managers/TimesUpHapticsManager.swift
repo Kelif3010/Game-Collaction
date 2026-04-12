@@ -26,6 +26,12 @@ class TimesUpHapticsManager {
         createEngine()
         setupLifecycleObservers()
     }
+
+    /// Engine bei Bedarf erstellen — falls beim App-Start Haptics deaktiviert war
+    private func ensureEngine() {
+        guard engine == nil, supportsHaptics else { return }
+        createEngine()
+    }
     
     deinit {
         stopEngine()
@@ -100,6 +106,7 @@ class TimesUpHapticsManager {
     /// Spielt einen belohnenden Effekt für eine richtige Antwort
     /// Fühlt sich an wie ein doppeltes "Einrasten" oder ein heller Triller.
     func playSuccess() {
+        ensureEngine()
         guard supportsHaptics else {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             return
@@ -124,6 +131,7 @@ class TimesUpHapticsManager {
     /// Spielt einen Effekt für das Überspringen (Skip) einer Karte
     /// Fühlt sich an wie physische Reibung beim Wegschieben einer Papierkarte.
     func playSkip() {
+        ensureEngine()
         guard supportsHaptics else {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             return
@@ -149,6 +157,7 @@ class TimesUpHapticsManager {
     /// Spielt einen Timer-Tick basierend auf der verbleibenden Zeit.
     /// Erzeugt eine progressive Spannungskurve.
     func playTimerTick(secondsRemaining: Int) {
+        ensureEngine()
         guard supportsHaptics else {
             // Einfacher Fallback für alte Geräte bei den letzten 3 Sekunden
             if secondsRemaining <= 3 && secondsRemaining > 0 {
@@ -196,6 +205,7 @@ class TimesUpHapticsManager {
     /// Spielt einen magischen Crescendo-Effekt für die Aktivierung eines Perks.
     /// Fühlt sich an, als würde sich Energie aufladen und entladen.
     func playPerkActivation() {
+        ensureEngine()
         guard supportsHaptics else {
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             return
@@ -229,6 +239,7 @@ class TimesUpHapticsManager {
     
     /// Spielt einen schweren, dumpfen Schlag für eine Strafe oder Minuspunkte.
     func playPenalty() {
+        ensureEngine()
         guard supportsHaptics else {
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             return

@@ -109,16 +109,21 @@ final class GlobalPlayerManager: ObservableObject {
         // Called when data changes on another device
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            // Reload from iCloud
-            if let data = self.iCloudStore.data(forKey: self.storageKey),
-               let decoded = try? JSONDecoder().decode([GlobalPlayer].self, from: data) {
-                
-                // Merge Logic: We simply take the cloud version as truth for simplicity in V1.
-                // In a complex app, we would merge arrays by ID.
-                self.players = decoded
-                
-                // Update local storage
-                UserDefaults.standard.set(data, forKey: self.storageKey)
+            guard let data = self.iCloudStore.data(forKey: self.storageKey),
+                  let cloudPlayers = try? JSONDecoder().decode([GlobalPlayer].self, from: data)
+            else { return }
+
+            // UUID-basiertes Merge: Vereinigt lokale + Cloud-Spieler (DA-02 / SVC-02 Fix)
+            // Cloud-Version gewinnt bei Konflikten (neuere Geräte-Änderungen)
+            var merged = Dictionary(uniqueKeysWithValues: self.players.map { ($0.id, $0) })
+            for cloudPlayer in cloudPlayers {
+                merged[cloudPlayer.id] = cloudPlayer
+            }
+            self.players = Array(merged.values).sorted { $0.name < $1.name }
+
+            // Gemergten Stand lokal sichern
+            if let mergedData = try? JSONEncoder().encode(self.players) {
+                UserDefaults.standard.set(mergedData, forKey: self.storageKey)
             }
         }
     }

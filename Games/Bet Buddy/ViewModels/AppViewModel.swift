@@ -83,7 +83,13 @@ final class AppViewModel: ObservableObject {
     @Published private(set) var voteHistory: [VoteEntry] = []
     
     // Session Scores (nur für das aktuelle Spiel / ResultView)
-    @Published private(set) var scores: [UUID: Int] = [:]
+    @Published private(set) var scores: [UUID: Int] = [:] {
+        didSet {
+            guard !isInitializing else { return }
+            saveSessionScores()
+        }
+    }
+    private var isInitializing = true
     
     @Published var highlights = GameHighlights()
 
@@ -150,7 +156,9 @@ final class AppViewModel: ObservableObject {
         scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
         
         loadStats()
-        
+        loadSessionScores()   // BB-01: gespeicherte Session-Scores wiederherstellen
+        isInitializing = false
+
         // Listen for Factory Reset
         NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -248,6 +256,7 @@ final class AppViewModel: ObservableObject {
     func resetSessionScores() {
         resetVotes()
         scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
+        UserDefaults.standard.removeObject(forKey: "betbuddy.sessionScores")
         playedChallengeIDs.removeAll()
         refreshChallenge()
     }
@@ -475,5 +484,29 @@ final class AppViewModel: ObservableObject {
             newScores[group.id] = scores[group.id, default: 0]
         }
         scores = newScores
+    }
+
+    // MARK: - Session Score Persistence (BB-01 Fix)
+
+    private func saveSessionScores() {
+        // Speichern nach GroupColor.rawValue (stabil über App-Neustarts)
+        var colorKeyed: [String: Int] = [:]
+        for group in groups {
+            colorKeyed[group.color.rawValue] = scores[group.id, default: 0]
+        }
+        if let data = try? JSONEncoder().encode(colorKeyed) {
+            UserDefaults.standard.set(data, forKey: "betbuddy.sessionScores")
+        }
+    }
+
+    private func loadSessionScores() {
+        guard let data = UserDefaults.standard.data(forKey: "betbuddy.sessionScores"),
+              let colorKeyed = try? JSONDecoder().decode([String: Int].self, from: data)
+        else { return }
+        for group in groups {
+            if let saved = colorKeyed[group.color.rawValue] {
+                scores[group.id] = saved
+            }
+        }
     }
 }

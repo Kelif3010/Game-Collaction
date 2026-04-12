@@ -31,12 +31,17 @@ class MultipeerManager: NSObject, ObservableObject {
     @Published var lastError: String? // Fehleranzeige für UI
     
     // NEU: Liste aller Spieler in der Lobby (vom Host empfangen)
-    @Published var lobbyPeers: [String] = [] 
+    @Published var lobbyPeers: [String] = []
     @Published var readyPlayers: Set<String> = []
     @Published var activeRoomCode: String? = nil
     @Published var hostActivity: String = ""
     @Published var disconnectedPeers: Set<String> = []
-    
+
+    // Explizit gespeicherter Host-Name (SVC-06 Fix: nicht mehr Konvention "erster in Array")
+    @Published private(set) var hostPeerName: String? = nil
+    // Host-Disconnect Alert für Clients (SVC-03 / UX-18 Fix)
+    @Published var hostDidDisconnect: Bool = false
+
     // NEU: Für UI-Benachrichtigungen
     @Published var lastDisconnectedPlayerName: String? = nil
     @Published var lastReconnectedPlayerName: String? = nil
@@ -102,6 +107,7 @@ class MultipeerManager: NSObject, ObservableObject {
         stop()
         syncPeerNameFromDefaults()
         role = .host
+        hostPeerName = myPeerId.displayName  // Host-Name explizit merken
         lobbyPeers = [myPeerId.displayName] // Ich bin der erste
         readyPlayers.removeAll()
         activeRoomCode = roomCode
@@ -155,6 +161,8 @@ class MultipeerManager: NSObject, ObservableObject {
         disconnectTasks.removeAll()
         hostActivity = ""
         role = .unknown
+        hostPeerName = nil
+        hostDidDisconnect = false
         targetRoomCode = nil
         activeRoomCode = nil
     }
@@ -201,8 +209,8 @@ class MultipeerManager: NSObject, ObservableObject {
     
     func sendToHost(event: String, object: Codable? = nil) {
         guard role == .peer else { return }
-        // Der Host ist immer der erste in der lobbyPeers Liste (Konvention)
-        guard let hostName = lobbyPeers.first else { return }
+        // SVC-06 Fix: hostPeerName explizit gespeichert, nicht mehr Konvention "erster in Array"
+        guard let hostName = hostPeerName ?? lobbyPeers.first else { return }
         
         if let hostPeer = getPeer(byName: hostName) {
             sendToPeer(event: event, object: object, to: hostPeer)
@@ -325,6 +333,10 @@ extension MultipeerManager: MCSessionDelegate {
                 print("MPC: Getrennt von \(peerDisplayName)")
                 self.lastDisconnectedPlayerName = peerDisplayName
                 self.markPeerDisconnected(peerDisplayName)
+                // SVC-03 / UX-18 Fix: Clients erkennen Host-Disconnect und können Alert zeigen
+                if self.role == .peer, peerDisplayName == self.hostPeerName {
+                    self.hostDidDisconnect = true
+                }
             @unknown default:
                 break
             }
@@ -347,6 +359,10 @@ extension MultipeerManager: MCSessionDelegate {
                 if let names = try? JSONDecoder().decode([String].self, from: payload) {
                     print("MPC Gast: Lobby-Update empfangen: \(names)")
                     self.lobbyPeers = names
+                    // SVC-06 Fix: Host-Name aus Lobby-Update ableiten (erster Eintrag = Host-Konvention beim Broadcast)
+                    if self.role == .peer, self.hostPeerName == nil, let first = names.first {
+                        self.hostPeerName = first
+                    }
                     return // Nicht weiterleiten, ist intern
                 }
             }

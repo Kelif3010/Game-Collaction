@@ -53,11 +53,15 @@ struct TimesUpGameView: View {
             .alert("Spiel beenden?", isPresented: $showingEndGame) {
                 Button("Abbrechen", role: .cancel) { }
                 Button("Beenden", role: .destructive) {
+                    gameManager.cleanup()
                     dismiss()
                 }
             } message: {
                 Text("Möchtest du das aktuelle Spiel wirklich beenden?")
             }
+        }
+        .onDisappear {
+            gameManager.cleanup()
         }
         .overlay(alignment: .topTrailing) {
             if !gameManager.scoreBursts.isEmpty {
