@@ -431,3 +431,14 @@
 "soundcinema_timer_medium_desc" = "Normal – 8 Sekunden";
 "soundcinema_timer_long_desc" = "Entspannt – 10 Sekunden";
 "Geräusch-Kino" = "Geräusch-Kino";
+
+/* Falsche Fährte */
+"ff.pack.klassisch" = "Klassisch";
+"ff.pack.krass" = "Krass";
+"ff.pack.extrem" = "Extrem";
+"Falsche Fährte" = "Falsche Fährte";
+"ff.tagline" = "Lüge & Entlarve";
+"ff.setup.players" = "Spieler";
+"ff.setup.packs" = "Fragen-Pack";
+"ff.setup.rounds" = "Runden";
+"ff.setup.bluffTimer" = "Lügen-Zeit";

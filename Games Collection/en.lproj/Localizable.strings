@@ -1104,3 +1104,14 @@
 "soundcinema_timer_medium_desc" = "Normal – 8 seconds";
 "soundcinema_timer_long_desc" = "Relaxed – 10 seconds";
 "Geräusch-Kino" = "Sound Cinema";
+
+/* Falsche Fährte */
+"ff.pack.klassisch" = "Classic";
+"ff.pack.krass" = "Bold";
+"ff.pack.extrem" = "Extreme";
+"Falsche Fährte" = "Red Herring";
+"ff.tagline" = "Bluff & Expose";
+"ff.setup.players" = "Players";
+"ff.setup.packs" = "Question Pack";
+"ff.setup.rounds" = "Rounds";
+"ff.setup.bluffTimer" = "Bluff Timer";

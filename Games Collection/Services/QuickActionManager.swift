@@ -7,15 +7,17 @@ enum QuickActionType: String {
     case timesUp     = "quickaction.timesup"
     case question    = "quickaction.question"
     case imposter    = "quickaction.imposter"
-    case soundCinema = "quickaction.soundcinema"
+    case soundCinema    = "quickaction.soundcinema"
+    case falscheFaehrte = "quickaction.falschefaehrte"
 
     var gameId: String {
         switch self {
-        case .betBuddy:    return "BetBuddy"
-        case .timesUp:     return "TimesUp"
-        case .question:    return "Question"
-        case .imposter:    return "Imposter"
-        case .soundCinema: return "SoundCinema"
+        case .betBuddy:       return "BetBuddy"
+        case .timesUp:        return "TimesUp"
+        case .question:       return "Question"
+        case .imposter:       return "Imposter"
+        case .soundCinema:    return "SoundCinema"
+        case .falscheFaehrte: return "FalscheFaehrte"
         }
     }
 
@@ -31,6 +33,8 @@ enum QuickActionType: String {
             return NSLocalizedString("Imposter", comment: "Quick action title")
         case .soundCinema:
             return NSLocalizedString("Geräusch-Kino", comment: "Quick action title")
+        case .falscheFaehrte:
+            return NSLocalizedString("Falsche Fährte", comment: "Quick action title")
         }
     }
 
@@ -46,6 +50,8 @@ enum QuickActionType: String {
             return UIApplicationShortcutIcon(systemImageName: "theatermasks.fill")
         case .soundCinema:
             return UIApplicationShortcutIcon(systemImageName: "waveform.circle.fill")
+        case .falscheFaehrte:
+            return UIApplicationShortcutIcon(systemImageName: "magnifyingglass.circle.fill")
         }
     }
 }
@@ -65,7 +71,8 @@ final class QuickActionManager: ObservableObject {
             QuickActionType.timesUp,
             QuickActionType.question,
             QuickActionType.imposter,
-            QuickActionType.soundCinema
+            QuickActionType.soundCinema,
+            QuickActionType.falscheFaehrte
         ].map { type in
             UIApplicationShortcutItem(
                 type: type.rawValue,

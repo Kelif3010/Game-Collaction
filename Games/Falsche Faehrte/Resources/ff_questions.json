@@ -1,0 +1,1127 @@
+[
+  {
+    "id": "ff001",
+    "de_question": "Womit putzten sich alte Römer die Zähne?",
+    "en_question": "What did ancient Romans use to clean their teeth?",
+    "de_answer": "Urin (Ammoniak wirkt als Bleichmittel)",
+    "en_answer": "Urine (ammonia acts as a bleaching agent)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff002",
+    "de_question": "Wie viele Herzen hat ein Tintenfisch?",
+    "en_question": "How many hearts does an octopus have?",
+    "de_answer": "3 Herzen",
+    "en_answer": "3 hearts",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff003",
+    "de_question": "Was war die erste Speise, die im Weltraum gegessen wurde?",
+    "en_question": "What was the first food eaten in space?",
+    "de_answer": "Rindfleisch-Pastete aus einer Tube",
+    "en_answer": "Beef paste from a tube",
+    "category": "Weltraum",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff004",
+    "de_question": "Welches Tier schläft stehend ein und fällt dabei manchmal um?",
+    "en_question": "Which animal falls asleep standing and sometimes tips over?",
+    "de_answer": "Kühe",
+    "en_answer": "Cows",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff005",
+    "de_question": "Was kostet das teuerste Pizza-Rezept der Welt pro Stück?",
+    "en_question": "How much does the world's most expensive pizza cost per slice?",
+    "de_answer": "Rund 1.000 Euro (belegt mit Trüffel, Kaviar, Hummer)",
+    "en_answer": "About 1,000 euros (topped with truffle, caviar, lobster)",
+    "category": "Essen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff006",
+    "de_question": "Welche Farbe hat das Blut von Tintenfischen?",
+    "en_question": "What color is octopus blood?",
+    "de_answer": "Blau (wegen Hämocyanin statt Hämoglobin)",
+    "en_answer": "Blue (because of hemocyanin instead of hemoglobin)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff007",
+    "de_question": "Was ist die häufigste Lüge auf Lebensläufen?",
+    "en_question": "What is the most common lie on resumes?",
+    "de_answer": "Fremdsprachenkenntnisse",
+    "en_answer": "Foreign language skills",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff008",
+    "de_question": "Wie nennt man die Angst vor langen Wörtern?",
+    "en_question": "What is the fear of long words called?",
+    "de_answer": "Hippopotomonstrosesquippedaliophobie",
+    "en_answer": "Hippopotomonstrosesquippedaliophobia",
+    "category": "Kuriositäten",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff009",
+    "de_question": "Welches Tier kann seinen eigenen Kopf 270 Grad drehen?",
+    "en_question": "Which animal can rotate its own head 270 degrees?",
+    "de_answer": "Die Eule",
+    "en_answer": "The owl",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff010",
+    "de_question": "Was war das erste Produkt, das jemals mit einem Barcode gescannt wurde?",
+    "en_question": "What was the first product ever scanned with a barcode?",
+    "de_answer": "Ein Päckchen Wrigley's Kaugummi (1974)",
+    "en_answer": "A pack of Wrigley's chewing gum (1974)",
+    "category": "Technik",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff011",
+    "de_question": "Welche Pflanze wird in der Raumfahrt als Sauerstofflieferant bevorzugt eingesetzt?",
+    "en_question": "Which plant is preferred in space travel as an oxygen supplier?",
+    "de_answer": "Salat (wächst schnell, braucht wenig Platz)",
+    "en_answer": "Lettuce (grows fast, needs little space)",
+    "category": "Weltraum",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff012",
+    "de_question": "Wie lange kann eine Weinbergschnecke schlafen?",
+    "en_question": "How long can a garden snail sleep?",
+    "de_answer": "Bis zu 3 Jahre",
+    "en_answer": "Up to 3 years",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff013",
+    "de_question": "Was ist der offizielle Spitzname der Farbe Blau auf dem Twitter/X-Logo?",
+    "en_question": "What is the official nickname of the blue color on the Twitter/X logo?",
+    "de_answer": "Twitter Blue",
+    "en_answer": "Twitter Blue",
+    "category": "Tech & Social",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff014",
+    "de_question": "Welches Land verbraucht pro Kopf am meisten Schokolade?",
+    "en_question": "Which country consumes the most chocolate per capita?",
+    "de_answer": "Die Schweiz",
+    "en_answer": "Switzerland",
+    "category": "Essen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff015",
+    "de_question": "Wie heißt das Phänomen, wenn man morgens nicht aufstehen will, obwohl man genug geschlafen hat?",
+    "en_question": "What is the phenomenon called when you don't want to get up in the morning even though you've had enough sleep?",
+    "de_answer": "Dysania",
+    "en_answer": "Dysania",
+    "category": "Kuriositäten",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff016",
+    "de_question": "Welches Tier hat den größten Augapfel im Verhältnis zu seinem Körper?",
+    "en_question": "Which animal has the largest eyeball relative to its body?",
+    "de_answer": "Der Tarsier (Koboldmaki)",
+    "en_answer": "The tarsier",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff017",
+    "de_question": "Wo wurde das erste McDonald's-Restaurant eröffnet?",
+    "en_question": "Where was the first McDonald's restaurant opened?",
+    "de_answer": "San Bernardino, Kalifornien (1940)",
+    "en_answer": "San Bernardino, California (1940)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff018",
+    "de_question": "Wie lange lebt eine Tagesfliegenlarve, bevor sie zum erwachsenen Insekt wird?",
+    "en_question": "How long does a mayfly larva live before becoming an adult insect?",
+    "de_answer": "Bis zu 3 Jahre (als erwachsenes Tier nur Stunden)",
+    "en_answer": "Up to 3 years (as an adult only hours)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff019",
+    "de_question": "Welches Gerät wurde ursprünglich für medizinische Zwecke erfunden, bevor es zum Küchenmixer wurde?",
+    "en_question": "What device was originally invented for medical purposes before becoming a kitchen blender?",
+    "de_answer": "Der Mixer (zum Behandeln von Epilepsie erfunden)",
+    "en_answer": "The blender (invented to treat epilepsy)",
+    "category": "Technik",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff020",
+    "de_question": "Welches Tier wurde zuerst als Haustier domestiziert?",
+    "en_question": "Which animal was first domesticated as a pet?",
+    "de_answer": "Der Hund (vor ca. 15.000 Jahren)",
+    "en_answer": "The dog (approximately 15,000 years ago)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff021",
+    "de_question": "Was ist in Singapur seit 1992 verboten?",
+    "en_question": "What has been banned in Singapore since 1992?",
+    "de_answer": "Kaugummi (außer für medizinische Zwecke)",
+    "en_answer": "Chewing gum (except for medical purposes)",
+    "category": "Gesetze",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff022",
+    "de_question": "Wie viele Gerüche kann ein Mensch ungefähr unterscheiden?",
+    "en_question": "How many smells can a human approximately distinguish?",
+    "de_answer": "Über 1 Billion (1.000.000.000.000)",
+    "en_answer": "Over 1 trillion (1,000,000,000,000)",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff023",
+    "de_question": "Welches Tier kann seinen Magen nach außen stülpen?",
+    "en_question": "Which animal can turn its stomach inside out?",
+    "de_answer": "Der Seestern",
+    "en_answer": "The starfish",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff024",
+    "de_question": "In welchem Land ist es illegal, einen Hamster als Haustier zu halten?",
+    "en_question": "In which country is it illegal to keep a hamster as a pet?",
+    "de_answer": "Vietnam",
+    "en_answer": "Vietnam",
+    "category": "Gesetze",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff025",
+    "de_question": "Wie viele Muskeln braucht ein Mensch um zu lächeln?",
+    "en_question": "How many muscles does a person need to smile?",
+    "de_answer": "Ca. 12 Muskeln (zum Stirnrunzeln ca. 11)",
+    "en_answer": "About 12 muscles (to frown about 11)",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff026",
+    "de_question": "Was ist das älteste bekannte Rezept der Welt?",
+    "en_question": "What is the oldest known recipe in the world?",
+    "de_answer": "Bierrezept aus Sumerien (ca. 1.800 v. Chr.)",
+    "en_answer": "Beer recipe from Sumer (around 1,800 BC)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff027",
+    "de_question": "Welches Tier hat sieben Nacken-Wirbel — genau wie Menschen?",
+    "en_question": "Which animal has seven neck vertebrae — just like humans?",
+    "de_answer": "Die Giraffe",
+    "en_answer": "The giraffe",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff028",
+    "de_question": "Was produzieren Bienen, wenn sie gestresst sind?",
+    "en_question": "What do bees produce when they are stressed?",
+    "de_answer": "Propolis (als Abwehrmechanismus)",
+    "en_answer": "Propolis (as a defense mechanism)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff029",
+    "de_question": "Welches Element wurde auf dem Mond entdeckt, bevor es auf der Erde gefunden wurde?",
+    "en_question": "Which element was discovered on the Moon before it was found on Earth?",
+    "de_answer": "Helium (1868 in der Sonnenatmosphäre, dann auf Mond, 1882 auf Erde)",
+    "en_answer": "Helium (1868 in solar atmosphere, then Moon, 1882 on Earth)",
+    "category": "Wissenschaft",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff030",
+    "de_question": "Wie viel Prozent des Gehirns benutzt ein Mensch wirklich?",
+    "en_question": "What percentage of the brain does a person actually use?",
+    "de_answer": "Nahezu 100% (aber nicht alle Bereiche gleichzeitig)",
+    "en_answer": "Nearly 100% (but not all areas simultaneously)",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff031",
+    "de_question": "Was ist das einzige Lebensmittel, das niemals verdirbt?",
+    "en_question": "What is the only food that never spoils?",
+    "de_answer": "Honig (3.000 Jahre alter Honig aus Pharaonengräbern war noch essbar)",
+    "en_answer": "Honey (3,000-year-old honey from pharaoh tombs was still edible)",
+    "category": "Essen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff032",
+    "de_question": "Welches Tier hat keine Beine, aber vier Kniegele?",
+    "en_question": "Which animal has no legs but four knees?",
+    "de_answer": "Die Schlange (hat vestigiale Beckenstrukturen)",
+    "en_answer": "The snake (has vestigial pelvic structures)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff033",
+    "de_question": "Welches Land hat weltweit die meisten Burgen und Schlösser?",
+    "en_question": "Which country has the most castles in the world?",
+    "de_answer": "Deutschland (über 20.000)",
+    "en_answer": "Germany (over 20,000)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff034",
+    "de_question": "Was ist das schwerste bekannte organische Molekül?",
+    "en_question": "What is the heaviest known organic molecule?",
+    "de_answer": "Titin (ein Muskelprotein mit über 34.000 Aminosäuren)",
+    "en_answer": "Titin (a muscle protein with over 34,000 amino acids)",
+    "category": "Wissenschaft",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff035",
+    "de_question": "In welchem Land wurde die Klimaanlage als Standard in Schulen als erstes eingeführt?",
+    "en_question": "In which country was air conditioning first introduced as standard in schools?",
+    "de_answer": "USA (1950er Jahre in Texas)",
+    "en_answer": "USA (1950s in Texas)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff036",
+    "de_question": "Was wäre, wenn man alle Atome im menschlichen Körper entfernen würde — was würde übrig bleiben?",
+    "en_question": "If you removed all atoms from the human body, what would be left?",
+    "de_answer": "Nichts — der Körper besteht vollständig aus Atomen",
+    "en_answer": "Nothing — the body consists entirely of atoms",
+    "category": "Wissenschaft",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff037",
+    "de_question": "Welches Tier hat das größte Gehirn im Verhältnis zu seinem Körper?",
+    "en_question": "Which animal has the largest brain relative to its body?",
+    "de_answer": "Der Mensch",
+    "en_answer": "The human",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff038",
+    "de_question": "Wie hieß die erste digitale Kamera und wie schwer war sie?",
+    "en_question": "What was the first digital camera called and how heavy was it?",
+    "de_answer": "Kodak 1975 Prototyp — wog 3,6 Kilogramm",
+    "en_answer": "Kodak 1975 prototype — weighed 3.6 kilograms",
+    "category": "Technik",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff039",
+    "de_question": "Was ist das älteste Nationalflaggen-Design, das noch heute verwendet wird?",
+    "en_question": "What is the oldest national flag design still in use today?",
+    "de_answer": "Dänemark (Dannebrog) seit ca. 1370",
+    "en_answer": "Denmark (Dannebrog) since approximately 1370",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff040",
+    "de_question": "Welcher Planet dreht sich in die entgegengesetzte Richtung als die meisten anderen?",
+    "en_question": "Which planet rotates in the opposite direction from most others?",
+    "de_answer": "Venus (dreht sich von Ost nach West — retrograd)",
+    "en_answer": "Venus (rotates from east to west — retrograde)",
+    "category": "Weltraum",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff041",
+    "de_question": "Was passiert, wenn eine Katze von sehr großer Höhe fällt?",
+    "en_question": "What happens when a cat falls from a very great height?",
+    "de_answer": "Katzen erreichen eine Endgeschwindigkeit und überleben öfter als erwartet (High-Rise-Syndrom)",
+    "en_answer": "Cats reach terminal velocity and survive more often than expected (high-rise syndrome)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff042",
+    "de_question": "In welchem Land ist Schlurfen im Büro eine akzeptierte Praxis?",
+    "en_question": "In which country is slurping noodles in the office an accepted practice?",
+    "de_answer": "Japan (Slurfen gilt als Zeichen, dass das Essen gut ist)",
+    "en_answer": "Japan (slurping is a sign that the food is delicious)",
+    "category": "Kulturen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff043",
+    "de_question": "Wie viele verschiedene Sprachen kann ein Papagei lernen?",
+    "en_question": "How many different languages can a parrot learn?",
+    "de_answer": "Papageien verstehen keine Sprache wirklich — sie imitieren nur Laute",
+    "en_answer": "Parrots don't actually understand language — they only imitate sounds",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff044",
+    "de_question": "Was hat Napoleon Bonaparte wirklich während der Ägypten-Expedition entdeckt?",
+    "en_question": "What did Napoleon Bonaparte's soldiers actually discover during the Egypt expedition?",
+    "de_answer": "Den Rosetta-Stein (1799 — Schlüssel zur Hieroglyphen-Entzifferung)",
+    "en_answer": "The Rosetta Stone (1799 — key to deciphering hieroglyphics)",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff045",
+    "de_question": "Wie viele Quadratzentimeter Oberfläche hat die menschliche Lunge, wenn man sie ausbreitet?",
+    "en_question": "How many square meters of surface area does the human lung have when spread out?",
+    "de_answer": "Ca. 70 Quadratmeter (ungefähr die Größe eines Tennisplatzes)",
+    "en_answer": "About 70 square meters (roughly the size of a tennis court)",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff046",
+    "de_question": "Welche Stadt hat die meisten Buchläden pro Einwohner der Welt?",
+    "en_question": "Which city has the most bookshops per capita in the world?",
+    "de_answer": "Buenos Aires, Argentinien",
+    "en_answer": "Buenos Aires, Argentina",
+    "category": "Kuriositäten",
+    "pack": "krass"
+  },
+  {
+    "id": "ff047",
+    "de_question": "Was ist die häufigste Todesursache für Astronauten außerhalb des Raumschiffs?",
+    "en_question": "What is the most common cause of death for astronauts outside the spacecraft?",
+    "de_answer": "Es hat noch kein Astronaut im Weltraumspaziergang seinen Tod gefunden",
+    "en_answer": "No astronaut has ever died during a spacewalk",
+    "category": "Weltraum",
+    "pack": "krass"
+  },
+  {
+    "id": "ff048",
+    "de_question": "Was essen Flamingos, damit ihre Federn rosa bleiben?",
+    "en_question": "What do flamingos eat to keep their feathers pink?",
+    "de_answer": "Krustentiere und Algen (enthalten Carotinoide — ohne sie werden sie weiß)",
+    "en_answer": "Crustaceans and algae (contain carotenoids — without them they turn white)",
+    "category": "Tiere",
+    "pack": "krass"
+  },
+  {
+    "id": "ff049",
+    "de_question": "Wie viel Geld würde man brauchen, um alle Rechnungen der US-Nationalschulden übereinanderzustapeln und den Mond zu erreichen?",
+    "en_question": "How tall would a stack of US national debt dollar bills be?",
+    "de_answer": "Der Stapel würde über 1,4 Millionen Kilometer reichen — fast 4x zur Mond-Distanz",
+    "en_answer": "The stack would reach over 1.4 million kilometers — almost 4x the moon's distance",
+    "category": "Zahlen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff050",
+    "de_question": "Welches Tier tötet pro Jahr die meisten Menschen weltweit?",
+    "en_question": "Which animal kills the most humans worldwide per year?",
+    "de_answer": "Die Mücke (ca. 725.000 Tode durch übertragene Krankheiten)",
+    "en_answer": "The mosquito (about 725,000 deaths via transmitted diseases)",
+    "category": "Tiere",
+    "pack": "krass"
+  },
+  {
+    "id": "ff051",
+    "de_question": "Was enthält McDonald's-Eiscrème angeblich, das kein reguläres Eis enthält?",
+    "en_question": "What does McDonald's soft-serve allegedly contain that regular ice cream doesn't?",
+    "de_answer": "Seaweed-Extrakt (Carrageenan als Stabilisator) — das Rezept variiert je nach Land",
+    "en_answer": "Seaweed extract (carrageenan as stabilizer) — the recipe varies by country",
+    "category": "Essen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff052",
+    "de_question": "In welchem Land ist es legal, mit einem toten Hai zu tanzen?",
+    "en_question": "In which country is it legal to dance with a dead shark?",
+    "de_answer": "In keinem gibt es ein solches Gesetz — jedoch in Island ist Stranden-Haiflossen essen traditionell",
+    "en_answer": "No country has such a law — however Iceland has traditional fermented shark eating",
+    "category": "Gesetze",
+    "pack": "krass"
+  },
+  {
+    "id": "ff053",
+    "de_question": "Was macht der Gehalt Deiner Großmutter mit Deinen Genen, laut Wissenschaft?",
+    "en_question": "What does your grandmother's diet do to your genes, according to science?",
+    "de_answer": "Epigenetik zeigt: Ernährung der Großmutter beeinflusst tatsächlich die Gesundheit der Enkel",
+    "en_answer": "Epigenetics shows: grandmother's diet actually influences grandchildren's health",
+    "category": "Wissenschaft",
+    "pack": "krass"
+  },
+  {
+    "id": "ff054",
+    "de_question": "Wie weit reist ein durchschnittlicher Nieser?",
+    "en_question": "How far does an average sneeze travel?",
+    "de_answer": "Bis zu 8 Meter — mit Tröpfchen die stundenlang in der Luft schweben",
+    "en_answer": "Up to 8 meters — with droplets that float in the air for hours",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff055",
+    "de_question": "Was passiert, wenn man zwei Tage nicht schläft?",
+    "en_question": "What happens when you don't sleep for two days?",
+    "de_answer": "Man beginnt zu halluzinieren (schon nach 24h gibt es kognitive Ausfälle)",
+    "en_answer": "You start hallucinating (cognitive failures already after 24 hours)",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff056",
+    "de_question": "Wie lange kann ein Mensch ohne Essen überleben?",
+    "en_question": "How long can a human survive without food?",
+    "de_answer": "Ca. 3 Wochen (Rekord: 382 Tage unter ärztlicher Aufsicht)",
+    "en_answer": "About 3 weeks (record: 382 days under medical supervision)",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff057",
+    "de_question": "Welches Tier kann sich selbst geklont reproduzieren, ohne Sex?",
+    "en_question": "Which animal can reproduce by cloning itself without sex?",
+    "de_answer": "Weibliche Komodowarane (Parthenogenese)",
+    "en_answer": "Female Komodo dragons (parthenogenesis)",
+    "category": "Tiere",
+    "pack": "krass"
+  },
+  {
+    "id": "ff058",
+    "de_question": "Was enthält Cola Zero, das Cola Light nicht hat?",
+    "en_question": "What does Coke Zero contain that Diet Coke doesn't?",
+    "de_answer": "Acesulfam-Kalium in anderer Kombination — und eine andere Geschmacksformel",
+    "en_answer": "Acesulfame potassium in a different combination — and a different flavor formula",
+    "category": "Essen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff059",
+    "de_question": "Warum kann man Uhren nicht in Werbefotos unter 10:10 sehen?",
+    "en_question": "Why are watches almost never shown before 10:10 in advertisements?",
+    "de_answer": "10:10 sieht aus wie ein Lächeln — Marketing-Strategie seit den 1950ern",
+    "en_answer": "10:10 looks like a smile — a marketing strategy since the 1950s",
+    "category": "Kuriositäten",
+    "pack": "krass"
+  },
+  {
+    "id": "ff060",
+    "de_question": "Wie viele Bakterien leben auf der menschlichen Haut?",
+    "en_question": "How many bacteria live on human skin?",
+    "de_answer": "Ca. 1,8 Kilogramm — mehr als 1 Billion Bakterien",
+    "en_answer": "About 1.8 kilograms — more than 1 trillion bacteria",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff061",
+    "de_question": "Was kostet es im Durchschnitt, einen Goldfisch richtig zu pflegen (Lebensdauer)?",
+    "en_question": "What does it cost on average to properly care for a goldfish (lifetime)?",
+    "de_answer": "Über 2.000 Euro — Goldfische leben bis zu 20 Jahre",
+    "en_answer": "Over 2,000 euros — goldfish live up to 20 years",
+    "category": "Tiere",
+    "pack": "krass"
+  },
+  {
+    "id": "ff062",
+    "de_question": "Was war das erste Gericht, das jemals in einer Mikrowelle erhitzt wurde?",
+    "en_question": "What was the first food ever heated in a microwave?",
+    "de_answer": "Popcorn (dann ein Schokoladen-Ei — das explodierte)",
+    "en_answer": "Popcorn (then a chocolate egg — which exploded)",
+    "category": "Technik",
+    "pack": "krass"
+  },
+  {
+    "id": "ff063",
+    "de_question": "In welchem Land gilt Vergessen seines Geburtstags als beleidigend?",
+    "en_question": "In which country is forgetting one's birthday considered offensive?",
+    "de_answer": "Das ist kulturell überall ähnlich — in Südkorea wird man beim Geburtstag Seaweed-Suppe gegessen",
+    "en_answer": "This is culturally similar everywhere — in South Korea seaweed soup is eaten on birthdays",
+    "category": "Kulturen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff064",
+    "de_question": "Wie viele Menschen sterben pro Jahr durch Vending-Machines (Automaten)?",
+    "en_question": "How many people die per year from vending machines?",
+    "de_answer": "Ca. 2-3 Menschen pro Jahr (durch Kippen des Automaten)",
+    "en_answer": "About 2-3 people per year (from tipping the machine)",
+    "category": "Kuriositäten",
+    "pack": "krass"
+  },
+  {
+    "id": "ff065",
+    "de_question": "Was passiert mit dem menschlichen Körper nach dem Tod in einem Weltraum-Spaziergang?",
+    "en_question": "What happens to the human body after death during a spacewalk?",
+    "de_answer": "Der Körper trocknet aus (Sublimation) und konserviert sich im Vakuum",
+    "en_answer": "The body desiccates (sublimation) and is preserved in the vacuum",
+    "category": "Weltraum",
+    "pack": "krass"
+  },
+  {
+    "id": "ff066",
+    "de_question": "Wie schwer ist das Gehirn eines durchschnittlichen Erwachsenen?",
+    "en_question": "How heavy is the brain of an average adult?",
+    "de_answer": "Ca. 1,4 Kilogramm — etwa so viel wie ein kleines Hähnchen",
+    "en_answer": "About 1.4 kilograms — about as much as a small chicken",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff067",
+    "de_question": "Welche Farbe hat der Urin eines gesunden Astronauten im Weltraum?",
+    "en_question": "What color is a healthy astronaut's urine in space?",
+    "de_answer": "Gelb — genau wie auf der Erde",
+    "en_answer": "Yellow — exactly like on Earth",
+    "category": "Weltraum",
+    "pack": "krass"
+  },
+  {
+    "id": "ff068",
+    "de_question": "Was macht der Körper, wenn man sehr lange atmet?",
+    "en_question": "What happens to the body when you hold your breath for a long time?",
+    "de_answer": "Man ohnmächtet (CO2-Aufbau löst den Atemreflex aus, nicht O2-Mangel)",
+    "en_answer": "You pass out (CO2 buildup triggers the breathing reflex, not oxygen shortage)",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff069",
+    "de_question": "Was ist die eigenartigste legale Tätigkeit in den USA?",
+    "en_question": "What is the strangest legal activity in the USA?",
+    "de_answer": "In Alabama ist es illegal, blinde Augen bei einem Esel zu tragen (echtes Gesetz)",
+    "en_answer": "In Alabama it is illegal to wear a fake moustache that causes laughter in church (real law)",
+    "category": "Gesetze",
+    "pack": "krass"
+  },
+  {
+    "id": "ff070",
+    "de_question": "Wie hoch ist der Wasseranteil eines Gurkens?",
+    "en_question": "What is the water percentage of a cucumber?",
+    "de_answer": "96% Wasser",
+    "en_answer": "96% water",
+    "category": "Essen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff071",
+    "de_question": "Was enthält ein durchschnittlicher Lippenstift, der nicht auf der Verpackung angegeben ist?",
+    "en_question": "What does an average lipstick contain that isn't listed on the packaging?",
+    "de_answer": "Fischschuppen (Guanin für den schimmernden Effekt)",
+    "en_answer": "Fish scales (guanine for the shimmering effect)",
+    "category": "Kuriositäten",
+    "pack": "krass"
+  },
+  {
+    "id": "ff072",
+    "de_question": "Wofür stand das 'e' in e-Mail ursprünglich?",
+    "en_question": "What did the 'e' in e-mail originally stand for?",
+    "de_answer": "Elektronisch",
+    "en_answer": "Electronic",
+    "category": "Technik",
+    "pack": "krass"
+  },
+  {
+    "id": "ff073",
+    "de_question": "Wie viel Prozent der Erde ist mit Wasser bedeckt?",
+    "en_question": "What percentage of the Earth is covered with water?",
+    "de_answer": "71%",
+    "en_answer": "71%",
+    "category": "Wissenschaft",
+    "pack": "krass"
+  },
+  {
+    "id": "ff074",
+    "de_question": "Was ist das teuerste Gewürz der Welt pro Gramm?",
+    "en_question": "What is the world's most expensive spice per gram?",
+    "de_answer": "Safran (bis zu 30 Euro pro Gramm)",
+    "en_answer": "Saffron (up to 30 euros per gram)",
+    "category": "Essen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff075",
+    "de_question": "Wie oft blinzelt ein Mensch durchschnittlich pro Tag?",
+    "en_question": "How many times does a person blink on average per day?",
+    "de_answer": "Ca. 15.000-20.000 mal",
+    "en_answer": "About 15,000-20,000 times",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff076",
+    "de_question": "Welche Droge wurde früher in Coca-Cola als aktiver Wirkstoff verwendet?",
+    "en_question": "Which drug was formerly used as an active ingredient in Coca-Cola?",
+    "de_answer": "Kokain (bis 1903 enthalten)",
+    "en_answer": "Cocaine (contained until 1903)",
+    "category": "Geschichte",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff077",
+    "de_question": "Was macht der menschliche Körper, wenn man ihn in flüssigen Stickstoff taucht?",
+    "en_question": "What happens to the human body when submerged in liquid nitrogen?",
+    "de_answer": "Er gefriert sofort und zerbricht wie Glas (bei -196°C)",
+    "en_answer": "It freezes instantly and shatters like glass (at -196°C)",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff078",
+    "de_question": "Welches Gift findet sich natürlich in Mandeln?",
+    "en_question": "Which poison naturally occurs in almonds?",
+    "de_answer": "Cyanid (bittere Mandeln haben mehr — süße haben es fast nicht)",
+    "en_answer": "Cyanide (bitter almonds have more — sweet ones barely have it)",
+    "category": "Essen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff079",
+    "de_question": "Was ist das giftigste Tier der Welt?",
+    "en_question": "What is the most venomous animal in the world?",
+    "de_answer": "Der Pfeilgiftfrosch (Dendrobatidae — stark genug um 10 Menschen zu töten)",
+    "en_answer": "The poison dart frog (Dendrobatidae — strong enough to kill 10 people)",
+    "category": "Tiere",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff080",
+    "de_question": "Wie viele Liter Blut pumpt das menschliche Herz täglich?",
+    "en_question": "How many liters of blood does the human heart pump daily?",
+    "de_answer": "Ca. 7.500 Liter (fast 2.000 Gallonen)",
+    "en_answer": "About 7,500 liters (almost 2,000 gallons)",
+    "category": "Menschen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff081",
+    "de_question": "Was enthält Wasser, das Menschen tatsächlich tötet?",
+    "en_question": "What in water actually kills people?",
+    "de_answer": "Zu viel reines Wasser (Hyponatriämie — Wasservergiftung durch Natriumverdünnung)",
+    "en_answer": "Too much pure water (hyponatremia — water poisoning from sodium dilution)",
+    "category": "Menschen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff082",
+    "de_question": "Wie viel des Universums besteht aus Dunkler Materie?",
+    "en_question": "How much of the universe consists of dark matter?",
+    "de_answer": "Ca. 27% — weitere 68% ist Dunkle Energie (nur 5% ist normale Materie)",
+    "en_answer": "About 27% — another 68% is dark energy (only 5% is normal matter)",
+    "category": "Weltraum",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff083",
+    "de_question": "Was passiert mit dem menschlichen Körper im Vakuum des Alls?",
+    "en_question": "What happens to the human body in the vacuum of space?",
+    "de_answer": "Man verliert in ca. 15 Sekunden das Bewusstsein — aber explodiert nicht",
+    "en_answer": "You lose consciousness in about 15 seconds — but you don't explode",
+    "category": "Weltraum",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff084",
+    "de_question": "Welches Element ist radioaktiv und kommt in Bananen vor?",
+    "en_question": "Which element is radioactive and occurs in bananas?",
+    "de_answer": "Kalium-40 (K-40) — Bananen strahlen minimal, aber messbar",
+    "en_answer": "Potassium-40 (K-40) — bananas emit minimal but measurable radiation",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff085",
+    "de_question": "Was ist das gefährlichste bekannte Objekt im Sonnensystem für die Erde?",
+    "en_question": "What is the most dangerous known object in the solar system for Earth?",
+    "de_answer": "Der Asteroid Apophis — Annäherung 2029 auf unter 32.000 km",
+    "en_answer": "The asteroid Apophis — approaching within 32,000 km in 2029",
+    "category": "Weltraum",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff086",
+    "de_question": "Wie viele Atomsprengköpfe existieren weltweit?",
+    "en_question": "How many nuclear warheads exist worldwide?",
+    "de_answer": "Ca. 12.500 (davon sind ca. 2.000 einsatzbereit)",
+    "en_answer": "About 12,500 (of which about 2,000 are operational)",
+    "category": "Geschichte",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff087",
+    "de_question": "Was ist der tödlichste bekannte Stoff, den die Menschheit erzeugt hat?",
+    "en_question": "What is the deadliest substance known to mankind?",
+    "de_answer": "Botulinum-Toxin — nanogramm-Mengen töten einen Menschen",
+    "en_answer": "Botulinum toxin — nanogram quantities kill a human",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff088",
+    "de_question": "Welches historische Gericht wird aus einem Tier gemacht, das sich selbst vergiftet hat?",
+    "en_question": "Which historical dish is made from an animal that has poisoned itself?",
+    "de_answer": "Fugu (Kugelfisch) — dessen Toxin Tetrodotoxin ist 1.200x giftiger als Zyankali",
+    "en_answer": "Fugu (puffer fish) — whose toxin tetrodotoxin is 1,200x more potent than cyanide",
+    "category": "Essen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff089",
+    "de_question": "Was passiert, wenn eine Spinne in ein Schwarzes Loch fällt?",
+    "en_question": "What happens when a spider falls into a black hole?",
+    "de_answer": "Sie wird durch Gezeitenkräfte 'gespagettifiziert' — längs gestreckt bis zum Zerreißen",
+    "en_answer": "It gets 'spaghettified' by tidal forces — stretched lengthwise until torn apart",
+    "category": "Weltraum",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff090",
+    "de_question": "Welche gefährliche Substanz findet sich in Kernkraftwerks-Kühlwasser?",
+    "en_question": "Which dangerous substance is found in nuclear power plant cooling water?",
+    "de_answer": "Tritium (radioaktives Wasserstoffisotop) — wird aber stark verdünnt abgeleitet",
+    "en_answer": "Tritium (radioactive hydrogen isotope) — but released highly diluted",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff091",
+    "de_question": "Wie viele Menschen sterben täglich an den Folgen des Rauchens weltweit?",
+    "en_question": "How many people die daily worldwide from the effects of smoking?",
+    "de_answer": "Ca. 18.000 Menschen täglich (6,5 Millionen pro Jahr)",
+    "en_answer": "About 18,000 people daily (6.5 million per year)",
+    "category": "Menschen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff092",
+    "de_question": "Was wäre die Konsequenz, wenn alle Menschen der Welt gleichzeitig springen würden?",
+    "en_question": "What would happen if all people in the world jumped at the same time?",
+    "de_answer": "Physikalisch nichts merkbares — die Erschütterung wäre kleiner als ein mittleres Erdbeben",
+    "en_answer": "Physically nothing noticeable — the tremor would be smaller than a moderate earthquake",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff093",
+    "de_question": "Welche normale Haushaltschemikalie macht eine gefährliche Gasmischung?",
+    "en_question": "Which common household chemical creates a dangerous gas mixture?",
+    "de_answer": "Bleichmittel + Ammoniak (ergibt Chlorgas — Kriegsgas im 1. Weltkrieg)",
+    "en_answer": "Bleach + ammonia (creates chloramine gas — WWI warfare gas)",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff094",
+    "de_question": "Was ist das Ziel des Darwin Award?",
+    "en_question": "What is the purpose of the Darwin Award?",
+    "de_answer": "Er würdigt Menschen, die sich durch extrem dumme Aktionen aus dem Genpool entfernt haben",
+    "en_answer": "It honors people who removed themselves from the gene pool through extremely stupid actions",
+    "category": "Kuriositäten",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff095",
+    "de_question": "Wie lange würde die Menschheit ohne Strom zum Überleben brauchen?",
+    "en_question": "How long would humanity need to survive without electricity?",
+    "de_answer": "Schätzungen: 90% der Weltbevölkerung würde innerhalb eines Jahres sterben",
+    "en_answer": "Estimates: 90% of the world's population would die within one year",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff096",
+    "de_question": "Was findet sich in gewöhnlichem Trinkwasser, das nicht gefiltert wird?",
+    "en_question": "What is found in ordinary drinking water that is not filtered?",
+    "de_answer": "Spuren von Medikamenten, Mikroplastik und Hormonen aus dem Abwasser",
+    "en_answer": "Traces of pharmaceuticals, microplastics and hormones from wastewater",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff097",
+    "de_question": "Welches Tier wurde im Zweiten Weltkrieg als Kriegswaffe eingesetzt?",
+    "en_question": "Which animal was used as a weapon in World War II?",
+    "de_answer": "Fledermäuse (US-Programm 'Bat Bomb' — mit Brandbomben ausgestattet)",
+    "en_answer": "Bats (US program 'Bat Bomb' — equipped with incendiary devices)",
+    "category": "Geschichte",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff098",
+    "de_question": "Was würde passieren, wenn der Erdkern plötzlich aufhören würde zu rotieren?",
+    "en_question": "What would happen if the Earth's core suddenly stopped rotating?",
+    "de_answer": "Das Magnetfeld würde zusammenbrechen — kosmische Strahlung würde die Erde treffen",
+    "en_answer": "The magnetic field would collapse — cosmic radiation would bombard Earth",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff099",
+    "de_question": "Wie viel des Internets ist das sogenannte 'Dark Web'?",
+    "en_question": "How much of the internet is the so-called 'dark web'?",
+    "de_answer": "Ca. 96% des Internets ist 'Deep Web' — das Dark Web ist ein kleiner Teil davon",
+    "en_answer": "About 96% of the internet is 'deep web' — the dark web is a small part of that",
+    "category": "Technik",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff100",
+    "de_question": "Was passiert mit dem Körper, wenn man 11 Tage nicht schläft?",
+    "en_question": "What happens to the body when you don't sleep for 11 days?",
+    "de_answer": "Schwere Halluzinationen, Gedächtnisverlust, Paranoia — Schlafentzug tötet schneller als Hungern",
+    "en_answer": "Severe hallucinations, memory loss, paranoia — sleep deprivation kills faster than starvation",
+    "category": "Menschen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff101",
+    "de_question": "Welches normale Essen enthält winzige Insektenteile ohne Kennzeichnung?",
+    "en_question": "Which normal food contains tiny insect parts without labeling?",
+    "de_answer": "Schokolade (FDA erlaubt bis zu 60 Insektenteile pro 100g), Ketchup, Mehl",
+    "en_answer": "Chocolate (FDA allows up to 60 insect parts per 100g), ketchup, flour",
+    "category": "Essen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff102",
+    "de_question": "Wie hoch ist die Wahrscheinlichkeit, vom Blitz getroffen zu werden?",
+    "en_question": "What is the probability of being struck by lightning?",
+    "de_answer": "1 zu 15.300 im Laufe des Lebens — Roy Sullivan wurde 7 mal getroffen",
+    "en_answer": "1 in 15,300 over a lifetime — Roy Sullivan was struck 7 times",
+    "category": "Kuriositäten",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff103",
+    "de_question": "Was ist das einzige Tier, das an Haasengeschmack stirbt?",
+    "en_question": "What is the only animal that can die from eating too much rabbit meat?",
+    "de_answer": "Der Mensch (Kaninchen-Hunger: tödlicher Proteinmangel durch fettarmes Fleisch)",
+    "en_answer": "Humans (rabbit starvation: fatal protein deficiency from fat-free meat)",
+    "category": "Tiere",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff104",
+    "de_question": "Welches Körperorgan wächst dein ganzes Leben lang weiter?",
+    "en_question": "Which body part keeps growing throughout your entire life?",
+    "de_answer": "Die Nase und die Ohren (Knorpel wird durch Schwerkraft komprimiert — wächst aber tatsächlich)",
+    "en_answer": "The nose and ears (cartilage is compressed by gravity — but actually keeps growing)",
+    "category": "Menschen",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff105",
+    "de_question": "Warum kann Schimmelpilz auf Brot manchmal tödlich sein?",
+    "en_question": "Why can mold on bread sometimes be deadly?",
+    "de_answer": "Aflatoxin (produziert von Aspergillus) ist eines der stärksten natürlichen Karzinogene",
+    "en_answer": "Aflatoxin (produced by Aspergillus) is one of the strongest natural carcinogens",
+    "category": "Wissenschaft",
+    "pack": "extrem"
+  },
+  {
+    "id": "ff106",
+    "de_question": "Was macht Honig nach 1000 Jahren?",
+    "en_question": "What does honey do after 1000 years?",
+    "de_answer": "Es bleibt essbar — aber kristallisiert und verliert einige antimikrobielle Eigenschaften",
+    "en_answer": "It remains edible — but crystallizes and loses some antimicrobial properties",
+    "category": "Essen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff107",
+    "de_question": "Was ist die größte bekannte Struktur im Universum?",
+    "en_question": "What is the largest known structure in the universe?",
+    "de_answer": "Der Hercules-Corona Borealis Great Wall — 10 Milliarden Lichtjahre breit",
+    "en_answer": "The Hercules-Corona Borealis Great Wall — 10 billion light-years wide",
+    "category": "Weltraum",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff108",
+    "de_question": "Welches Tier schläft mit einem Auge offen?",
+    "en_question": "Which animal sleeps with one eye open?",
+    "de_answer": "Delphine (und viele Vögel) — Halbschlaf, eine Gehirnhälfte bleibt wach",
+    "en_answer": "Dolphins (and many birds) — half-sleep, one brain hemisphere stays awake",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff109",
+    "de_question": "Wie viele Bakterien überträgt ein durchschnittlicher Kuss?",
+    "en_question": "How many bacteria does an average kiss transfer?",
+    "de_answer": "Bis zu 80 Millionen Bakterien in 10 Sekunden",
+    "en_answer": "Up to 80 million bacteria in 10 seconds",
+    "category": "Menschen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff110",
+    "de_question": "Wie hoch ist die Körpertemperatur eines Pinguins mitten in der Antarktis?",
+    "en_question": "What is the body temperature of a penguin in the middle of Antarctica?",
+    "de_answer": "Ca. 38°C — Pinguine halten ihre Körperwärme trotz Minusgraden perfekt",
+    "en_answer": "About 38°C — penguins maintain their body heat perfectly despite freezing temperatures",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff111",
+    "de_question": "Welches Tier ist technisch gesehen ein Fisch, wird aber nicht so bezeichnet?",
+    "en_question": "Which animal is technically a fish but is not called one?",
+    "de_answer": "Der Seepferdchen (Hippocampus) — biologisch ein echter Knochenfisch",
+    "en_answer": "The seahorse (Hippocampus) — biologically a true bony fish",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff112",
+    "de_question": "Was ist 'Brain Freeze' tatsächlich?",
+    "en_question": "What is 'brain freeze' actually?",
+    "de_answer": "Sphenopalatine Ganglioneuralgie — ein Reflex-Schmerz durch Kühlung des Gaumens",
+    "en_answer": "Sphenopalatine ganglioneuralgia — a reflex pain from cooling of the palate",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff113",
+    "de_question": "Was ist die lauteste natürliche Explosion, die je auf der Erde registriert wurde?",
+    "en_question": "What is the loudest natural explosion ever recorded on Earth?",
+    "de_answer": "Der Krakatau-Ausbruch 1883 — in 4.800 km Entfernung noch hörbar",
+    "en_answer": "The Krakatoa eruption of 1883 — audible from 4,800 km away",
+    "category": "Wissenschaft",
+    "pack": "krass"
+  },
+  {
+    "id": "ff114",
+    "de_question": "Welches Tier kann seinen gesamten Körper unter Wasser ausatmen?",
+    "en_question": "Which animal can breathe through its entire skin underwater?",
+    "de_answer": "Der Regenwurm (atmet über seine Haut — braucht Feuchtigkeit)",
+    "en_answer": "The earthworm (breathes through its skin — needs moisture)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff115",
+    "de_question": "Wie alt kann eine Grönlandwal werden?",
+    "en_question": "How old can a bowhead whale get?",
+    "de_answer": "Über 200 Jahre — das langlebigste Säugetier der Welt",
+    "en_answer": "Over 200 years — the longest-living mammal in the world",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff116",
+    "de_question": "Welche Farbe hat Sonnenlicht wirklich?",
+    "en_question": "What color is sunlight actually?",
+    "de_answer": "Weiß (es enthält alle Farben des Spektrums — Atmosphäre streut Blau)",
+    "en_answer": "White (it contains all colors of the spectrum — atmosphere scatters blue)",
+    "category": "Wissenschaft",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff117",
+    "de_question": "Was ist 'Earworm' auf Deutsch und warum passiert das?",
+    "en_question": "What is an 'earworm' and why does it happen?",
+    "de_answer": "Ohrwurm — Gehirn versucht ein 'unvollständiges' Lied zu vervollständigen (Zeigarnik-Effekt)",
+    "en_answer": "The brain tries to complete an 'unfinished' song (Zeigarnik effect)",
+    "category": "Menschen",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff118",
+    "de_question": "Welches Land hat den höchsten Bierkonsum pro Kopf der Welt?",
+    "en_question": "Which country has the highest beer consumption per capita in the world?",
+    "de_answer": "Tschechien (ca. 184 Liter pro Kopf im Jahr)",
+    "en_answer": "Czech Republic (about 184 liters per capita per year)",
+    "category": "Essen",
+    "pack": "krass"
+  },
+  {
+    "id": "ff119",
+    "de_question": "Welches alltägliche Objekt ist statistisch gesehen gefährlicher als ein Hai?",
+    "en_question": "Which everyday object is statistically more dangerous than a shark?",
+    "de_answer": "Kühe — töten jährlich ca. 20x mehr Menschen als Haie",
+    "en_answer": "Cows — kill about 20x more people per year than sharks",
+    "category": "Tiere",
+    "pack": "krass"
+  },
+  {
+    "id": "ff120",
+    "de_question": "Was ist 'Phantom-Vibrationssyndrom'?",
+    "en_question": "What is 'phantom vibration syndrome'?",
+    "de_answer": "Das Gefühl, das Handy vibriert zu spüren, obwohl es das nicht tut — 90% aller Smartphonenutzer kennen das",
+    "en_answer": "The sensation of feeling the phone vibrate when it isn't — 90% of smartphone users experience this",
+    "category": "Kuriositäten",
+    "pack": "krass"
+  },
+  {
+    "id": "ff121",
+    "de_question": "Wie lange braucht ein Lichtstrahl von der Sonne bis zur Erde?",
+    "en_question": "How long does a ray of light take from the sun to Earth?",
+    "de_answer": "Ca. 8 Minuten und 20 Sekunden",
+    "en_answer": "About 8 minutes and 20 seconds",
+    "category": "Weltraum",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff122",
+    "de_question": "Was ist das einzige Tier, das nicht schlafen muss?",
+    "en_question": "What is the only animal that doesn't need to sleep?",
+    "de_answer": "Kein Tier — alle bekannten Tiere brauchen Schlaf oder Ruhephasen",
+    "en_answer": "No animal — all known animals need sleep or rest phases",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff123",
+    "de_question": "Welches Tier hat den stärksten Biss im Verhältnis zu seiner Körpergröße?",
+    "en_question": "Which animal has the strongest bite relative to its body size?",
+    "de_answer": "Die Tausendfüßler-Krabbe (oder der Tasmanian Devil — je nach Messmethode)",
+    "en_answer": "The Tasmanian devil (or certain crustaceans — depending on measurement method)",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff124",
+    "de_question": "Was ist der Unterschied zwischen einem Alligator und einem Krokodil?",
+    "en_question": "What is the difference between an alligator and a crocodile?",
+    "de_answer": "Die Schnauzenform (Alligator: breiter U-Form; Krokodil: spitzer V-Form) und Herkunft",
+    "en_answer": "Snout shape (alligator: wider U-shape; crocodile: pointier V-shape) and origin",
+    "category": "Tiere",
+    "pack": "klassisch"
+  },
+  {
+    "id": "ff125",
+    "de_question": "Was ist das älteste Spiel, das die Menschheit kennt?",
+    "en_question": "What is the oldest game known to mankind?",
+    "de_answer": "Senet — ägyptisches Brettspiel aus ca. 3.100 v. Chr.",
+    "en_answer": "Senet — Egyptian board game from approximately 3,100 BC",
+    "category": "Geschichte",
+    "pack": "klassisch"
+  }
+]
