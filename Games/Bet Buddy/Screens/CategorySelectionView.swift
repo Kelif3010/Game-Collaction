@@ -22,8 +22,7 @@ struct CategorySelectionView: View {
                     }
 
                     VStack(spacing: 12) {
-                        // ÄNDERUNG: Hier filtern wir .deep heraus, damit es nicht in der Liste erscheint.
-                        ForEach(CategoryType.allCases.filter { $0 != .deep }) { category in
+                        ForEach(appModel.availableCategories) { category in
                             CategoryRowView(
                                 category: category,
                                 isSelected: appModel.selectedCategories.contains(category)

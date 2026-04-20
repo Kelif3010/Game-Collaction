@@ -64,7 +64,7 @@ struct TVRootView: View {
 
                     Text("GAMES COLLECTION")
                         .font(.system(size: scaled(60, by: scale), weight: .black, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .tracking(scaled(5, by: scale))
                 }
 
@@ -78,7 +78,7 @@ struct TVRootView: View {
 
                     Text("BEREIT FUR DAS NACHSTE SPIEL")
                         .font(.system(size: scaled(24, by: scale), weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(.white.opacity(0.7))
                 }
                 .padding(.horizontal, scaled(30, by: scale))
                 .padding(.vertical, scaled(15, by: scale))

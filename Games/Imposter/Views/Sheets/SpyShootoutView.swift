@@ -44,16 +44,16 @@ struct SpyShootoutView: View {
                 VStack(spacing: 8) {
                     Text("LETZTE CHANCE")
                         .font(.system(size: 16, weight: .black, design: .monospaced))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                         .tracking(4)
                     
                     Text("\(shooter.name), nimm das Handy!")
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     Text("Finde den Geheimagenten, um den Sieg zu stehlen.")
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -86,7 +86,7 @@ struct SpyShootoutView: View {
                     VStack(spacing: 10) {
                         Text("Ziel erfasst: \(target.name)")
                             .font(.caption.bold())
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                         
                         Button(action: {
                             handleShot(at: target)
@@ -96,11 +96,11 @@ struct SpyShootoutView: View {
                                 Text("SCHIESSEN")
                             }
                             .font(.title3.weight(.black))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 20)
                             .background(Color.red)
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                             .shadow(color: .red.opacity(0.5), radius: 20)
                         }
                         .padding(.horizontal, 40)
@@ -148,22 +148,22 @@ private struct TargetButton: View {
                     if isSelected {
                         Image(systemName: "scope")
                             .font(.system(size: 40))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     } else {
                         Text(String(player.name.prefix(1)).uppercased())
                             .font(.title.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                 }
                 
                 Text(player.name)
                     .font(.headline)
-                    .foregroundColor(isSelected ? .red : .white)
+                    .foregroundStyle(isSelected ? .red : .white)
             }
             .padding()
             .frame(maxWidth: .infinity)
             .background(Color.white.opacity(0.05))
-            .cornerRadius(16)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(isSelected ? Color.red : Color.clear, lineWidth: 2)

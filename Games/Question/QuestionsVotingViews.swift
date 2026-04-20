@@ -46,8 +46,8 @@ struct QuestionsVotingView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(manager.canConfirm ? Color.accentColor : Color.gray.opacity(0.5))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
             }
@@ -80,7 +80,7 @@ private struct QVPlayerCard: View {
             
             Text(LocalizedStringKey(player.name))
                 .font(.body)
-                .foregroundColor(disabled ? Color.gray : Color.primary)
+                .foregroundStyle(disabled ? Color.gray : Color.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
@@ -136,7 +136,7 @@ struct QuestionsVotingResultsView: View {
                 
                 if selectedPlayers.isEmpty {
                     Text("Keine Verdächtigen gewählt")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         ForEach(selectedPlayers, id: \.id) { player in
@@ -144,7 +144,7 @@ struct QuestionsVotingResultsView: View {
                                 Text(LocalizedStringKey(player.name))
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                                 Spacer()
                                 Text(evaluation.correct.contains(player.id) ? "✔️" : "✖️")
                             }
@@ -166,7 +166,7 @@ struct QuestionsVotingResultsView: View {
                 
                 if liars.isEmpty {
                     Text("Keine Lügner")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         ForEach(liars, id: \.id) { player in
@@ -179,7 +179,7 @@ struct QuestionsVotingResultsView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(Color.red.opacity(0.2))
                                 )
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                     }
                 }
@@ -196,8 +196,8 @@ struct QuestionsVotingResultsView: View {
             .frame(maxWidth: .infinity)
             .padding()
             .background(Color.accentColor)
-            .foregroundColor(.white)
-            .cornerRadius(12)
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }

@@ -10,6 +10,7 @@ struct ChallengeStartView: View {
     @State private var showExitAlert = false
     @State private var cardAppeared = false
     @State private var shuffleRotation: Double = 0
+    @State private var shimmerOffset: CGFloat = -200
 
     var body: some View {
         ZStack {
@@ -43,6 +44,14 @@ struct ChallengeStartView: View {
 
                 Spacer()
 
+                // Aktive Spieler anzeigen (nur wenn Namen vorhanden)
+                let teamsWithNames = appModel.activeGroups.filter { $0.hasPlayerNames }
+                if !teamsWithNames.isEmpty {
+                    activePlayersBar(teams: teamsWithNames)
+                        .padding(.horizontal, Theme.padding)
+                        .padding(.bottom, 12)
+                }
+
                 // Deal Button (Start)
                 dealButton
                     .padding(.horizontal, Theme.padding)
@@ -63,6 +72,12 @@ struct ChallengeStartView: View {
             appModel.refreshChallenge()
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
                 cardAppeared = true
+            }
+            // Shimmer sweep nach Card-Eingang
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                withAnimation(.easeInOut(duration: 0.7)) {
+                    shimmerOffset = 300
+                }
             }
         }
     }
@@ -96,7 +111,7 @@ struct ChallengeStartView: View {
                 Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))
@@ -114,30 +129,71 @@ struct ChallengeStartView: View {
     // MARK: - Decorative Background Cards
     private var decorativeCards: some View {
         ZStack {
-            // Left card
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.3))
-                .frame(width: 80, height: 110)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(BetBuddyTheme.accentGold.opacity(0.1), lineWidth: 1)
-                )
-                .rotationEffect(.degrees(-15))
-                .offset(x: -100, y: -20)
-                .opacity(0.5)
-
-            // Right card
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.3))
-                .frame(width: 80, height: 110)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(BetBuddyTheme.accentGold.opacity(0.1), lineWidth: 1)
-                )
-                .rotationEffect(.degrees(15))
-                .offset(x: 100, y: -20)
-                .opacity(0.5)
+            // Left card — Spades
+            decorativeCard(suit: "♠", number: "A", rotation: -15, offsetX: -100, offsetY: -20)
+            // Right card — Hearts
+            decorativeCard(suit: "♥", number: "K", rotation: 15, offsetX: 100, offsetY: -20)
         }
+    }
+
+    private func decorativeCard(suit: String, number: String, rotation: Double, offsetX: CGFloat, offsetY: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.12, green: 0.12, blue: 0.10),
+                            Color(red: 0.07, green: 0.07, blue: 0.06)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 80, height: 110)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
+                )
+
+            // Corner marks
+            VStack {
+                HStack {
+                    VStack(spacing: 1) {
+                        Text(number)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.8))
+                        Text(suit)
+                            .font(.system(size: 9))
+                            .foregroundStyle(suit == "♥" ? BetBuddyTheme.accentRuby.opacity(0.8) : BetBuddyTheme.accentGold.opacity(0.6))
+                    }
+                    Spacer()
+                }
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 1) {
+                        Text(suit)
+                            .font(.system(size: 9))
+                            .foregroundStyle(suit == "♥" ? BetBuddyTheme.accentRuby.opacity(0.8) : BetBuddyTheme.accentGold.opacity(0.6))
+                        Text(number)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.8))
+                    }
+                    .rotationEffect(.degrees(180))
+                }
+            }
+            .padding(8)
+            .frame(width: 80, height: 110)
+
+            // Center suit
+            Text(suit)
+                .font(.system(size: 26))
+                .foregroundStyle(suit == "♥" ? BetBuddyTheme.accentRuby.opacity(0.5) : BetBuddyTheme.accentGold.opacity(0.4))
+        }
+        .rotationEffect(.degrees(rotation))
+        .offset(x: offsetX, y: offsetY)
+        .opacity(0.6)
+        .shadow(color: BetBuddyTheme.accentGold.opacity(0.1), radius: 8, y: 4)
     }
 
     // MARK: - Category Badge
@@ -208,7 +264,7 @@ struct ChallengeStartView: View {
                 .padding(.leading, 16)
                 .padding(.top, 12)
 
-                Spacer()
+                Spacer(minLength: 12)
 
                 // Center Icon
                 ZStack {
@@ -231,10 +287,10 @@ struct ChallengeStartView: View {
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 20)
-                    .minimumScaleFactor(0.8)
 
-                Spacer()
+                Spacer(minLength: 12)
 
                 // Bottom-Right Corner (mirrored)
                 HStack {
@@ -253,7 +309,7 @@ struct ChallengeStartView: View {
                 .padding(.bottom, 12)
             }
         }
-        .frame(height: 320)
+        .frame(minHeight: 300)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
@@ -269,6 +325,23 @@ struct ChallengeStartView: View {
                     lineWidth: 2.5
                 )
         )
+        // Shimmer sweep
+        .overlay(
+            LinearGradient(
+                colors: [
+                    Color.clear,
+                    Color.white.opacity(0.12),
+                    Color.clear
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: 80)
+            .offset(x: shimmerOffset)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .allowsHitTesting(false)
+        )
+        .clipped()
         .shadow(color: BetBuddyTheme.accentGold.opacity(0.15), radius: 20, y: 10)
         .shadow(color: Color.black.opacity(0.4), radius: 15, y: 8)
     }
@@ -282,12 +355,18 @@ struct ChallengeStartView: View {
                 shuffleRotation += 360
             }
 
-            HapticsService.impact(.light)
+            HapticsService.impact(.medium)
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 appModel.refreshChallenge()
+                shimmerOffset = -200
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     cardAppeared = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    withAnimation(.easeInOut(duration: 0.7)) {
+                        shimmerOffset = 300
+                    }
                 }
             }
         } label: {
@@ -311,6 +390,62 @@ struct ChallengeStartView: View {
                     )
             )
         }
+    }
+
+    // MARK: - Active Players Bar
+    private func activePlayersBar(teams: [GroupInfo]) -> some View {
+        VStack(spacing: 8) {
+            Text("DIESE RUNDE")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(BetBuddyTheme.textSilver)
+                .tracking(2)
+
+            HStack(spacing: 10) {
+                ForEach(teams) { group in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(group.color.primary)
+                            .frame(width: 8, height: 8)
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(group.activePlayerName)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(group.color.accent)
+                                .lineLimit(1)
+                            Text("macht es")
+                                .font(.system(size: 10))
+                                .foregroundStyle(BetBuddyTheme.textSilver)
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(group.color.primary.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(group.color.primary.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+
+                    if group.id != teams.last?.id {
+                        Text("vs")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.5))
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(BetBuddyTheme.accentGold.opacity(0.1), lineWidth: 1)
+                )
+        )
     }
 
     // MARK: - Deal Button

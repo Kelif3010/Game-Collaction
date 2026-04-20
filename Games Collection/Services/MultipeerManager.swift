@@ -4,7 +4,7 @@ import SwiftUI
 import Combine
 
 // MARK: - Datenmodelle
-struct MPCMessage: Codable {
+struct MPCMessage: Codable, Sendable {
     let type: String
     let payload: Data? // JSON-kodierter Inhalt
 }
@@ -244,7 +244,7 @@ class MultipeerManager: NSObject, ObservableObject {
         print("MPC Host: Sende Lobby-Update an \(connectedPeers.count) Peers: \(allNames)")
         
         // An alle senden
-        sendToAll(event: "LOBBY_UPDATE", object: allNames)
+        sendToAll(event: MPCEventType.lobbyUpdate, object: allNames)
         sendToAll(event: MPCEventType.lobbyDisconnected, object: Array(disconnectedPeers))
     }
 
@@ -253,7 +253,7 @@ class MultipeerManager: NSObject, ObservableObject {
         disconnectedPeers.insert(name)
         readyPlayers.remove(name)
         broadcastLobbyState()
-        sendToAll(event: "LOBBY_STATE_SYNC", object: Array(readyPlayers))
+        sendToAll(event: MPCEventType.lobbyStateSync, object: Array(readyPlayers))
         
         disconnectTasks[name]?.cancel()
         let task = Task { [weak self] in
@@ -355,7 +355,7 @@ extension MultipeerManager: MCSessionDelegate {
 
         Task { @MainActor in
             // Interne Events abfangen
-            if message.type == "LOBBY_UPDATE", let payload = message.payload {
+            if message.type == MPCEventType.lobbyUpdate, let payload = message.payload {
                 if let names = try? JSONDecoder().decode([String].self, from: payload) {
                     print("MPC Gast: Lobby-Update empfangen: \(names)")
                     self.lobbyPeers = names

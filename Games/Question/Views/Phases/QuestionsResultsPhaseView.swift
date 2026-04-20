@@ -158,6 +158,7 @@ struct QuestionsResultsPhaseView: View {
 // MARK: - Analyse-Intro View
 private struct AnalysisIntroView: View {
     @State private var dots = ""
+    @State private var dotsTimer: Timer?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -176,17 +177,17 @@ private struct AnalysisIntroView: View {
             ScanningBar()
         }
         .onAppear {
-            animateDots()
-        }
-    }
-
-    private func animateDots() {
-        Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { timer in
-            if dots.count >= 3 {
-                dots = ""
-            } else {
-                dots += "."
+            dotsTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { _ in
+                if dots.count >= 3 {
+                    dots = ""
+                } else {
+                    dots += "."
+                }
             }
+        }
+        .onDisappear {
+            dotsTimer?.invalidate()
+            dotsTimer = nil
         }
     }
 }
@@ -229,6 +230,7 @@ private struct DossierView: View {
 
     @State private var displayedName = ""
     @State private var cursorVisible = true
+    @State private var cursorTimer: Timer?
 
     var body: some View {
         ZStack {
@@ -397,6 +399,10 @@ private struct DossierView: View {
                 startCursorBlink()
             }
         }
+        .onDisappear {
+            cursorTimer?.invalidate()
+            cursorTimer = nil
+        }
     }
 
     private func typewriterEffect() {
@@ -410,7 +416,8 @@ private struct DossierView: View {
     }
 
     private func startCursorBlink() {
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+        cursorTimer?.invalidate()
+        cursorTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             cursorVisible.toggle()
         }
     }

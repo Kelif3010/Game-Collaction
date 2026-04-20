@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddCategoryView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var categoryManager: CategoryManager
 
     @State private var categoryName = ""
@@ -41,31 +41,30 @@ struct AddCategoryView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 backgroundGradient.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Header
                     HStack {
-                        Button { presentationMode.wrappedValue.dismiss() } label: {
+                        Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         Spacer()
                         Text(LocalizedStringKey("Neue Kategorie"))
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         // Save Button
                         Button(action: saveCategory) {
                             Text(LocalizedStringKey("Speichern"))
                                 .font(.headline.bold())
-                                .foregroundColor(canSave ? .green : .gray)
+                                .foregroundStyle(canSave ? .green : .gray)
                         }
                         .disabled(!canSave)
                     }
@@ -80,13 +79,13 @@ struct AddCategoryView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text(LocalizedStringKey("Name der Kategorie"))
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                 
-                                TextField("", text: $categoryName, prompt: Text(LocalizedStringKey("z.B. 90er Hits")).foregroundColor(.gray))
+                                TextField("", text: $categoryName, prompt: Text(LocalizedStringKey("z.B. 90er Hits")).foregroundStyle(.gray))
                                     .padding()
                                     .background(Color.white.opacity(0.08))
-                                    .cornerRadius(12)
-                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(.white)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -101,14 +100,14 @@ struct AddCategoryView: View {
                                 } label: {
                                     HStack {
                                         Image(systemName: "sparkles")
-                                            .foregroundColor(.purple)
+                                            .foregroundStyle(.purple)
                                         Text(LocalizedStringKey("KI-Unterstützung"))
                                             .font(.headline)
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                         Spacer()
                                         Image(systemName: "chevron.right")
                                             .rotationEffect(.degrees(showAIGenerator ? 90 : 0))
-                                            .foregroundColor(.gray)
+                                            .foregroundStyle(.gray)
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.05))
@@ -116,11 +115,11 @@ struct AddCategoryView: View {
                                 
                                 if showAIGenerator {
                                     VStack(spacing: 16) {
-                                        TextField("", text: $aiTheme, prompt: Text(LocalizedStringKey("Thema für KI (z.B. Weltraum)")).foregroundColor(.gray))
+                                        TextField("", text: $aiTheme, prompt: Text(LocalizedStringKey("Thema für KI (z.B. Weltraum)")).foregroundStyle(.gray))
                                             .padding()
                                             .background(Color.black.opacity(0.3))
-                                            .cornerRadius(10)
-                                            .foregroundColor(.white)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .foregroundStyle(.white)
                                         
                                         Picker(LocalizedStringKey("Schwierigkeit"), selection: $selectedDifficulty) {
                                             ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
@@ -144,11 +143,11 @@ struct AddCategoryView: View {
                                                 Text(categoryManager.isGeneratingAI ? String(localized: "Generiere...") : String(localized: "Vorschläge generieren"))
                                             }
                                             .font(.headline)
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .frame(maxWidth: .infinity)
                                             .padding()
                                             .background(aiTheme.isEmpty ? Color.gray.opacity(0.3) : Color.purple)
-                                            .cornerRadius(12)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
                                         .disabled(aiTheme.isEmpty || categoryManager.isGeneratingAI)
                                     }
@@ -156,7 +155,7 @@ struct AddCategoryView: View {
                                     .background(Color.white.opacity(0.02))
                                 }
                             }
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
                             .padding(.horizontal)
 
@@ -165,26 +164,26 @@ struct AddCategoryView: View {
                                 HStack {
                                     Text(LocalizedStringKey("Begriffe"))
                                         .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
+                                        .foregroundStyle(.white.opacity(0.8))
                                     Spacer()
                                     let minLabel = String(localized: "min.")
                                     Text("\(terms.count) / 5 \(minLabel)")
                                         .font(.caption)
-                                        .foregroundColor(terms.count >= 5 ? .green : .orange)
+                                        .foregroundStyle(terms.count >= 5 ? .green : .orange)
                                 }
                                 
                                 HStack(spacing: 12) {
-                                    TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Neues Wort...")).foregroundColor(.gray))
+                                    TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Neues Wort...")).foregroundStyle(.gray))
                                         .padding()
                                         .background(Color.white.opacity(0.08))
-                                        .cornerRadius(12)
-                                        .foregroundColor(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .foregroundStyle(.white)
                                         .onSubmit { addTerm() }
                                     
                                     Button(action: addTerm) {
                                         Image(systemName: "plus")
                                             .font(.title2.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .frame(width: 50, height: 50)
                                             .background(newTermText.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
                                             .clipShape(Circle())
@@ -204,7 +203,7 @@ struct AddCategoryView: View {
                                             Text(LocalizedStringKey("Alle fehlenden Englisch-Übersetzungen ergänzen"))
                                                 .font(.subheadline)
                                         }
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(.blue)
                                         .padding(.vertical, 4)
                                     }
                                     .disabled(isTranslatingTerms)
@@ -217,14 +216,14 @@ struct AddCategoryView: View {
                                             VStack(alignment: .leading, spacing: 4) {
                                                 Text(term.text)
                                                     .font(.body.bold())
-                                                    .foregroundColor(.white)
+                                                    .foregroundStyle(.white)
                                                 
                                                 TextField(String(localized: "Englisch (optional)"), text: Binding(
                                                     get: { term.englishTranslation ?? "" },
                                                     set: { term.englishTranslation = $0.isEmpty ? nil : $0 }
                                                 ))
                                                 .font(.caption)
-                                                .foregroundColor(.gray)
+                                                .foregroundStyle(.gray)
                                             }
                                             
                                             Spacer()
@@ -237,7 +236,7 @@ struct AddCategoryView: View {
                                                     ProgressView().tint(.blue).scaleEffect(0.7)
                                                 } else {
                                                     Image(systemName: "globe")
-                                                        .foregroundColor(.blue.opacity(0.7))
+                                                        .foregroundStyle(.blue.opacity(0.7))
                                                 }
                                             }
                                             .padding(.trailing, 8)
@@ -249,12 +248,12 @@ struct AddCategoryView: View {
                                                 }
                                             } label: {
                                                 Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.red.opacity(0.6))
+                                                    .foregroundStyle(.red.opacity(0.6))
                                             }
                                         }
                                         .padding()
                                         .background(Color.white.opacity(0.05))
-                                        .cornerRadius(12)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                     }
                                 }
                             }
@@ -271,7 +270,7 @@ struct AddCategoryView: View {
     // Logic
     private func saveCategory() {
         categoryManager.addCategory(name: categoryName, terms: terms.map { Term(text: $0.text, englishTranslation: $0.englishTranslation) })
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
     
     private func addTerm() {
@@ -292,7 +291,7 @@ struct AddCategoryView: View {
             // Assuming default behavior is fine (adds to list), user can then see it in list.
             // OR: If the user wants to EDIT the generated one before saving, that's complex.
             // Let's stick to standard behavior: It generates and adds it.
-            presentationMode.wrappedValue.dismiss()
+            dismiss()
         }
     }
 

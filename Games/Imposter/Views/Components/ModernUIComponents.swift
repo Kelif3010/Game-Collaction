@@ -16,12 +16,12 @@ struct SectionHeader: View {
         HStack {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
             
             Text(title)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Spacer()
         }
@@ -38,7 +38,7 @@ struct ModernTextFieldStyle: TextFieldStyle {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.orange.opacity(0.3), lineWidth: 1)
@@ -57,7 +57,7 @@ struct ModernPlayerCard: View {
         HStack {
             Image(systemName: "person.circle.fill")
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             
             Text(player.name)
                 .font(.subheadline)
@@ -68,7 +68,7 @@ struct ModernPlayerCard: View {
             
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                     .font(.title3)
             }
         }
@@ -95,11 +95,11 @@ struct InfoCard: View {
         HStack {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
         }
@@ -151,12 +151,12 @@ struct GameActionButton: View {
         HStack {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
             
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
             
             Spacer()
         }
@@ -195,20 +195,20 @@ struct ImposterCategoryCard: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(Color.purple.opacity(0.2))
-                            .cornerRadius(8)
-                            .foregroundColor(.purple)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(.purple)
                     }
                 }
                 
                 Text(category.name)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
                 
                 Text("\(category.words.count) Begriffe")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Spacer()
             }
@@ -247,11 +247,11 @@ struct CategoryDetailCard: View {
                     Text(category.name)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text("\(category.words.count) Begriffe")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -260,14 +260,14 @@ struct CategoryDetailCard: View {
                     Button(action: onEdit) {
                         Image(systemName: "pencil.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     }
                     
                     if category.isCustom {
                         Button(action: onDelete) {
                             Image(systemName: "trash.circle.fill")
                                 .font(.title2)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                     }
                 }
@@ -283,8 +283,8 @@ struct CategoryDetailCard: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(Color.blue.opacity(0.1))
-                        .cornerRadius(8)
-                        .foregroundColor(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(.primary)
                 }
             }
         }

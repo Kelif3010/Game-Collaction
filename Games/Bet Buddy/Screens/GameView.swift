@@ -57,9 +57,23 @@ struct GameView: View {
                 VStack(spacing: 0) {
                     topBar.padding(.bottom, 10)
                     VStack(spacing: 6) {
-                        Text("Team \(winningName)")
+                        Text(appModel.isDrawResult ? "Unentschieden" : "Team \(winningName)")
                             .font(.title3.weight(.heavy))
-                            .foregroundStyle(winningColor)
+                            .foregroundStyle(appModel.isDrawResult ? BetBuddyTheme.accentGold : winningColor)
+
+                        // Aktiver Spieler anzeigen (nur wenn Namen vorhanden)
+                        if let winner = winningGroup, winner.hasPlayerNames, !appModel.isDrawResult {
+                            HStack(spacing: 5) {
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 11))
+                                Text("\(winner.activePlayerName) ist dran")
+                                    .font(.system(size: 13, weight: .semibold))
+                            }
+                            .foregroundStyle(winningColor.opacity(0.75))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(winningColor.opacity(0.1), in: Capsule())
+                        }
 
                         if appModel.currentChallenge.inputType == .alphabet {
                             LetterFlipView(
@@ -301,12 +315,19 @@ struct GameView: View {
         } message: {
             Text("Der aktuelle Spielstand geht verloren. Es werden keine Punkte gewertet.")
         }
+        // BB-10: Timer bei App-Hintergrund pausieren, bei Vordergrund fortsetzen
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            gameTimer.pause()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            gameTimer.resume()
+        }
         .onAppear {
             gameValue = winningScore
             roundStartValue = winningScore
             DispatchQueue.main.async { startTimer() }
             loadHints()
-            
+
             // NEU: Streak aktualisieren, sobald das Spiel startet!
             if let winnerId = winningGroup?.id {
                 appModel.updatePlayStreak(for: winnerId)
@@ -359,7 +380,7 @@ struct GameView: View {
                 Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))

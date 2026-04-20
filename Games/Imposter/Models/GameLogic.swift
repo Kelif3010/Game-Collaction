@@ -45,19 +45,22 @@ class GameLogic: ObservableObject {
     
     /// Startet das Spiel und weist Begriffe und Imposter zu
     @MainActor
-    func startGame() async {
+    /// Returns `true` if the game started successfully, `false` if setup failed.
+    /// Callers must show an alert when `false` is returned.
+    @discardableResult
+    func startGame() async -> Bool {
         stopGameTimer()
-        
+
         // 1. Grundeinstellungen validieren
         if !gameSettings.randomSpyCount {
             let cap = maxAllowedImposters(for: gameSettings.players.count)
             gameSettings.numberOfImposters = min(max(1, gameSettings.numberOfImposters), cap)
         }
-        
+
         // Spiel zurücksetzen
         gameSettings.resetGame()
         HintService.shared.resetState()
-        
+
         // Animation für diese Runde zufällig wählen
         let animations = ["Fingerprint biometric scan", "Android Fingerprint"]
         gameSettings.currentCardBackAnimation = animations.randomElement() ?? "Fingerprint biometric scan"
@@ -65,22 +68,23 @@ class GameLogic: ObservableObject {
         guard let roundCategory = gameSettings.chooseRoundCategory(),
               !roundCategory.words.isEmpty,
               gameSettings.players.count >= 4 else {
-            return
+            return false
         }
-        
+
         // 2. Begriffe wählen
-        guard let gameWords = selectWordsForGameMode(from: roundCategory) else { return }
+        guard let gameWords = selectWordsForGameMode(from: roundCategory) else { return false }
 
         // 3. Rollen verteilen (Core Logic)
         distributeRoles(playersCount: gameSettings.players.count)
 
         // 4. Texte generieren und zuweisen
         await assignWordsToPlayers(gameWords: gameWords)
-        
+
         // 5. Spielzustand setzen
         gameSettings.gamePhase = .cardReveal
         gameSettings.currentPlayerIndex = 0
         gameSettings.timeRemaining = gameSettings.timeLimit
+        return true
     }
 
     @MainActor

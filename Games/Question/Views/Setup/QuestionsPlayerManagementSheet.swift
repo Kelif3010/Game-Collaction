@@ -3,331 +3,244 @@ import SwiftUI
 struct QuestionsPlayerManagementSheet: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.dismiss) var dismiss
-    @AppStorage("myPlayerName") private var myPlayerName = ""
+    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+
     @State private var newPlayerName = ""
     @FocusState private var isInputFocused: Bool
-    private let minimumPlayers = 3
+    @State private var showCrewPlayers = false
 
-    private var playerCount: Int { appModel.players.count }
-    private var isReadyToPlay: Bool { playerCount >= minimumPlayers }
-    private var missingPlayers: Int { max(0, minimumPlayers - playerCount) }
-    private var trimmedNewPlayerName: String {
+    private let accent = QuestionsTheme.accentGreen
+
+    private var trimmed: String {
         newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    private var canAddPlayer: Bool { !trimmedNewPlayerName.isEmpty }
+
+    private var canAdd: Bool {
+        !trimmed.isEmpty && !appModel.players.contains(where: { $0.name == trimmed })
+    }
+
+    private var crewNotSelected: [GlobalPlayer] {
+        playerManager.players.filter { crew in
+            !appModel.players.contains(where: { $0.name == crew.name })
+        }
+    }
 
     var body: some View {
-        ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                QuestionsSheetHeader(title: "Spieler verwalten") {
-                    dismiss()
-                }
-                .padding(.horizontal, QuestionsStyle.padding)
-                
-                ScrollView {
-                    VStack(spacing: 16) {
-                        QuestionsDeckStatusCard(
-                            playerCount: playerCount,
-                            minimumPlayers: minimumPlayers,
-                            isReady: isReadyToPlay,
-                            missingPlayers: missingPlayers
-                        )
-                        
-                        QuestionsAddPlayerCard(
-                            newPlayerName: $newPlayerName,
-                            isInputFocused: $isInputFocused,
-                            canAddPlayer: canAddPlayer,
-                            onSubmit: addPlayer
-                        )
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("\(playerCount) Spieler")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(QuestionsStyle.mutedText)
-                            
-                            LazyVStack(spacing: 12) {
-                                if appModel.players.isEmpty {
-                                    QuestionsEmptyDeckCard()
-                                } else {
-                                    ForEach(Array(appModel.players.enumerated()), id: \.element.id) { index, player in
-                                        QuestionsPlayerDeckCard(
-                                            player: player,
-                                            index: index,
-                                            canMoveUp: index > 0,
-                                            canMoveDown: index < appModel.players.count - 1,
-                                            onMoveUp: { movePlayerUp(from: index) },
-                                            onMoveDown: { movePlayerDown(from: index) },
-                                            onRemove: { removePlayer(player) }
-                                        )
-                                    }
-                                }
-                            }
+        NavigationStack {
+            ZStack {
+                QuestionsStyle.backgroundGradient.ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        newPlayerSection
+                        if !appModel.players.isEmpty {
+                            selectedPlayersSection
+                        }
+                        if !crewNotSelected.isEmpty {
+                            crewSection
                         }
                     }
-                    .padding(.horizontal, QuestionsStyle.padding)
-                    .padding(.bottom, 24)
+                    .padding()
+                }
+            }
+            .navigationTitle("Spieler")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { dismiss() }
+                        .font(.headline)
+                        .foregroundStyle(accent)
                 }
             }
         }
-        .onAppear {
-            if !myPlayerName.isEmpty {
-                // Automatisch hinzufügen, wenn noch nicht vorhanden
-                if !appModel.players.contains(where: { $0.name == myPlayerName }) {
-                    appModel.players.append(QuestionPlayer(name: myPlayerName))
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(28)
+    }
+
+    // MARK: - Neuer Spieler
+
+    private var newPlayerSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("NEUER SPIELER")
+
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(accent.opacity(0.7))
+                    TextField("Name eingeben…", text: $newPlayerName)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white)
+                        .tint(accent)
+                        .focused($isInputFocused)
+                        .submitLabel(.done)
+                        .onSubmit { addCurrentName() }
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.words)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.06))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    isInputFocused ? accent.opacity(0.5) : Color.white.opacity(0.08),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+
+                Button { addCurrentName() } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(canAdd ? .black : .gray)
+                        .frame(width: 46, height: 46)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(canAdd ? accent : Color.white.opacity(0.06))
+                        )
+                }
+                .disabled(!canAdd)
+            }
+        }
+    }
+
+    // MARK: - Ausgewählte Spieler
+
+    private var selectedPlayersSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("AUSGEWÄHLT (\(appModel.players.count))", color: accent)
+
+            VStack(spacing: 8) {
+                ForEach(appModel.players) { player in
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle()
+                                .fill(accent.opacity(0.15))
+                                .frame(width: 38, height: 38)
+                            Text(String(player.name.prefix(1)).uppercased())
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(accent)
+                        }
+                        Text(player.name)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            withAnimation(.spring(response: 0.3)) {
+                                appModel.players.removeAll { $0.id == player.id }
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(QuestionsStyle.mutedText)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(accent.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(accent.opacity(0.35), lineWidth: 1)
+                            )
+                    )
                 }
             }
         }
     }
-    
-    private func addPlayer() {
-        guard canAddPlayer else { return }
-        let name = trimmedNewPlayerName
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-            _ = appModel.players.append(QuestionPlayer(name: name))
+
+    // MARK: - Deine Crew
+
+    private var crewSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                sectionLabel("DEINE CREW")
+                Spacer()
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+                        showCrewPlayers.toggle()
+                    }
+                } label: {
+                    Text(showCrewPlayers ? "Ausblenden" : "Einblenden")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(accent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(accent.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+            }
+
+            if showCrewPlayers {
+                VStack(spacing: 8) {
+                    ForEach(crewNotSelected) { player in
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            withAnimation(.spring(response: 0.3)) {
+                                appModel.players.append(QuestionPlayer(name: player.name))
+                            }
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.06))
+                                        .frame(width: 38, height: 38)
+                                    Text(String(player.name.prefix(1)).uppercased())
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundStyle(QuestionsStyle.mutedText)
+                                }
+                                Text(player.name)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: "plus.circle")
+                                    .font(.title3)
+                                    .foregroundStyle(accent)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white.opacity(0.04))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.07), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
         }
+    }
+
+    // MARK: - Helpers
+
+    private func sectionLabel(_ text: String, color: Color = QuestionsStyle.mutedText) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .bold, design: .monospaced))
+            .foregroundStyle(color)
+            .tracking(1.5)
+    }
+
+    private func addCurrentName() {
+        guard canAdd else {
+            newPlayerName = ""
+            return
+        }
+        withAnimation(.spring(response: 0.3)) {
+            appModel.players.append(QuestionPlayer(name: trimmed))
+        }
+        GlobalPlayerManager.shared.addPlayer(name: trimmed)
         newPlayerName = ""
         isInputFocused = true
-    }
-    
-    private func removePlayer(_ player: QuestionPlayer) {
-        guard let index = appModel.players.firstIndex(where: { $0.id == player.id }) else { return }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-            _ = appModel.players.remove(at: index)
-        }
-    }
-    
-    private func movePlayerUp(from index: Int) {
-        guard index > 0 else { return }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-            _ = appModel.players.swapAt(index, index - 1)
-        }
-    }
-    
-    private func movePlayerDown(from index: Int) {
-        guard index < appModel.players.count - 1 else { return }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-            _ = appModel.players.swapAt(index, index + 1)
-        }
-    }
-}
-
-private struct QuestionsDeckStatusCard: View {
-    let playerCount: Int
-    let minimumPlayers: Int
-    let isReady: Bool
-    let missingPlayers: Int
-    
-    private var progress: Double {
-        guard minimumPlayers > 0 else { return 1 }
-        return min(1, Double(playerCount) / Double(minimumPlayers))
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(playerCount)")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(.white)
-                Text("Spieler")
-                    .font(.headline)
-                    .foregroundStyle(QuestionsStyle.mutedText)
-                Spacer()
-                Text(isReady ? "Bereit" : "In Vorbereitung")
-                    .font(.footnote.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(isReady ? Color.green.opacity(0.25) : Color.white.opacity(0.08))
-                    )
-                    .foregroundStyle(isReady ? Color.green : QuestionsStyle.mutedText)
-            }
-            
-            Text(isReady ? "Reihenfolge festlegen und starten." : "Noch \(missingPlayers) Spieler benoetigt.")
-                .font(.callout)
-                .foregroundStyle(.white.opacity(0.9))
-            
-            ProgressView(value: progress)
-                .tint(Color.white.opacity(0.85))
-        }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.containerBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                        .fill(QuestionsStyle.primaryGradient.opacity(0.18))
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
-        )
-    }
-}
-
-private struct QuestionsAddPlayerCard: View {
-    @Binding var newPlayerName: String
-    var isInputFocused: FocusState<Bool>.Binding
-    let canAddPlayer: Bool
-    let onSubmit: () -> Void
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "person.badge.plus")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(QuestionsStyle.primaryGradient)
-                )
-            
-            TextField("Neuer Spieler...", text: $newPlayerName)
-                .textFieldStyle(.plain)
-                .font(.body)
-                .foregroundStyle(.white)
-                .submitLabel(.done)
-                .focused(isInputFocused)
-                .onSubmit(onSubmit)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.words)
-            
-            Button(action: onSubmit) {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(QuestionsStyle.buttonGradient)
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(!canAddPlayer)
-            .opacity(canAddPlayer ? 1 : 0.4)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.containerBackground)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.containerCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
-        )
-    }
-}
-
-private struct QuestionsPlayerDeckCard: View {
-    let player: QuestionPlayer
-    let index: Int
-    let canMoveUp: Bool
-    let canMoveDown: Bool
-    let onMoveUp: () -> Void
-    let onMoveDown: () -> Void
-    let onRemove: () -> Void
-    
-    private var initials: String {
-        let parts = player.name.split(whereSeparator: { $0 == " " || $0 == "-" })
-        let letters = parts.prefix(2).compactMap { $0.first }
-        let initials = String(letters)
-        return initials.isEmpty ? "?" : initials.uppercased()
-    }
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(QuestionsStyle.primaryGradient)
-                Text(initials)
-                    .font(.headline.bold())
-                    .foregroundStyle(.white)
-            }
-            .frame(width: 44, height: 44)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(player.name)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                Text("Platz \(index + 1)")
-                    .font(.caption)
-                    .foregroundStyle(QuestionsStyle.mutedText)
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 8) {
-                Menu {
-                    Button("Nach oben", action: onMoveUp)
-                        .disabled(!canMoveUp)
-                    Button("Nach unten", action: onMoveDown)
-                        .disabled(!canMoveDown)
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: onRemove) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.rowBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                        .fill(Color.white.opacity(0.02))
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
-        )
-        .contextMenu {
-            Button("Nach oben", action: onMoveUp)
-                .disabled(!canMoveUp)
-            Button("Nach unten", action: onMoveDown)
-                .disabled(!canMoveDown)
-            Button("Entfernen", role: .destructive, action: onRemove)
-        }
-    }
-}
-
-private struct QuestionsEmptyDeckCard: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "person.3.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(QuestionsStyle.mutedText)
-            Text("Keine Spieler hinzugefuegt.")
-                .font(.callout)
-                .foregroundStyle(QuestionsStyle.mutedText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .fill(QuestionsStyle.rowBackground)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: QuestionsStyle.rowCornerRadius, style: .continuous)
-                .stroke(QuestionsStyle.cardStroke, lineWidth: 1)
-        )
     }
 }

@@ -89,7 +89,6 @@ struct GameRecommenderView: View {
         let description: LocalizedStringKey
         let imageName: String
         let matchScore: Int // 0-100
-        let targetView: AnyView
         let reasons: [LocalizedStringKey]
 
         var isPlayableNow: Bool { reasons.isEmpty }
@@ -99,13 +98,37 @@ struct GameRecommenderView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. Background
-                LinearGradient(
-                    colors: [Color.indigo.opacity(0.8), Color.purple.opacity(0.6), Color.black],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // 1. HINTERGRUND: MeshGradient (Konsistent mit ContentView)
+                if #available(iOS 18.0, *) {
+                    MeshGradient(
+                        width: 3,
+                        height: 3,
+                        points: [
+                            [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+                            [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+                            [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
+                        ],
+                        colors: [
+                            Color(red: 0.05, green: 0.05, blue: 0.18),
+                            Color(red: 0.08, green: 0.05, blue: 0.22),
+                            Color(red: 0.05, green: 0.05, blue: 0.18),
+                            Color(red: 0.10, green: 0.05, blue: 0.25),
+                            Color(red: 0.12, green: 0.08, blue: 0.30),
+                            Color(red: 0.08, green: 0.05, blue: 0.20),
+                            Color(red: 0.05, green: 0.05, blue: 0.15),
+                            Color(red: 0.10, green: 0.08, blue: 0.22),
+                            Color(red: 0.05, green: 0.05, blue: 0.15)
+                        ]
+                    )
+                    .ignoresSafeArea()
+                } else {
+                    LinearGradient(
+                        colors: [Color(red: 0.05, green: 0.05, blue: 0.15), Color(red: 0.1, green: 0.1, blue: 0.25)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
+                }
                 
                 // 2. Content
                 ScrollView(showsIndicators: false) {
@@ -114,9 +137,9 @@ struct GameRecommenderView: View {
                         // Header Title
                         Text(LocalizedStringKey("Was spielen wir?"))
                             .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(.top)
-                            .shadow(color: .purple, radius: 10)
+                            .shadow(color: .cyan.opacity(0.3), radius: 10)
                         
                         // --- CONFIGURATION SECTION ---
                         VStack(spacing: 20) {
@@ -127,40 +150,52 @@ struct GameRecommenderView: View {
                                 GlassBox {
                                     VStack(spacing: 8) {
                                         Text(LocalizedStringKey("Spieler"))
-                                            .font(.caption)
+                                            .font(.caption.bold())
                                             .textCase(.uppercase)
-                                            .foregroundStyle(.white.opacity(0.7))
+                                            .foregroundStyle(.white.opacity(0.5))
                                         
                                         HStack(spacing: 15) {
-                                            Button(action: { if playerCount > 2 { playerCount -= 1 } }) {
+                                            Button(action: { 
+                                                if playerCount > 2 { 
+                                                    playerCount -= 1 
+                                                    hapticFeedback()
+                                                } 
+                                            }) {
                                                 Image(systemName: "minus.circle.fill")
                                                     .font(.title2)
-                                                    .foregroundStyle(.white.opacity(0.8))
+                                                    .foregroundStyle(.white.opacity(0.6))
                                             }
+                                            .accessibilityLabel("Spieleranzahl verringern")
                                             
                                             Text("\(playerCount)")
                                                 .font(.system(size: 32, weight: .heavy, design: .rounded))
                                                 .foregroundStyle(.white)
                                                 .contentTransition(.numericText())
                                             
-                                            Button(action: { if playerCount < 20 { playerCount += 1 } }) {
+                                            Button(action: { 
+                                                if playerCount < 20 { 
+                                                    playerCount += 1 
+                                                    hapticFeedback()
+                                                } 
+                                            }) {
                                                 Image(systemName: "plus.circle.fill")
                                                     .font(.title2)
                                                     .foregroundStyle(.white)
                                             }
+                                            .accessibilityLabel("Spieleranzahl erhöhen")
                                         }
-                                        .animation(.spring, value: playerCount)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: playerCount)
                                     }
-                                    .padding(.vertical, 10)
+                                    .padding(.vertical, 12)
                                 }
                                 
                                 // Mode Toggle
                                 GlassBox {
                                     VStack(spacing: 8) {
                                         Text(LocalizedStringKey("Modus"))
-                                            .font(.caption)
+                                            .font(.caption.bold())
                                             .textCase(.uppercase)
-                                            .foregroundStyle(.white.opacity(0.7))
+                                            .foregroundStyle(.white.opacity(0.5))
                                         
                                         Picker("Mode", selection: $playMode) {
                                             ForEach(PlayMode.allCases) { mode in
@@ -168,13 +203,13 @@ struct GameRecommenderView: View {
                                             }
                                         }
                                         .pickerStyle(.segmented)
-                                        .colorScheme(.dark) // Force dark appearance for picker
+                                        .colorScheme(.dark)
                                         
                                         Text(playMode.label)
-                                            .font(.caption2)
-                                            .foregroundStyle(.white)
+                                            .font(.caption2.bold())
+                                            .foregroundStyle(.white.opacity(0.8))
                                     }
-                                    .padding(.vertical, 10)
+                                    .padding(.vertical, 12)
                                     .padding(.horizontal, 4)
                                 }
                             }
@@ -182,15 +217,16 @@ struct GameRecommenderView: View {
                             // Row 2: Moods
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(LocalizedStringKey("Vibe"))
-                                    .font(.caption)
+                                    .font(.caption.bold())
                                     .textCase(.uppercase)
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(.white.opacity(0.5))
                                     .padding(.leading, 4)
                                 
                                 HStack(spacing: 10) {
                                     ForEach(GameMood.allCases) { m in
                                         MoodButton(mood: m, isSelected: mood == m) {
                                             mood = m
+                                            hapticFeedback()
                                         }
                                     }
                                 }
@@ -199,23 +235,27 @@ struct GameRecommenderView: View {
                             // Row 3: Time
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(LocalizedStringKey("Zeit"))
-                                    .font(.caption)
+                                    .font(.caption.bold())
                                     .textCase(.uppercase)
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(.white.opacity(0.5))
                                     .padding(.leading, 4)
                                 
                                 HStack(spacing: 10) {
                                     ForEach(TimeCategory.allCases) { t in
                                         TimeButton(time: t, isSelected: timeCategory == t) {
                                             timeCategory = t
+                                            hapticFeedback()
                                         }
                                     }
                                 }
                             }
                         }
                         .padding()
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(24)
+                        .background(.ultraThinMaterial.opacity(0.5), in: RoundedRectangle(cornerRadius: 24))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
                         .padding(.horizontal)
                         
                         // --- RESULTS SECTION ---
@@ -229,7 +269,7 @@ struct GameRecommenderView: View {
                                     .padding(.horizontal)
                                 
                                 HeroRecommendationCard(game: bestMatch)
-                                    .transition(.scale.combined(with: .opacity))
+                                    .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
                             } else {
                                 Text(LocalizedStringKey("Kein perfekter Treffer..."))
                                     .foregroundStyle(.white.opacity(0.6))
@@ -248,14 +288,16 @@ struct GameRecommenderView: View {
                                         ForEach(alternatives) { game in
                                             SmallRecommendationCard(game: game)
                                         }
+                                        // Invisible Spacer at the end to help with scroll hint (DAU-friendly)
+                                        Spacer().frame(width: 20)
                                     }
                                     .padding(.horizontal)
                                 }
                             }
                         }
-                        .animation(.spring(), value: mood)
-                        .animation(.spring(), value: playerCount)
-                        .animation(.spring(), value: timeCategory)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: mood)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: playerCount)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: timeCategory)
                         
                         Spacer(minLength: 50)
                     }
@@ -270,6 +312,21 @@ struct GameRecommenderView: View {
                     .foregroundStyle(.white)
                 }
             }
+        }
+    }
+    
+    private func hapticFeedback() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+    
+    @ViewBuilder
+    static func destination(for gameId: String) -> some View {
+        switch gameId {
+        case "BetBuddy": BetBuddyWrapper()
+        case "Imposter": ImposterGameWrapper()
+        case "TimesUp": TimesUpWrapper()
+        case "Question": QuestionGameWrapper()
+        default: EmptyView()
         }
     }
     
@@ -327,7 +384,6 @@ struct GameRecommenderView: View {
             description: "Wettet aufeinander. Wer kennt die Gruppe am besten?",
             imageName: "BetBuddyIcon",
             matchScore: clampScore(betScore),
-            targetView: AnyView(BetBuddyWrapper()),
             reasons: betReasons
         ))
         
@@ -348,7 +404,6 @@ struct GameRecommenderView: View {
             description: "Findet den Spion, bevor die Zeit abläuft!",
             imageName: "ImposterIcon",
             matchScore: clampScore(impScore),
-            targetView: AnyView(ImposterGameWrapper()),
             reasons: impReasons
         ))
         
@@ -368,7 +423,6 @@ struct GameRecommenderView: View {
             description: "Erklären, Pantomime, Zeichnen. Pures Chaos.",
             imageName: "TimesUpIcon",
             matchScore: clampScore(timeScore),
-            targetView: AnyView(TimesUpWrapper()),
             reasons: timeReasons
         ))
         
@@ -387,7 +441,6 @@ struct GameRecommenderView: View {
             description: "Deep Talk oder lustige Fragen.",
             imageName: "QuestionIcon",
             matchScore: clampScore(questScore),
-            targetView: AnyView(QuestionGameWrapper()),
             reasons: questReasons
         ))
         
@@ -407,11 +460,11 @@ struct GlassBox<Content: View>: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(16)
+            .background(.ultraThinMaterial.opacity(0.3))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
             )
     }
 }
@@ -423,25 +476,25 @@ struct MoodButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack {
+            VStack(spacing: 6) {
                 Text(mood.emoji)
                     .font(.largeTitle)
                 Text(mood.label)
-                    .font(.caption2)
-                    .fontWeight(.bold)
+                    .font(.caption2.bold())
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(isSelected ? mood.color.opacity(0.8) : Color.white.opacity(0.1))
-            .cornerRadius(12)
+            .background(isSelected ? mood.color.opacity(0.3) : Color.white.opacity(0.05))
+            .background(isSelected ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color.clear))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? mood.color : Color.white.opacity(0.1), lineWidth: isSelected ? 2 : 1)
             )
-            .foregroundColor(.white)
-            .animation(.spring(), value: isSelected)
+            .foregroundStyle(.white)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
     }
 }
@@ -454,14 +507,17 @@ struct TimeButton: View {
     var body: some View {
         Button(action: action) {
             Text(time.label)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .bold : .regular)
-                .padding(.vertical, 10)
+                .font(.subheadline.bold())
+                .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? Color.white : Color.white.opacity(0.1))
-                .foregroundColor(isSelected ? .black : .white)
-                .cornerRadius(20)
-                .animation(.spring(), value: isSelected)
+                .background(isSelected ? Color.white : Color.white.opacity(0.05))
+                .foregroundStyle(isSelected ? .black : .white.opacity(0.8))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.1), lineWidth: isSelected ? 0 : 1)
+                )
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
     }
 }
@@ -470,86 +526,100 @@ struct HeroRecommendationCard: View {
     let game: GameRecommenderView.GameRecommendation
     
     var body: some View {
-        NavigationLink(destination: game.targetView) {
-            VStack(alignment: .leading, spacing: 12) {
+        NavigationLink(destination: GameRecommenderView.destination(for: game.id)) {
+            VStack(alignment: .leading, spacing: 16) {
                 // Top Badge
                 HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                    Text("\(game.matchScore)% Match")
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    if !game.isPlayableNow {
-                        Text(LocalizedStringKey("Bedingungen prüfen"))
-                            .font(.caption)
-                            .padding(6)
-                            .background(Color.red.opacity(0.8))
-                            .cornerRadius(6)
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(.yellow)
+                        Text("\(game.matchScore)% Match")
+                            .font(.subheadline.bold())
                             .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.black.opacity(0.3), in: Capsule())
+                    
+                    Spacer()
+                    
+                    if !game.isPlayableNow {
+                        HStack(spacing: 4) {
+                            Image(systemName: "info.circle.fill")
+                            Text(LocalizedStringKey("Bedingungen prüfen"))
+                        }
+                        .font(.caption.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.red.opacity(0.8), in: Capsule())
+                        .foregroundStyle(.white)
                     }
                 }
                 
-                HStack(alignment: .top) {
+                HStack(alignment: .center, spacing: 16) {
                     Image(game.imageName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 80, height: 80)
-                        .cornerRadius(16)
-                        .shadow(radius: 5)
+                        .frame(width: 70, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.2), radius: 8)
                     
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(game.name)
-                            .font(.title2.bold())
+                            .font(.title3.bold())
                             .foregroundStyle(.white)
                         
                         Text(game.description)
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.8))
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.7))
                             .multilineTextAlignment(.leading)
-                            .lineLimit(3)
+                            .lineLimit(2)
                     }
                 }
                 
                 if !game.reasons.isEmpty {
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 6) {
                         ForEach(Array(game.reasons.enumerated()), id: \.offset) { _, reason in
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .foregroundColor(.orange)
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.yellow)
                                 Text(reason)
                                     .font(.caption)
                                     .foregroundStyle(.white.opacity(0.9))
                             }
                         }
                     }
-                    .padding(8)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(8)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 12))
                 }
                 
                 HStack {
                     Text(LocalizedStringKey("Jetzt Starten"))
-                        .fontWeight(.bold)
-                    Image(systemName: "play.circle.fill")
+                        .font(.headline)
+                    Image(systemName: "play.fill")
                 }
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(game.isPlayableNow ? Color.white : Color.gray)
-                .foregroundColor(game.isPlayableNow ? .indigo : .white)
-                .cornerRadius(14)
-                .padding(.top, 4)
+                .padding(.vertical, 14)
+                .background(game.isPlayableNow ? Color.white : Color.white.opacity(0.1))
+                .foregroundStyle(game.isPlayableNow ? Color(red: 0.1, green: 0.1, blue: 0.3) : .white.opacity(0.3))
+                .clipShape(Capsule())
+                .shadow(color: game.isPlayableNow ? .white.opacity(0.2) : .clear, radius: 10)
             }
             .padding(20)
             .background(
-                LinearGradient(colors: [Color.indigo, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                LinearGradient(colors: [Color.cyan.opacity(0.3), Color.blue.opacity(0.2)], startPoint: .topLeading, endPoint: .bottomTrailing)
             )
-            .cornerRadius(24)
-            .shadow(color: .indigo.opacity(0.5), radius: 15, x: 0, y: 10)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 28))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28)
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+            )
             .padding(.horizontal)
         }
         .disabled(!game.isPlayableNow)
-        .opacity(game.isPlayableNow ? 1 : 0.8)
     }
 }
 
@@ -557,37 +627,41 @@ struct SmallRecommendationCard: View {
     let game: GameRecommenderView.GameRecommendation
     
     var body: some View {
-        NavigationLink(destination: game.targetView) {
-            VStack(alignment: .leading) {
+        NavigationLink(destination: GameRecommenderView.destination(for: game.id)) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(game.imageName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 40, height: 40)
-                        .cornerRadius(8)
+                        .frame(width: 44, height: 44)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     Spacer()
                     Text("\(game.matchScore)%")
-                        .font(.caption.bold())
+                        .font(.system(.caption, design: .rounded).bold())
                         .foregroundStyle(game.matchScore > 50 ? .green : .orange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.black.opacity(0.2), in: Capsule())
                 }
                 
-                Text(game.name)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                
-                Text(game.description)
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(game.name)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    
+                    Text(game.description)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
             }
-            .padding()
-            .frame(width: 160, height: 140)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(16)
+            .padding(14)
+            .frame(width: 150, height: 130)
+            .background(.ultraThinMaterial.opacity(0.3), in: RoundedRectangle(cornerRadius: 20))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 20)
                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
             )
         }

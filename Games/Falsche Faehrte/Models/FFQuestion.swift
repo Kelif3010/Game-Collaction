@@ -5,6 +5,10 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
     case klassisch = "klassisch"
     case krass     = "krass"
     case extrem    = "extrem"
+    case lustig    = "lustig"
+    case verrueckt = "verrueckt"
+    case pervers   = "pervers"
+    case unnuetz   = "unnuetz"
 
     var id: String { rawValue }
 
@@ -13,6 +17,10 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
         case .klassisch: return NSLocalizedString("ff.pack.klassisch", comment: "")
         case .krass:     return NSLocalizedString("ff.pack.krass", comment: "")
         case .extrem:    return NSLocalizedString("ff.pack.extrem", comment: "")
+        case .lustig:    return NSLocalizedString("ff.pack.lustig", comment: "")
+        case .verrueckt: return NSLocalizedString("ff.pack.verrueckt", comment: "")
+        case .pervers:   return NSLocalizedString("ff.pack.pervers", comment: "")
+        case .unnuetz:   return NSLocalizedString("ff.pack.unnuetz", comment: "")
         }
     }
 
@@ -21,6 +29,10 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
         case .klassisch: return "🕵️"
         case .krass:     return "🤯"
         case .extrem:    return "💀"
+        case .lustig:    return "😂"
+        case .verrueckt: return "🎲"
+        case .pervers:   return "🔞"
+        case .unnuetz:   return "🧠"
         }
     }
 
@@ -29,6 +41,10 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
         case .klassisch: return FFThemeColor(primary: FFStyle.accentViolet, secondary: FFStyle.accentIndigo)
         case .krass:     return FFThemeColor(primary: FFStyle.accentCrimson, secondary: FFStyle.accentViolet)
         case .extrem:    return FFThemeColor(primary: FFStyle.accentGold, secondary: FFStyle.accentCrimson)
+        case .lustig:    return FFThemeColor(primary: FFStyle.accentGold, secondary: FFStyle.accentViolet)
+        case .verrueckt: return FFThemeColor(primary: FFStyle.accentIndigo, secondary: FFStyle.accentGold)
+        case .pervers:   return FFThemeColor(primary: FFStyle.accentCrimson, secondary: FFStyle.accentGold)
+        case .unnuetz:   return FFThemeColor(primary: FFStyle.accentViolet, secondary: FFStyle.accentGold)
         }
     }
 }

@@ -9,13 +9,13 @@ struct QuestionsSheetHeader: View {
     var body: some View {
         HStack {
             Button(action: {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 onBack()
             }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundStyle(QuestionsTheme.textPrimary)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))
@@ -36,7 +36,7 @@ struct QuestionsSheetHeader: View {
             Spacer()
 
             Color.clear
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
         }
         .padding(.top, 20)
         .padding(.bottom, 8)
@@ -243,7 +243,7 @@ struct QuestionsHintBanner: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UISelectionFeedbackGenerator().selectionChanged()
             onDismiss()
         }) {
             HStack(spacing: 12) {

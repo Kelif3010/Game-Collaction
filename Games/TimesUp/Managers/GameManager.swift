@@ -231,8 +231,7 @@ class GameManager: ObservableObject {
     }
 
     deinit {
-        // Timer invalidieren sich bei deinit automatisch — cleanup() sollte vorher von der View aufgerufen worden sein
-        turnTimer.invalidate()
+        // cleanup() muss von der View aufgerufen werden, bevor GameManager freigegeben wird
     }
     
     // MARK: - Setup

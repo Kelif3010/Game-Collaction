@@ -26,11 +26,11 @@ struct DrawingColorPalette: View {
             HStack {
                 Image(systemName: "paintpalette")
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 Text(LocalizedStringKey("Farben"))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 Spacer()
             }
             
@@ -64,13 +64,13 @@ struct ColorCircle: View {
                 // Main color circle
                 Circle()
                     .fill(color)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                 
                 // Selection border
                 if isSelected {
                     Circle()
                         .stroke(Color.white, lineWidth: 3)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                     
                     Circle()
                         .stroke(color == .black ? Color.white : Color.black, lineWidth: 2)
@@ -82,7 +82,7 @@ struct ColorCircle: View {
                     Image(systemName: "checkmark")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                 }
             }
         }

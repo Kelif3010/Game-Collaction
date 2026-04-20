@@ -45,7 +45,7 @@ struct CompactHintPill: View {
         HStack(spacing: 12) {
             Image(systemName: hint.type.icon)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
                 .overlay(
                     Circle()
                         .stroke(Color.orange, lineWidth: 2)
@@ -56,11 +56,11 @@ struct CompactHintPill: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(hint.type.displayName.uppercased())
                     .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.orange.opacity(0.8))
+                    .foregroundStyle(.orange.opacity(0.8))
                 
                 Text(hint.content)
                     .font(.subheadline.weight(.medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .lineLimit(2)
             }
             
@@ -68,7 +68,7 @@ struct CompactHintPill: View {
             
             Image(systemName: "chevron.right")
                 .font(.caption.bold())
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundStyle(.white.opacity(0.3))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -78,7 +78,7 @@ struct CompactHintPill: View {
                 Color.black.opacity(0.4)
             }
         )
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -98,7 +98,7 @@ struct HintHistoryView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ImposterStyle.backgroundGradient.ignoresSafeArea()
                 
@@ -106,7 +106,7 @@ struct HintHistoryView: View {
                     VStack(spacing: 16) {
                         if hints.isEmpty {
                             Text("Noch keine Funksprüche empfangen.")
-                                .foregroundColor(.white.opacity(0.4))
+                                .foregroundStyle(.white.opacity(0.4))
                                 .padding(.top, 100)
                         } else {
                             ForEach(hints.reversed()) { hint in
@@ -122,7 +122,7 @@ struct HintHistoryView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Schließen") { dismiss() }
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                 }
             }
         }
@@ -140,24 +140,24 @@ struct NeutralHintRow: View {
                     .fill(Color.orange.opacity(0.1))
                     .frame(width: 40, height: 40)
                 Image(systemName: hint.type.icon)
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(hint.type.displayName)
                     .font(.caption.bold())
-                    .foregroundColor(.orange.opacity(0.7))
+                    .foregroundStyle(.orange.opacity(0.7))
                 
                 Text(hint.content)
                     .font(.body)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             
             Spacer()
         }
         .padding()
         .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

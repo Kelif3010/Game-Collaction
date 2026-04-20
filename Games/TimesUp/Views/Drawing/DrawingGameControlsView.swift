@@ -38,7 +38,7 @@ struct DrawingGameControlsView: View {
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 120, height: 120)
                         .background(
                             LinearGradient(
@@ -55,7 +55,7 @@ struct DrawingGameControlsView: View {
                             if skipFrozen {
                                 Image(systemName: "lock.fill")
                                     .font(.caption)
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                                     .padding(4)
                                     .background(Color.black.opacity(0.45))
                                     .clipShape(Circle())
@@ -78,7 +78,7 @@ struct DrawingGameControlsView: View {
                                     .font(.headline)
                                     .fontWeight(.bold)
                             }
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 120, height: 120)
                             .background(
                                 LinearGradient(
@@ -100,7 +100,7 @@ struct DrawingGameControlsView: View {
                 if forcedSkipActive {
                     Text(LocalizedStringKey("Zwangs-Skip aktiv – erst Skip ausführen."))
                         .font(.footnote)
-                        .foregroundColor(.yellow)
+                        .foregroundStyle(.yellow)
                 } else {
                     Button(action: {
                         // Drawing automatisch für nächsten Begriff löschen
@@ -114,7 +114,7 @@ struct DrawingGameControlsView: View {
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 120, height: 120)
                         .background(
                             LinearGradient(
@@ -160,7 +160,7 @@ struct TermDisplayBanner: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(LocalizedStringKey("Zeichne:"))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .fontWeight(.medium)
                     
                     PerkWordText(
@@ -180,12 +180,12 @@ struct TermDisplayBanner: View {
                 VStack(spacing: 4) {
                     Text(LocalizedStringKey("Übrig"))
                         .font(.caption2)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     Text("\(remainingCount)")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .frame(width: 50, height: 50)
                 .background(

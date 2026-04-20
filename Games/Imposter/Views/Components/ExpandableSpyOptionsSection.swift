@@ -24,16 +24,16 @@ struct ExpandableSpyOptionsSection: View {
                     HStack {
                         Image(systemName: "eye.slash.fill")
                             .font(.title2)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Spion-Optionen")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             
                             Text("\(gameSettings.numberOfImposters) \(gameSettings.numberOfImposters == 1 ? "Spion" : "Spione") • \(activeOptionsCount) von 2 Optionen aktiv")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
@@ -43,11 +43,11 @@ struct ExpandableSpyOptionsSection: View {
                             Text("\(gameSettings.numberOfImposters)")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                                 .font(.title3)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .animation(.easeInOut(duration: 0.2), value: isExpanded)
                         }
                     }
@@ -63,7 +63,7 @@ struct ExpandableSpyOptionsSection: View {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Image(systemName: "number.circle.fill")
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                                 Text("Anzahl Spione anpassen")
                                     .font(.headline)
                                 Spacer()
@@ -84,13 +84,13 @@ struct ExpandableSpyOptionsSection: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Image(systemName: "folder.fill")
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Spion sieht Kategorie")
                                         .font(.headline)
                                     Text("Spione erfahren, zu welcher Kategorie der Begriff gehört")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Toggle("", isOn: $gameSettings.spyCanSeeCategory)
@@ -104,14 +104,14 @@ struct ExpandableSpyOptionsSection: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Image(systemName: "person.2.fill")
-                                    .foregroundColor(gameSettings.numberOfImposters >= 2 ? .red : .gray)
+                                    .foregroundStyle(gameSettings.numberOfImposters >= 2 ? .red : .gray)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Spione sehen sich gegenseitig")
                                         .font(.headline)
-                                        .foregroundColor(gameSettings.numberOfImposters >= 2 ? .primary : .secondary)
+                                        .foregroundStyle(gameSettings.numberOfImposters >= 2 ? .primary : .secondary)
                                     Text("Bei 2+ Spionen: Spione erfahren die Namen ihrer Mitspione")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Toggle("", isOn: $gameSettings.spiesCanSeeEachOther)
@@ -131,14 +131,14 @@ struct ExpandableSpyOptionsSection: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Image(systemName: "plus.circle.dashed")
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(.gray)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Weitere Optionen")
                                         .font(.headline)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                     Text("Zukünftige Spion-Features werden hier angezeigt")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                         .italic()
                                 }
                                 Spacer()

@@ -2,6 +2,7 @@ import SwiftUI
 
 enum AppRoute: Hashable {
     case categories
+    case playerDraw
     case challengeStart
     case voting
     case groupSelection
@@ -21,7 +22,7 @@ struct BetBuddyRootView: View {
             HomeView(
                 onSelectGroups: { path.append(.groupSelection) },
                 onSelectCategories: { path.append(.categories) },
-                onStart: { path.append(.challengeStart) }
+                onStart: { path.append(.playerDraw) }
             )
             // WICHTIG: Der Destination-Modifier muss INNEN an der View hängen
             .navigationDestination(for: AppRoute.self) { route in
@@ -44,6 +45,10 @@ struct BetBuddyRootView: View {
                                 path = []
                             }
                         )
+                    case .playerDraw:
+                        PlayerDrawView {
+                            path.append(.challengeStart)
+                        }
                     case .challengeStart:
                         ChallengeStartView(
                             onStart: { path.append(.voting) },
@@ -62,9 +67,13 @@ struct BetBuddyRootView: View {
                     case .result(let result):
                         ResultView(
                             result: result,
-                            onRestart: { path = [] },
+                            onRestart: {
+                                viewModel.randomizeStartingPlayers()
+                                path = []
+                            },
                             onNewChallenge: {
-                                path = [.challengeStart] // Reset & Sprung
+                                viewModel.rotateActivePlayers()
+                                path = [.challengeStart]
                             }
                         )
                     }

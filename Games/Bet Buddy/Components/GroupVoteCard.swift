@@ -1,5 +1,4 @@
 import SwiftUI
-import Lottie
 
 struct GroupVoteCard: View {
     let group: GroupInfo

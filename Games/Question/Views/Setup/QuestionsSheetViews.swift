@@ -14,7 +14,7 @@ struct QuestionsSettingsSheet: View {
                 
                 Spacer()
                 Text(LocalizedStringKey("Hier könnten Spieleinstellungen sein."))
-                    .foregroundColor(QuestionsStyle.mutedText)
+                    .foregroundStyle(QuestionsStyle.mutedText)
                 Spacer()
             }
         }
@@ -39,11 +39,11 @@ struct QuestionsPlaceholderSheet: View {
                 
                 Image(systemName: icon)
                     .font(.system(size: 60))
-                    .foregroundColor(.white.opacity(0.2))
+                    .foregroundStyle(.white.opacity(0.2))
                 
                 Text(LocalizedStringKey(title))
                     .font(.title2.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Spacer()
             }

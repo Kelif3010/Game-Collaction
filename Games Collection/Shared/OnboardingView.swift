@@ -52,7 +52,7 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                         .background(Color.gray.opacity(0.1))
-                        .cornerRadius(16)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(Color.blue.opacity(nameInput.isEmpty ? 0 : 0.5), lineWidth: 2)
@@ -70,7 +70,7 @@ struct OnboardingView: View {
                             .background(
                                 LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
                             )
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                             .shadow(color: .blue.opacity(0.3), radius: 8, y: 4)
                     }
                     .disabled(nameInput.trimmingCharacters(in: .whitespaces).isEmpty)

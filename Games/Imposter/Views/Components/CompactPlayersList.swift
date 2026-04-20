@@ -55,16 +55,16 @@ struct CompactPlayersList: View {
                             VStack(spacing: 6) {
                                 Image(systemName: "person.3.fill")
                                     .font(.title3)
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                                 
                                 Text("+ \(players.count - 4)")
                                     .font(.caption)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                                 
                                 Text("weitere")
                                     .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
@@ -124,7 +124,7 @@ struct PlayerSummaryCard: View {
         HStack {
             Image(systemName: statusIcon)
                 .font(.title2)
-                .foregroundColor(statusColor)
+                .foregroundStyle(statusColor)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(summaryText)
@@ -133,7 +133,7 @@ struct PlayerSummaryCard: View {
                 
                 Text(playerCount >= 4 ? "Bereit zum Spielen" : "Weitere Spieler benötigt")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -143,23 +143,23 @@ struct PlayerSummaryCard: View {
                 ForEach(0..<min(playerCount, 5), id: \.self) { _ in
                     Circle()
                         .frame(width: 24, height: 24)
-                        .foregroundColor(.blue.opacity(0.7))
+                        .foregroundStyle(.blue.opacity(0.7))
                         .overlay(
                             Image(systemName: "person.fill")
                                 .font(.caption2)
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                         )
                 }
                 
                 if playerCount > 5 {
                     Circle()
                         .frame(width: 24, height: 24)
-                        .foregroundColor(.gray.opacity(0.5))
+                        .foregroundStyle(.gray.opacity(0.5))
                         .overlay(
                             Text("+\(playerCount - 5)")
                                 .font(.caption2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                         )
                 }
             }
@@ -189,7 +189,7 @@ struct CompactPlayerCard: View {
             Text(String(player.name.prefix(2)))
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
                 .background(Circle().fill(Color.blue))
             
@@ -197,14 +197,14 @@ struct CompactPlayerCard: View {
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(1)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Spacer(minLength: 0)
             
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .font(.caption2)
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
             }
             .buttonStyle(PlainButtonStyle())
         }
@@ -229,7 +229,7 @@ struct AllPlayersManagementSheet: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
@@ -244,7 +244,7 @@ struct AllPlayersManagementSheet: View {
                         VStack(spacing: 10) {
                             Image(systemName: "person.3.circle.fill")
                                 .font(.system(size: 50))
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             
                             Text("ALLE SPIELER")
                                 .font(.title2)

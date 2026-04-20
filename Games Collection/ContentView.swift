@@ -29,6 +29,7 @@ private extension View {
 
         if #available(iOS 26.0, *) {
             glassEffect(.regular.interactive(), in: shape)
+                .clipShape(shape)
         } else {
             clipShape(shape)
                 .background(.ultraThinMaterial, in: shape)
@@ -48,6 +49,7 @@ struct ContentView: View {
     @State private var isImposterPresented = false
     @State private var isSoundCinemaPresented = false
     @State private var isFalscheFaehrtePresented = false
+    @State private var isPartyPresented = false
 
     // Tap-Animation für Karten (Hero-Effekt)
     @State private var betBuddyTap = false
@@ -103,156 +105,182 @@ struct ContentView: View {
                         .opacity(0.6)
                 }
                 
-                VStack(spacing: 20) {
-                    // HEADER: Einstellungen + Titel
-                    HStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+
+                        // ── PARTY STARTEN Banner ──────────────────────────────
+                        Button {
+                            isPartyPresented = true
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(.black.opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                    Image(systemName: "crown.fill")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.black.opacity(0.7))
+                                }
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Party starten")
+                                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.black)
+                                    Text("Mehrere Spiele · Gesamtwertung")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.black.opacity(0.55))
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.black.opacity(0.4))
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 1.0, green: 0.83, blue: 0.15),
+                                        Color(red: 1.0, green: 0.65, blue: 0.05)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                in: RoundedRectangle(cornerRadius: 18)
+                            )
+                            .shadow(
+                                color: Color(red: 1.0, green: 0.65, blue: 0.05).opacity(0.35),
+                                radius: 12, y: 6
+                            )
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+
+                        CompatibleGlassEffectContainer(spacing: 20) {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
+                                // ... rest of buttons remain the same
+                                // --- SPIEL 1: BET BUDDY ---
+                                Button {
+                                    statsManager.markGameAsPlayed("BetBuddy")
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { betBuddyTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        betBuddyTap = false
+                                        isBetBuddyPresented = true
+                                    }
+                                } label: {
+                                    BetBuddyGameCard()
+                                        .scaleEffect(betBuddyTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: betBuddyTap)
+                                }
+
+                                // --- SPIEL 2: TIME'S UP ---
+                                Button {
+                                    statsManager.markGameAsPlayed("TimesUp")
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { timesUpTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        timesUpTap = false
+                                        isTimesUpPresented = true
+                                    }
+                                } label: {
+                                    MenuGameCard(
+                                        title: "Time's Up",
+                                        subtitle: "Erklären & Raten",
+                                        icon: "hourglass",
+                                        gradient: LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .scaleEffect(timesUpTap ? 0.93 : 1.0)
+                                    .animation(.spring(response: 0.25, dampingFraction: 0.6), value: timesUpTap)
+                                }
+
+                                // --- SPIEL 3: FINDE DEN LÜGNER ---
+                                Button {
+                                    statsManager.markGameAsPlayed("Question")
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { questionTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        questionTap = false
+                                        isQuestionGamePresented = true
+                                    }
+                                } label: {
+                                    LugnerGameCard()
+                                        .scaleEffect(questionTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: questionTap)
+                                }
+
+                                // --- SPIEL 4: IMPOSTER ---
+                                Button {
+                                    statsManager.markGameAsPlayed("Imposter")
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { imposterTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        imposterTap = false
+                                        isImposterPresented = true
+                                    }
+                                } label: {
+                                    ImposterGameCard()
+                                        .scaleEffect(imposterTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: imposterTap)
+                                }
+
+                                // --- SPIEL 5: GERÄUSCH-KINO ---
+                                Button {
+                                    statsManager.markGameAsPlayed("SoundCinema")
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { soundCinemaTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        soundCinemaTap = false
+                                        isSoundCinemaPresented = true
+                                    }
+                                } label: {
+                                    SoundCinemaGameCard()
+                                        .scaleEffect(soundCinemaTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: soundCinemaTap)
+                                }
+
+                                // --- SPIEL 6: FALSCHE FÄHRTE ---
+                                Button {
+                                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { falscheFaehrteTap = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                                        falscheFaehrteTap = false
+                                        isFalscheFaehrtePresented = true
+                                    }
+                                } label: {
+                                    FalscheFaehrteGameCard()
+                                        .scaleEffect(falscheFaehrteTap ? 0.93 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: falscheFaehrteTap)
+                                }
+                            }
+                            .padding(.bottom, 30)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .ignoresSafeArea(edges: .bottom)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
                         Button {
                             showSettings = true
                         } label: {
                             Image(systemName: "gearshape.fill")
-                                .font(.title2)
+                                .font(.body.bold())
                                 .foregroundStyle(.white.opacity(0.8))
-                                .padding(10)
+                                .padding(8)
                                 .background(.ultraThinMaterial, in: Circle())
                         }
-                        .accessibilityLabel(Text("Einstellungen"))
-
-                        Spacer()
-
-                        Text("Games Collection")
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                            .shadow(radius: 5)
-
-                        Spacer()
-
-                        // Magic Recommender Button
+                    }
+                    
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             showRecommender = true
                         } label: {
                             Image(systemName: "wand.and.stars")
-                                .font(.title2)
+                                .font(.body.bold())
                                 .foregroundStyle(.white.opacity(0.8))
-                                .padding(10)
+                                .padding(8)
                                 .background(.ultraThinMaterial, in: Circle())
                         }
-                        .accessibilityLabel(Text("Spielempfehler"))
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-
-                    
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 10) {
-                            
-                            // --- LIVE TICKER ---
-                            InfoTickerView()
-                                .padding(.vertical, 10)
-                            
-                            CompatibleGlassEffectContainer(spacing: 20) {
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
-
-                                    // --- SPIEL 1: BET BUDDY ---
-                                    Button {
-                                        statsManager.markGameAsPlayed("BetBuddy")
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { betBuddyTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            betBuddyTap = false
-                                            isBetBuddyPresented = true
-                                        }
-                                    } label: {
-                                        BetBuddyGameCard()
-                                            .scaleEffect(betBuddyTap ? 0.93 : 1.0)
-                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: betBuddyTap)
-                                    }
-
-                                    // --- SPIEL 2: TIME'S UP ---
-                                    Button {
-                                        statsManager.markGameAsPlayed("TimesUp")
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { timesUpTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            timesUpTap = false
-                                            isTimesUpPresented = true
-                                        }
-                                    } label: {
-                                        MenuGameCard(
-                                            title: "Time's Up",
-                                            subtitle: "Erklären & Raten",
-                                            icon: "hourglass",
-                                            gradient: LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                        )
-                                        .scaleEffect(timesUpTap ? 0.93 : 1.0)
-                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: timesUpTap)
-                                    }
-
-                                    // --- SPIEL 3: FINDE DEN LÜGNER ---
-                                    Button {
-                                        statsManager.markGameAsPlayed("Question")
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { questionTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            questionTap = false
-                                            isQuestionGamePresented = true
-                                        }
-                                    } label: {
-                                        LugnerGameCard()
-                                            .scaleEffect(questionTap ? 0.93 : 1.0)
-                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: questionTap)
-                                    }
-
-                                    // --- SPIEL 4: IMPOSTER ---
-                                    Button {
-                                        statsManager.markGameAsPlayed("Imposter")
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { imposterTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            imposterTap = false
-                                            isImposterPresented = true
-                                        }
-                                    } label: {
-                                        ImposterGameCard()
-                                            .scaleEffect(imposterTap ? 0.93 : 1.0)
-                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: imposterTap)
-                                    }
-
-                                    // --- SPIEL 5: GERÄUSCH-KINO ---
-                                    Button {
-                                        statsManager.markGameAsPlayed("SoundCinema")
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { soundCinemaTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            soundCinemaTap = false
-                                            isSoundCinemaPresented = true
-                                        }
-                                    } label: {
-                                        SoundCinemaGameCard()
-                                            .scaleEffect(soundCinemaTap ? 0.93 : 1.0)
-                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: soundCinemaTap)
-                                    }
-
-                                    // --- SPIEL 6: FALSCHE FÄHRTE ---
-                                    Button {
-                                        withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { falscheFaehrteTap = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                                            falscheFaehrteTap = false
-                                            isFalscheFaehrtePresented = true
-                                        }
-                                    } label: {
-                                        FalscheFaehrteGameCard()
-                                            .scaleEffect(falscheFaehrteTap ? 0.93 : 1.0)
-                                            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: falscheFaehrteTap)
-                                    }
-                                }
-                            }
-                            .padding()
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    // MARK: - In-App Branding
-                    Text("A KELIF Game ❤️")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .padding(.bottom, 10)
                 }
             }
         }
@@ -279,6 +307,9 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $isFalscheFaehrtePresented) {
             FalscheFaehrteWrapper()
+        }
+        .fullScreenCover(isPresented: $isPartyPresented) {
+            PartyWrapper()
         }
         .onAppear {
             handleQuickActionIfNeeded()
@@ -374,7 +405,7 @@ struct MenuGameCard: View {
             hourglassTimer?.invalidate()
             hourglassTimer = nil
         }
-        .background(gradient.opacity(0.6))
+        .background(gradient.opacity(0.6), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .compatibleGlassCardEffect(cornerRadius: 24)
         .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
     }

@@ -9,6 +9,9 @@ struct FFVotePhaseView: View {
     @State private var selectedSubmissionId: UUID? = nil
     @State private var showVoterTransition = false
 
+    // Multiplayer-State
+    @State private var mpSelectedId: String? = nil
+
     private var round: FFRound? { viewModel.currentRound }
     private var currentVoter: FFPlayer? {
         guard currentVoterIndex < viewModel.players.count else { return nil }
@@ -26,7 +29,10 @@ struct FFVotePhaseView: View {
         ZStack {
             FFBackground()
 
-            if showVoterTransition {
+            if viewModel.isMultiplayer && viewModel.hasVoted {
+                // Multiplayer: Warte-Bildschirm nach Vote
+                mpVoteWaitingView
+            } else if showVoterTransition {
                 voterTransitionOverlay
             } else {
                 VStack(spacing: 0) {
@@ -40,13 +46,21 @@ struct FFVotePhaseView: View {
                                 .opacity(appeared ? 1 : 0)
                                 .offset(y: appeared ? 0 : 16)
 
-                            voterBadge
-                                .opacity(appeared ? 1 : 0)
-                                .offset(y: appeared ? 0 : 12)
+                            if !viewModel.isMultiplayer {
+                                voterBadge
+                                    .opacity(appeared ? 1 : 0)
+                                    .offset(y: appeared ? 0 : 12)
+                            }
 
-                            answersStack
-                                .opacity(appeared ? 1 : 0)
-                                .offset(y: appeared ? 0 : 16)
+                            if viewModel.isMultiplayer {
+                                mpAnswersStack
+                                    .opacity(appeared ? 1 : 0)
+                                    .offset(y: appeared ? 0 : 16)
+                            } else {
+                                answersStack
+                                    .opacity(appeared ? 1 : 0)
+                                    .offset(y: appeared ? 0 : 16)
+                            }
 
                             Color.clear.frame(height: 110)
                         }
@@ -58,9 +72,15 @@ struct FFVotePhaseView: View {
                 // Floating Confirm-Button
                 VStack {
                     Spacer()
-                    confirmButton
-                        .padding(.bottom, 36)
-                        .opacity(appeared ? 1 : 0)
+                    if viewModel.isMultiplayer {
+                        mpConfirmButton
+                            .padding(.bottom, 36)
+                            .opacity(appeared ? 1 : 0)
+                    } else {
+                        confirmButton
+                            .padding(.bottom, 36)
+                            .opacity(appeared ? 1 : 0)
+                    }
                 }
             }
         }
@@ -68,6 +88,7 @@ struct FFVotePhaseView: View {
         .onAppear {
             currentVoterIndex = 0
             selectedSubmissionId = nil
+            mpSelectedId = nil
             withAnimation(.spring(response: 0.5, dampingFraction: 0.82).delay(0.05)) {
                 appeared = true
             }
@@ -276,6 +297,164 @@ struct FFVotePhaseView: View {
         .disabled(!hasVoted)
         .animation(.spring(response: 0.3), value: hasVoted)
         .padding(.horizontal, 24)
+    }
+
+    // MARK: - Multiplayer: Antworten-Liste (anonyme Submissions vom Host)
+
+    private var mpAnswersStack: some View {
+        VStack(spacing: 10) {
+            Text("WELCHE IST DIE WAHRHEIT?")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundStyle(FFStyle.textMuted)
+                .tracking(1.5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            ForEach(Array(viewModel.mpSubmissions.enumerated()), id: \.element.id) { idx, submission in
+                let isSelected = mpSelectedId == submission.id
+                let isOwnBluff = submission.text == viewModel.myBluffText
+
+                Button {
+                    guard !isOwnBluff else { return }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(.spring(response: 0.3)) {
+                        mpSelectedId = (mpSelectedId == submission.id) ? nil : submission.id
+                    }
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle()
+                                .fill(isSelected ? FFStyle.accentViolet.opacity(0.25) : Color.white.opacity(0.08))
+                                .frame(width: 36, height: 36)
+                            Text(String(UnicodeScalar(65 + idx)!))
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                                .foregroundStyle(isSelected ? FFStyle.accentViolet : FFStyle.textMuted)
+                        }
+
+                        Text(submission.text)
+                            .font(.system(size: 15, weight: isSelected ? .bold : .semibold))
+                            .foregroundStyle(isSelected ? .white : Color.white.opacity(0.85))
+                            .lineLimit(3)
+                            .lineSpacing(2)
+
+                        Spacer()
+
+                        if isOwnBluff {
+                            Image(systemName: "hand.raised.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(FFStyle.textSubtle)
+                        } else if isSelected {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(FFStyle.accentViolet)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isSelected ? FFStyle.accentViolet.opacity(0.1) : Color.white.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(isSelected ? FFStyle.accentViolet.opacity(0.55) : Color.white.opacity(0.07), lineWidth: isSelected ? 1.5 : 1)
+                    )
+                }
+                .disabled(isOwnBluff)
+                .opacity(isOwnBluff ? 0.4 : (appeared ? 1 : 0))
+                .offset(y: appeared ? 0 : CGFloat(idx * 8))
+                .animation(.spring(response: 0.45, dampingFraction: 0.82).delay(Double(idx) * 0.06), value: appeared)
+            }
+        }
+    }
+
+    // MARK: - Multiplayer: Vote-Button
+
+    private var mpConfirmButton: some View {
+        let hasVoted = mpSelectedId != nil
+
+        return Button {
+            guard hasVoted, let id = mpSelectedId else { return }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            viewModel.castVoteMultiplayer(submissionId: id)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: hasVoted ? "checkmark.circle.fill" : "circle.dashed")
+                    .font(.system(size: 16, weight: .bold))
+                Text(hasVoted ? "Stimme abgeben" : "Bitte wählen…")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(hasVoted ? .black : .white.opacity(0.4))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(
+                Capsule()
+                    .fill(hasVoted
+                          ? AnyShapeStyle(FFStyle.primaryGradient)
+                          : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing)))
+                    .shadow(color: hasVoted ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 16, y: 6)
+            )
+        }
+        .disabled(!hasVoted)
+        .animation(.spring(response: 0.3), value: hasVoted)
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Multiplayer: Warte-Bildschirm nach Vote
+
+    private var mpVoteWaitingView: some View {
+        let voted = viewModel.voteCount
+        let total = viewModel.totalMultiplayerPlayers
+
+        return VStack(spacing: 28) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(FFStyle.accentViolet.opacity(0.12))
+                    .frame(width: 90, height: 90)
+                Image(systemName: "checkmark.bubble.fill")
+                    .font(.system(size: 38))
+                    .foregroundStyle(FFStyle.primaryGradient)
+            }
+
+            VStack(spacing: 8) {
+                Text("Stimme abgegeben!")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Warte auf die Auflösung...")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(FFStyle.textMuted)
+            }
+
+            VStack(spacing: 10) {
+                Text("\(voted) / \(total)")
+                    .font(.system(size: 32, weight: .heavy, design: .monospaced))
+                    .foregroundStyle(FFStyle.accentViolet)
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 6)
+                        Capsule()
+                            .fill(FFStyle.primaryGradient)
+                            .frame(width: total > 0 ? geo.size.width * CGFloat(voted) / CGFloat(total) : 0, height: 6)
+                            .animation(.spring(response: 0.5), value: voted)
+                    }
+                }
+                .frame(height: 6)
+                .padding(.horizontal, 40)
+
+                Text("haben abgestimmt")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(FFStyle.textSubtle)
+            }
+            .padding(20)
+            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 18))
+            .padding(.horizontal, 40)
+
+            Spacer()
+        }
     }
 
     // MARK: - Wähler-Übergabe Overlay

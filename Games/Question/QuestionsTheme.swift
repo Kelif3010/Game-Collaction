@@ -310,7 +310,7 @@ struct TypewriterText: View {
             currentIndex += 1
 
             // Haptik für jeden Buchstaben
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UISelectionFeedbackGenerator().selectionChanged()
 
             typeNextCharacter()
         }

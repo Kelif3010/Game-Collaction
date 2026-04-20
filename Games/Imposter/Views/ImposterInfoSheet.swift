@@ -11,7 +11,7 @@ struct ImposterInfoSheet: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ImposterStyle.backgroundGradient
                     .ignoresSafeArea()

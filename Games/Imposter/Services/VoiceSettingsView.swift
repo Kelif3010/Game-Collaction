@@ -55,7 +55,7 @@ struct VoiceSettingsView: View {
                         Spacer()
                         Text("STIMME KONFIGURIEREN")
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                     }
                     .padding(.top, 20)
@@ -65,31 +65,31 @@ struct VoiceSettingsView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.yellow)
+                                    .foregroundStyle(.yellow)
                                 Text("Verbessere die Sprachqualität")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                             
                             Text("Für einen natürlichen Klang (weniger Roboter) lade bitte 'Erweiterte' oder 'Premium' Stimmen in den iOS Einstellungen herunter:")
                                 .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.8))
                                 .fixedSize(horizontal: false, vertical: true)
                             
                             Text("Einstellungen > Bedienungshilfen > Gesprochene Inhalte > Stimmen > Deutsch")
                                 .font(.caption.bold())
                                 .padding(10)
                                 .background(Color.white.opacity(0.1))
-                                .cornerRadius(8)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             
                             Text("Hinweis: Die Stimmen 'Siri 1-5' sind von Apple leider für Apps gesperrt. Nutze 'Anna Premium' oder 'Petra Premium' für beste Ergebnisse.")
                                 .font(.caption2)
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.5))
                                 .padding(.top, 4)
                         }
                         .padding()
                         .background(Color.orange.opacity(0.2))
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.3), lineWidth: 1))
                         .padding(.horizontal)
                     }
@@ -102,11 +102,11 @@ struct VoiceSettingsView: View {
                             HStack {
                                 Text("Geschwindigkeit")
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundStyle(.white.opacity(0.7))
                                 Spacer()
                                 Text(String(format: "%.2f", speechRate))
                                     .font(.caption.bold())
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                             // Standard ist 0.5. Range erweitert für mehr Kontrolle.
                             Slider(value: $speechRate, in: 0.25...0.75)
@@ -117,11 +117,11 @@ struct VoiceSettingsView: View {
                             HStack {
                                 Text("Tonhöhe")
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundStyle(.white.opacity(0.7))
                                 Spacer()
                                 Text(String(format: "%.2f", pitchMultiplier))
                                     .font(.caption.bold())
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                             Slider(value: $pitchMultiplier, in: 0.5...1.5)
                                 .tint(.orange)
@@ -129,7 +129,7 @@ struct VoiceSettingsView: View {
                     }
                     .padding(20)
                     .background(Color.black.opacity(0.2))
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
                     
                     // Stimmen Auswahl
@@ -140,7 +140,7 @@ struct VoiceSettingsView: View {
                                     HStack {
                                         Text(sectionTitle.uppercased())
                                             .font(.caption.bold())
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundStyle(.white.opacity(0.5))
                                             .padding(.leading, 5)
                                         Spacer()
                                     }
@@ -169,11 +169,11 @@ struct VoiceSettingsView: View {
                             Text(isSpeaking ? "WIRD ABGESPIELT..." : "STIMME TESTEN")
                         }
                         .font(.headline.bold())
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color.orange)
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(20)
                     .disabled(isSpeaking)
@@ -213,7 +213,7 @@ struct VoiceSelectionRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(voice.name)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     HStack(spacing: 6) {
                         if voice.quality == .premium {
@@ -228,7 +228,7 @@ struct VoiceSelectionRow: View {
                         
                         Text(voice.language)
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
                 
@@ -236,17 +236,17 @@ struct VoiceSelectionRow: View {
                 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                         .font(.title2)
                 } else {
                     Image(systemName: "circle")
-                        .foregroundColor(.white.opacity(0.1))
+                        .foregroundStyle(.white.opacity(0.1))
                         .font(.title2)
                 }
             }
             .padding()
             .background(Color.white.opacity(isSelected ? 0.1 : 0.05))
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1)
@@ -263,10 +263,10 @@ struct Badge: View {
     var body: some View {
         Text(text)
             .font(.system(size: 8, weight: .bold))
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(color.opacity(0.6))
-            .cornerRadius(4)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }

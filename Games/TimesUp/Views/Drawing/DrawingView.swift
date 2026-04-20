@@ -95,7 +95,7 @@ struct DrawingToolsView: View {
                             Text(tool.name)
                                 .fontWeight(.medium)
                         }
-                        .foregroundColor(drawingState.selectedTool == tool ? .white : tool.color)
+                        .foregroundStyle(drawingState.selectedTool == tool ? .white : tool.color)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
                         .background(
@@ -103,7 +103,7 @@ struct DrawingToolsView: View {
                                 LinearGradient(colors: [tool.color, tool.color.opacity(0.8)], startPoint: .leading, endPoint: .trailing) :
                                 LinearGradient(colors: [Color.gray.opacity(0.1)], startPoint: .leading, endPoint: .trailing)
                         )
-                        .cornerRadius(20)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                         .shadow(color: drawingState.selectedTool == tool ? tool.color.opacity(0.3) : .clear, radius: 5, x: 0, y: 2)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -121,10 +121,10 @@ struct DrawingToolsView: View {
                     }) {
                         Image(systemName: "arrow.uturn.backward")
                             .font(.title3)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                             .frame(width: 44, height: 44)
                             .background(Color.orange.opacity(0.1))
-                            .cornerRadius(22)
+                            .clipShape(RoundedRectangle(cornerRadius: 22))
                     }
                     .disabled(drawingState.strokes.isEmpty)
                     .opacity(drawingState.strokes.isEmpty ? 0.5 : 1.0)
@@ -135,10 +135,10 @@ struct DrawingToolsView: View {
                     }) {
                         Image(systemName: "trash")
                             .font(.title3)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .frame(width: 44, height: 44)
                             .background(Color.red.opacity(0.1))
-                            .cornerRadius(22)
+                            .clipShape(RoundedRectangle(cornerRadius: 22))
                     }
                     .disabled(drawingState.isEmpty)
                     .opacity(drawingState.isEmpty ? 0.5 : 1.0)
@@ -155,7 +155,7 @@ struct DrawingToolsView: View {
         }
         .padding(.vertical, 15)
         .background(Color(.systemGray6).opacity(0.8))
-        .cornerRadius(20)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .shadow(color: .primary.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: - Rundenanzahl
 enum FFRoundCount: Int, CaseIterable, Identifiable {
+    case two   = 2
     case five  = 5
     case eight = 8
     case ten   = 10

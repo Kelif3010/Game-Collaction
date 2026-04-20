@@ -24,9 +24,8 @@ struct SpyOptionsView: View {
                         Image(systemName: "chevron.left")
                             .font(.headline.bold())
                             .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .frame(width: 44, height: 44)
+                            .modifier(GlassCircleButtonBackground())
                     }
 
                     Spacer()
@@ -43,9 +42,8 @@ struct SpyOptionsView: View {
                         Image(systemName: "questionmark")
                             .font(.headline.bold())
                             .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .frame(width: 44, height: 44)
+                            .modifier(GlassCircleButtonBackground())
                     }
                 }
                 .padding(.top, 20)
@@ -206,7 +204,7 @@ private struct RoleGroupView: View {
             HStack {
                 Text(teamName.uppercased())
                     .font(.caption.bold())
-                    .foregroundColor(teamColor)
+                    .foregroundStyle(teamColor)
                 Spacer()
             }
             .padding(.leading, 4)
@@ -244,25 +242,25 @@ private struct RoleToggleRow: View {
                 
                 Image(systemName: role.icon)
                     .font(.title3)
-                    .foregroundColor(isSelected ? color : .gray)
+                    .foregroundStyle(isSelected ? color : .gray)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(role.rawValue)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     Button(action: onInfo) {
                         Image(systemName: "questionmark.circle")
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.6))
                     }
                 }
                 
                 Text(role.description)
                     .font(.caption)
-                    .foregroundColor(ImposterStyle.mutedText)
+                    .foregroundStyle(ImposterStyle.mutedText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             

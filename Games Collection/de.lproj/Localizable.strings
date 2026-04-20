@@ -436,9 +436,32 @@
 "ff.pack.klassisch" = "Klassisch";
 "ff.pack.krass" = "Krass";
 "ff.pack.extrem" = "Extrem";
+"ff.pack.lustig" = "Lustig";
+"ff.pack.verrueckt" = "Verrückt";
+"ff.pack.pervers" = "FSK 18";
+"ff.pack.unnuetz" = "Unnütz";
 "Falsche Fährte" = "Falsche Fährte";
 "ff.tagline" = "Lüge & Entlarve";
 "ff.setup.players" = "Spieler";
 "ff.setup.packs" = "Fragen-Pack";
 "ff.setup.rounds" = "Runden";
 "ff.setup.bluffTimer" = "Lügen-Zeit";
+
+/* Party Setup */
+"party.setup.title" = "Party starten";
+"party.setup.subtitle" = "Mehrere Spiele · Gesamtwertung";
+"party.setup.section.players" = "Spieler";
+"party.setup.section.games" = "Spiele";
+"party.setup.players.min" = "mind. 2";
+"party.setup.players.count" = "%lld ausgewählt";
+"party.setup.games.min" = "mind. 2 wählen";
+"party.setup.games.count" = "%lld Spiele";
+"party.setup.new_player" = "Neu";
+"party.setup.game_order_hint" = "Gespielt in der Reihenfolge deiner Auswahl";
+"party.setup.start_button.ready" = "Los geht's · %lld Spiele · %lld Spieler";
+"party.setup.start_button.not_ready" = "Spieler & Spiele auswählen";
+"party.setup.add_player.title" = "Spieler hinzufügen";
+"party.setup.add_player.subtitle" = "Wer spielt noch mit?";
+"party.setup.add_player.placeholder" = "Name...";
+"party.setup.validation.missing_players" = "Du brauchst noch mind. %lld Spieler";
+"party.setup.validation.missing_games" = "Wähle noch mind. %lld Spiele";

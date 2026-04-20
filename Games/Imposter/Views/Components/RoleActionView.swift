@@ -26,60 +26,60 @@ struct RoleActionView: View {
                     if role == .hacker {
                         Text("\(selected.name) ist:")
                             .font(.title3)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundStyle(.white.opacity(0.8))
                         
                         if let role = revealedRole {
                             VStack(spacing: 8) {
                                 Image(systemName: role.icon)
                                     .font(.system(size: 50))
-                                    .foregroundColor(.purple)
+                                    .foregroundStyle(.purple)
                                 Text(role.rawValue)
                                     .font(.title.bold())
-                                    .foregroundColor(.purple)
+                                    .foregroundStyle(.purple)
                             }
                         } else if let isSpy = isImposter, isSpy {
                             VStack(spacing: 8) {
                                 Image(systemName: "eye.slash.fill")
                                     .font(.system(size: 50))
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                                 Text("SPION")
                                     .font(.title.bold())
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                             }
                         } else {
                             VStack(spacing: 8) {
                                 Image(systemName: "person.fill")
                                     .font(.system(size: 50))
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                                 Text("BÜRGER")
                                     .font(.title.bold())
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                             }
                         }
                     } else if role == .bodyguard {
                         VStack(spacing: 12) {
                             Image(systemName: "shield.checkered")
                                 .font(.system(size: 60))
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                             Text("GESCHÜTZT")
                                 .font(.title.bold())
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                             Text("Du beschützt \(selected.name).")
                                 .font(.body)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.8))
                         }
                     }
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(Color.white.opacity(0.1))
-                .cornerRadius(16)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .transition(.scale.combined(with: .opacity))
             } else {
                 // Titel nur anzeigen, solange noch nicht gewählt wurde
                 Text(titleText)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, 4)
@@ -95,19 +95,19 @@ struct RoleActionView: View {
                                     VStack(spacing: 8) {
                                         Text(String(player.name.prefix(1)).uppercased())
                                             .font(.title2.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .frame(width: 44, height: 44)
                                             .background(Circle().fill(Color.white.opacity(0.1)))
                                         
                                         Text(player.name)
                                             .font(.caption.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .lineLimit(1)
                                     }
                                     .padding(10)
                                     .frame(maxWidth: .infinity)
                                     .background(Color.white.opacity(0.05))
-                                    .cornerRadius(12)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
                         }

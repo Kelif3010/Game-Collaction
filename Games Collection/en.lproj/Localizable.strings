@@ -1109,9 +1109,32 @@
 "ff.pack.klassisch" = "Classic";
 "ff.pack.krass" = "Bold";
 "ff.pack.extrem" = "Extreme";
+"ff.pack.lustig" = "Funny";
+"ff.pack.verrueckt" = "Wild";
+"ff.pack.pervers" = "18+";
+"ff.pack.unnuetz" = "Useless";
 "Falsche Fährte" = "Red Herring";
 "ff.tagline" = "Bluff & Expose";
 "ff.setup.players" = "Players";
 "ff.setup.packs" = "Question Pack";
 "ff.setup.rounds" = "Rounds";
 "ff.setup.bluffTimer" = "Bluff Timer";
+
+/* Party Setup */
+"party.setup.title" = "Start Party";
+"party.setup.subtitle" = "Multiple games · Total score";
+"party.setup.section.players" = "Players";
+"party.setup.section.games" = "Games";
+"party.setup.players.min" = "min. 2";
+"party.setup.players.count" = "%lld selected";
+"party.setup.games.min" = "pick min. 2";
+"party.setup.games.count" = "%lld games";
+"party.setup.new_player" = "New";
+"party.setup.game_order_hint" = "Played in the order of your selection";
+"party.setup.start_button.ready" = "Let's Go · %lld games · %lld players";
+"party.setup.start_button.not_ready" = "Select players & games";
+"party.setup.add_player.title" = "Add Player";
+"party.setup.add_player.subtitle" = "Who else is playing?";
+"party.setup.add_player.placeholder" = "Name...";
+"party.setup.validation.missing_players" = "You need at least %lld more players";
+"party.setup.validation.missing_games" = "Select at least %lld more games";

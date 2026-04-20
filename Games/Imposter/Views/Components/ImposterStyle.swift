@@ -64,7 +64,7 @@ struct ClassifiedBadge: View {
         Text(text)
             .font(.system(size: 10, weight: .black, design: .monospaced))
             .tracking(2)
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(color.opacity(0.15))
@@ -86,7 +86,7 @@ struct TerminalText: View {
         Text(text)
             .font(.system(size: size, weight: .bold, design: .monospaced))
             .tracking(tracking)
-            .foregroundColor(color)
+            .foregroundStyle(color)
     }
 }
 
@@ -108,7 +108,7 @@ struct MissionStatusIndicator: View {
             Text(status.uppercased())
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .tracking(2)
-                .foregroundColor(isActive ? activeColor : .gray)
+                .foregroundStyle(isActive ? activeColor : .gray)
         }
         .onAppear {
             if isActive {
@@ -145,7 +145,7 @@ struct ImposterPrimaryButton: View {
         Button(action: action) {
             Text(title)
                 .font(.headline.weight(.semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
         }
@@ -169,9 +169,8 @@ struct ImposterSheetHeader: View {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassCircleButtonBackground())
             }
 
             Spacer()
@@ -183,7 +182,7 @@ struct ImposterSheetHeader: View {
             Spacer()
 
             Color.clear
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
         }
         .padding(.top, 20)
         .padding(.bottom, 8)
@@ -205,9 +204,10 @@ struct ImposterIconBadge: View {
                     )
                 )
             Image(systemName: systemName)
-                .foregroundColor(tint)
+                .foregroundStyle(tint)
                 .font(.system(size: 18, weight: .semibold))
         }
         .frame(width: 44, height: 44)
     }
 }
+

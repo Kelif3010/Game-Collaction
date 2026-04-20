@@ -56,7 +56,7 @@ struct AppIconPickerView: View {
                         }
                         .padding()
                         .background(Color.orange.opacity(0.1))
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
                     }
 
@@ -70,7 +70,7 @@ struct AppIconPickerView: View {
                     }
                     .padding()
                     .background(Color.blue.opacity(0.1))
-                    .cornerRadius(12)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal)
                     #endif
 

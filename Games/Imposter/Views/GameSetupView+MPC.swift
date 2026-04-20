@@ -175,7 +175,7 @@ extension GameSetupView {
                         }
                     }
                     
-                case "PLAYER_READY_UPDATE":
+                case MPCEventType.playerReadyUpdate:
                     if let data = payload,
                        let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
                         if info.isReady {
@@ -186,11 +186,11 @@ extension GameSetupView {
                         if mpc.role == .host {
                             let validPlayers = Set(mpc.lobbyPeers)
                             mpc.readyPlayers = mpc.readyPlayers.intersection(validPlayers)
-                            mpc.sendToAll(event: "LOBBY_STATE_SYNC", object: Array(mpc.readyPlayers))
+                            mpc.sendToAll(event: MPCEventType.lobbyStateSync, object: Array(mpc.readyPlayers))
                         }
                     }
-                    
-                case "LOBBY_STATE_SYNC":
+
+                case MPCEventType.lobbyStateSync:
                     if let data = payload,
                        let list = try? JSONDecoder().decode([String].self, from: data) {
                         mpc.readyPlayers = Set(list)

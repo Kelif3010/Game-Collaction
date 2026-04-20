@@ -16,18 +16,12 @@ struct ScreenHeader: View {
                     Image(systemName: "chevron.left")
                         .font(.headline.bold())
                         .foregroundStyle(BetBuddyTheme.textChampagne)
-                        .frame(width: 36, height: 36)
-                        .background(
-                            Circle()
-                                .fill(Color.white.opacity(0.08))
-                                .overlay(
-                                    Circle()
-                                        .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                                )
-                        )
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Zurück")
             } else {
-                Color.clear.frame(width: 36, height: 36)
+                Color.clear.frame(width: 44, height: 44)
             }
 
             Spacer()
@@ -39,7 +33,7 @@ struct ScreenHeader: View {
 
             Spacer()
 
-            Color.clear.frame(width: 36, height: 36)
+            Color.clear.frame(width: 44, height: 44)
         }
         .padding(.bottom, 8)
     }

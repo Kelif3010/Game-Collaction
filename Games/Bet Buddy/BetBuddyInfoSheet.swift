@@ -95,7 +95,7 @@ struct BetBuddyInfoSheet: View {
                             title: "Einstellungen",
                             content: {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    BulletPoint(text: "Party Modus: Der Timer läuft durch. Ohne Modus startet er bei Treffern neu.", icon: "sparkles")
+                                    BulletPoint(text: "Timer läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: "timer")
                                     BulletPoint(text: "Punkte Abzug: Bestimmt das Risiko (Normal, Mittel, Hardcore).", icon: "exclamationmark.circle")
                                     BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: "square.grid.2x2.fill")
                                 }

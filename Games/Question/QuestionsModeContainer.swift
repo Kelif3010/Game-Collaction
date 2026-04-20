@@ -67,22 +67,21 @@ struct QuestionsModeContainer: View {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassCircleButtonBackground())
             }
 
             Spacer()
 
             Text("Lügendetektor-Test")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .opacity(0.8)
 
             Spacer()
 
             Color.clear
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
         }
         .padding(.horizontal, 16)
         .padding(.top, 50)

@@ -79,6 +79,12 @@ struct BetBuddyVotingView: View {
             appModel.resetVotes()
             didNavigateToGame = false
         }
+        // BB-03: Stale Votes auch nach App-Hintergrund zurücksetzen
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            if !appModel.votesLocked {
+                appModel.resetVotes()
+            }
+        }
         .onChange(of: appModel.votesLocked) { _, locked in
             if locked && !didNavigateToGame {
                 didNavigateToGame = true
@@ -89,7 +95,7 @@ struct BetBuddyVotingView: View {
     
     private var header: some View {
         HStack {
-            Color.clear.frame(width: 36, height: 36)
+            Color.clear.frame(width: 44, height: 44)
             Spacer()
 
             // Casino-Style Titel
@@ -117,7 +123,7 @@ struct BetBuddyVotingView: View {
                 Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))

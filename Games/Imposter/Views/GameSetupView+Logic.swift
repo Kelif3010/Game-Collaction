@@ -86,10 +86,15 @@ extension GameSetupView {
              }
 
              gameLogic.gameSettings = gameSettings
-             
+
              Task { @MainActor in
-                 await gameLogic.startGame()
-                 route = .game
+                 let success = await gameLogic.startGame()
+                 if success {
+                     route = .game
+                 } else {
+                     alertMessage = "Spiel konnte nicht gestartet werden. Bitte prüfe, ob die gewählte Kategorie genug Wörter für den Spielmodus hat."
+                     showingAlert = true
+                 }
              }
         }
     }

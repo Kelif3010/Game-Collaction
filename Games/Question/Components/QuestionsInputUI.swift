@@ -335,7 +335,7 @@ struct QuestionsSecureRevealButton: View {
 
             // Leichte Haptik während des Scans
             if Int(progress * 10) % 2 == 0 {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
             }
 
             if progress >= 1.0 {

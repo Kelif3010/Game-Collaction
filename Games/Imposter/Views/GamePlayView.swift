@@ -8,6 +8,7 @@
 import SwiftUI
 import MultipeerConnectivity
 import Foundation
+import Combine
 
 struct GamePlayView: View {
     @EnvironmentObject var gameSettings: GameSettings
@@ -34,7 +35,7 @@ struct GamePlayView: View {
     @State private var reconnectToastName = ""
     
     // KI-Services
-    @StateObject private var hintService = HintService.shared
+    @ObservedObject private var hintService = HintService.shared
 
     private var isMultiplayerActive: Bool {
         MultipeerManager.shared.role != .unknown
@@ -70,11 +71,11 @@ struct GamePlayView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "wifi.slash")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         
                         Text("\(disconnectToastName) hat die Verbindung verloren")
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -95,11 +96,11 @@ struct GamePlayView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "wifi")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         
                         Text("\(reconnectToastName) ist zurückgekehrt")
                             .font(.subheadline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -128,7 +129,7 @@ struct GamePlayView: View {
             resetLocalState()
             gameLogic.stopGameTimer()
         }
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onChange(of: mpc.lastReconnectedPlayerName) { _, newName in
             if let name = newName {
                 reconnectToastName = name
@@ -474,10 +475,11 @@ struct GamePlayView: View {
         // Send to Host Logic (even if Host)
         let payload = ImposterCardSeenPayload(playerName: myName)
         if MultipeerManager.shared.role == .host {
-             // Host Logic simulation for self
-             MultipeerManager.shared.onEventReceived?(MPCEventType.imposterCardSeen, try? JSONEncoder().encode(payload))
+            // Host processes own card-seen event locally via eventPublisher
+            let payloadData = try? JSONEncoder().encode(payload)
+            MultipeerManager.shared.eventPublisher.send((type: MPCEventType.imposterCardSeen, payload: payloadData))
         } else {
-             MultipeerManager.shared.sendToHost(event: MPCEventType.imposterCardSeen, object: payload)
+            MultipeerManager.shared.sendToHost(event: MPCEventType.imposterCardSeen, object: payload)
         }
     }
 
@@ -601,23 +603,23 @@ struct MultiplayerWaitingView: View {
                         .font(.headline)
                         .fontWeight(.bold)
                         .tracking(2)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     if let progress = gameSettings.revealProgress {
                         Text("\(progress.ready) / \(progress.total) BEREIT")
                             .font(.system(size: 32, weight: .black, design: .monospaced))
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     } else {
                         Text("Synchronisiere...")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
                 
                 Text("Das Spiel startet automatisch,\nsobald alle ihre Rolle gesehen haben.")
                     .font(.footnote)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.5))
                     .padding(.horizontal, 40)
             }
         }
@@ -643,17 +645,17 @@ struct ImposterGameHeaderView: View {
                             .frame(width: 32, height: 32)
                         Image(systemName: "person.fill.viewfinder")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(ImposterStyle.spyRed)
+                            .foregroundStyle(ImposterStyle.spyRed)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(gameSettings.numberOfImposters)")
                             .font(.system(size: 14, weight: .black, design: .monospaced))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Text(gameSettings.numberOfImposters == 1 ? "AGENT" : "AGENTEN")
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
                             .tracking(1)
-                            .foregroundColor(ImposterStyle.spyRed.opacity(0.8))
+                            .foregroundStyle(ImposterStyle.spyRed.opacity(0.8))
                     }
                 }
                 .padding(.horizontal, 10)
@@ -674,11 +676,11 @@ struct ImposterGameHeaderView: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("\(gameSettings.currentPlayerIndex + 1)/\(gameSettings.players.count)")
                             .font(.system(size: 14, weight: .black, design: .monospaced))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Text("DOSSIERS")
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
                             .tracking(1)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
 
                     // Progress Ring
@@ -747,25 +749,25 @@ struct StartingPlayerAnnouncementView: View {
                 
                 Image(systemName: "flag.checkered")
                     .font(.system(size: 60))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             
             VStack(spacing: 10) {
                 Text(LocalizedStringKey("Startspieler"))
                     .font(.headline)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.7))
                     .textCase(.uppercase)
                     .kerning(2)
                 
                 Text(displayName)
                     .font(.system(size: 42, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
             }
             
             Text(LocalizedStringKey("Der ausgewählte Spieler beginnt die Runde. Danach startet der Timer."))
                 .font(.body)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundStyle(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
@@ -774,10 +776,10 @@ struct StartingPlayerAnnouncementView: View {
                     Text("START IN")
                         .font(.caption.bold())
                         .tracking(2)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.6))
                     Text("\(max(0, countdownSeconds))")
                         .font(.system(size: 64, weight: .black, design: .monospaced))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .contentTransition(.numericText())
                 }
             }
@@ -904,7 +906,7 @@ struct GameTimerView: View {
                             Text("VERBLEIBENDE ZEIT")
                                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                                 .tracking(3)
-                                .foregroundColor(Color.white.opacity(0.4))
+                                .foregroundStyle(Color.white.opacity(0.4))
 
                             // Timer
                             Text(timeString)
@@ -923,7 +925,7 @@ struct GameTimerView: View {
                                 Text(gameSettings.isTimerPaused ? "MISSION PAUSIERT" : (isCriticalTime ? "ZEIT KRITISCH" : "MISSION LÄUFT"))
                                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
                                     .tracking(1)
-                                    .foregroundColor(gameSettings.isTimerPaused ? ImposterStyle.terminalAmber : (isCriticalTime ? ImposterStyle.spyRed : Color.green.opacity(0.8)))
+                                    .foregroundStyle(gameSettings.isTimerPaused ? ImposterStyle.terminalAmber : (isCriticalTime ? ImposterStyle.spyRed : Color.green.opacity(0.8)))
                             }
                         }
                     }
@@ -938,7 +940,7 @@ struct GameTimerView: View {
                             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
                                 criticalGlow = true
                             }
-                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         } else {
                             criticalPulse = false
                             criticalGlow = false
@@ -1031,7 +1033,7 @@ struct GameTimerView: View {
                 } else {
                     Text("Keine Karte verfügbar")
                         .font(.headline)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.8))
                 }
             }
         }
@@ -1216,7 +1218,7 @@ struct SpyActionButton: View {
 
                     Image(systemName: icon)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(accentColor)
+                        .foregroundStyle(accentColor)
                 }
 
                 // Text
@@ -1224,11 +1226,11 @@ struct SpyActionButton: View {
                     Text(title)
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                         .tracking(0.5)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
 
                     Text(subtitle)
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
 
                 Spacer()
@@ -1236,7 +1238,7 @@ struct SpyActionButton: View {
                 // Arrow
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(accentColor.opacity(0.6))
+                    .foregroundStyle(accentColor.opacity(0.6))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -1271,7 +1273,7 @@ struct GameFooterView: View {
                 Text(LocalizedStringKey("Spiel verlassen"))
                     .font(.callout.weight(.medium))
             }
-            .foregroundColor(.white.opacity(0.7))
+            .foregroundStyle(.white.opacity(0.7))
             .padding(.horizontal, 24)
             .padding(.vertical, 12)
             .background(Color.black.opacity(0.3))

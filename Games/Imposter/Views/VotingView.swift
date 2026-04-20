@@ -44,7 +44,7 @@ struct VotingView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             contentView
                 .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
@@ -104,6 +104,9 @@ struct VotingView: View {
             .ignoresSafeArea()
 
             votingBody
+                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: votingManager.showResults)
+                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: isLockingAnimationActive)
+                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: votingManager.isSpyShootoutActive)
         }
     }
 
@@ -117,10 +120,10 @@ struct VotingView: View {
                     isPlaying: true
                 )
                 .frame(width: 180, height: 180)
-                
+
                 Text("STIMME VERRIEGELT")
                     .font(.system(size: 18, weight: .black, design: .monospaced))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
                     .tracking(2)
             }
             .transition(.scale.combined(with: .opacity))
@@ -167,12 +170,17 @@ struct VotingView: View {
                     dismiss()
                 }
             )
+            .transition(.asymmetric(
+                insertion: .move(edge: .bottom).combined(with: .opacity),
+                removal: .opacity
+            ))
         } else if isMultiplayer && hasVotedMultiplayer {
             // Multiplayer Warte-Screen
             MultiplayerVotingWaitView(
                 votesReceived: votesReceivedCount,
                 totalVoters: totalVotersCount
             )
+            .transition(.opacity)
         } else {
             VotingActiveView(
                 votingManager: votingManager,
@@ -186,7 +194,7 @@ struct VotingView: View {
                     
                     // Sound & Haptik
                     SoundManager.shared.playSound(named: "computer-processing-sound-effects-short-click-select-01-122134")
-                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     
                     // Kurze Verzögerung für die Animation (1.5 Sekunden)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -212,12 +220,12 @@ struct VotingView: View {
                 Text("ABSTIMMUNG")
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .tracking(2)
-                    .foregroundColor(ImposterStyle.spyRed)
+                    .foregroundStyle(ImposterStyle.spyRed)
 
                 if isMultiplayer {
                     Text("\(votesReceivedCount)/\(totalVotersCount) STIMMEN")
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
             }
         }
@@ -390,14 +398,14 @@ struct VotingActiveView: View {
                     Text(isMultiplayer ? "WEN VERDÄCHTIGST DU?" : "WER IST DER AGENT?")
                         .font(.system(size: 18, weight: .bold, design: .monospaced))
                         .tracking(1)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
                     Text(isMultiplayer
                          ? "Deine Stimme bleibt geheim bis alle gewählt haben."
                          : "Wählt gemeinsam einen Verdächtigen zur Eliminierung.")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.5))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
                 }
@@ -488,12 +496,12 @@ struct MultiplayerVotingWaitView: View {
                     VStack(spacing: 4) {
                         Text("\(votesReceived)/\(totalVoters)")
                             .font(.system(size: 32, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
 
                         Text("STIMMEN")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .tracking(2)
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundStyle(.white.opacity(0.4))
                     }
                 }
 
@@ -502,11 +510,11 @@ struct MultiplayerVotingWaitView: View {
                     Text("STIMME REGISTRIERT")
                         .font(.system(size: 18, weight: .bold, design: .monospaced))
                         .tracking(2)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
 
                     Text("Warte auf Ergebnis der Gruppe...")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
 
                 Spacer()
@@ -578,18 +586,18 @@ struct VotingPlayerCard: View {
                         Text("VERDÄCHTIG")
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
                             .tracking(1)
-                            .foregroundColor(isSelected ? ImposterStyle.spyRed : .white.opacity(0.3))
+                            .foregroundStyle(isSelected ? ImposterStyle.spyRed : .white.opacity(0.3))
 
                         Spacer()
 
                         if isSelected {
                             Image(systemName: "target")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(ImposterStyle.spyRed)
+                                .foregroundStyle(ImposterStyle.spyRed)
                         } else if isSpyAlreadyFound {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 10))
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                         }
                     }
                     .padding(.horizontal, 12)
@@ -607,18 +615,18 @@ struct VotingPlayerCard: View {
                             if isSpyAlreadyFound {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(.green)
                             } else {
                                 Text(String(player.name.prefix(1)).uppercased())
                                     .font(.system(size: 24, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                         }
 
                         // Name
                         Text(player.name)
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
@@ -627,7 +635,7 @@ struct VotingPlayerCard: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 130)
                 .background(backgroundColor)
-                .cornerRadius(14)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(accentColor.opacity(isSelected ? 0.6 : 0.2), lineWidth: isSelected ? 2 : 1)
@@ -639,7 +647,7 @@ struct VotingPlayerCard: View {
                 if showVoteCount && voteCount > 0 {
                     Text("\(voteCount)")
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(6)
                         .background(
                             Circle()

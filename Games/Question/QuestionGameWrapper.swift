@@ -1,20 +1,16 @@
-//
-//  QuestionGameWrapper.swift
-//  Games Collection
-//
-//  Created by Ken  on 27.12.25.
-//
-
-
 import SwiftUI
 
 struct QuestionGameWrapper: View {
-    // Hier erstellen wir das Herzstück (Daten-Speicher) für das Frage-Spiel,
-    // genau so, wie wir es vorher in der QuestionApp gemacht haben.
+    var partyContext: PartyGameLaunchContext? = nil
+
     @StateObject private var appModel = AppModel()
 
     var body: some View {
-        // Wir starten den Container und übergeben das Model
         QuestionsModeContainer(appModel: appModel)
+            .onAppear {
+                guard let names = partyContext?.playerNames, !names.isEmpty else { return }
+                // Party-Spieler vorladen – ersetzt gespeicherte Spieler.
+                appModel.players = names.map { QuestionPlayer(name: $0) }
+            }
     }
 }

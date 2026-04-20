@@ -124,7 +124,7 @@ struct TimeOutResultView: View {
 
                         Image(systemName: theme.icon)
                             .font(.system(size: 40, weight: .medium))
-                            .foregroundColor(theme.accentColor)
+                            .foregroundStyle(theme.accentColor)
                     }
                     .scaleEffect(showContent ? 1 : 0.8)
                     .opacity(showContent ? 1 : 0)
@@ -134,12 +134,12 @@ struct TimeOutResultView: View {
                         Text(theme.title)
                             .font(.system(size: 24, weight: .bold, design: .monospaced))
                             .tracking(2)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
 
                         Text(theme.subtitle)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
                             .padding(.horizontal, 40)
@@ -160,7 +160,7 @@ struct TimeOutResultView: View {
                         Text("ENTTARNTE AGENTEN")
                             .font(.system(size: 11, weight: .bold, design: .monospaced))
                             .tracking(2)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                     .padding(.horizontal, 24)
 
@@ -193,7 +193,7 @@ struct TimeOutResultView: View {
                                     icon: "arrow.counterclockwise",
                                     style: .primary,
                                     action: {
-                                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                         gameLogic.startMultiplayerRematchOffer()
                                     }
                                 )
@@ -208,7 +208,7 @@ struct TimeOutResultView: View {
                             icon: "arrow.counterclockwise",
                             style: .primary,
                             action: {
-                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                 Task { @MainActor in
                                     await gameLogic.restartGame()
                                 }
@@ -226,7 +226,7 @@ struct TimeOutResultView: View {
                                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .tracking(1)
                         }
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundStyle(.white.opacity(0.4))
                         .padding(.vertical, 12)
                     }
                 }
@@ -277,7 +277,7 @@ struct TimeOutResultView: View {
 
             Text(isHost ? "Warte auf Antworten..." : "Warte auf Host...")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
         }
         .padding(.vertical, 16)
     }

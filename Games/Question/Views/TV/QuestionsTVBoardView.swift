@@ -228,7 +228,7 @@ private struct TVCinematicRevealView: View {
                 }
             }
 
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
 

@@ -7,290 +7,458 @@ struct FFBluffPhaseView: View {
 
     @State private var inputText = ""
     @State private var appeared = false
+    @State private var playerAppeared = false
     @State private var shakeTrigger = false
+    @State private var inputGlow: CGFloat = 0.0
 
     private var round: FFRound? { viewModel.currentRound }
     private var currentPlayer: FFPlayer? { viewModel.currentInputPlayer }
+    private var currentIdx: Int { round?.currentInputPlayerIndex ?? 0 }
+    private var totalPlayers: Int { viewModel.players.count }
 
     var body: some View {
         ZStack {
             FFBackground()
 
-            VStack(spacing: 0) {
-                roundHeader
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
+            if viewModel.isMultiplayer && viewModel.hasSubmittedBluff {
+                mpWaitingView
+            } else {
+                GeometryReader { geo in
+                    VStack(spacing: 0) {
+                        topBar
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
+                            .padding(.bottom, 4)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 22) {
-                        questionCard
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 20)
+                        questionZone
+                            .frame(height: questionHeight(in: geo.size.height))
 
-                        playerIndicator
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 16)
+                        if !viewModel.isMultiplayer {
+                            playerDivider
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 4)
+                        } else {
+                            dividerLine
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 4)
+                        }
 
-                        inputCard
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 12)
+                        inputZone
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
 
-                        progressDots
-                            .opacity(appeared ? 1 : 0)
-
-                        Color.clear.frame(height: 100)
+                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .safeAreaInset(edge: .bottom) {
+                        submitButton
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 16)
+                            .padding(.top, 12)
+                            .opacity(appeared ? 1 : 0)
+                    }
                 }
-            }
-
-            // Floating Submit-Button
-            VStack {
-                Spacer()
-                submitButton
-                    .padding(.bottom, 36)
-                    .opacity(appeared ? 1 : 0)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .animation(.spring(response: 0.35, dampingFraction: 0.82), value: textFieldFocused)
         .onAppear {
+            inputText = ""
+            shakeTrigger = false
+            inputGlow = 0
+            textFieldFocused = false
             inputText = viewModel.currentBluffText
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05)) {
                 appeared = true
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                textFieldFocused = true
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.75).delay(0.3)) {
+                playerAppeared = true
             }
         }
         .onChange(of: viewModel.currentRound?.currentInputPlayerIndex) { _, _ in
             inputText = ""
+            inputGlow = 0
             appeared = false
+            playerAppeared = false
             withAnimation(.spring(response: 0.45, dampingFraction: 0.82).delay(0.05)) {
                 appeared = true
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                textFieldFocused = true
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.75).delay(0.25)) {
+                playerAppeared = true
             }
+        }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                textFieldFocused = false
+            }
+        )
+        .onChange(of: viewModel.currentRoundIndex) { _, _ in
+            inputText = viewModel.currentBluffText
+            shakeTrigger = false
+            inputGlow = 0
+            textFieldFocused = false
         }
     }
 
-    // MARK: - Header
-    private var roundHeader: some View {
-        HStack {
+    private func questionHeight(in height: CGFloat) -> CGFloat {
+        textFieldFocused ? max(120, height * 0.24) : height * 0.40
+    }
+
+    // MARK: - Top Bar: X + Story-Bar + Runde
+    private var topBar: some View {
+        HStack(spacing: 12) {
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 viewModel.returnToSetup()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(.ultraThinMaterial))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white.opacity(0.07)))
             }
 
-            Spacer()
-
-            VStack(spacing: 2) {
-                Text("Runde \(viewModel.currentRoundNumber) / \(viewModel.totalRounds)")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                Text("Lügen eingeben")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(FFStyle.textMuted)
+            // Story-Segmente (ein Segment pro Spieler)
+            HStack(spacing: 3) {
+                ForEach(0..<totalPlayers, id: \.self) { idx in
+                    Capsule()
+                        .fill(
+                            idx < currentIdx
+                                ? FFStyle.accentViolet
+                                : idx == currentIdx
+                                    ? FFStyle.accentViolet.opacity(0.45)
+                                    : Color.white.opacity(0.12)
+                        )
+                        .frame(height: 3)
+                        .animation(.spring(response: 0.35), value: currentIdx)
+                }
             }
 
-            Spacer()
+            // Runden-Badge
+            Text("\(viewModel.currentRoundNumber)/\(viewModel.totalRounds)")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.38))
+                .frame(width: 30, alignment: .trailing)
+        }
+        .frame(height: 42)
+    }
 
-            // Platzhalter für symmetrisches Layout
-            Circle().fill(Color.clear).frame(width: 36, height: 36)
+    // MARK: - Question Zone: kein Karten-Rahmen, pure Atmosphäre
+    private var questionZone: some View {
+        ZStack {
+            // Atmosphärischer Hintergrund-Glow
+            RadialGradient(
+                colors: [FFStyle.accentViolet.opacity(0.22), Color.clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: 200
+            )
+            .allowsHitTesting(false)
+
+            VStack(spacing: 14) {
+                Spacer()
+
+                // Kategorie-Chip
+                if viewModel.settings.showCategoryHint,
+                   let category = round?.question.category {
+                    Text(category.uppercased())
+                        .font(.system(size: 9, weight: .black, design: .monospaced))
+                        .tracking(3)
+                        .foregroundStyle(FFStyle.accentViolet)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(FFStyle.accentViolet.opacity(0.1))
+                                .overlay(Capsule().stroke(FFStyle.accentViolet.opacity(0.3), lineWidth: 1))
+                        )
+                        .opacity(appeared ? 1 : 0)
+                        .animation(.easeOut(duration: 0.4).delay(0.1), value: appeared)
+                }
+
+                // Hero-Frage
+                Text(round?.question.localizedQuestion ?? "")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 24)
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 14)
+                    .animation(.spring(response: 0.55, dampingFraction: 0.8).delay(0.08), value: appeared)
+
+                Spacer()
+            }
         }
     }
 
-    // MARK: - Frage-Karte
-    private var questionCard: some View {
-        VStack(spacing: 14) {
-            // Kategorie-Badge (wenn aktiviert)
-            if viewModel.settings.showCategoryHint, let category = round?.question.category {
-                HStack(spacing: 6) {
-                    Image(systemName: "tag.fill")
-                        .font(.system(size: 10, weight: .bold))
-                    Text(category.uppercased())
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(1.5)
+    // MARK: - Spieler-Divider: Name sitzt in der Trennlinie
+    private var playerDivider: some View {
+        HStack(spacing: 0) {
+            fadeLine(direction: .trailing)
+
+            if let player = currentPlayer {
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(FFStyle.accentViolet.opacity(0.18))
+                            .frame(width: 26, height: 26)
+                        Text(String(player.displayName.prefix(1).uppercased()))
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundStyle(FFStyle.accentViolet)
+                    }
+                    Text(player.displayName)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .minimumScaleFactor(0.85)
+                        .layoutPriority(1)
+                    Image(systemName: "theatermasks.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(FFStyle.accentViolet.opacity(0.6))
                 }
-                .foregroundStyle(FFStyle.accentViolet)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 5)
+                .padding(.vertical, 7)
                 .background(
                     Capsule()
-                        .fill(FFStyle.accentViolet.opacity(0.12))
-                        .overlay(Capsule().stroke(FFStyle.accentViolet.opacity(0.3), lineWidth: 1))
+                        .fill(Color.black.opacity(0.5))
+                        .overlay(
+                            Capsule()
+                                .stroke(FFStyle.accentViolet.opacity(0.28), lineWidth: 1)
+                        )
                 )
+                .scaleEffect(playerAppeared ? 1 : 0.6)
+                .opacity(playerAppeared ? 1 : 0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.65), value: playerAppeared)
             }
 
-            // Detektiv-Icon
-            ZStack {
-                Circle()
-                    .fill(FFStyle.accentViolet.opacity(0.15))
-                    .frame(width: 56, height: 56)
-                Image(systemName: "questionmark.bubble.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(FFStyle.primaryGradient)
-            }
-
-            // Frage
-            Text(round?.question.localizedQuestion ?? "")
-                .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .padding(.horizontal, 8)
+            fadeLine(direction: .leading)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .ffCard(isPrimary: true)
     }
 
-    // MARK: - Spieler-Indikator
-    private var playerIndicator: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(FFStyle.accentViolet.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Text(String(currentPlayer?.displayName.prefix(1).uppercased() ?? "?"))
-                    .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(FFStyle.accentViolet)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(currentPlayer?.displayName ?? "")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                Text("Gib jetzt deine Lüge ein!")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(FFStyle.textMuted)
-            }
-
-            Spacer()
-
-            // Schild-Icon: Lüge-Symbol
+    // Einfache Trennlinie für Multiplayer (kein Spieler-Chip)
+    private var dividerLine: some View {
+        HStack(spacing: 0) {
+            fadeLine(direction: .trailing)
             Image(systemName: "theatermasks.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 13))
                 .foregroundStyle(FFStyle.accentViolet.opacity(0.5))
+                .padding(.horizontal, 14)
+            fadeLine(direction: .leading)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .ffCard()
     }
 
-    // MARK: - Eingabe-Karte
-    private var inputCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "pencil")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(FFStyle.accentViolet)
-                Text("DEINE LÜGE")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(FFStyle.textMuted)
-                    .tracking(1.5)
-            }
-
-            TextField("Eine glaubwürdige Antwort eingeben…", text: $inputText, axis: .vertical)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
-                .tint(FFStyle.accentViolet)
-                .focused($textFieldFocused)
-                .lineLimit(3)
-                .onChange(of: inputText) { _, new in
-                    viewModel.currentBluffText = new
-                }
-
-            // Zeichenzähler
-            HStack {
-                Spacer()
-                Text("\(inputText.count)/80")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(inputText.count > 80 ? FFStyle.accentCrimson : FFStyle.textSubtle)
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: FFStyle.cornerRadius, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: FFStyle.cornerRadius, style: .continuous)
-                        .stroke(textFieldFocused
-                                ? FFStyle.accentViolet.opacity(0.5)
-                                : Color.white.opacity(0.08), lineWidth: 1.5)
+    private func fadeLine(direction: UnitPoint) -> some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: direction == .trailing
+                        ? [Color.clear, FFStyle.accentViolet.opacity(0.3)]
+                        : [FFStyle.accentViolet.opacity(0.3), Color.clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
                 )
-        )
-        .modifier(ShakeModifier(trigger: shakeTrigger))
+            )
+            .frame(height: 1)
     }
 
-    // MARK: - Fortschritts-Punkte
-    private var progressDots: some View {
-        HStack(spacing: 8) {
-            let currentIdx = round?.currentInputPlayerIndex ?? 0
-            ForEach(viewModel.players.indices, id: \.self) { idx in
-                let done = idx < currentIdx
-                let active = idx == currentIdx
-                Circle()
-                    .fill(done ? FFStyle.accentViolet : (active ? FFStyle.accentViolet.opacity(0.5) : Color.white.opacity(0.15)))
-                    .frame(width: active ? 10 : 7, height: active ? 10 : 7)
-                    .overlay(
-                        Circle().stroke(active ? FFStyle.accentViolet : Color.clear, lineWidth: 1.5)
-                            .frame(width: 14, height: 14)
-                    )
-                    .animation(.spring(response: 0.3), value: active)
+    // MARK: - Input Zone: dynamisches Glühen
+    private var inputZone: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("DEINE LÜGE")
+                .font(.system(size: 9, weight: .black, design: .monospaced))
+                .tracking(3)
+                .foregroundStyle(FFStyle.accentViolet.opacity(0.65))
+                .opacity(appeared ? 1 : 0)
+
+            ZStack(alignment: .bottomTrailing) {
+                TextField("Eine glaubwürdige Antwort…", text: $inputText, axis: .vertical)
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .tint(FFStyle.accentViolet)
+                    .focused($textFieldFocused)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        textFieldFocused = false
+                    }
+                    .lineLimit(3)
+                    .padding(16)
+                    .padding(.bottom, 10)
+                    .onChange(of: inputText) { _, new in
+                        let sanitized = new.components(separatedBy: .newlines).joined(separator: " ")
+                        if sanitized != new {
+                            inputText = sanitized
+                            textFieldFocused = false
+                        }
+
+                        viewModel.currentBluffText = sanitized
+                        let count = sanitized.trimmingCharacters(in: .whitespaces).count
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            inputGlow = count == 0 ? 0 : count > 80 ? 0 : min(CGFloat(count) / 30.0, 1.0)
+                        }
+                    }
+
+                // Zeichenzähler
+                let count = inputText.trimmingCharacters(in: .whitespaces).count
+                Text("\(count)/80")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(count > 80 ? FFStyle.accentCrimson : .white.opacity(0.22))
+                    .padding(12)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(
+                                textFieldFocused
+                                    ? AnyShapeStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                FFStyle.accentViolet.opacity(0.75),
+                                                FFStyle.accentIndigo.opacity(0.45)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    : AnyShapeStyle(Color.white.opacity(0.08)),
+                                lineWidth: 1.5
+                            )
+                    )
+                    .shadow(
+                        color: FFStyle.accentViolet.opacity(inputGlow * 0.5),
+                        radius: 24,
+                        y: 4
+                    )
+            )
+            .modifier(ShakeModifier(trigger: shakeTrigger))
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 10)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: appeared)
         }
     }
 
-    // MARK: - Submit-Button
+    // MARK: - Submit Button
     private var submitButton: some View {
         let trimmed = inputText.trimmingCharacters(in: .whitespaces)
-        let isEmpty = trimmed.isEmpty
-        let tooLong = trimmed.count > 80
+        let canSubmit = !trimmed.isEmpty && trimmed.count <= 80
 
         return Button {
-            guard !isEmpty && !tooLong else {
+            guard canSubmit else {
                 UINotificationFeedbackGenerator().notificationOccurred(.error)
                 withAnimation(.default) { shakeTrigger.toggle() }
                 return
             }
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             textFieldFocused = false
-            viewModel.submitBluff(trimmed)
+            if viewModel.isMultiplayer {
+                viewModel.submitBluffMultiplayer(trimmed)
+            } else {
+                viewModel.submitBluff(trimmed)
+            }
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .bold))
-                Text("Lüge einreichen")
+                Text(canSubmit ? "Lüge einreichen" : "Lüge eingeben…")
                     .font(.system(size: 17, weight: .bold, design: .rounded))
+                if canSubmit {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 17, weight: .bold))
+                }
             }
-            .foregroundStyle((!isEmpty && !tooLong) ? .black : .white.opacity(0.4))
+            .foregroundStyle(canSubmit ? .black : .white.opacity(0.28))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(
                 Capsule()
-                    .fill((!isEmpty && !tooLong)
-                          ? AnyShapeStyle(FFStyle.primaryGradient)
-                          : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)],
-                                                         startPoint: .leading, endPoint: .trailing)))
-                    .shadow(color: (!isEmpty && !tooLong) ? FFStyle.accentViolet.opacity(0.5) : .clear,
-                            radius: 16, y: 6)
+                    .fill(
+                        canSubmit
+                            ? AnyShapeStyle(FFStyle.primaryGradient)
+                            : AnyShapeStyle(Color.white.opacity(0.07))
+                    )
+                    .shadow(
+                        color: canSubmit ? FFStyle.accentViolet.opacity(0.55) : .clear,
+                        radius: 22, y: 6
+                    )
             )
         }
-        .disabled(isEmpty || tooLong)
-        .animation(.spring(response: 0.3), value: isEmpty)
-        .padding(.horizontal, 24)
+        .disabled(!canSubmit)
+        .animation(.spring(response: 0.25), value: canSubmit)
+    }
+
+    // MARK: - Multiplayer Warte-Screen
+    private var mpWaitingView: some View {
+        let submitted = viewModel.bluffSubmittedCount
+        let total = viewModel.totalMultiplayerPlayers
+        let progress = total > 0 ? CGFloat(submitted) / CGFloat(total) : 0
+
+        return VStack(spacing: 36) {
+            Spacer()
+
+            // Icon mit Puls-Ring
+            ZStack {
+                Circle()
+                    .fill(FFStyle.accentViolet.opacity(0.06))
+                    .frame(width: 110, height: 110)
+                Circle()
+                    .stroke(FFStyle.accentViolet.opacity(0.15), lineWidth: 1)
+                    .frame(width: 90, height: 90)
+                Circle()
+                    .fill(FFStyle.accentViolet.opacity(0.12))
+                    .frame(width: 72, height: 72)
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(FFStyle.primaryGradient)
+            }
+
+            VStack(spacing: 8) {
+                Text("Lüge übermittelt")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Warte auf die anderen Spieler")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+
+            // Fortschritt
+            VStack(spacing: 14) {
+                // Player dots
+                HStack(spacing: 8) {
+                    ForEach(0..<total, id: \.self) { idx in
+                        Circle()
+                            .fill(idx < submitted
+                                  ? FFStyle.accentViolet
+                                  : Color.white.opacity(0.12))
+                            .frame(width: 8, height: 8)
+                            .animation(.spring(response: 0.35).delay(Double(idx) * 0.05), value: submitted)
+                    }
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.06))
+                            .frame(height: 3)
+                        Capsule()
+                            .fill(FFStyle.primaryGradient)
+                            .frame(width: geo.size.width * progress, height: 3)
+                            .animation(.spring(response: 0.5), value: submitted)
+                    }
+                }
+                .frame(height: 3)
+                .padding(.horizontal, 48)
+
+                Text("\(submitted) von \(total) eingereicht")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+
+            Spacer()
+        }
     }
 }
 
-// MARK: - Shake-Modifier
+// MARK: - Shake-Modifier (unverändert)
 struct ShakeModifier: ViewModifier {
     var trigger: Bool
 

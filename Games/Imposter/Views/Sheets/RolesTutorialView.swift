@@ -54,7 +54,7 @@ struct RolesTutorialView: View {
                     Spacer()
                     Text("Rollen-Handbuch")
                         .font(.headline)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(.white.opacity(0.7))
                     Spacer()
                     
                     Button {
@@ -62,7 +62,7 @@ struct RolesTutorialView: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
                 .padding()
@@ -84,7 +84,7 @@ struct RolesTutorialView: View {
                         Button("Überspringen") {
                             completeTutorial()
                         }
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.5))
                         
                         Spacer()
                         
@@ -98,11 +98,11 @@ struct RolesTutorialView: View {
                                 Image(systemName: "arrow.right")
                             }
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
                             .background(Color.blue)
-                            .cornerRadius(20)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
                         }
                     } else {
                         Button {
@@ -110,11 +110,11 @@ struct RolesTutorialView: View {
                         } label: {
                             Text("Verstanden")
                                 .font(.headline.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
                                 .background(Color.green)
-                                .cornerRadius(16)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                         .padding(.horizontal, 40)
                     }
@@ -169,7 +169,7 @@ struct RoleCardView: View {
                 
                 Image(systemName: role.icon)
                     .font(.system(size: 50))
-                    .foregroundColor(role.color)
+                    .foregroundStyle(role.color)
             }
             .padding(.top, 20)
             
@@ -177,15 +177,15 @@ struct RoleCardView: View {
             VStack(spacing: 5) {
                 Text(role.name)
                     .font(.largeTitle.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Text(role.team.rawValue)
                     .font(.headline)
-                    .foregroundColor(role.color)
+                    .foregroundStyle(role.color)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
                     .background(role.color.opacity(0.15))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             
             Divider().background(Color.white.opacity(0.2))
@@ -204,7 +204,7 @@ struct RoleCardView: View {
             Spacer()
         }
         .background(Color.white.opacity(0.08))
-        .cornerRadius(24)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
             RoundedRectangle(cornerRadius: 24)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -221,19 +221,19 @@ private struct InfoRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .font(.title3)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption.bold())
-                    .foregroundColor(color.opacity(0.8))
+                    .foregroundStyle(color.opacity(0.8))
                     .textCase(.uppercase)
                 
                 Text(text)
                     .font(.body)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundStyle(.white.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

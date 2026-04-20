@@ -3,7 +3,7 @@ import MultipeerConnectivity
 
 struct ImposterMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
-    @StateObject private var mpc = MultipeerManager.shared
+    @ObservedObject private var mpc = MultipeerManager.shared
     @AppStorage("myPlayerName") private var myPlayerName = ""
     
     @State private var mode: Mode = .menu
@@ -175,22 +175,21 @@ struct ImposterMultiplayerSheet: View {
             } label: {
                 Image(systemName: mode == .menu ? "xmark" : "chevron.left")
                     .font(.headline.bold())
-                    .foregroundColor(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassCircleButtonBackground())
             }
             
             Spacer()
             
             Text(headerTitle)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
             
             Spacer()
             
             // Placeholder for symmetry
-            Color.clear.frame(width: 36, height: 36)
+            Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal)
         .padding(.top, 20)
@@ -244,8 +243,8 @@ struct ImposterMultiplayerSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(16)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             
             Button {
@@ -259,8 +258,8 @@ struct ImposterMultiplayerSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(16)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             
             // NEU: Rejoin Button
@@ -277,14 +276,14 @@ struct ImposterMultiplayerSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.white.opacity(0.15))
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
             }
             
             Text("Verbinde dich mit Freunden in der Nähe (WLAN/Bluetooth).")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundStyle(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
@@ -297,7 +296,7 @@ struct ImposterMultiplayerSheet: View {
         VStack(spacing: 20) {
             Text("Gib den Code vom Host ein")
                 .font(.body)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundStyle(.white.opacity(0.8))
             
             TextField("0000", text: $inputCode)
                 .font(.system(size: 50, weight: .bold, design: .monospaced))
@@ -306,7 +305,7 @@ struct ImposterMultiplayerSheet: View {
                 .foregroundStyle(.white)
                 .padding()
                 .background(Color.white.opacity(0.1))
-                .cornerRadius(20)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
                 .onChange(of: inputCode) { _, newValue in
                     if newValue.count > 4 {
                         inputCode = String(newValue.prefix(4))
@@ -323,8 +322,8 @@ struct ImposterMultiplayerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(inputCode.count == 4 ? Color.green : Color.white.opacity(0.2))
-                        .foregroundColor(.white)
-                        .cornerRadius(16)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 } else {
                     ProgressView()
                         .tint(.white)
@@ -340,7 +339,7 @@ struct ImposterMultiplayerSheet: View {
     private func setupMPCListener() {
         previousOnEventReceived = mpc.onEventReceived
         mpc.onEventReceived = { type, payload in
-            if type == "PLAYER_READY_UPDATE", let data = payload {
+            if type == MPCEventType.playerReadyUpdate, let data = payload {
                 if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
                     withAnimation {
                         if info.isReady {
@@ -351,7 +350,7 @@ struct ImposterMultiplayerSheet: View {
                     }
                     syncReadyStateIfHost()
                 }
-            } else if type == "LOBBY_STATE_SYNC", let data = payload {
+            } else if type == MPCEventType.lobbyStateSync, let data = payload {
                 // Für neu beigetretene Spieler: Empfange kompletten Status
                 if let list = try? JSONDecoder().decode([String].self, from: data) {
                     withAnimation {
@@ -555,7 +554,7 @@ private struct UnifiedLobbyView: View {
                         .background(
                             amIReady ? Color.green : Color.white.opacity(0.15)
                         )
-                        .cornerRadius(20)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                         .animation(.easeInOut, value: amIReady)
                     }
                     
@@ -569,7 +568,7 @@ private struct UnifiedLobbyView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(Color.white.opacity(0.12))
-                        .cornerRadius(18)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
                     }
                     
                     Text("\(readyPlayers.count) von \(players.count) bereit")
@@ -595,7 +594,7 @@ private struct UnifiedLobbyView: View {
                         .background(
                             amIReady ? Color.green : Color.white.opacity(0.15)
                         )
-                        .cornerRadius(20)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                         .animation(.easeInOut, value: amIReady)
                     }
                     
@@ -652,7 +651,7 @@ private struct LobbyPlayerCard: View {
             .padding(12)
             .frame(maxWidth: .infinity)
             .background(Color.black.opacity(0.2))
-            .cornerRadius(16)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(isMe ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)
@@ -664,7 +663,7 @@ private struct LobbyPlayerCard: View {
             let statusIcon = isDisconnected ? "wifi.slash" : (isReady ? "checkmark.circle.fill" : "xmark.circle.fill")
             let statusColor: Color = isDisconnected ? .orange : (isReady ? .green : .red.opacity(0.5))
             Image(systemName: statusIcon)
-                .foregroundColor(statusColor)
+                .foregroundStyle(statusColor)
                 .background(Circle().fill(.white).padding(2))
                 .clipShape(Circle())
                 .offset(x: 5, y: -5)

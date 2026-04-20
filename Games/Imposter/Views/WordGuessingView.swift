@@ -94,7 +94,7 @@ struct WordGuessingActiveView: View {
             HStack {
                 Text("TERMINAL_ACCESS // ID: \(Int.random(in: 1000...9999))")
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundColor(.orange.opacity(0.8))
+                    .foregroundStyle(.orange.opacity(0.8))
                 Spacer()
                 Circle()
                     .fill(Color.red)
@@ -121,7 +121,7 @@ struct WordGuessingActiveView: View {
                 
                 Image(systemName: "touchid")
                     .font(.system(size: 80, weight: .thin))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
                     .opacity(0.8)
                 
                 // Scan Line
@@ -137,25 +137,25 @@ struct WordGuessingActiveView: View {
             VStack(spacing: 20) {
                 Text(NSLocalizedString("VERIFIZIERUNG ERFORDERLICH", comment: ""))
                     .font(.system(size: 18, weight: .black, design: .monospaced))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
                     .tracking(2)
                 
                 Text(NSLocalizedString("Hat der Spion das korrekte Passwort genannt?", comment: ""))
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                 
                 VStack(spacing: 8) {
                     HStack {
                         Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.yellow)
+                            .foregroundStyle(.yellow)
                         Text(NSLocalizedString("WARNUNG", comment: ""))
                             .font(.caption.bold())
-                            .foregroundColor(.yellow)
+                            .foregroundStyle(.yellow)
                     }
                     Text(NSLocalizedString("Eine Bestätigung beendet die Mission sofort.", comment: ""))
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
                 .padding(.horizontal, 40)
             }
@@ -167,7 +167,7 @@ struct WordGuessingActiveView: View {
             // Actions
             VStack(spacing: 16) {
                 Button(action: {
-                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     _ = wordGuessingManager.confirmCorrectGuess()
                 }) {
                     HStack {
@@ -175,11 +175,11 @@ struct WordGuessingActiveView: View {
                         Text(NSLocalizedString("ZUGRIFF BESTÄTIGEN", comment: ""))
                     }
                     .font(.headline.bold())
-                    .foregroundColor(.black)
+                    .foregroundStyle(.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(Color.orange)
-                    .cornerRadius(12)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .shadow(color: .orange.opacity(0.4), radius: 10, x: 0, y: 5)
                 }
                 
@@ -187,7 +187,7 @@ struct WordGuessingActiveView: View {
                     dismiss()
                 }
                 .font(.subheadline.bold())
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.4))
                 .padding(.top, 5)
             }
             .padding(.horizontal, 25)
@@ -221,6 +221,7 @@ struct WordGuessResultView: View {
     @State private var revealedText: String = ""
     @State private var glitchEffect = false
     @State private var showPoints = false // Animation State for Points
+    @State private var glitchTimer: Timer?
 
     init(
         result: WordGuessResult,
@@ -252,15 +253,15 @@ struct WordGuessResultView: View {
                 Text(NSLocalizedString("MISSION STATUS", comment: ""))
                     .font(.caption.bold())
                     .tracking(4)
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.5))
                 
                 Text(NSLocalizedString("KOMPROMITTIERT", comment: ""))
                     .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 8)
                     .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.red.opacity(0.3), lineWidth: 1))
             }
             .scaleEffect(showContent ? 1 : 0.9)
@@ -273,12 +274,12 @@ struct WordGuessResultView: View {
             VStack(spacing: 12) {
                 Text(NSLocalizedString("GEHEIMWORT ENTSCHLÜSSELT", comment: ""))
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                 
                 HStack(spacing: 0) {
                     Text(revealedText)
                         .font(.system(size: 40, weight: .black, design: .monospaced))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .transition(.opacity)
                     
                     // Blinking cursor
@@ -291,7 +292,7 @@ struct WordGuessResultView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 100)
                 .background(Color.black.opacity(0.3))
-                .cornerRadius(16)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
                 .padding(.horizontal, 25)
             }
@@ -311,7 +312,7 @@ struct WordGuessResultView: View {
                         onExitToMain()
                     }
                     .font(.caption.bold())
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundStyle(.white.opacity(0.4))
                 }
                 .padding(.horizontal, 25)
                 .padding(.bottom, 100)
@@ -319,7 +320,7 @@ struct WordGuessResultView: View {
             } else {
                 Text(waitingMessage)
                     .font(.caption.bold())
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.5))
                     .padding(.bottom, 100)
                     .opacity(showContent ? 1 : 0)
             }
@@ -333,7 +334,7 @@ struct WordGuessResultView: View {
             revealText(target: result.correctWord)
             
             // Glitch effect loop
-            Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
+            glitchTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
                 withAnimation(.spring(response: 0.1, dampingFraction: 0.1)) {
                     glitchEffect = true
                 }
@@ -366,8 +367,12 @@ struct WordGuessResultView: View {
         } message: {
             Text("Der Host möchte eine neue Runde starten.")
         }
+        .onDisappear {
+            glitchTimer?.invalidate()
+            glitchTimer = nil
+        }
     }
-    
+
     private func revealText(target: String) {
         let chars = Array(target)
         var currentIndex = 0
@@ -375,11 +380,11 @@ struct WordGuessResultView: View {
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             if currentIndex < chars.count {
                 revealedText += String(chars[currentIndex])
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 currentIndex += 1
             } else {
                 timer.invalidate()
-                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
         }
     }

@@ -17,12 +17,14 @@ struct QuestionsPressureTimer: View {
         HStack(spacing: 8) {
             Image(systemName: "stopwatch.fill")
                 .font(.headline)
+                .symbolEffect(.pulse, options: .repeating)
             
             Text(timeString)
                 .font(.system(.headline, design: .monospaced))
                 .fontWeight(.bold)
+                .contentTransition(.numericText())
         }
-        .foregroundColor(color)
+        .foregroundStyle(color)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(

@@ -5,16 +5,17 @@ struct QuestionsCollectingPhaseView: View {
     @FocusState private var isAnswerFocused: Bool
     @AppStorage("question.hint.collecting") private var collectingHintSeen = false
     @State private var hasSubmittedAnswer = false
-    
+
     var body: some View {
         let mpcRole = MultipeerManager.shared.role
         let isMultiplayer = mpcRole != .unknown
-        
+
         return ZStack {
             QuestionsBackgroundView(stressLevel: viewModel.showQuestionToCurrentPlayer ? 0.28 : 0.18)
                 .ignoresSafeArea()
             VStack(spacing: 20) {
-                Color.clear.frame(height: 110)
+                // Adaptiver Abstand statt festem 110pt – funktioniert auf allen Geräten (auch iPhone SE)
+                Spacer().frame(minHeight: 16, maxHeight: 56)
                 Spacer(minLength: 0)
 
                 Group {
@@ -39,10 +40,15 @@ struct QuestionsCollectingPhaseView: View {
                                 
                                 if viewModel.showQuestionToCurrentPlayer {
                                     QuestionsPressureTimer(seconds: Int(viewModel.currentInputDuration))
+                                        .transition(.asymmetric(
+                                            insertion: .scale(scale: 0.8).combined(with: .opacity),
+                                            removal: .opacity
+                                        ))
                                 } else if !isMultiplayer {
                                     Text("Bereit?")
                                         .font(.title3.bold())
                                         .foregroundStyle(.white)
+                                        .transition(.opacity)
                                 }
                             }
 
@@ -64,17 +70,17 @@ struct QuestionsCollectingPhaseView: View {
                                         VStack(spacing: 20) {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .font(.system(size: 60))
-                                                .foregroundColor(.green)
+                                                .foregroundStyle(.green)
                                             Text("Antwort gesendet!")
                                                 .font(.headline)
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                             Text("Warte auf die anderen Spieler...")
                                                 .font(.subheadline)
-                                                .foregroundColor(QuestionsStyle.mutedText)
+                                                .foregroundStyle(QuestionsStyle.mutedText)
                                         }
                                         .padding(40)
                                         .background(QuestionsStyle.containerBackground)
-                                        .cornerRadius(20)
+                                        .clipShape(RoundedRectangle(cornerRadius: 20))
                                     } else {
                                         QuestionsPromptBoard(question: question)
                                         QuestionsAnswerBoard(text: $viewModel.answerText, focus: $isAnswerFocused)

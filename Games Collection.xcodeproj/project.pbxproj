@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BED823852F197C6C00243376 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = BED823842F197C6C00243376 /* Lottie */; };
+		BE763CED2F8EA66C004DE460 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = BE763CEC2F8EA66C004DE460 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,7 +32,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BED823852F197C6C00243376 /* Lottie in Frameworks */,
+				BE763CED2F8EA66C004DE460 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -76,9 +76,6 @@
 				BED007852EFFFBB5008E5FDB /* Games */,
 			);
 			name = "Games Collection";
-			packageProductDependencies = (
-				BED823842F197C6C00243376 /* Lottie */,
-			);
 			productName = "Games Collection";
 			productReference = BED007762EFFFB2B008E5FDB /* Games Collection.app */;
 			productType = "com.apple.product-type.application";
@@ -91,7 +88,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					BED007752EFFFB2B008E5FDB = {
 						CreatedOnToolsVersion = 26.2;
@@ -109,7 +106,7 @@
 			mainGroup = BED0076D2EFFFB2B008E5FDB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				BED823832F197C6C00243376 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BED007772EFFFB2B008E5FDB /* Products */;
@@ -147,6 +144,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -201,6 +199,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -211,6 +210,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -258,6 +258,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -363,7 +364,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		BED823832F197C6C00243376 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+		BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
 			requirement = {
@@ -374,9 +375,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		BED823842F197C6C00243376 /* Lottie */ = {
+		BE763CEC2F8EA66C004DE460 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = BED823832F197C6C00243376 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			package = BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */

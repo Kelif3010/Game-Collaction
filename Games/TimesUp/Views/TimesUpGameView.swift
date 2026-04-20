@@ -295,7 +295,7 @@ struct SlotMachineCard: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
                         .background(Color.blue.opacity(0.2))
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
             .padding(20)
@@ -350,7 +350,7 @@ struct SlotMachineCard: View {
                         .padding(.vertical, 12)
                         .padding(.horizontal, 20)
                         .background(Color.white.opacity(0.05))
-                        .cornerRadius(18)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
                 }
                 .disabled(spinning)
                 
@@ -1160,7 +1160,7 @@ struct GameHeaderView: View {
             }
             .padding()
             .background(Color(.systemGray5))
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .primary.opacity(0.08), radius: 3, x: 0, y: 1)
         }
     }
@@ -1348,13 +1348,13 @@ struct ScoreboardView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
                 .background(index == 0 && showFinal ? Color.yellow.opacity(0.2) : Color(.systemGray5))
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .primary.opacity(0.05), radius: 2, x: 0, y: 1)
             }
         }
         .padding()
         .background(Color(.systemGray5))
-        .cornerRadius(18)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
         .shadow(color: .primary.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }

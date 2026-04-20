@@ -118,54 +118,57 @@ struct BetBuddyBackgroundView: View {
     var intensity: CGFloat = 0.5
 
     var body: some View {
-        ZStack {
-            // Basis: Dunkler Smaragd-Gradient
-            BetBuddyTheme.gradient
-                .ignoresSafeArea()
+        GeometryReader { geo in
+            let width = geo.size.width
+            ZStack {
+                // Basis: Dunkler Smaragd-Gradient
+                BetBuddyTheme.gradient
+                    .ignoresSafeArea()
 
-            // Poker-Filz-Textur (Subtil)
-            FeltTextureOverlay()
-                .opacity(0.04)
-                .ignoresSafeArea()
+                // Poker-Filz-Textur (Subtil)
+                FeltTextureOverlay()
+                    .opacity(0.04)
+                    .ignoresSafeArea()
 
-            // Vignette für Spotlight-Effekt
-            RadialGradient(
-                colors: [
-                    Color.clear,
-                    Color.black.opacity(0.5)
-                ],
-                center: .center,
-                startRadius: UIScreen.main.bounds.width * 0.25,
-                endRadius: UIScreen.main.bounds.width * 0.85
-            )
-            .ignoresSafeArea()
-
-            // Subtiler Gold-Schimmer von oben (wie Casino-Beleuchtung)
-            LinearGradient(
-                colors: [
-                    BetBuddyTheme.accentGold.opacity(0.03 * intensity),
-                    Color.clear
-                ],
-                startPoint: .top,
-                endPoint: .center
-            )
-            .ignoresSafeArea()
-
-            // Ambient Glow bei hoher Intensität (Spannung)
-            if intensity > 0.7 {
+                // Vignette für Spotlight-Effekt
                 RadialGradient(
                     colors: [
-                        BetBuddyTheme.accentGold.opacity(0.08),
-                        Color.clear
+                        Color.clear,
+                        Color.black.opacity(0.5)
                     ],
-                    center: .top,
-                    startRadius: 0,
-                    endRadius: 300
+                    center: .center,
+                    startRadius: width * 0.25,
+                    endRadius: width * 0.85
                 )
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.8), value: intensity)
+
+                // Subtiler Gold-Schimmer von oben (wie Casino-Beleuchtung)
+                LinearGradient(
+                    colors: [
+                        BetBuddyTheme.accentGold.opacity(0.03 * intensity),
+                        Color.clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+                .ignoresSafeArea()
+
+                // Ambient Glow bei hoher Intensität (Spannung)
+                if intensity > 0.7 {
+                    RadialGradient(
+                        colors: [
+                            BetBuddyTheme.accentGold.opacity(0.08),
+                            Color.clear
+                        ],
+                        center: .top,
+                        startRadius: 0,
+                        endRadius: 300
+                    )
+                    .ignoresSafeArea()
+                }
             }
         }
+        .ignoresSafeArea()
     }
 }
 

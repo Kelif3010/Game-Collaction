@@ -26,7 +26,7 @@ struct FloatingStartButton: View {
                 if !canStart && showingHint {
                     Text(hintText)
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(
@@ -86,39 +86,52 @@ struct FloatingButtonContent: View {
     let title: String
     let icon: String
     let isEnabled: Bool
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
+
+    @ViewBuilder
+    private var label: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.white)
-            
+                .foregroundStyle(.white)
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 25)
-                .fill(
-                    LinearGradient(
-                        colors: isEnabled ? 
-                            [Color.orange, Color.red] : 
-                            [Color.gray, Color.gray.opacity(0.8)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+    }
+
+    var body: some View {
+        Group {
+            if #available(iOS 26, *) {
+                label
+                    .glassEffect(
+                        isEnabled
+                            ? Glass.regular.tint(.orange).interactive()
+                            : Glass.regular.tint(.gray),
+                        in: Capsule()
                     )
-                )
-                .shadow(
-                    color: .black.opacity(isEnabled ? 0.4 : 0.2),
-                    radius: 8,
-                    x: 0,
-                    y: 4
-                )
-        )
+            } else {
+                label
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(
+                                LinearGradient(
+                                    colors: isEnabled
+                                        ? [Color.orange, Color.red]
+                                        : [Color.gray, Color.gray.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .shadow(
+                                color: .black.opacity(isEnabled ? 0.4 : 0.2),
+                                radius: 8, x: 0, y: 4
+                            )
+                    )
+            }
+        }
         .scaleEffect(isEnabled ? 1.0 : 0.95)
         .animation(.easeInOut(duration: 0.2), value: isEnabled)
     }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CategoryDetailView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     let category: TimesUpCategory
     @ObservedObject var categoryManager: CategoryManager
@@ -39,7 +39,7 @@ struct CategoryDetailView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background
                 backgroundGradient.ignoresSafeArea()
@@ -51,21 +51,20 @@ struct CategoryDetailView: View {
                             if hasChanges && canEdit {
                                 saveChanges()
                             }
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         
                         Spacer()
                         
                         Text(canEdit ? LocalizedStringKey("Bearbeiten") : LocalizedStringKey("Details"))
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         
                         Spacer()
                         
@@ -74,10 +73,9 @@ struct CategoryDetailView: View {
                             Button(action: saveChanges) {
                                 Image(systemName: "checkmark")
                                     .font(.title2.bold())
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(.green)
                                     .frame(width: 44, height: 44)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .modifier(GlassCircleButtonBackground())
                             }
                         } else {
                             Color.clear.frame(width: 44, height: 44)
@@ -106,11 +104,11 @@ struct CategoryDetailView: View {
                                         TextField(String(localized: "Name"), text: $editingCategory.name)
                                             .font(.title.bold())
                                             .multilineTextAlignment(.center)
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .padding(.horizontal)
                                             .padding(.vertical, 8)
                                             .background(Color.white.opacity(0.1))
-                                            .cornerRadius(12)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
                                                     .stroke(Color.white.opacity(0.2), lineWidth: 1)
@@ -119,7 +117,7 @@ struct CategoryDetailView: View {
                                     } else {
                                         Text(LocalizedStringKey(category.name))
                                             .font(.title.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                     }
                                     
                                     HStack(spacing: 12) {
@@ -133,7 +131,7 @@ struct CategoryDetailView: View {
                                         }
                                     }
                                     .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundStyle(.white.opacity(0.6))
                                 }
                             }
                             .padding(.bottom, 10)
@@ -143,21 +141,21 @@ struct CategoryDetailView: View {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text(LocalizedStringKey("Neues Wort"))
                                         .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
+                                        .foregroundStyle(.white.opacity(0.8))
                                         .padding(.leading, 4)
                                     
                                     HStack(spacing: 12) {
-                                        TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Wort eingeben...")).foregroundColor(.gray))
+                                        TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Wort eingeben...")).foregroundStyle(.gray))
                                             .padding()
                                             .background(Color.white.opacity(0.08))
-                                            .cornerRadius(12)
-                                            .foregroundColor(.white)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            .foregroundStyle(.white)
                                             .onSubmit { addTerm() }
                                         
                                         Button(action: addTerm) {
                                             Image(systemName: "plus")
                                                 .font(.title2.bold())
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                                 .frame(width: 50, height: 50)
                                                 .background(newTermText.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : category.type.color)
                                                 .clipShape(Circle())
@@ -172,12 +170,12 @@ struct CategoryDetailView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text(LocalizedStringKey("Begriffe"))
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                     .padding(.leading, 20)
                                 
                                 if editingCategory.terms.isEmpty {
                                     Text(LocalizedStringKey("Keine Wörter vorhanden."))
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(.gray)
                                         .italic()
                                         .padding()
                                         .frame(maxWidth: .infinity)
@@ -187,7 +185,7 @@ struct CategoryDetailView: View {
                                             HStack {
                                                 Text(term.text)
                                                     .font(.subheadline.bold())
-                                                    .foregroundColor(.white)
+                                                    .foregroundStyle(.white)
                                                     .lineLimit(1)
                                                 
                                                 Spacer()
@@ -197,14 +195,14 @@ struct CategoryDetailView: View {
                                                         deleteTerm(at: IndexSet(integer: index))
                                                     } label: {
                                                         Image(systemName: "xmark.circle.fill")
-                                                            .foregroundColor(.red.opacity(0.8))
+                                                            .foregroundStyle(.red.opacity(0.8))
                                                     }
                                                 }
                                             }
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 10)
                                             .background(Color.white.opacity(0.08))
-                                            .cornerRadius(12)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
                                                     .stroke(Color.white.opacity(0.05), lineWidth: 1)

@@ -18,21 +18,21 @@ struct DrawingLineWidthSelector: View {
             HStack {
                 Image(systemName: "lineweight")
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 Text(LocalizedStringKey("Strichstärke"))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 Spacer()
                 
                 // Current width indicator
                 Text(LocalizedStringKey(DrawingLineWidths.name(for: drawingState.selectedLineWidth)))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             
             // Line Width Options
@@ -77,7 +77,7 @@ struct LineWidthButton: View {
                 Text("\(Int(width))")
                     .font(.caption2)
                     .fontWeight(isSelected ? .bold : .medium)
-                    .foregroundColor(isSelected ? selectedColor : .secondary)
+                    .foregroundStyle(isSelected ? selectedColor : .secondary)
             }
             .frame(width: 50, height: 60)
             .background(
@@ -106,7 +106,7 @@ struct DrawingLineWidthSlider: View {
                 Text("\(Int(drawingState.selectedLineWidth))")
                     .font(.subheadline)
                     .fontWeight(.bold)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
             
             // Custom Slider
@@ -126,11 +126,11 @@ struct DrawingLineWidthSlider: View {
                 } minimumValueLabel: {
                     Text("1")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 } maximumValueLabel: {
                     Text("20")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .tint(drawingState.selectedColor)
                 

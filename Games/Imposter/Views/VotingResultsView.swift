@@ -237,7 +237,7 @@ struct VotingResultsView: View {
 
                         Image(systemName: theme.icon)
                             .font(.system(size: 40, weight: .medium))
-                            .foregroundColor(theme.accentColor)
+                            .foregroundStyle(theme.accentColor)
                     }
                     .scaleEffect(showContent ? 1 : 0.8)
                     .opacity(showContent ? 1 : 0)
@@ -247,12 +247,12 @@ struct VotingResultsView: View {
                         Text(theme.title)
                             .font(.system(size: 24, weight: .bold, design: .monospaced))
                             .tracking(2)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
 
                         Text(theme.subtitle)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
                             .padding(.horizontal, 40)
@@ -275,7 +275,7 @@ struct VotingResultsView: View {
                             Text("ENTTARNTE AGENTEN")
                                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                                 .tracking(2)
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.5))
                         }
                         .padding(.horizontal, 24)
 
@@ -328,7 +328,7 @@ struct VotingResultsView: View {
                                         icon: "arrow.counterclockwise",
                                         style: .primary,
                                         action: {
-                                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                             gameLogic.startMultiplayerRematchOffer()
                                         }
                                     )
@@ -343,7 +343,7 @@ struct VotingResultsView: View {
                                 icon: "arrow.counterclockwise",
                                 style: .primary,
                                 action: {
-                                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                     Task { @MainActor in
                                         await gameLogic.restartGame()
                                         onNewGame()
@@ -363,7 +363,7 @@ struct VotingResultsView: View {
                                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                                     .tracking(1)
                             }
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundStyle(.white.opacity(0.4))
                             .padding(.vertical, 12)
                         }
                     }
@@ -420,7 +420,7 @@ struct VotingResultsView: View {
 
             Text(isHost ? "Warte auf Antworten..." : "Warte auf Host...")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
         }
         .padding(.vertical, 16)
     }
@@ -474,7 +474,7 @@ struct DossierCard: View {
                 Text("DOSSIER")
                     .font(.system(size: 8, weight: .bold, design: .monospaced))
                     .tracking(1)
-                    .foregroundColor(accentColor)
+                    .foregroundStyle(accentColor)
 
                 Spacer()
 
@@ -496,31 +496,31 @@ struct DossierCard: View {
 
                     Text(String(player.name.prefix(1)).uppercased())
                         .font(.system(size: 22, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
 
                 // Name
                 Text(player.name)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
 
                 // Role Badge
                 Text(player.roleType?.rawValue.uppercased() ?? "AGENT")
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
                     .tracking(1)
-                    .foregroundColor(accentColor)
+                    .foregroundStyle(accentColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(accentColor.opacity(0.15))
-                    .cornerRadius(4)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 12)
         }
         .frame(width: 120)
         .background(Color.black.opacity(0.4))
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(accentColor.opacity(0.25), lineWidth: 1)

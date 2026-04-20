@@ -363,7 +363,7 @@ struct QuestionsOverviewPhaseView: View {
             Spacer()
 
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 overviewHintSeen = true
             } label: {
                 Text("OK")

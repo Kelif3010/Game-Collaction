@@ -38,52 +38,47 @@ struct QuestionsSetupView: View {
                             Image(systemName: "chevron.left")
                                 .font(.headline.bold())
                                 .foregroundStyle(.white)
-                                .frame(width: 36, height: 36)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .frame(width: 44, height: 44)
+                                .modifier(GlassCircleButtonBackground())
                         }
-                        
+
                         Spacer()
-                        
+
                         HStack(spacing: 12) {
                             // Auswertung
                             Button { showLeaderboardSheet = true } label: {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
                                     .font(.headline)
                                     .foregroundStyle(.yellow)
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .frame(width: 44, height: 44)
+                                    .modifier(GlassCircleButtonBackground())
                             }
-                            
+
                             // Akte (Kategorie)
                             Button { showCategorySheet = true } label: {
                                 Image(systemName: "doc.text.magnifyingglass")
                                     .font(.headline)
                                     .foregroundStyle(.orange)
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .frame(width: 44, height: 44)
+                                    .modifier(GlassCircleButtonBackground())
                             }
-                            
+
                             // Zahnrad (Settings)
                             Button { showSettingsSheet = true } label: {
                                 Image(systemName: "slider.horizontal.3")
                                     .font(.headline)
                                     .foregroundStyle(.gray)
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .frame(width: 44, height: 44)
+                                    .modifier(GlassCircleButtonBackground())
                             }
-                            
+
                             // Info
                             Button { showInfoSheet = true } label: {
                                 Image(systemName: "info.circle.fill")
                                     .font(.headline.bold())
                                     .foregroundStyle(.white)
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .frame(width: 44, height: 44)
+                                    .modifier(GlassCircleButtonBackground())
                             }
                         }
                     }
@@ -113,7 +108,7 @@ struct QuestionsSetupView: View {
                                     Text("Lügner")
                                         .font(.body)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                     Spacer()
                                     
                                     HStack(spacing: 8) {
@@ -124,13 +119,13 @@ struct QuestionsSetupView: View {
                                                 .font(.system(size: 16, weight: .semibold))
                                                 .frame(width: 30, height: 30)
                                                 .background(Color.white.opacity(0.12))
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                                 .clipShape(Circle())
                                         }
                                         
                                         Text("\(numberOfLiars)")
                                             .font(.callout)
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .frame(minWidth: 24)
                                             
                                         Button {
@@ -140,7 +135,7 @@ struct QuestionsSetupView: View {
                                                 .font(.system(size: 16, weight: .semibold))
                                                 .frame(width: 30, height: 30)
                                                 .background(Color.white.opacity(0.12))
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                                 .clipShape(Circle())
                                         }
                                     }
@@ -154,7 +149,7 @@ struct QuestionsSetupView: View {
                                     Text("Befragung")
                                         .font(.body)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         Spacer()
                                         Text(timeString)
                                             .font(.callout)

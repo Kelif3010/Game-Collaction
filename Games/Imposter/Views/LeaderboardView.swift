@@ -14,7 +14,7 @@ enum LeaderboardTab: String, CaseIterable {
 }
 
 struct LeaderboardView: View {
-    @StateObject private var statsService = StatsService.shared
+    @ObservedObject private var statsService = StatsService.shared
     @Environment(\.dismiss) var dismiss
     @State private var selectedTab: LeaderboardTab = .overall
     @State private var showDeleteConfirmation = false
@@ -29,10 +29,9 @@ struct LeaderboardView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(10)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .modifier(GlassCircleButtonBackground())
                     }
                     
                     Spacer()
@@ -40,14 +39,14 @@ struct LeaderboardView: View {
                     Text("RANGLISTE")
                         .font(.headline.bold())
                         .tracking(2)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     Spacer()
                     
                     Button(action: { showDeleteConfirmation = true }) {
                         Image(systemName: "trash")
                             .font(.headline)
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.6))
                             .padding(10)
                     }
                 }
@@ -63,7 +62,7 @@ struct LeaderboardView: View {
                         }) {
                             Text(tab.rawValue)
                                 .font(.subheadline.bold())
-                                .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
+                                .foregroundStyle(selectedTab == tab ? .white : .white.opacity(0.6))
                                 .padding(.vertical, 8)
                                 .frame(maxWidth: .infinity)
                                 .background(
@@ -75,7 +74,7 @@ struct LeaderboardView: View {
                 }
                 .padding(4)
                 .background(Color.black.opacity(0.2))
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
                 .padding(.bottom, 10)
                 
@@ -149,14 +148,14 @@ struct RankRow: View {
             // Rank Number
             Text("\(rank)")
                 .font(.title3.bold())
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
                 .frame(width: 30)
             
             // Name & Detail
             VStack(alignment: .leading, spacing: 4) {
                 Text(stat.playerName)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Group {
                     switch type {
@@ -169,7 +168,7 @@ struct RankRow: View {
                     }
                 }
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundStyle(.white.opacity(0.6))
             }
             
             Spacer()
@@ -180,30 +179,30 @@ struct RankRow: View {
                 case .overall:
                     Text("\(stat.totalPoints)")
                         .font(.title3.bold())
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     Text("PKT")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.orange.opacity(0.7))
+                        .foregroundStyle(.orange.opacity(0.7))
                 case .spies:
                     Text("\(stat.imposterWins)")
                         .font(.title3.bold())
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     Text("SIEGE")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.red.opacity(0.7))
+                        .foregroundStyle(.red.opacity(0.7))
                 case .citizens:
                     Text("\(stat.citizenWins)")
                         .font(.title3.bold())
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                     Text("SIEGE")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.green.opacity(0.7))
+                        .foregroundStyle(.green.opacity(0.7))
                 }
             }
         }
         .padding()
         .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -244,7 +243,7 @@ struct PodiumColumn: View {
             Text(stat.playerName)
                 .font(.caption.bold())
                 .lineLimit(1)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.bottom, 4)
             
             ZStack(alignment: .bottom) {
@@ -265,11 +264,11 @@ struct PodiumColumn: View {
                 VStack(spacing: 2) {
                     Text("\(rank)")
                         .font(.title.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     
                     Text("\(stat.totalPoints)")
                         .font(.caption.bold())
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.8))
                 }
                 .padding(.bottom, 12)
             }
@@ -283,15 +282,15 @@ struct EmptyStateView: View {
         VStack(spacing: 16) {
             Image(systemName: "trophy")
                 .font(.system(size: 50))
-                .foregroundColor(.white.opacity(0.2))
+                .foregroundStyle(.white.opacity(0.2))
             
             Text("Keine Daten vorhanden")
                 .font(.headline)
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
             
             Text("Spiele eine Runde, um Punkte zu sammeln!")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundStyle(.white.opacity(0.3))
         }
     }
 }

@@ -17,7 +17,7 @@ struct QuestionsRevealedPhaseView: View {
                 }
                 Text("Los geht’s! Gleich seht ihr alle Antworten – danach diskutiert ihr die Frage oben.")
                     .font(.body)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundStyle(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 30)
                 

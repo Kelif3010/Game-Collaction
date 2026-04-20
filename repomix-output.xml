@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Türkisch Vokabeltrainer</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f0f4f8; 
+            padding: 50px; 
+            color: #333;
+        }
+        h1 { color: #d32f2f; }
+        #card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1); 
+            text-align: center; 
+            width: 320px; 
+            cursor: pointer; 
+            transition: transform 0.2s; 
+            margin-bottom: 20px;
+        }
+        #card:hover { transform: scale(1.03); }
+        .word { font-size: 28px; font-weight: bold; margin-bottom: 15px; }
+        .translation { font-size: 22px; color: #1976d2; display: none; }
+        button { 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            border: none; 
+            border-radius: 8px; 
+            background-color: #d32f2f; 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        button:hover { background-color: #b71c1c; }
+        .hint { font-size: 14px; color: #666; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Kolay Türkçe!</h1>
+    <p class="hint">Klicke auf die Karte, um die deutsche Übersetzung zu sehen.</p>
+
+    <div id="card" onclick="toggleTranslation()">
+        <div class="word" id="turkishWord">Merhaba</div>
+        <div class="translation" id="germanWord">Hallo</div>
+    </div>
+
+    <button onclick="nextWord()">Nächste Vokabel ➔</button>
+
+    <script>
+        const vocab = [
+            { tr: "Merhaba", de: "Hallo" },
+            { tr: "Teşekkür ederim", de: "Danke" },
+            { tr: "Evet", de: "Ja" },
+            { tr: "Hayır", de: "Nein" },
+            { tr: "Lütfen", de: "Bitte" },
+            { tr: "Nasılsın?", de: "Wie geht es dir?" },
+            { tr: "İyiyim", de: "Mir geht es gut" },
+            { tr: "Güle güle", de: "Tschüss (sagt der Bleibende)" },
+            { tr: "Hoşça kal", de: "Tschüss (sagt der Gehende)" },
+            { tr: "Günaydın", de: "Guten Morgen" }
+        ];
+        
+        let currentIndex = 0;
+
+        function toggleTranslation() {
+            const trans = document.getElementById("germanWord");
+            trans.style.display = trans.style.display === "block" ? "none" : "block";
+        }
+
+        function nextWord() {
+            currentIndex = (currentIndex + 1) % vocab.length;
+            document.getElementById("turkishWord").innerText = vocab[currentIndex].tr;
+            document.getElementById("germanWord").innerText = vocab[currentIndex].de;
+            document.getElementById("germanWord").style.display = "none";
+        }
+    </script>
+</body>
+</html>

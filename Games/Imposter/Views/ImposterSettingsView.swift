@@ -13,7 +13,7 @@ struct ImposterSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 30) {
                 Text("Einstellungen")
                     .font(.largeTitle)
@@ -22,19 +22,19 @@ struct ImposterSettingsView: View {
                 VStack(spacing: 16) {
                     Text("Allgemeine Einstellungen")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
 
                     // Hinweise-Einstellungen
                     Toggle(isOn: $settings.enableHints) {
                         HStack(spacing: 12) {
                             Image(systemName: "lightbulb.fill")
-                                .foregroundColor(.yellow)
+                                .foregroundStyle(.yellow)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Hinweise aktivieren")
                                     .font(.headline)
                                 Text("Zeigt während des Spiels gelegentlich Tipps an.")
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -47,17 +47,17 @@ struct ImposterSettingsView: View {
                     NavigationLink(destination: VoiceSettingsView()) {
                         HStack {
                             Image(systemName: "waveform")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Stimmen & Vorlesen")
                                     .font(.headline)
                                 Text("Premium-Stimmen auswählen und testen")
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         .padding()
                         .background(
@@ -70,13 +70,13 @@ struct ImposterSettingsView: View {
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: aiService.isAvailable ? "brain.head.profile" : "bolt.slash")
                                 .font(.title2)
-                                .foregroundColor(aiService.isAvailable ? .green : .orange)
+                                .foregroundStyle(aiService.isAvailable ? .green : .orange)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Apple Intelligence")
                                     .font(.headline)
                                 Text(aiService.isAvailable ? "Aktiv – KI generiert Hinweise, Rollen und Logs." : "Nicht verfügbar – Fallback-Logik wird automatisch genutzt.")
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer()
@@ -101,9 +101,6 @@ struct ImposterSettingsView: View {
 #endif
             }
         }
-#if os(iOS)
-        .navigationViewStyle(StackNavigationViewStyle())
-#endif
     }
 }
 

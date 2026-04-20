@@ -82,7 +82,7 @@ struct QuestionsAnswerRevealCard: View {
         .overlay(cardBorder)
         .modifier(ShakeEffect(animatableData: showRedX ? shakeTrigger : 0))
         .onTapGesture {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UISelectionFeedbackGenerator().selectionChanged()
             onTap()
         }
     }
@@ -221,12 +221,12 @@ struct VoteStepper: View {
         HStack(spacing: 16) {
             // Minus Button
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 onDecrement?()
             } label: {
                 Image(systemName: "minus")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .foregroundStyle(count == 0 ? QuestionsTheme.textMuted.opacity(0.3) : QuestionsTheme.textPrimary)
                     .background(
                         Circle()
@@ -259,12 +259,12 @@ struct VoteStepper: View {
 
             // Plus Button
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 onIncrement?()
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .foregroundStyle(canIncrement ? QuestionsTheme.accentGreen : QuestionsTheme.textMuted.opacity(0.3))
                     .background(
                         Circle()

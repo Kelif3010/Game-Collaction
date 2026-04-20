@@ -24,7 +24,7 @@ struct PerkWordText: View {
                 .multilineTextAlignment(alignment)
                 .lineLimit(lineLimit)
                 .minimumScaleFactor(0.6)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
     }
 }

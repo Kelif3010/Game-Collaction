@@ -46,9 +46,9 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "sparkles",
-                        title: "Party Modus",
-                        detail: appModel.isPartyMode  ? "An" : "Aus",
+                        icon: "timer",
+                        title: "Timer läuft weiter",
+                        detail: appModel.isPartyMode ? "Kein Reset bei Treffern" : "Reset nach Treffern",
                         rowType: .partyMode,
                         isToggleOn: appModel.isPartyMode,
                         onTap: {
@@ -133,8 +133,23 @@ struct HomeView: View {
             .padding(Theme.padding)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showTimerSheet) { timerSheet }
-        .sheet(isPresented: $showPenaltySheet) { penaltySheet }
+        .sheet(isPresented: $showTimerSheet) {
+            CasinoTimerSheet(
+                options: appModel.timerOptions,
+                selected: appModel.timerSelection
+            ) { appModel.timerSelection = $0 }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
+        .sheet(isPresented: $showPenaltySheet) {
+            CasinoPenaltySheet(
+                selected: appModel.penaltyLevel
+            ) { appModel.penaltyLevel = $0 }
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
         .sheet(isPresented: $showInfoSheet) {
             BetBuddyInfoSheet()
         }
@@ -163,7 +178,7 @@ struct HomeView: View {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))
@@ -183,7 +198,7 @@ struct HomeView: View {
                 Image(systemName: "trophy.fill")
                     .font(.headline)
                     .foregroundStyle(BetBuddyTheme.accentGold)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(BetBuddyTheme.accentGold.opacity(0.15))
@@ -202,7 +217,7 @@ struct HomeView: View {
                 Image(systemName: "questionmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.08))
@@ -215,67 +230,265 @@ struct HomeView: View {
         }
     }
 
-    private var timerSheet: some View {
-        NavigationStack {
-            List {
-                ForEach(appModel.timerOptions, id: \.self) { option in
-                    Button {
-                        appModel.timerSelection = option
-                        showTimerSheet = false
-                        HapticsService.impact(.light)
-                    } label: {
-                        HStack {
-                            (Text("\(option) ") + Text("Sekunden"))
-                                .foregroundStyle(.white)
-                            Spacer()
-                            if appModel.timerSelection == option {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.green)
+}
+
+// MARK: - Casino Timer Sheet
+
+private struct CasinoTimerSheet: View {
+    let options: [Int]
+    let selected: Int
+    let onSelect: (Int) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            BetBuddyBackgroundView(intensity: 0.5)
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline.bold())
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.accentGold)
+                        Text("ZEITLIMIT")
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundStyle(BetBuddyTheme.textGold)
+                            .tracking(2)
+                    }
+                    Spacer()
+                    Color.clear.frame(width: 44, height: 44)
+                }
+                .padding(.horizontal)
+                .padding(.top, 20)
+
+                Text("Wähle die Zeit pro Runde")
+                    .font(.subheadline)
+                    .foregroundStyle(BetBuddyTheme.textSilver)
+                    .padding(.top, 8)
+
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(options, id: \.self) { option in
+                            let isSelected = selected == option
+                            Button {
+                                HapticsService.impact(.light)
+                                onSelect(option)
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(isSelected
+                                                ? BetBuddyTheme.accentGold.opacity(0.2)
+                                                : Color.white.opacity(0.06))
+                                            .frame(width: 36, height: 36)
+                                        Image(systemName: "timer")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(isSelected
+                                                ? BetBuddyTheme.accentGold
+                                                : BetBuddyTheme.textSilver)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(option) Sekunden")
+                                            .font(.body.weight(.semibold))
+                                            .foregroundStyle(.white)
+                                        Text(timerHint(for: option))
+                                            .font(.caption)
+                                            .foregroundStyle(BetBuddyTheme.textSilver)
+                                    }
+
+                                    Spacer()
+
+                                    if isSelected {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(BetBuddyTheme.accentGold)
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .font(.title3)
+                                            .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(isSelected
+                                            ? BetBuddyTheme.accentGold.opacity(0.12)
+                                            : Color.black.opacity(0.35))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(isSelected
+                                            ? BetBuddyTheme.accentGold.opacity(0.5)
+                                            : Color.white.opacity(0.08),
+                                            lineWidth: 1)
+                                )
                             }
                         }
                     }
-                    .listRowBackground(Color.black)
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(BetBuddyTheme.gradient)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { showTimerSheet = false }
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
                 }
             }
         }
     }
 
-    private var penaltySheet: some View {
-        NavigationStack {
-            List {
-                ForEach(PenaltyLevel.allCases) { level in
-                    Button {
-                        appModel.penaltyLevel = level
-                        showPenaltySheet = false
-                        HapticsService.impact(.light)
-                    } label: {
-                        HStack {
-                            Text(LocalizedStringKey(level.title))
-                                .foregroundStyle(.white)
-                            Spacer()
-                            if appModel.penaltyLevel == level {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.green)
+    private func timerHint(for seconds: Int) -> String {
+        switch seconds {
+        case 15: return "Blitzrunde"
+        case 30: return "Schnell"
+        case 45: return "Normal"
+        case 60: return "Entspannt"
+        case 90: return "Gemächlich"
+        case 120: return "Langform · 2 Min"
+        case 180: return "Marathon · 3 Min"
+        default: return "\(seconds)s"
+        }
+    }
+}
+
+// MARK: - Casino Penalty Sheet
+
+private struct CasinoPenaltySheet: View {
+    let selected: PenaltyLevel
+    let onSelect: (PenaltyLevel) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            BetBuddyBackgroundView(intensity: 0.5)
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline.bold())
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.accentRuby)
+                        Text("PUNKTE ABZUG")
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundStyle(BetBuddyTheme.textGold)
+                            .tracking(2)
+                    }
+                    Spacer()
+                    Color.clear.frame(width: 44, height: 44)
+                }
+                .padding(.horizontal)
+                .padding(.top, 20)
+
+                Text("Strafe bei Aufgeben oder Zeitablauf")
+                    .font(.subheadline)
+                    .foregroundStyle(BetBuddyTheme.textSilver)
+                    .padding(.top, 8)
+
+                VStack(spacing: 10) {
+                    ForEach(PenaltyLevel.allCases) { level in
+                        let isSelected = selected == level
+                        Button {
+                            HapticsService.impact(.light)
+                            onSelect(level)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(isSelected
+                                            ? penaltyColor(level).opacity(0.2)
+                                            : Color.white.opacity(0.06))
+                                        .frame(width: 40, height: 40)
+                                    Text(penaltyEmoji(level))
+                                        .font(.system(size: 18))
+                                }
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(level.title)
+                                        .font(.body.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                    Text(penaltyDescription(level))
+                                        .font(.caption)
+                                        .foregroundStyle(isSelected
+                                            ? penaltyColor(level).opacity(0.9)
+                                            : BetBuddyTheme.textSilver)
+                                }
+
+                                Spacer()
+
+                                if isSelected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(BetBuddyTheme.accentGold)
+                                } else {
+                                    Image(systemName: "circle")
+                                        .font(.title3)
+                                        .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isSelected
+                                        ? penaltyColor(level).opacity(0.10)
+                                        : Color.black.opacity(0.35))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(isSelected
+                                        ? penaltyColor(level).opacity(0.4)
+                                        : Color.white.opacity(0.08),
+                                        lineWidth: 1)
+                            )
                         }
                     }
-                    .listRowBackground(Color.black)
                 }
+                .padding(.horizontal)
+                .padding(.top, 16)
+
+                Spacer()
             }
-            .scrollContentBackground(.hidden)
-            .background(BetBuddyTheme.gradient)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { showPenaltySheet = false }
-                }
-            }
+        }
+    }
+
+    private func penaltyDescription(_ level: PenaltyLevel) -> String {
+        switch level {
+        case .normal: return "Abzug = verbleibende Punkte"
+        case .medium: return "Abzug = halbe Anfangspunkte"
+        case .hardcore: return "Abzug = volle Anfangspunkte"
+        }
+    }
+
+    private func penaltyEmoji(_ level: PenaltyLevel) -> String {
+        switch level {
+        case .normal: return "🎯"
+        case .medium: return "💥"
+        case .hardcore: return "☠️"
+        }
+    }
+
+    private func penaltyColor(_ level: PenaltyLevel) -> Color {
+        switch level {
+        case .normal: return BetBuddyTheme.accentEmerald
+        case .medium: return BetBuddyTheme.accentGold
+        case .hardcore: return BetBuddyTheme.accentRuby
         }
     }
 }

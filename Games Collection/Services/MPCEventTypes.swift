@@ -5,7 +5,9 @@ import Foundation
 public enum MPCEventType {
     // Global Lobby Events
     static let lobbyUpdate = "LOBBY_UPDATE"
+    static let lobbyStateSync = "LOBBY_STATE_SYNC"
     static let lobbyDisconnected = "LOBBY_DISCONNECTED"
+    static let playerReadyUpdate = "PLAYER_READY_UPDATE"
     static let gameStart = "GAME_START"
     static let gameAbort = "GAME_ABORT"
     
@@ -39,6 +41,20 @@ public enum MPCEventType {
     // Rematch Events
     static let imposterRematchOffer = "IMPOSTER_REMATCH_OFFER" // Payload: ImposterRematchOfferPayload
     static let imposterRematchResponse = "IMPOSTER_REMATCH_RESPONSE" // Payload: ImposterRematchResponsePayload
+
+    // Falsche Fährte Events – Host → Alle
+    static let ffGameConfig     = "FF_GAME_CONFIG"      // FFGameConfigPayload
+    static let ffBluffsReady    = "FF_BLUFFS_READY"     // FFBluffsReadyPayload
+    static let ffReveal         = "FF_REVEAL"            // FFRevealPayload
+    static let ffRevealScores   = "FF_REVEAL_SCORES"     // FFRevealScoresPayload
+    static let ffNextRound      = "FF_NEXT_ROUND"        // FFNextRoundPayload
+    static let ffGameOver       = "FF_GAME_OVER"         // FFGameOverPayload
+    static let ffBluffingStatus = "FF_BLUFFING_STATUS"   // FFBluffingStatusPayload
+    static let ffVotingStatus   = "FF_VOTING_STATUS"     // FFVotingStatusPayload
+
+    // Falsche Fährte Events – Client → Host
+    static let ffBluffSubmit    = "FF_BLUFF_SUBMITTED"   // FFBluffSubmitPayload
+    static let ffVoteCast       = "FF_VOTE_CAST_FF"      // FFVoteCastPayload (FF-spezifisch)
 
     // Questions Specific Events
     static let questionsSyncConfig = "QUESTIONS_SYNC_CONFIG" // Payload: QuestionsConfig

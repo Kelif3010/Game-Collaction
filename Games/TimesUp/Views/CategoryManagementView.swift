@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CategoryManagementView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var categoryManager: CategoryManager
     
     @State private var showingAddCategory = false
@@ -33,7 +33,7 @@ struct CategoryManagementView: View {
     )
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 backgroundGradient.ignoresSafeArea()
                 
@@ -41,21 +41,20 @@ struct CategoryManagementView: View {
                     // Custom Header
                     HStack {
                         Button {
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         
                         Spacer()
                         
                         Text(LocalizedStringKey("Kategorien verwalten"))
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         
                         Spacer()
                         
@@ -86,30 +85,30 @@ struct CategoryManagementView: View {
                                                 .frame(width: 48, height: 48)
                                             Image(systemName: "sparkles")
                                                 .font(.title3.bold())
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(LocalizedStringKey("Mit KI generieren"))
                                                 .font(.headline)
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                             Text(LocalizedStringKey("Lass dir Begriffe vorschlagen"))
                                                 .font(.caption)
-                                                .foregroundColor(.white.opacity(0.7))
+                                                .foregroundStyle(.white.opacity(0.7))
                                         }
                                         Spacer()
                                         
                                         if !AIService.shared.isAvailable {
                                             Image(systemName: "lock.fill")
-                                                .foregroundColor(.white.opacity(0.5))
+                                                .foregroundStyle(.white.opacity(0.5))
                                         } else {
                                             Image(systemName: "chevron.right")
-                                                .foregroundColor(.white.opacity(0.5))
+                                                .foregroundStyle(.white.opacity(0.5))
                                         }
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.08))
-                                    .cornerRadius(18)
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 18)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -128,24 +127,24 @@ struct CategoryManagementView: View {
                                                 .frame(width: 48, height: 48)
                                             Image(systemName: "plus")
                                                 .font(.title3.bold())
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(LocalizedStringKey("Manuell erstellen"))
                                                 .font(.headline)
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                             Text(LocalizedStringKey("Erstelle eine leere Kategorie"))
                                                 .font(.caption)
-                                                .foregroundColor(.white.opacity(0.7))
+                                                .foregroundStyle(.white.opacity(0.7))
                                         }
                                         Spacer()
                                         Image(systemName: "chevron.right")
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundStyle(.white.opacity(0.5))
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.08))
-                                    .cornerRadius(18)
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 18)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -158,7 +157,7 @@ struct CategoryManagementView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text(LocalizedStringKey("Deine Kategorien"))
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                     .padding(.horizontal)
                                     .padding(.top, 10)
                                 
@@ -248,11 +247,11 @@ private struct ManagementRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(LocalizedStringKey(category.name))
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 (Text("\(category.terms.count) ") + Text("Begriffe"))
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.6))
             }
             
             Spacer()
@@ -262,7 +261,7 @@ private struct ManagementRow: View {
                 Button(action: onTap) {
                     Image(systemName: "pencil.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .background(Color.white.clipShape(Circle()).padding(2))
                 }
                 
@@ -270,19 +269,19 @@ private struct ManagementRow: View {
                     Button(action: onDelete) {
                         Image(systemName: "trash.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .background(Color.white.clipShape(Circle()).padding(2))
                     }
                 } else {
                     Image(systemName: "lock.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.gray.opacity(0.5))
+                        .foregroundStyle(.gray.opacity(0.5))
                 }
             }
         }
         .padding()
         .background(Color.black.opacity(0.3))
-        .cornerRadius(18)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)

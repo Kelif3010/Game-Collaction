@@ -2,7 +2,7 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct MPCDebugView: View {
-    @StateObject private var mpc = MultipeerManager.shared
+    @ObservedObject private var mpc = MultipeerManager.shared
     @Environment(\.dismiss) var dismiss
     
     @State private var messageText = ""
@@ -14,16 +14,16 @@ struct MPCDebugView: View {
                 VStack {
                     Text(mpc.role == .unknown ? "Modus wählen" : (mpc.role == .host ? "Host (Spielleiter)" : "Client (Spieler)"))
                         .font(.headline)
-                        .foregroundColor(statusColor)
+                        .foregroundStyle(statusColor)
                     
                     Text("Mein Name: \(mpc.myPeerId.displayName)")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                     
                     if let error = mpc.lastError {
                         Text(error)
                             .font(.caption)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .padding(.top, 4)
                     }
                 }
@@ -44,8 +44,8 @@ struct MPCDebugView: View {
                             }
                             .frame(width: 120, height: 100)
                             .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(16)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                         
                         Button {
@@ -58,15 +58,15 @@ struct MPCDebugView: View {
                             }
                             .frame(width: 120, height: 100)
                             .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(16)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }
                 } else {
                     Button("Verbindung trennen") {
                         mpc.stop()
                     }
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                 }
                 
                 Divider()
@@ -76,7 +76,7 @@ struct MPCDebugView: View {
                     Section("Verbundene Geräte") {
                         if mpc.connectedPeers.isEmpty {
                             Text("Suche...")
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.gray)
                                 .italic()
                         }
                         ForEach(mpc.connectedPeers, id: \.self) { peer in

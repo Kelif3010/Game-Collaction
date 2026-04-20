@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GlobalRecapView: View {
-    @StateObject private var statsManager = GlobalStatsManager.shared
+    @ObservedObject private var statsManager = GlobalStatsManager.shared
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -52,7 +52,7 @@ struct GlobalRecapView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Rangliste")
                                 .font(.headline)
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundStyle(.white.opacity(0.7))
                                 .padding(.leading)
                             
                             VStack(spacing: 12) {
@@ -60,21 +60,21 @@ struct GlobalRecapView: View {
                                     HStack {
                                         Text(player.name)
                                             .font(.headline)
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                         Spacer()
                                         
                                         VStack(alignment: .trailing) {
                                             Text("\(Int(player.winRate * 100))% Win Rate")
                                                 .font(.caption.bold())
-                                                .foregroundColor(.green)
+                                                .foregroundStyle(.green)
                                             Text("\(player.wins)S - \(player.losses)N")
                                                 .font(.caption2)
-                                                .foregroundColor(.gray)
+                                                .foregroundStyle(.gray)
                                         }
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.08))
-                                    .cornerRadius(12)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
                             .padding(.horizontal)
@@ -84,7 +84,7 @@ struct GlobalRecapView: View {
                         Button(action: { statsManager.resetAllStats() }) {
                             Text("Statistik zurücksetzen")
                                 .font(.caption)
-                                .foregroundColor(.red.opacity(0.7))
+                                .foregroundStyle(.red.opacity(0.7))
                                 .padding()
                         }
                     }
@@ -119,28 +119,28 @@ struct GlobalHighlightCard: View {
                     .frame(width: 60, height: 60)
                 Image(systemName: icon)
                     .font(.title)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             
             VStack(spacing: 4) {
                 Text(title)
                     .font(.caption.bold())
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                     .textCase(.uppercase)
                 
                 Text(player.name)
                     .font(.title3.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Text(detail)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.6))
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(Color.white.opacity(0.05))
-        .cornerRadius(20)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(color.opacity(0.3), lineWidth: 1)

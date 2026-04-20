@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AICategoryGeneratorView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var categoryManager: CategoryManager
     
     @State private var selectedThemes: [String] = []
@@ -35,25 +35,24 @@ struct AICategoryGeneratorView: View {
     )
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 backgroundGradient.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Header
                     HStack {
-                        Button { presentationMode.wrappedValue.dismiss() } label: {
+                        Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         Spacer()
                         Text(LocalizedStringKey("KI Generator"))
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         Color.clear.frame(width: 44)
                     }
@@ -68,7 +67,7 @@ struct AICategoryGeneratorView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Label(LocalizedStringKey("Schwierigkeit"), systemImage: "gauge.medium")
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                 
                                 Picker(LocalizedStringKey("Schwierigkeit"), selection: $selectedDifficulty) {
                                     ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
@@ -88,20 +87,20 @@ struct AICategoryGeneratorView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Label(LocalizedStringKey("Themen wählen"), systemImage: "sparkles")
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                 
                                 HStack(spacing: 12) {
-                                    TextField("", text: $newTheme, prompt: Text(LocalizedStringKey("Eigenes Thema (z.B. 80er)...")).foregroundColor(.gray))
+                                    TextField("", text: $newTheme, prompt: Text(LocalizedStringKey("Eigenes Thema (z.B. 80er)...")).foregroundStyle(.gray))
                                         .padding()
                                         .background(Color.white.opacity(0.08))
-                                        .cornerRadius(12)
-                                        .foregroundColor(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .foregroundStyle(.white)
                                         .onSubmit { addCustomTheme() }
                                     
                                     Button(action: addCustomTheme) {
                                         Image(systemName: "plus")
                                             .font(.title2.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .frame(width: 50, height: 50)
                                             .background(newTheme.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.purple)
                                             .clipShape(Circle())
@@ -119,13 +118,13 @@ struct AICategoryGeneratorView: View {
                                             HStack(spacing: 6) {
                                                 Text(LocalizedStringKey(theme))
                                                     .font(.subheadline.bold())
-                                                    .foregroundColor(.white)
+                                                    .foregroundStyle(.white)
                                                 Button {
                                                     toggleTheme(theme)
                                                 } label: {
                                                     Image(systemName: "xmark")
                                                         .font(.caption)
-                                                        .foregroundColor(.white.opacity(0.7))
+                                                        .foregroundStyle(.white.opacity(0.7))
                                                 }
                                             }
                                             .padding(.horizontal, 12)
@@ -133,7 +132,7 @@ struct AICategoryGeneratorView: View {
                                             .background(
                                                 LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
                                             )
-                                            .cornerRadius(20)
+                                            .clipShape(RoundedRectangle(cornerRadius: 20))
                                         }
                                     }
                                     .padding(.horizontal)
@@ -148,10 +147,10 @@ struct AICategoryGeneratorView: View {
                                     HStack {
                                         Text(LocalizedStringKey("Vorschläge"))
                                             .font(.subheadline)
-                                            .foregroundColor(.gray)
+                                            .foregroundStyle(.gray)
                                         Image(systemName: "chevron.right")
                                             .rotationEffect(.degrees(showPresetThemes ? 90 : 0))
-                                            .foregroundColor(.gray)
+                                            .foregroundStyle(.gray)
                                         Spacer()
                                     }
                                 }
@@ -165,7 +164,7 @@ struct AICategoryGeneratorView: View {
                                                 Text(LocalizedStringKey(theme))
                                                     .font(.caption)
                                                     .fontWeight(.medium)
-                                                    .foregroundColor(selectedThemes.contains(theme) ? .white : .gray)
+                                                    .foregroundStyle(selectedThemes.contains(theme) ? .white : .gray)
                                                     .frame(maxWidth: .infinity)
                                                     .padding(.vertical, 8)
                                                     .background(
@@ -173,7 +172,7 @@ struct AICategoryGeneratorView: View {
                                                         Color.purple.opacity(0.6) :
                                                         Color.white.opacity(0.05)
                                                     )
-                                                    .cornerRadius(10)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
                                                     .overlay(
                                                         RoundedRectangle(cornerRadius: 10)
                                                             .stroke(selectedThemes.contains(theme) ? Color.purple : Color.white.opacity(0.1), lineWidth: 1)
@@ -200,7 +199,7 @@ struct AICategoryGeneratorView: View {
                                     Text(categoryManager.isGeneratingAI ? String(localized: "Generiere...") : String(localized: "Generieren"))
                                         .font(.title3.bold())
                                 }
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 60)
                                 .background(
@@ -208,7 +207,7 @@ struct AICategoryGeneratorView: View {
                                     LinearGradient(colors: [.orange, .purple], startPoint: .leading, endPoint: .trailing) :
                                         LinearGradient(colors: [.gray.opacity(0.5), .gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
                                 )
-                                .cornerRadius(20)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
                                 .shadow(color: canGenerate ? .purple.opacity(0.4) : .clear, radius: 10, x: 0, y: 5)
                             }
                             .disabled(!canGenerate)
@@ -219,14 +218,14 @@ struct AICategoryGeneratorView: View {
                             if let error = categoryManager.aiErrorMessage {
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(.red)
+                                        .foregroundStyle(.red)
                                     Text(error)
                                         .font(.caption)
-                                        .foregroundColor(.red.opacity(0.9))
+                                        .foregroundStyle(.red.opacity(0.9))
                                 }
                                 .padding()
                                 .background(Color.red.opacity(0.1))
-                                .cornerRadius(12)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .padding(.horizontal)
                             }
                             
@@ -269,7 +268,7 @@ struct AICategoryGeneratorView: View {
                 themes: selectedThemes,
                 difficulty: selectedDifficulty
             )
-            presentationMode.wrappedValue.dismiss()
+            dismiss()
         }
     }
 }

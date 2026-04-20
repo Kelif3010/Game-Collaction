@@ -1,12 +1,16 @@
 import SwiftUI
 
-// MARK: - Reveal-Phase: Auflösung + Punkte-Anzeige
+// MARK: - Reveal-Phase: zwei Screens
+// Screen 1: Antworten-Auflösung
+// Screen 2: Punkte-Zwischenstand (Push-Transition)
+
 struct FFRevealPhaseView: View {
     @EnvironmentObject private var viewModel: FFViewModel
 
-    @State private var appeared = false
-    @State private var showPoints = false
-    @State private var revealStep: Int = 0  // 0=Frage, 1=Antworten, 2=Punkte
+    @State private var appeared       = false
+    @State private var cardsVisible   = false
+    @State private var nextEnabled    = false
+    @State private var showScores     = false   // Wechsel zu Screen 2
 
     private var round: FFRound? { viewModel.currentRound }
 
@@ -14,314 +18,565 @@ struct FFRevealPhaseView: View {
         guard let round else { return [] }
         return round.displayOrder.compactMap { id in round.submission(for: id) }
     }
+    private var mpRevealSubmissions: [FFRevealSubmission] {
+        viewModel.mpRevealData?.submissions ?? []
+    }
+
+    private var submissionCount: Int {
+        viewModel.isMultiplayer
+            ? mpRevealSubmissions.count
+            : orderedSubmissions.count
+    }
+
+    private var isShowingScores: Bool {
+        viewModel.isMultiplayer ? viewModel.isShowingRevealScores : showScores
+    }
 
     var body: some View {
         ZStack {
             FFBackground()
 
-            // Violetter Glow für Dramatik
-            if revealStep >= 1 {
-                VStack {
-                    Spacer()
-                    RadialGradient(
-                        colors: [FFStyle.accentViolet.opacity(0.18), Color.clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 300
-                    )
-                    .frame(height: 400)
-                }
-                .transition(.opacity)
-            }
-
-            VStack(spacing: 0) {
-                revealHeader
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        // Frage
-                        questionCard
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 16)
-
-                        // Antworten mit Auflösung
-                        if revealStep >= 1 {
-                            answersReveal
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        }
-
-                        // Punkte-Übersicht
-                        if showPoints {
-                            pointsSummary
-                                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                        }
-
-                        Color.clear.frame(height: 110)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                }
-            }
-
-            // Floating Next-Button
-            VStack {
-                Spacer()
-                nextButton
-                    .padding(.bottom, 36)
-                    .opacity(appeared ? 1 : 0)
+            if isShowingScores {
+                FFScoreInterludeView(onNext: {
+                    viewModel.nextRound()
+                })
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing),
+                    removal: .move(edge: .leading)
+                ))
+            } else {
+                answersScreen
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .leading),
+                        removal: .move(edge: .leading)
+                    ))
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: isShowingScores)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.82).delay(0.05)) {
+            appeared = false
+            cardsVisible = false
+            nextEnabled = false
+            showScores = false
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05)) {
                 appeared = true
             }
-            // Automatisch Antworten enthüllen
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    revealStep = 1
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                withAnimation { cardsVisible = true }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    showPoints = true
-                }
+            let enableDelay = 0.4 + Double(submissionCount) * 0.14 + 0.4
+            DispatchQueue.main.asyncAfter(deadline: .now() + enableDelay) {
+                withAnimation(.spring(response: 0.3)) { nextEnabled = true }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
         }
     }
 
-    // MARK: - Header
-    private var revealHeader: some View {
+    // MARK: - Screen 1: Antworten
+    private var answersScreen: some View {
+        VStack(spacing: 0) {
+            topBar
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    questionBanner
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : 12)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: appeared)
+
+                    if cardsVisible {
+                        answersSection
+                    }
+
+                    Color.clear.frame(height: 110)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            revealNextButton
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
+                .padding(.top, 12)
+                .opacity(appeared ? 1 : 0)
+        }
+    }
+
+    // MARK: - Top Bar
+    private var topBar: some View {
         HStack {
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 viewModel.returnToSetup()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(.ultraThinMaterial))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white.opacity(0.07)))
             }
 
             Spacer()
 
             VStack(spacing: 2) {
                 Text("Runde \(viewModel.currentRoundNumber) / \(viewModel.totalRounds)")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .font(.system(size: 14, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
-                Text("Auflösung")
-                    .font(.system(size: 11, weight: .semibold))
+                Text("AUFLÖSUNG")
+                    .font(.system(size: 9, weight: .black, design: .monospaced))
+                    .tracking(2.5)
                     .foregroundStyle(FFStyle.accentViolet)
             }
 
             Spacer()
-            Circle().fill(Color.clear).frame(width: 36, height: 36)
+            Color.clear.frame(width: 30, height: 30)
         }
+        .frame(height: 44)
     }
 
-    // MARK: - Frage-Karte
-    private var questionCard: some View {
-        VStack(spacing: 12) {
-            if viewModel.settings.showCategoryHint, let category = round?.question.category {
-                HStack(spacing: 6) {
-                    Image(systemName: "tag.fill")
-                        .font(.system(size: 10, weight: .bold))
-                    Text(category.uppercased())
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(1.5)
-                }
-                .foregroundStyle(FFStyle.accentViolet)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule()
-                        .fill(FFStyle.accentViolet.opacity(0.12))
-                        .overlay(Capsule().stroke(FFStyle.accentViolet.opacity(0.3), lineWidth: 1))
-                )
-            }
+    // MARK: - Fragen-Banner
+    private var questionBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "questionmark.bubble.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(FFStyle.primaryGradient)
+                .frame(width: 28)
 
             Text(round?.question.localizedQuestion ?? "")
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .lineSpacing(3)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.85))
+                .lineLimit(3)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .ffCard(isPrimary: true)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(FFStyle.accentViolet.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(FFStyle.accentViolet.opacity(0.25), lineWidth: 1)
+                )
+        )
     }
 
-    // MARK: - Antworten mit Auflösung
-    private var answersReveal: some View {
+    // MARK: - Antworten gestaffelt
+    @ViewBuilder
+    private var answersSection: some View {
         VStack(spacing: 10) {
-            ForEach(Array(orderedSubmissions.enumerated()), id: \.element.id) { idx, submission in
-                revealCard(submission: submission, index: idx)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(idx) * 0.12), value: revealStep)
+            Text("WER HAT WEN VERARSCHT")
+                .font(.system(size: 9, weight: .black, design: .monospaced))
+                .tracking(2.5)
+                .foregroundStyle(.white.opacity(0.25))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 4)
+
+            if viewModel.isMultiplayer {
+                // Host und Client nutzen beide mpRevealData
+                ForEach(Array(mpRevealSubmissions.enumerated()), id: \.element.id) { idx, sub in
+                    mpRevealCard(sub, index: idx)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(Double(idx) * 0.14), value: cardsVisible)
+                }
+            } else {
+                ForEach(Array(orderedSubmissions.enumerated()), id: \.element.id) { idx, sub in
+                    revealCard(sub, index: idx)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(Double(idx) * 0.14), value: cardsVisible)
+                }
             }
         }
     }
 
-    private func revealCard(submission: FFSubmission, index: Int) -> some View {
+    // MARK: - Karte Single/Host
+    private func revealCard(_ submission: FFSubmission, index: Int) -> some View {
         let isAnswer = submission.isAnswer
-        let fooledCount = submission.voterIds.count
         let voterNames = submission.voterIds.compactMap { id in
             viewModel.players.first(where: { $0.id == id })?.displayName
         }
+        return revealCardContent(
+            text: submission.text,
+            authorLabel: isAnswer ? "Die echte Antwort" : "Lüge von \(submission.playerName)",
+            isAnswer: isAnswer,
+            index: index,
+            voterNames: voterNames
+        )
+    }
 
-        return VStack(alignment: .leading, spacing: 10) {
+    // MARK: - Karte MP-Client
+    private func mpRevealCard(_ submission: FFRevealSubmission, index: Int) -> some View {
+        revealCardContent(
+            text: submission.text,
+            authorLabel: submission.isAnswer ? "Die echte Antwort" : "Lüge von \(submission.authorName)",
+            isAnswer: submission.isAnswer,
+            index: index,
+            voterNames: submission.voterNames
+        )
+    }
+
+    // MARK: - Gemeinsame Karten-Logik
+    private func revealCardContent(
+        text: String,
+        authorLabel: String,
+        isAnswer: Bool,
+        index: Int,
+        voterNames: [String]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                // Buchstaben-Badge
                 ZStack {
                     Circle()
-                        .fill(isAnswer ? Color.green.opacity(0.25) : Color.white.opacity(0.1))
-                        .frame(width: 36, height: 36)
+                        .fill(isAnswer ? Color.green.opacity(0.22) : Color.white.opacity(0.07))
+                        .frame(width: 34, height: 34)
                     if isAnswer {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .black))
+                            .font(.system(size: 13, weight: .black))
                             .foregroundStyle(Color.green)
                     } else {
                         Text(String(UnicodeScalar(65 + index)!))
-                            .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(FFStyle.textMuted)
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.4))
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(submission.text)
-                        .font(.system(size: 15, weight: isAnswer ? .black : .semibold))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(text)
+                        .font(.system(size: 15, weight: isAnswer ? .black : .semibold, design: .rounded))
                         .foregroundStyle(isAnswer ? Color.green : .white)
                         .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    if !isAnswer {
-                        Text("Lüge von \(submission.playerName)")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(FFStyle.textMuted)
-                    } else {
-                        Text("Die echte Antwort")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(Color.green.opacity(0.8))
-                    }
+                    Text(authorLabel)
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .tracking(0.5)
+                        .foregroundStyle(isAnswer ? Color.green.opacity(0.65) : .white.opacity(0.32))
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
 
-                // Täuschungs-Badge oder Richtig-Zeiger
-                if isAnswer && !submission.voterIds.isEmpty {
+                if !voterNames.isEmpty {
                     VStack(spacing: 2) {
-                        Text("+2")
-                            .font(.system(size: 13, weight: .black))
-                            .foregroundStyle(Color.green)
-                        Text("× \(submission.voterIds.count)")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(FFStyle.textMuted)
-                    }
-                } else if !isAnswer && fooledCount > 0 {
-                    VStack(spacing: 2) {
-                        Text("+\(fooledCount)")
-                            .font(.system(size: 13, weight: .black))
-                            .foregroundStyle(FFStyle.accentGold)
-                        Image(systemName: "theatermasks.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(FFStyle.accentGold.opacity(0.7))
+                        Text(isAnswer ? "+2" : "+\(voterNames.count)")
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(isAnswer ? Color.green : FFStyle.accentGold)
+                        Text("×\(voterNames.count)")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(isAnswer ? Color.green.opacity(0.55) : FFStyle.accentGold.opacity(0.55))
                     }
                 }
             }
 
-            // Wer hat diese Antwort gewählt?
             if !voterNames.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: isAnswer ? "checkmark.circle" : "person.fill.questionmark")
-                        .font(.system(size: 10))
-                        .foregroundStyle(isAnswer ? Color.green.opacity(0.7) : FFStyle.accentGold.opacity(0.7))
-                    Text(voterNames.joined(separator: ", "))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(isAnswer ? Color.green.opacity(0.7) : FFStyle.accentGold.opacity(0.7))
-                        .lineLimit(2)
+                FlowLayout(spacing: 5) {
+                    ForEach(voterNames, id: \.self) { name in
+                        let color: Color = isAnswer ? .green : FFStyle.accentGold
+                        Text(name)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(color.opacity(0.85))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule().fill(color.opacity(0.1))
+                                    .overlay(Capsule().stroke(color.opacity(0.25), lineWidth: 1))
+                            )
+                    }
                 }
             }
         }
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(isAnswer ? Color.green.opacity(0.08) : Color.white.opacity(0.04))
+                .fill(isAnswer ? Color.green.opacity(0.07) : Color.white.opacity(0.035))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(isAnswer ? Color.green.opacity(0.45) : Color.white.opacity(0.07),
+                                lineWidth: isAnswer ? 1.5 : 1)
+                )
         )
-        .overlay(
+        .shadow(color: isAnswer ? Color.green.opacity(0.18) : .clear, radius: 16, y: 4)
+    }
+
+    // MARK: - Button: zu Screen 2 oder Warten
+    @ViewBuilder
+    private var revealNextButton: some View {
+        if viewModel.isMultiplayer && !viewModel.isHost {
+            HStack(spacing: 8) {
+                ProgressView().tint(.white.opacity(0.4)).scaleEffect(0.75)
+                Text("Warte auf den Host…")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+        } else {
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                if viewModel.isMultiplayer {
+                    viewModel.showRevealScores()
+                } else {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                        showScores = true
+                    }
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Text("Punktestand")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 15, weight: .bold))
+                }
+                .foregroundStyle(nextEnabled ? .black : .white.opacity(0.25))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    Capsule()
+                        .fill(nextEnabled
+                              ? AnyShapeStyle(FFStyle.primaryGradient)
+                              : AnyShapeStyle(Color.white.opacity(0.07)))
+                        .shadow(color: nextEnabled ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 20, y: 6)
+                )
+            }
+            .disabled(!nextEnabled)
+            .animation(.spring(response: 0.3), value: nextEnabled)
+        }
+    }
+}
+
+// MARK: - Screen 2: Punkte-Zwischenstand
+struct FFScoreInterludeView: View {
+    @EnvironmentObject private var viewModel: FFViewModel
+    let onNext: () -> Void
+
+    @State private var appeared   = false
+    @State private var rowsVisible = false
+
+    private var sorted: [FFPlayer] { viewModel.sortedPlayers }
+    private var isLastRound: Bool { viewModel.isLastRound }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            header
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+            Spacer(minLength: 16)
+
+            // Leaderboard
+            VStack(spacing: 8) {
+                ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, player in
+                    scoreRow(player: player, rank: idx + 1)
+                        .opacity(rowsVisible ? 1 : 0)
+                        .offset(x: rowsVisible ? 0 : 40)
+                        .animation(
+                            .spring(response: 0.45, dampingFraction: 0.8)
+                                .delay(Double(idx) * 0.08),
+                            value: rowsVisible
+                        )
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+        }
+        .safeAreaInset(edge: .bottom) {
+            nextButton
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
+                .padding(.top, 12)
+                .opacity(appeared ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8).delay(0.05)) {
+                appeared = true
+            }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8).delay(0.2)) {
+                rowsVisible = true
+            }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+    }
+
+    // MARK: - Header
+    private var header: some View {
+        VStack(spacing: 6) {
+            Text("RUNDE \(viewModel.currentRoundNumber) / \(viewModel.totalRounds)")
+                .font(.system(size: 10, weight: .black, design: .monospaced))
+                .tracking(3)
+                .foregroundStyle(FFStyle.accentViolet)
+
+            Text("Punktestand")
+                .font(.system(size: 28, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 10)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: appeared)
+    }
+
+    // MARK: - Zeile
+    private func scoreRow(player: FFPlayer, rank: Int) -> some View {
+        let isFirst = rank == 1
+        let rowColor: Color = isFirst ? FFStyle.accentGold : FFStyle.accentViolet
+
+        return HStack(spacing: 14) {
+            // Rang
+            ZStack {
+                Circle()
+                    .fill(rowColor.opacity(0.14))
+                    .frame(width: 36, height: 36)
+                if isFirst {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(FFStyle.accentGold)
+                } else {
+                    Text("\(rank)")
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(rowColor.opacity(0.75))
+                }
+            }
+
+            // Avatar
+            ZStack {
+                Circle()
+                    .fill(rowColor.opacity(0.12))
+                    .frame(width: 38, height: 38)
+                Text(String(player.displayName.prefix(1).uppercased()))
+                    .font(.system(size: 15, weight: .black))
+                    .foregroundStyle(rowColor)
+            }
+
+            // Name + Mini-Stats
+            VStack(alignment: .leading, spacing: 3) {
+                Text(player.displayName)
+                    .font(.system(size: 15, weight: isFirst ? .black : .bold, design: .rounded))
+                    .foregroundStyle(isFirst ? .white : .white.opacity(0.8))
+
+                HStack(spacing: 6) {
+                    if player.truthScore > 0 {
+                        Label("\(player.truthScore / 2)×", systemImage: "magnifyingglass")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(Color.green.opacity(0.7))
+                    }
+                    if player.bluffSuccesses > 0 {
+                        Label("\(player.bluffSuccesses)×", systemImage: "theatermasks.fill")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(FFStyle.accentGold.opacity(0.7))
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Score
+            HStack(alignment: .lastTextBaseline, spacing: 3) {
+                Text("\(player.score)")
+                    .font(.system(size: 26, weight: .black, design: .rounded))
+                    .foregroundStyle(isFirst ? FFStyle.accentGold : .white)
+                Text("Pkt")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(isAnswer ? Color.green.opacity(0.4) : Color.white.opacity(0.07), lineWidth: isAnswer ? 1.5 : 1)
+                .fill(isFirst
+                      ? FFStyle.accentGold.opacity(0.08)
+                      : Color.white.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(isFirst ? FFStyle.accentGold.opacity(0.3) : Color.white.opacity(0.06),
+                                lineWidth: isFirst ? 1.5 : 1)
+                )
         )
     }
 
-    // MARK: - Punkte-Zusammenfassung
-    private var pointsSummary: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(FFStyle.accentGold)
-                Text("PUNKTESTAND")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(FFStyle.textMuted)
-                    .tracking(1.5)
+    // MARK: - Next Button
+    @ViewBuilder
+    private var nextButton: some View {
+        if viewModel.isMultiplayer && !viewModel.isHost {
+            HStack(spacing: 8) {
+                ProgressView().tint(.white.opacity(0.4)).scaleEffect(0.75)
+                Text("Warte auf den Host…")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
             }
-
-            ForEach(viewModel.sortedPlayers) { player in
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(FFStyle.accentViolet.opacity(0.15))
-                            .frame(width: 32, height: 32)
-                        Text(String(player.displayName.prefix(1).uppercased()))
-                            .font(.system(size: 12, weight: .black))
-                            .foregroundStyle(FFStyle.accentViolet)
-                    }
-
-                    Text(player.displayName)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-
-                    Spacer()
-
-                    Text("\(player.score) Pkt")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+        } else {
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                onNext()
+            } label: {
+                HStack(spacing: 10) {
+                    Text(isLastRound ? "Endergebnis" : "Nächste Runde")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                    Image(systemName: isLastRound ? "trophy.fill" : "arrow.right")
+                        .font(.system(size: 15, weight: .bold))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .foregroundStyle(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.04))
+                    Capsule()
+                        .fill(FFStyle.primaryGradient)
+                        .shadow(color: FFStyle.accentViolet.opacity(0.5), radius: 20, y: 6)
                 )
             }
         }
-        .padding(16)
-        .ffCard()
+    }
+}
+
+// MARK: - Flow Layout für Voter-Chips
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 0
+        var height: CGFloat = 0
+        var x: CGFloat = 0
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > width && x > 0 {
+                height += rowHeight + spacing
+                x = 0
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        height += rowHeight
+        return CGSize(width: width, height: height)
     }
 
-    // MARK: - Next-Button
-    private var nextButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            viewModel.nextRound()
-        } label: {
-            HStack(spacing: 10) {
-                Text(viewModel.isLastRound ? "Ergebnis anzeigen" : "Nächste Runde")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                Image(systemName: viewModel.isLastRound ? "trophy.fill" : "arrow.right")
-                    .font(.system(size: 16, weight: .bold))
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > bounds.maxX && x > bounds.minX {
+                y += rowHeight + spacing
+                x = bounds.minX
+                rowHeight = 0
             }
-            .foregroundStyle(.black)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(
-                Capsule()
-                    .fill(FFStyle.primaryGradient)
-                    .shadow(color: FFStyle.accentViolet.opacity(0.5), radius: 16, y: 6)
-            )
+            subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
         }
-        .padding(.horizontal, 24)
     }
 }

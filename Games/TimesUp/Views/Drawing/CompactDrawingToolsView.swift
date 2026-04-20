@@ -29,10 +29,10 @@ struct CompactDrawingToolsView: View {
                         
                         Image(systemName: tool.systemImage)
                             .font(.title3)
-                            .foregroundColor(foregroundColor)
+                            .foregroundStyle(foregroundColor)
                             .frame(width: 32, height: 32)
                             .background(backgroundGradient)
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -115,7 +115,7 @@ struct CompactDrawingToolsView: View {
                                 Spacer()
                                 Image(systemName: "checkmark")
                                     .font(.subheadline)
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                             }
                         }
                     }
@@ -128,12 +128,12 @@ struct CompactDrawingToolsView: View {
                     
                     Image(systemName: "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(Color.gray.opacity(0.1))
-                .cornerRadius(20)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             }
             
             Spacer()
@@ -146,10 +146,10 @@ struct CompactDrawingToolsView: View {
                     }) {
                         Image(systemName: "arrow.uturn.backward")
                             .font(.system(size: 14))
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                             .frame(width: 32, height: 32)
                             .background(Color.orange.opacity(0.1))
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(drawingState.strokes.isEmpty)
                     .opacity(drawingState.strokes.isEmpty ? 0.5 : 1.0)
@@ -160,10 +160,10 @@ struct CompactDrawingToolsView: View {
                     }) {
                         Image(systemName: "trash")
                             .font(.system(size: 14))
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .frame(width: 32, height: 32)
                             .background(Color.red.opacity(0.1))
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(drawingState.isEmpty)
                     .opacity(drawingState.isEmpty ? 0.5 : 1.0)
@@ -172,7 +172,7 @@ struct CompactDrawingToolsView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
         .background(Color(.systemGray6).opacity(0.8))
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

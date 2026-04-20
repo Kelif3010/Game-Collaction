@@ -1,10 +1,22 @@
 import Foundation
 
-struct ChallengeService {
+protocol ChallengeProviding {
+    func randomChallenge(
+        for categories: Set<CategoryType>,
+        excluding history: Set<UUID>,
+        avoiding lastCategory: CategoryType?
+    ) -> (challenge: Challenge, didReset: Bool)
+}
+
+struct ChallengeService: ChallengeProviding {
     
     /// Wählt eine zufällige Challenge, schließt aber bereits gespielte aus.
     /// Gibt zusätzlich zurück, ob der Verlauf zurückgesetzt werden musste (weil alle Fragen gespielt wurden).
-    func randomChallenge(for categories: Set<CategoryType>, excluding history: Set<UUID>) -> (challenge: Challenge, didReset: Bool) {
+    func randomChallenge(
+        for categories: Set<CategoryType>,
+        excluding history: Set<UUID>,
+        avoiding lastCategory: CategoryType? = nil
+    ) -> (challenge: Challenge, didReset: Bool) {
         var pool: [Challenge] = []
         
         // 1. Pool aufbauen
@@ -19,16 +31,20 @@ struct ChallengeService {
         
         // 2. Filtern: Nur Fragen nehmen, die NICHT in der History sind
         let availableChallenges = pool.filter { !history.contains($0.id) }
-        
-        // 3. Entscheidung
-        if let newChallenge = availableChallenges.randomElement() {
-            // Wir haben noch frische Fragen
-            return (newChallenge, false)
-        } else {
-            // Alle Fragen wurden schon gespielt! Wir fangen von vorne an (Reset).
-            // Wir nehmen eine beliebige aus dem vollen Pool.
-            let resetChallenge = pool.randomElement() ?? ChallengeData.classic[0]
-            return (resetChallenge, true)
+        let didReset = availableChallenges.isEmpty
+        let candidatePool = didReset ? pool : availableChallenges
+
+        if let lastCategory {
+            let categoryVariedPool = candidatePool.filter { $0.category != lastCategory }
+            if let variedChallenge = categoryVariedPool.randomElement() {
+                return (variedChallenge, didReset)
+            }
         }
+
+        let fallbackChallenge = candidatePool.randomElement()
+            ?? pool.randomElement()
+            ?? ChallengeData.classic.first
+            ?? Challenge(text: "Wer zuletzt lacht, lacht am besten!", category: .classic)
+        return (fallbackChallenge, didReset)
     }
 }

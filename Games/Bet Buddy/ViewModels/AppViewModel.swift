@@ -18,7 +18,10 @@ struct GameHighlights: Codable {
     var fastestWin: HighlightRecord?
     
     var totalWins: [String: Int] = [:]
-    
+
+    // BB-09: Kategorie-Statistiken
+    var categoryPlayCount: [String: Int] = [:]
+
     // NEU: Die ewige Punktetabelle (Name -> Datensatz)
     var allTimeScores: [String: HighlightRecord] = [:]
     
@@ -94,16 +97,19 @@ final class AppViewModel: ObservableObject {
     @Published var highlights = GameHighlights()
 
     private var playedChallengeIDs: Set<UUID> = []
+    private var lastChallengeCategory: CategoryType?
     let timerOptions: [Int] = [15, 30, 45, 60, 90, 120, 180]
 
-    private let challengeService = ChallengeService()
+    // BB-14: Dependency Injection für Testbarkeit
+    private let challengeService: any ChallengeProviding
     private var nameStore = GroupNamePersistence()
     private var timer: Timer?
     
     private let statsStorageKey = "BetBuddy_GlobalStats_V1"
 
     // MARK: - Init
-    init() {
+    init(challengeService: any ChallengeProviding = ChallengeService()) {
+        self.challengeService = challengeService
         let defaults = UserDefaults.standard
         
         // Load Settings or use Defaults
@@ -142,12 +148,23 @@ final class AppViewModel: ObservableObject {
         playedChallengeIDs = []
 
         let colors = Array(GroupColor.allCases.prefix(initialGroupCount))
-        groups = colors.map { GroupInfo(color: $0, customName: store.loadName(for: $0)) }
+        groups = colors.map {
+            GroupInfo(
+                color: $0,
+                customName: store.loadName(for: $0),
+                player1Name: store.loadPlayer1(for: $0),
+                player2Name: store.loadPlayer2(for: $0)
+            )
+        }
         
-        let service = ChallengeService()
-        let startResult = service.randomChallenge(for: initialCategories, excluding: [])
+        let startResult = challengeService.randomChallenge(
+            for: initialCategories,
+            excluding: [],
+            avoiding: nil
+        )
         currentChallenge = startResult.challenge
         playedChallengeIDs.insert(startResult.challenge.id)
+        lastChallengeCategory = startResult.challenge.category
         
         timerRemaining = isTimerEnabled ? initialTimer : 0
         votesLocked = false
@@ -185,13 +202,24 @@ final class AppViewModel: ObservableObject {
     }
 
     var activeGroups: [GroupInfo] { Array(groups.prefix(selectedGroupCount)) }
-    
+
+    // BB-04: Gleichstand-Erkennung
+    var isDrawResult: Bool {
+        let values = voteCounters.values.filter { $0 > 0 }
+        guard let max = values.max(), max > 0 else { return false }
+        return values.filter { $0 == max }.count > 1
+    }
+
     // FIX: Zeigt "Mix" an, wenn mehr als 1 Kategorie gewählt ist
     var selectedCategoriesDisplay: String {
         if selectedCategories.count > 1 {
             return "Mix"
         }
         return selectedCategories.first?.title ?? "Keine"
+    }
+
+    var availableCategories: [CategoryType] {
+        CategoryType.allCases
     }
 
     // Für ResultView (Session based)
@@ -225,17 +253,58 @@ final class AppViewModel: ObservableObject {
         nameStore.save(name: name, for: color)
         groups = groups.map { group in
             guard group.color == color else { return group }
-            return GroupInfo(id: group.id, color: color, customName: name, score: group.score)
+            return GroupInfo(
+                id: group.id, color: color, customName: name,
+                player1Name: group.player1Name, player2Name: group.player2Name,
+                activePlayerIndex: group.activePlayerIndex, score: group.score
+            )
+        }
+    }
+
+    func updatePlayerNames(player1: String, player2: String, for color: GroupColor) {
+        nameStore.savePlayer1(name: player1, for: color)
+        nameStore.savePlayer2(name: player2, for: color)
+        groups = groups.map { group in
+            guard group.color == color else { return group }
+            return GroupInfo(
+                id: group.id, color: color, customName: group.customName,
+                player1Name: player1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : player1,
+                player2Name: player2.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : player2,
+                activePlayerIndex: group.activePlayerIndex, score: group.score
+            )
+        }
+    }
+
+    func randomizeStartingPlayers() {
+        groups = groups.map { group in
+            var updated = group
+            updated.activePlayerIndex = Bool.random() ? 0 : 1
+            return updated
+        }
+    }
+
+    func rotateActivePlayers() {
+        groups = groups.map { group in
+            var updated = group
+            updated.activePlayerIndex = updated.activePlayerIndex == 0 ? 1 : 0
+            return updated
         }
     }
 
     func refreshChallenge() {
         let result = challengeService.randomChallenge(
             for: selectedCategories,
-            excluding: playedChallengeIDs
+            excluding: playedChallengeIDs,
+            avoiding: lastChallengeCategory
         )
         currentChallenge = result.challenge
-        
+        lastChallengeCategory = result.challenge.category
+
+        // BB-09: Kategorie-Spielzähler erhöhen
+        let categoryKey = result.challenge.category.rawValue
+        highlights.categoryPlayCount[categoryKey, default: 0] += 1
+        saveStats()
+
         if result.didReset {
             playedChallengeIDs.removeAll()
             playedChallengeIDs.insert(result.challenge.id)
@@ -258,6 +327,7 @@ final class AppViewModel: ObservableObject {
         scores = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, 0) })
         UserDefaults.standard.removeObject(forKey: "betbuddy.sessionScores")
         playedChallengeIDs.removeAll()
+        lastChallengeCategory = nil
         refreshChallenge()
     }
     
@@ -469,8 +539,12 @@ final class AppViewModel: ObservableObject {
             if let existing = groups.first(where: { $0.color == color }) {
                 updated.append(existing)
             } else {
-                let name = nameStore.loadName(for: color)
-                updated.append(GroupInfo(color: color, customName: name))
+                updated.append(GroupInfo(
+                    color: color,
+                    customName: nameStore.loadName(for: color),
+                    player1Name: nameStore.loadPlayer1(for: color),
+                    player2Name: nameStore.loadPlayer2(for: color)
+                ))
             }
         }
         groups = updated

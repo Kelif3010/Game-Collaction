@@ -72,7 +72,7 @@ struct SpyCardView: View {
         .onTapGesture {
             // Nur im lokalen Modus schließt Tap die Karte (wenn umgedreht)
             if isFlipped && !isMovingOut && !isMultiplayer {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UISelectionFeedbackGenerator().selectionChanged()
                 moveCardOut()
             }
         }
@@ -180,7 +180,7 @@ struct CardBackView: View {
                         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isScanning)
                         // Fallback-Overlay, falls man nicht scannt (damit man sieht wo man drücken muss)
                         .overlay(
-                            !isScanning ? Image(systemName: "touchid").font(.largeTitle).foregroundColor(.white.opacity(0.2)) : nil
+                            !isScanning ? Image(systemName: "touchid").font(.largeTitle).foregroundStyle(.white.opacity(0.2)) : nil
                         )
                     }
                     
@@ -434,7 +434,7 @@ struct SpyCardFrontView: View {
                 .clipShape(Capsule())
                 .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
                 .padding(.top, 30)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 
                 // KATEGORIE HERO BADGE (Neu positioniert: Direkt unter Header)
                 // Nur anzeigen, wenn kein Spion ODER wenn Spione die Kategorie sehen dürfen
@@ -477,11 +477,11 @@ struct SpyCardFrontView: View {
                     } label: {
                         Text(LocalizedStringKey("Ich hab's"))
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(Color.blue)
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(Color.white.opacity(0.2), lineWidth: 1)
@@ -556,7 +556,7 @@ struct RoleCardContent: View {
                         // Glow Effect
                         Text(mainText)
                             .font(.system(size: isLongText ? 32 : 44, weight: .heavy, design: .rounded))
-                            .foregroundColor(.blue.opacity(0.4))
+                            .foregroundStyle(.blue.opacity(0.4))
                             .blur(radius: 10)
                         
                         Text(mainText)
@@ -592,7 +592,7 @@ struct RoleCardContent: View {
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.black.opacity(0.3))
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -621,8 +621,8 @@ struct RoleCardContent: View {
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
                                     .background(Color.red.opacity(0.15))
-                                    .cornerRadius(8)
-                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .foregroundStyle(.white)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
                                             .stroke(Color.red.opacity(0.2), lineWidth: 1)
@@ -640,7 +640,7 @@ struct RoleCardContent: View {
                     .padding(.vertical, 12)
                     .padding(.horizontal, 16)
                     .background(Color.black.opacity(0.3))
-                    .cornerRadius(20)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                     .padding(.horizontal, 30) // Macht die Box schmaler
                 }
             }

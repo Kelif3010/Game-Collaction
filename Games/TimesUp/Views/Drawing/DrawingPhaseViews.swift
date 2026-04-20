@@ -40,7 +40,7 @@ struct DrawingTermRevealView: View {
                     VStack(spacing: 15) {
                         Text(LocalizedStringKey("Zeichne diesen Begriff:"))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .fontWeight(.medium)
                         
                         PerkWordText(
@@ -58,17 +58,17 @@ struct DrawingTermRevealView: View {
                         // Begriffe übrig Badge
                         HStack {
                             Image(systemName: "paintbrush.pointed")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             let remainingLabel = String(localized: "Begriffe übrig")
                             Text("\(gameManager.gameState.remainingTermsCount) \(remainingLabel)")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.orange.opacity(0.1))
-                        .cornerRadius(15)
+                        .clipShape(RoundedRectangle(cornerRadius: 15))
                     }
                     .padding(.horizontal, 30)
                     .padding(.vertical, 25)
@@ -91,7 +91,7 @@ struct DrawingTermRevealView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 60)
                 .background(
@@ -101,7 +101,7 @@ struct DrawingTermRevealView: View {
                         endPoint: .trailing
                     )
                 )
-                .cornerRadius(30)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
                 .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
             }
             .padding(.horizontal, 30)
@@ -151,7 +151,7 @@ struct DrawingActiveView: View {
             
             // Große Drawing Canvas (MAXIMALER Platz!)
             DrawingCanvasView(drawingState: drawingState)
-                .cornerRadius(15)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 15)
                 .clipped()
@@ -171,18 +171,18 @@ struct DrawingActiveView: View {
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 100, height: 50)
                         .background(
                             LinearGradient(colors: [.blue, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
-                        .cornerRadius(25)
+                        .clipShape(RoundedRectangle(cornerRadius: 25))
                         .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
                         .overlay(alignment: .topTrailing) {
                             if skipFrozen {
                                 Image(systemName: "lock.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                                     .padding(4)
                                     .background(Color.black.opacity(0.4))
                                     .clipShape(Circle())
@@ -201,12 +201,12 @@ struct DrawingActiveView: View {
                                     .font(.headline)
                                     .fontWeight(.bold)
                             }
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 140, height: 50)
                             .background(
                                 LinearGradient(colors: [.red, .red.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
                             )
-                            .cornerRadius(25)
+                            .clipShape(RoundedRectangle(cornerRadius: 25))
                             .shadow(color: .red.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                     }
@@ -216,7 +216,7 @@ struct DrawingActiveView: View {
                 if forcedSkipActive {
                     Text(LocalizedStringKey("Zwangs-Skip aktiv – erst Skip drücken."))
                         .font(.footnote)
-                        .foregroundColor(.yellow)
+                        .foregroundStyle(.yellow)
                 } else {
                     Button(action: onCorrectGuess) {
                         HStack(spacing: 8) {
@@ -226,12 +226,12 @@ struct DrawingActiveView: View {
                                 .font(.headline)
                                 .fontWeight(.bold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 120, height: 50)
                         .background(
                             LinearGradient(colors: [.green, .green.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
-                        .cornerRadius(25)
+                        .clipShape(RoundedRectangle(cornerRadius: 25))
                         .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
                 }
@@ -290,7 +290,7 @@ struct DrawingGuessedView: View {
                     VStack(spacing: 12) {
                         Text(LocalizedStringKey("Der Begriff war:"))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .fontWeight(.medium)
                         
                         PerkWordText(
@@ -319,13 +319,13 @@ struct DrawingGuessedView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 60)
                 .background(
                     LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing)
                 )
-                .cornerRadius(30)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
                 .shadow(color: .green.opacity(0.4), radius: 15, x: 0, y: 8)
             }
             .padding(.horizontal, 30)

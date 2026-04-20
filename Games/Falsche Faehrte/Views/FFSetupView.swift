@@ -13,8 +13,13 @@ struct FFSetupView: View {
     @State private var showCategoryHint: Bool = true
 
     // Sheet-Steuerung
-    @State private var showPlayerSheet = false
-    @State private var showInfoSheet   = false
+    @State private var showPlayerSheet      = false
+    @State private var showInfoSheet        = false
+    @State private var showRoundsSheet      = false
+    @State private var showBluffTimerSheet  = false
+    @State private var showPackSheet        = false
+    @State private var showMultiplayerSheet = false
+    @State private var showCrewPlayers      = false
 
     // Eingabe
     @State private var newPlayerName = ""
@@ -27,54 +32,48 @@ struct FFSetupView: View {
         selectedNames.count >= 2 && !selectedPacks.isEmpty
     }
 
+    private var playerDetailText: String {
+        selectedNames.isEmpty
+            ? "Keine"
+            : selectedNames.count == 1 ? "1 Spieler" : "\(selectedNames.count) Spieler"
+    }
+
+    private var playerSubtitleText: String? {
+        selectedNames.isEmpty ? nil : selectedNames.joined(separator: ", ")
+    }
+
+    private var packDetailText: String {
+        let names = FFPack.allCases
+            .filter { selectedPacks.contains($0) }
+            .map { $0.localizedName }
+        return names.isEmpty ? "Keine" : names.joined(separator: ", ")
+    }
+
     var body: some View {
         ZStack {
             FFBackground()
 
             VStack(spacing: 0) {
                 header
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        heroBanner
+                    VStack(spacing: 18) {
+                        setupCard
                             .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 16)
-
-                        playerSection
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 20)
-
-                        packSection
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 24)
-
-                        settingsGrid
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 28)
-
-                        optionsSection
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 32)
-
-                        Color.clear.frame(height: 110)
+                            .offset(y: appeared ? 0 : 18)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
+                    .padding(.bottom, 120)
                 }
-            }
-
-            // Floating Start-Button
-            VStack {
-                Spacer()
-                startButton
-                    .padding(.bottom, 36)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: appeared ? 0 : 20)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .bottom) {
+            startButtonArea
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : 20)
+        }
         .onAppear {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.82).delay(0.1)) {
                 appeared = true
@@ -82,259 +81,220 @@ struct FFSetupView: View {
         }
         .sheet(isPresented: $showPlayerSheet) { playerPickerSheet }
         .sheet(isPresented: $showInfoSheet)   { FFInfoSheet() }
+        .sheet(isPresented: $showRoundsSheet) { roundsPickerSheet }
+        .sheet(isPresented: $showBluffTimerSheet) { bluffTimerPickerSheet }
+        .sheet(isPresented: $showPackSheet)       { packPickerSheet }
+        .sheet(isPresented: $showMultiplayerSheet) { multiplayerSheet }
     }
 
     // MARK: - Header
     private var header: some View {
-        HStack(spacing: 0) {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .modifier(GlassCircleButtonBackground())
-            }
-
-            Spacer()
-
-            Text("Falsche Fährte")
-                .font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundStyle(FFStyle.accentViolet)
-
-            Spacer()
-
+        HStack {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showInfoSheet = true
+                dismiss()
             } label: {
-                Image(systemName: "questionmark")
-                    .font(.system(size: 15, weight: .bold))
+                Image(systemName: "chevron.left")
+                    .font(.headline.bold())
                     .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
                     .modifier(GlassCircleButtonBackground())
             }
-        }
-    }
-
-    // MARK: - Hero Banner
-    private var heroBanner: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(FFStyle.accentViolet.opacity(0.18))
-                    .frame(width: 64, height: 64)
-                Image(systemName: "magnifyingglass.circle.fill")
-                    .font(.system(size: 34))
-                    .foregroundStyle(FFStyle.primaryGradient)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Falsche Fährte")
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                Text("Lüge überzeugend — oder finde die Wahrheit!")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(FFStyle.textMuted)
-                    .lineLimit(2)
-            }
+            .accessibilityLabel("Zurück")
 
             Spacer()
+
+            HStack(spacing: 12) {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showMultiplayerSheet = true
+                } label: {
+                    Image(systemName: "person.2.wave.2.fill")
+                        .font(.headline)
+                        .foregroundStyle(FFStyle.accentViolet)
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
+                }
+                .accessibilityLabel("Multiplayer")
+
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showInfoSheet = true
+                } label: {
+                    Image(systemName: "questionmark")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
+                }
+                .accessibilityLabel("Spielregeln")
+            }
         }
-        .padding(16)
-        .ffCard(isPrimary: true)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 10)
     }
 
-    // MARK: - Spieler-Sektion
-    private var playerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(icon: "person.2.fill", title: "Spieler",
-                         badge: selectedNames.isEmpty ? nil : "\(selectedNames.count)")
+    private var setupCard: some View {
+        VStack(spacing: 12) {
+            playerRow
+            packRow
+            roundsRow
+            bluffTimerRow
+            categoryHintRow
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.black.opacity(0.35))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(FFStyle.accentViolet.opacity(0.12), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 12, y: 6)
+    }
 
-            if selectedNames.isEmpty {
-                HStack(spacing: 10) {
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 18))
-                        .foregroundStyle(FFStyle.accentViolet.opacity(0.6))
-                    Text("Mindestens 2 Spieler hinzufügen")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(FFStyle.textMuted)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 4)
-            } else {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 100), spacing: 8)],
-                    spacing: 8
-                ) {
-                    ForEach(selectedNames, id: \.self) { name in
-                        HStack(spacing: 6) {
-                            Text(name)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
+    // MARK: - Spieler-Zeile (tippbar → Sheet)
+    private var playerRow: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showPlayerSheet = true
+        } label: {
+            FFSetupActionRow(
+                icon: "person.2.fill",
+                title: "Spieler",
+                detail: playerDetailText,
+                subtitle: playerSubtitleText,
+                accent: FFStyle.accentViolet
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Spieler auswählen")
+        .accessibilityValue(playerDetailText)
+    }
+
+    private var packRow: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showPackSheet = true
+        } label: {
+            FFSetupActionRow(
+                icon: "folder.fill",
+                title: "Fragen",
+                detail: packDetailText,
+                subtitle: nil,
+                accent: FFStyle.accentViolet
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Fragen auswählen")
+        .accessibilityValue(packDetailText)
+    }
+
+    private var roundsRow: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showRoundsSheet = true
+        } label: {
+            FFSetupActionRow(
+                icon: "arrow.clockwise",
+                title: "Runden",
+                detail: "\(roundCount.rawValue)",
+                subtitle: nil,
+                accent: FFStyle.accentViolet
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Runden auswählen")
+        .accessibilityValue("\(roundCount.rawValue) Runden")
+    }
+
+    private var bluffTimerRow: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showBluffTimerSheet = true
+        } label: {
+            FFSetupActionRow(
+                icon: "timer",
+                title: "Lügen-Zeit",
+                detail: bluffTimer.label,
+                subtitle: nil,
+                accent: FFStyle.accentIndigo
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Lügen-Zeit auswählen")
+        .accessibilityValue(bluffTimer.label)
+    }
+
+    // MARK: - Pack Picker Sheet
+    private var packPickerSheet: some View {
+        NavigationStack {
+            ZStack {
+                FFBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 10) {
+                        ForEach(FFPack.allCases) { pack in
+                            let isSelected = selectedPacks.contains(pack)
+                            let accent = pack.accentColor.primary
                             Button {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 withAnimation(.spring(response: 0.3)) {
-                                    selectedNames.removeAll { $0 == name }
+                                    if isSelected {
+                                        if selectedPacks.count > 1 { selectedPacks.remove(pack) }
+                                    } else {
+                                        selectedPacks.insert(pack)
+                                    }
                                 }
                             } label: {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(FFStyle.textMuted)
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(accent.opacity(0.18))
+                                            .frame(width: 44, height: 44)
+                                        Text(pack.emoji)
+                                            .font(.system(size: 22))
+                                    }
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(pack.localizedName)
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundStyle(isSelected ? .white : FFStyle.textMuted)
+                                        Text(packDescription(pack))
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(FFStyle.textMuted)
+                                            .lineLimit(1)
+                                    }
+                                    Spacer()
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .font(.title3)
+                                        .foregroundStyle(isSelected ? accent : FFStyle.textMuted)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 13)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(isSelected ? accent.opacity(0.10) : Color.white.opacity(0.04))
+                                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected ? accent.opacity(0.4) : Color.white.opacity(0.07), lineWidth: 1))
+                                )
                             }
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(FFStyle.accentViolet.opacity(0.12))
-                                .overlay(Capsule().stroke(FFStyle.accentViolet.opacity(0.3), lineWidth: 1))
-                        )
                     }
+                    .padding()
                 }
             }
-
-            addPlayerRow
-        }
-        .padding(16)
-        .ffCard()
-    }
-
-    private var addPlayerRow: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "person.fill")
-                    .font(.system(size: 13))
-                    .foregroundStyle(FFStyle.accentViolet.opacity(0.7))
-                TextField("Name eingeben…", text: $newPlayerName)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white)
-                    .tint(FFStyle.accentViolet)
-                    .focused($inputFocused)
-                    .submitLabel(.done)
-                    .onSubmit { addCurrentName() }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(inputFocused
-                                    ? FFStyle.accentViolet.opacity(0.5)
-                                    : Color.white.opacity(0.08),
-                                    lineWidth: 1)
-                    )
-            )
-
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showPlayerSheet = true
-            } label: {
-                Image(systemName: "person.crop.circle.badge.plus")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(FFStyle.accentViolet)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(FFStyle.accentViolet.opacity(0.12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(FFStyle.accentViolet.opacity(0.3), lineWidth: 1)
-                            )
-                    )
-            }
-
-            Button { addCurrentName() } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty ? .gray : .black)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty
-                                  ? Color.white.opacity(0.06)
-                                  : FFStyle.accentViolet)
-                    )
-            }
-            .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
-        }
-    }
-
-    // MARK: - Pack-Auswahl
-    private var packSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(icon: "square.stack.3d.up.fill", title: "Fragen-Pack")
-
-            VStack(spacing: 10) {
-                ForEach(FFPack.allCases) { pack in
-                    packRow(pack)
+            .navigationTitle("Fragen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { showPackSheet = false }
+                        .font(.headline)
+                        .foregroundStyle(FFStyle.accentViolet)
                 }
             }
         }
-        .padding(16)
-        .ffCard()
-    }
-
-    private func packRow(_ pack: FFPack) -> some View {
-        let isSelected = selectedPacks.contains(pack)
-        let accent = pack.accentColor.primary
-
-        return Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(.spring(response: 0.3)) {
-                if isSelected {
-                    if selectedPacks.count > 1 { selectedPacks.remove(pack) }
-                } else {
-                    selectedPacks.insert(pack)
-                }
-            }
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(accent.opacity(0.18))
-                        .frame(width: 42, height: 42)
-                    Text(pack.emoji)
-                        .font(.system(size: 20))
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(pack.localizedName)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text(packDescription(pack))
-                        .font(.system(size: 12))
-                        .foregroundStyle(FFStyle.textMuted)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? accent.opacity(0.2) : Color.white.opacity(0.06))
-                        .frame(width: 28, height: 28)
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(accent)
-                    }
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? accent.opacity(0.08) : Color.white.opacity(0.04))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(isSelected ? accent.opacity(0.45) : Color.white.opacity(0.07), lineWidth: 1)
-            )
-        }
+        .presentationDetents([.fraction(0.72)])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(28)
     }
 
     private func packDescription(_ pack: FFPack) -> String {
@@ -342,218 +302,413 @@ struct FFSetupView: View {
         case .klassisch: return "Kuriose Fakten für jeden"
         case .krass:     return "Schockierende Wahrheiten"
         case .extrem:    return "Nur für Hartgesottene"
+        case .lustig:    return "Absurde Fakten mit Humor"
+        case .verrueckt: return "Komplett irre, aber wahr"
+        case .pervers:   return "Erwachsen, dreckig, FSK 18"
+        case .unnuetz:   return "Herrlich unnützes Wissen"
         }
     }
 
-    // MARK: - Settings Grid (Runden + Bluff-Timer)
-    private var settingsGrid: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 10) {
-                sectionLabel(icon: "arrow.clockwise", title: "Runden")
-                VStack(spacing: 8) {
+    private var categoryHintRow: some View {
+        FFSetupToggleRow(
+            icon: "tag.fill",
+            title: "Kategorie",
+            detail: showCategoryHint ? "An" : "Aus",
+            accent: FFStyle.accentViolet,
+            isOn: $showCategoryHint
+        )
+    }
+
+    // MARK: - Runden Picker Sheet
+    private var roundsPickerSheet: some View {
+        NavigationStack {
+            ZStack {
+                FFBackground()
+                VStack(spacing: 10) {
                     ForEach(FFRoundCount.allCases) { mode in
-                        settingsRow(
-                            label: mode.label,
-                            isSelected: roundCount == mode,
-                            accent: FFStyle.accentViolet
-                        ) {
+                        let isSelected = roundCount == mode
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             withAnimation(.spring(response: 0.3)) { roundCount = mode }
+                            showRoundsSheet = false
+                        } label: {
+                            HStack(spacing: 14) {
+                                Text("\(mode.rawValue)")
+                                    .font(.system(size: 22, weight: .black, design: .rounded))
+                                    .foregroundStyle(isSelected ? FFStyle.accentViolet : .white)
+                                    .frame(width: 36, alignment: .leading)
+                                Text("Runden")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(FFStyle.textMuted)
+                                Spacer()
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(isSelected ? FFStyle.accentViolet : FFStyle.textMuted)
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isSelected ? FFStyle.accentViolet.opacity(0.10) : Color.white.opacity(0.04))
+                                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected ? FFStyle.accentViolet.opacity(0.4) : Color.white.opacity(0.07), lineWidth: 1))
+                            )
                         }
                     }
                 }
+                .padding()
             }
-            .padding(14)
-            .ffCard()
-            .frame(maxWidth: .infinity)
+            .navigationTitle("Rundenanzahl")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { showRoundsSheet = false }
+                        .font(.headline)
+                        .foregroundStyle(FFStyle.accentViolet)
+                }
+            }
+        }
+        .presentationDetents([.fraction(0.46)])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(28)
+    }
 
-            VStack(alignment: .leading, spacing: 10) {
-                sectionLabel(icon: "pencil.and.timer", title: "Lügen-Zeit")
-                VStack(spacing: 8) {
+    // MARK: - Bluff-Timer Picker Sheet
+    private var bluffTimerPickerSheet: some View {
+        NavigationStack {
+            ZStack {
+                FFBackground()
+                VStack(spacing: 10) {
                     ForEach(FFBluffTimer.allCases) { mode in
-                        settingsRow(
-                            label: mode.label,
-                            isSelected: bluffTimer == mode,
-                            accent: FFStyle.accentIndigo
-                        ) {
+                        let isSelected = bluffTimer == mode
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             withAnimation(.spring(response: 0.3)) { bluffTimer = mode }
+                            showBluffTimerSheet = false
+                        } label: {
+                            HStack(spacing: 14) {
+                                Text(mode.label)
+                                    .font(.system(size: 22, weight: .black, design: .rounded))
+                                    .foregroundStyle(isSelected ? FFStyle.accentIndigo : .white)
+                                    .frame(width: 52, alignment: .leading)
+                                Text("pro Spieler zum Lügen")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(FFStyle.textMuted)
+                                Spacer()
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(isSelected ? FFStyle.accentIndigo : FFStyle.textMuted)
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isSelected ? FFStyle.accentIndigo.opacity(0.10) : Color.white.opacity(0.04))
+                                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected ? FFStyle.accentIndigo.opacity(0.4) : Color.white.opacity(0.07), lineWidth: 1))
+                            )
                         }
                     }
                 }
+                .padding()
             }
-            .padding(14)
-            .ffCard()
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private func settingsRow(label: String, isSelected: Bool, accent: Color, action: @escaping () -> Void) -> some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            action()
-        } label: {
-            HStack {
-                Text(label)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(isSelected ? accent : .white)
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(accent)
+            .navigationTitle("Lügen-Zeit")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { showBluffTimerSheet = false }
+                        .font(.headline)
+                        .foregroundStyle(FFStyle.accentIndigo)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 9)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? accent.opacity(0.12) : Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(isSelected ? accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
-                    )
-            )
         }
-    }
-
-    // MARK: - Optionen
-    private var optionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(icon: "slider.horizontal.3", title: "Optionen")
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Kategorie-Hinweis")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text("Zeigt z.B. \"Geschichte\" unter der Frage")
-                        .font(.system(size: 12))
-                        .foregroundStyle(FFStyle.textMuted)
-                }
-                Spacer()
-                Toggle("", isOn: $showCategoryHint)
-                    .tint(FFStyle.accentViolet)
-                    .labelsHidden()
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.07), lineWidth: 1)
-                    )
-            )
-        }
-        .padding(16)
-        .ffCard()
+        .presentationDetents([.fraction(0.46)])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(28)
     }
 
     // MARK: - Start-Button
-    private var startButton: some View {
-        Button {
-            guard canStart else { return }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            inputFocused = false
+    private var startButtonArea: some View {
+        VStack(spacing: 10) {
+            // Einzelgerät-Start
+            Button {
+                guard canStart else { return }
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                inputFocused = false
+                startSinglePlayerGame()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Spiel starten")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(canStart ? .black : .white.opacity(0.4))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    Capsule()
+                        .fill(canStart
+                              ? AnyShapeStyle(FFStyle.primaryGradient)
+                              : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)],
+                                                             startPoint: .leading, endPoint: .trailing)))
+                        .shadow(color: canStart ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 16, y: 6)
+                )
+            }
+            .disabled(!canStart)
+            .animation(.spring(response: 0.3), value: canStart)
 
+            if !canStart {
+                Text(selectedNames.count < 2
+                     ? "Mindestens 2 Spieler hinzufügen"
+                     : "Mindestens ein Fragen-Pack auswählen")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(FFStyle.textMuted)
+                    .multilineTextAlignment(.center)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+        .padding(.bottom, 32)
+    }
+
+    // MARK: - Multiplayer Sheet
+
+    private var multiplayerSheet: some View {
+        FFMultiplayerSheet(
+            onGameStarted: { config, asHost in
+                startMultiplayerGame(config: config, asHost: asHost)
+            },
+            getHostConfig: { lobbyPlayers in
+                // Fragenpool aus aktuellen Einstellungen generieren
+                let pool = FFQuestionDatabase.questions(for: selectedPacks)
+                let limited = Array(pool.prefix(roundCount.rawValue))
+                return FFGameConfigPayload(
+                    questionIds: limited.map { $0.id },
+                    playerNames: lobbyPlayers,
+                    showCategoryHint: showCategoryHint,
+                    bluffTimerSeconds: bluffTimer.rawValue,
+                    roundCount: roundCount.rawValue
+                )
+            }
+        )
+    }
+
+    // MARK: - Spiel starten Hilfsmethoden
+
+    private func startSinglePlayerGame() {
+        viewModel.settings.selectedPacks   = selectedPacks
+        viewModel.settings.roundCount       = roundCount
+        viewModel.settings.bluffTimer       = bluffTimer
+        viewModel.settings.showCategoryHint = showCategoryHint
+
+        for name in selectedNames {
+            viewModel.addPlayer(name)
+        }
+        GlobalPlayerManager.shared.updateLastPlayed(for: selectedNames)
+        viewModel.startGame()
+    }
+
+    private func startMultiplayerGame(config: FFGameConfigPayload, asHost: Bool) {
+        viewModel.isMultiplayer = true
+        viewModel.isHost = asHost
+
+        if asHost {
             viewModel.settings.selectedPacks   = selectedPacks
             viewModel.settings.roundCount       = roundCount
             viewModel.settings.bluffTimer       = bluffTimer
             viewModel.settings.showCategoryHint = showCategoryHint
 
-            for name in selectedNames {
+            for name in config.playerNames {
                 viewModel.addPlayer(name)
             }
-            GlobalPlayerManager.shared.updateLastPlayed(for: selectedNames)
-            viewModel.startGame()
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 16, weight: .bold))
-                Text("Spiel starten")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-            }
-            .foregroundStyle(canStart ? .black : .white.opacity(0.4))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(
-                Capsule()
-                    .fill(canStart
-                          ? AnyShapeStyle(FFStyle.primaryGradient)
-                          : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)],
-                                                         startPoint: .leading, endPoint: .trailing)))
-                    .shadow(color: canStart ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 16, y: 6)
-            )
+            GlobalPlayerManager.shared.updateLastPlayed(for: config.playerNames)
+            viewModel.startMultiplayerGameAsHost(questionIds: config.questionIds)
+        } else {
+            viewModel.startMultiplayerGameAsClient(config: config)
         }
-        .disabled(!canStart)
-        .animation(.spring(response: 0.3), value: canStart)
-        .padding(.horizontal, 24)
     }
 
-    // MARK: - Spieler-Picker Sheet
+    // MARK: - Spieler Management Sheet
     private var playerPickerSheet: some View {
         NavigationStack {
             ZStack {
                 FFBackground()
-                if playerManager.players.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "person.slash")
-                            .font(.system(size: 40))
-                            .foregroundStyle(FFStyle.textMuted)
-                        Text("Keine gespeicherten Spieler")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(FFStyle.textMuted)
-                    }
-                } else {
-                    ScrollView {
-                        VStack(spacing: 10) {
-                            ForEach(playerManager.players) { player in
-                                let isAdded = selectedNames.contains(player.name)
-                                Button {
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                    withAnimation(.spring(response: 0.3)) {
-                                        if isAdded {
-                                            selectedNames.removeAll { $0 == player.name }
-                                        } else {
-                                            selectedNames.append(player.name)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+
+                        // Neuen Spieler hinzufügen
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("NEUER SPIELER")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundStyle(FFStyle.textMuted)
+                                .tracking(1.5)
+
+                            HStack(spacing: 10) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "person.fill")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(FFStyle.accentViolet.opacity(0.7))
+                                    TextField("Name eingeben…", text: $newPlayerName)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(.white)
+                                        .tint(FFStyle.accentViolet)
+                                        .focused($inputFocused)
+                                        .submitLabel(.done)
+                                        .onSubmit {
+                                            addCurrentName()
+                                            inputFocused = false
                                         }
-                                    }
-                                } label: {
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(FFStyle.accentViolet.opacity(0.18))
-                                                .frame(width: 40, height: 40)
-                                            Text(String(player.name.prefix(1)).uppercased())
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundStyle(FFStyle.accentViolet)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 11)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.06))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(inputFocused
+                                                        ? FFStyle.accentViolet.opacity(0.5)
+                                                        : Color.white.opacity(0.08), lineWidth: 1)
+                                        )
+                                )
+
+                                Button { addCurrentName() } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundStyle(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty ? .gray : .black)
+                                        .frame(width: 46, height: 46)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty
+                                                      ? Color.white.opacity(0.06)
+                                                      : FFStyle.accentViolet)
+                                        )
+                                }
+                                .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
+                            }
+                        }
+
+                        // Ausgewählte Spieler
+                        if !selectedNames.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("AUSGEWÄHLT (\(selectedNames.count))")
+                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(FFStyle.accentViolet)
+                                    .tracking(1.5)
+
+                                VStack(spacing: 8) {
+                                    ForEach(selectedNames, id: \.self) { name in
+                                        HStack(spacing: 14) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(FFStyle.accentViolet.opacity(0.15))
+                                                    .frame(width: 38, height: 38)
+                                                Text(String(name.prefix(1)).uppercased())
+                                                    .font(.system(size: 15, weight: .bold))
+                                                    .foregroundStyle(FFStyle.accentViolet)
+                                            }
+                                            Text(name)
+                                                .font(.system(size: 15, weight: .semibold))
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Button {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                withAnimation(.spring(response: 0.3)) {
+                                                    selectedNames.removeAll { $0 == name }
+                                                }
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 20))
+                                                    .foregroundStyle(FFStyle.textMuted)
+                                            }
                                         }
-                                        Text(player.name)
-                                            .font(.system(size: 15, weight: .semibold))
-                                            .foregroundStyle(.white)
-                                        Spacer()
-                                        Image(systemName: isAdded ? "checkmark.circle.fill" : "circle")
-                                            .font(.title3)
-                                            .foregroundStyle(isAdded ? FFStyle.accentViolet : FFStyle.textMuted)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(FFStyle.accentViolet.opacity(0.08))
+                                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(FFStyle.accentViolet.opacity(0.35), lineWidth: 1))
+                                        )
                                     }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 14)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .fill(isAdded ? FFStyle.accentViolet.opacity(0.08) : Color.white.opacity(0.04))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(isAdded ? FFStyle.accentViolet.opacity(0.4) : Color.white.opacity(0.07), lineWidth: 1)
-                                    )
                                 }
                             }
                         }
-                        .padding()
+
+                        // Gespeicherte Spieler (Crew)
+                        // Crew: nur nicht-ausgewählte Spieler anzeigen
+                        let crewNotSelected = playerManager.players.filter { !selectedNames.contains($0.name) }
+                        if !crewNotSelected.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 12) {
+                                    Text("DEINE CREW")
+                                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(FFStyle.textMuted)
+                                        .tracking(1.5)
+
+                                    Spacer()
+
+                                    Button {
+                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+                                            showCrewPlayers.toggle()
+                                        }
+                                    } label: {
+                                        Text(showCrewPlayers ? "Ausblenden" : "Einblenden")
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundStyle(FFStyle.accentViolet)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 7)
+                                            .background(
+                                                Capsule()
+                                                    .fill(FFStyle.accentViolet.opacity(0.12))
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+
+                                if showCrewPlayers {
+                                    VStack(spacing: 8) {
+                                        ForEach(crewNotSelected) { player in
+                                            Button {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                withAnimation(.spring(response: 0.3)) {
+                                                    selectedNames.append(player.name)
+                                                }
+                                            } label: {
+                                                HStack(spacing: 14) {
+                                                    ZStack {
+                                                        Circle()
+                                                            .fill(Color.white.opacity(0.06))
+                                                            .frame(width: 38, height: 38)
+                                                        Text(String(player.name.prefix(1)).uppercased())
+                                                            .font(.system(size: 15, weight: .bold))
+                                                            .foregroundStyle(FFStyle.textMuted)
+                                                    }
+                                                    Text(player.name)
+                                                        .font(.system(size: 15, weight: .semibold))
+                                                        .foregroundStyle(.white)
+                                                    Spacer()
+                                                    Image(systemName: "plus.circle")
+                                                        .font(.title3)
+                                                        .foregroundStyle(FFStyle.accentViolet)
+                                                }
+                                                .padding(.horizontal, 14)
+                                                .padding(.vertical, 11)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 14)
+                                                        .fill(Color.white.opacity(0.04))
+                                                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.07), lineWidth: 1))
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+                    .padding()
                 }
             }
-            .navigationTitle("Gespeicherte Spieler")
+            .navigationTitle("Spieler")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -583,24 +738,130 @@ struct FFSetupView: View {
         newPlayerName = ""
     }
 
-    private func sectionLabel(icon: String, title: String, badge: String? = nil) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(FFStyle.accentViolet)
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .foregroundStyle(FFStyle.textMuted)
-                .tracking(1.5)
-            if let badge {
-                Text(badge)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(FFStyle.accentViolet))
+}
+
+private struct FFSetupActionRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+    let subtitle: String?
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            FFSetupIconBadge(icon: icon, accent: accent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(FFStyle.textMuted)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                Text(detail)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(FFStyle.textMuted)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .foregroundStyle(FFStyle.textMuted.opacity(0.7))
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.black.opacity(0.35))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(accent.opacity(0.12), lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+    }
+}
+
+private struct FFSetupToggleRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+    let accent: Color
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            FFSetupIconBadge(icon: icon, accent: accent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text("Zeigt die Themenrichtung direkt unter der Frage")
+                    .font(.subheadline)
+                    .foregroundStyle(FFStyle.textMuted)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Text(detail)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(FFStyle.textMuted)
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .tint(accent)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.black.opacity(0.35))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(accent.opacity(0.12), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(detail)
+    }
+}
+
+private struct FFSetupIconBadge: View {
+    let icon: String
+    let accent: Color
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [accent.opacity(0.22), accent.opacity(0.08)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 44, height: 44)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(accent.opacity(0.3), lineWidth: 1)
+                )
+
+            Image(systemName: icon)
+                .font(.headline)
+                .foregroundStyle(accent)
+        }
+        .accessibilityHidden(true)
     }
 }
 

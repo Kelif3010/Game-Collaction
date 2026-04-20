@@ -134,16 +134,16 @@ struct EmptyCanvasView: View {
         VStack(spacing: 15) {
             Image(systemName: "scribble.variable")
                 .font(.system(size: 48))
-                .foregroundColor(.gray.opacity(0.6))
+                .foregroundStyle(.gray.opacity(0.6))
             
             Text(LocalizedStringKey("Bereit zum Zeichnen!"))
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
             
             Text(LocalizedStringKey("Tippe und ziehe, um zu zeichnen"))
                 .font(.subheadline)
-                .foregroundColor(.gray.opacity(0.8))
+                .foregroundStyle(.gray.opacity(0.8))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.gray.opacity(0.05))

@@ -5,35 +5,6 @@
 
 import SwiftUI
 
-// MARK: - TimesUp Theme (Updated to match GameView)
-private struct SettingsTheme {
-    // Matches TimesUpGameView background
-    static let background = LinearGradient(
-        colors: [
-            Color.black,
-            Color(.systemGray6).opacity(0.3),
-            Color.blue.opacity(0.15),
-            Color.purple.opacity(0.1)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-    
-    static let cardBackground = Color.black.opacity(0.4)
-    static let cardStroke = Color.white.opacity(0.1)
-    static let cornerRadius: CGFloat = 16
-    static let padding: CGFloat = 20
-    
-    static let mutedText = Color.white.opacity(0.6)
-}
-
-// MARK: - Haptics
-private enum TimesUpHaptics {
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
-    }
-}
-
 // MARK: - Components
 
 private struct TimesUpSettingsRow: View {
@@ -80,7 +51,7 @@ private struct TimesUpSettingsRow: View {
                    rowType != .difficulty,
                    rowType != .mode {
                     Text(LocalizedStringKey(detail))
-                        .foregroundStyle(SettingsTheme.mutedText)
+                        .foregroundStyle(TimesUpStyle.mutedText)
                         .font(.subheadline)
                 }
             }
@@ -93,7 +64,7 @@ private struct TimesUpSettingsRow: View {
                 // Let's just use a Chevron for the view, but show status text.
                  HStack(spacing: 6) {
                     Text(isToggleOn ? "An" : "Aus")
-                         .foregroundStyle(isToggleOn ? .green : SettingsTheme.mutedText)
+                         .foregroundStyle(isToggleOn ? .green : TimesUpStyle.mutedText)
                         .font(.subheadline.weight(.semibold))
                     
                     Image(systemName: "chevron.right")
@@ -107,7 +78,7 @@ private struct TimesUpSettingsRow: View {
                         // Only show detail on the right for these types or teams/categories count
                         if rowType == .teams || rowType == .categories || rowType == .difficulty || rowType == .mode {
                             Text(LocalizedStringKey(detail))
-                                .foregroundStyle(SettingsTheme.mutedText)
+                                .foregroundStyle(TimesUpStyle.mutedText)
                                 .font(.subheadline.weight(.semibold))
                         }
                     }
@@ -119,10 +90,10 @@ private struct TimesUpSettingsRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(SettingsTheme.cardBackground)
+        .background(TimesUpStyle.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 18)
-                .stroke(SettingsTheme.cardStroke, lineWidth: 1)
+                .stroke(TimesUpStyle.cardStroke, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .contentShape(Rectangle())
@@ -132,30 +103,7 @@ private struct TimesUpSettingsRow: View {
     }
 }
 
-private struct TimesUpPrimaryButton: View {
-    var title: LocalizedStringKey
-    var action: () -> Void
-    var isDisabled: Bool = false
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(
-                    isDisabled
-                    ? AnyShapeStyle(Color.gray.opacity(0.3))
-                    : AnyShapeStyle(LinearGradient(colors: [.green, .blue], startPoint: .leading, endPoint: .trailing))
-                )
-                .clipShape(Capsule())
-                .shadow(color: isDisabled ? .clear : .green.opacity(0.4), radius: 10, x: 0, y: 5)
-        }
-        .disabled(isDisabled)
-        .opacity(isDisabled ? 0.6 : 1.0)
-    }
-}
+// TimesUpPrimaryButton is now defined in TimesUpStyle.swift
 
 // MARK: - Main Settings View
 struct SettingsView: View {
@@ -172,6 +120,8 @@ struct SettingsView: View {
     @State private var showInfoSheet = false
     @State private var showLeaderboardSheet = false
     @State private var showTimeWordsSheet = false
+    @State private var showDifficultySheet = false
+    @State private var showGameModeSheet = false
     @State private var showCategoryManagement = false
     
     enum SettingsRoute: Hashable {
@@ -188,13 +138,13 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
-                SettingsTheme.background.ignoresSafeArea()
+                TimesUpStyle.backgroundGradient.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     // Header
                     topBar
-                        .padding(.horizontal, SettingsTheme.padding)
-                        .padding(.top, SettingsTheme.padding) // Changed to 20 (SettingsTheme.padding)
+                        .padding(.horizontal, TimesUpStyle.horizontalPadding)
+                        .padding(.top, TimesUpStyle.horizontalPadding) // Changed to 20 (TimesUpStyle.horizontalPadding)
                         .padding(.bottom, 20)
                     
                     ScrollView {
@@ -256,8 +206,8 @@ struct SettingsView: View {
                                 detail: gameManager.gameState.settings.difficulty.rawValue,
                                 rowType: .difficulty,
                                 onTap: {
-                                    cycleDifficulty()
                                     TimesUpHaptics.impact(.light)
+                                    showDifficultySheet = true
                                 }
                             )
                             
@@ -268,8 +218,8 @@ struct SettingsView: View {
                                 detail: gameManager.gameState.settings.gameMode.rawValue,
                                 rowType: .mode,
                                 onTap: {
-                                    cycleGameMode()
                                     TimesUpHaptics.impact(.light)
+                                    showGameModeSheet = true
                                 }
                             )
                         }
@@ -280,7 +230,7 @@ struct SettingsView: View {
                             RoundedRectangle(cornerRadius: 22)
                                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
                         )
-                        .padding(.horizontal, SettingsTheme.padding)
+                        .padding(.horizontal, TimesUpStyle.horizontalPadding)
                         .padding(.bottom, 100)
                     }
                 }
@@ -296,7 +246,7 @@ struct SettingsView: View {
                         },
                         isDisabled: !gameManager.canStartGame
                     )
-                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.horizontal, TimesUpStyle.horizontalPadding)
                     .padding(.bottom, 32) // Matched BetBuddy (20 container + 12 button padding)
                 }
             }
@@ -315,6 +265,27 @@ struct SettingsView: View {
                 TimeAndWordsSheetView(gameManager: gameManager)
                     .presentationDetents([.medium, .fraction(0.6)])
                     .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(28)
+            }
+            .sheet(isPresented: $showDifficultySheet) {
+                TimesUpDifficultySheet(
+                    selected: gameManager.gameState.settings.difficulty
+                ) { difficulty in
+                    gameManager.gameState.settings.difficulty = difficulty
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
+            }
+            .sheet(isPresented: $showGameModeSheet) {
+                TimesUpGameModeSheet(
+                    selected: gameManager.gameState.settings.gameMode
+                ) { mode in
+                    gameManager.gameState.settings.gameMode = mode
+                }
+                .presentationDetents([.medium, .fraction(0.58)])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
             }
             .fullScreenCover(isPresented: $showGame) {
                 TimesUpGameView(gameManager: gameManager)
@@ -339,9 +310,8 @@ struct SettingsView: View {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassCircleButtonBackground())
             }
 
             Spacer()
@@ -354,9 +324,8 @@ struct SettingsView: View {
                     Image(systemName: "trophy.fill")
                         .font(.headline)
                         .foregroundStyle(.yellow)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
                 
                 Button {
@@ -366,9 +335,8 @@ struct SettingsView: View {
                     Image(systemName: "folder.fill") // Or "folder.badge.gearshape" as requested
                         .font(.headline)
                         .foregroundStyle(.orange)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
                 
                 Button {
@@ -378,9 +346,8 @@ struct SettingsView: View {
                     Image(systemName: "questionmark")
                         .font(.headline.bold())
                         .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
             }
         }
@@ -389,22 +356,6 @@ struct SettingsView: View {
     private func startGame() {
         gameManager.startGame()
         showGame = true
-    }
-    
-    private func cycleDifficulty() {
-        let all = Difficulty.allCases
-        if let currentIdx = all.firstIndex(of: gameManager.gameState.settings.difficulty) {
-            let nextIdx = (currentIdx + 1) % all.count
-            gameManager.gameState.settings.difficulty = all[nextIdx]
-        }
-    }
-    
-    private func cycleGameMode() {
-        let all = TimesUpGameMode.allCases
-        if let currentIdx = all.firstIndex(of: gameManager.gameState.settings.gameMode) {
-            let nextIdx = (currentIdx + 1) % all.count
-            gameManager.gameState.settings.gameMode = all[nextIdx]
-        }
     }
 }
 
@@ -418,7 +369,7 @@ private struct TeamsDetailView: View {
 
     var body: some View {
         ZStack {
-            SettingsTheme.background.ignoresSafeArea()
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 20) {
@@ -427,15 +378,14 @@ private struct TeamsDetailView: View {
                         Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         Spacer()
                         Text("Teams")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         Color.clear.frame(width: 44)
                     }
@@ -444,17 +394,17 @@ private struct TeamsDetailView: View {
                     VStack(spacing: 16) {
                         // Input Field
                         HStack(spacing: 12) {
-                            TextField("", text: $newTeamName, prompt: Text(LocalizedStringKey("Teamname...")).foregroundColor(.gray))
+                            TextField("", text: $newTeamName, prompt: Text(LocalizedStringKey("Teamname...")).foregroundStyle(.gray))
                                 .padding()
                                 .background(Color.white.opacity(0.1))
-                                .cornerRadius(12)
-                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .foregroundStyle(.white)
                                 .onSubmit(addTeamIfPossible)
 
                             Button(action: addTeamIfPossible) {
                                 Image(systemName: "plus")
                                     .font(.title2.bold())
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                                     .frame(width: 50, height: 50)
                                     .background(newTeamName.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
                                     .clipShape(Circle())
@@ -466,10 +416,10 @@ private struct TeamsDetailView: View {
                             HStack(spacing: 6) {
                                 Spacer()
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.orange)
+                                    .foregroundStyle(.orange)
                                 Text(LocalizedStringKey("Mindestens 2 Teams erforderlich"))
                                     .font(.caption)
-                                    .foregroundColor(.orange)
+                                    .foregroundStyle(.orange)
                                 Spacer()
                             }
                         }
@@ -484,35 +434,40 @@ private struct TeamsDetailView: View {
                                         .overlay(
                                             Text(String(team.name.prefix(1)))
                                                 .font(.headline.bold())
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                         )
-                                    
+
                                     Text(team.name)
                                         .font(.body.weight(.medium))
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         .padding(.leading, 8)
-                                    
+
                                     Spacer()
-                                    
+
                                     Button {
                                         withAnimation {
                                             gameManager.removeTeam(team)
                                         }
                                     } label: {
                                         Image(systemName: "trash")
-                                            .foregroundColor(.red.opacity(0.8))
+                                            .foregroundStyle(.red.opacity(0.8))
                                             .padding(8)
                                     }
                                 }
                                 .padding()
                                 .background(Color.white.opacity(0.08))
-                                .cornerRadius(16)
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .scrollTransition { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1 : 0.6)
+                                        .offset(y: phase.isIdentity ? 0 : 12)
+                                }
                             }
                         }
                     }
                 }
             }
-            .padding(.horizontal, SettingsTheme.padding)
+            .padding(.horizontal, TimesUpStyle.horizontalPadding)
             .padding(.bottom, 40) // Bottom padding for scroll content
         }
         .scrollDismissesKeyboard(.interactively)
@@ -536,7 +491,7 @@ private struct CategoriesDetailView: View {
 
     var body: some View {
         ZStack {
-            SettingsTheme.background.ignoresSafeArea()
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 // Header
@@ -544,25 +499,24 @@ private struct CategoriesDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .modifier(GlassCircleButtonBackground())
                     }
                     Spacer()
                     Text(LocalizedStringKey("Kategorien"))
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     Spacer()
                     Text("\(gameManager.gameState.settings.selectedCategories.count)")
                         .font(.headline)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.blue.opacity(0.2))
                         .clipShape(Capsule())
                 }
-                .padding(.horizontal, SettingsTheme.padding)
+                .padding(.horizontal, TimesUpStyle.horizontalPadding)
                 .padding(.top, 10)
 
                 ScrollView {
@@ -578,7 +532,7 @@ private struct CategoriesDetailView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.horizontal, TimesUpStyle.horizontalPadding)
                     .padding(.bottom, 40)
                 }
             }
@@ -616,7 +570,7 @@ private struct TimesUpCategoryRowView: View {
                     .font(.headline)
                 
                 Text(LocalizedStringKey(category.type.rawValue))
-                    .foregroundStyle(SettingsTheme.mutedText)
+                    .foregroundStyle(TimesUpStyle.mutedText)
                     .font(.caption)
             }
 
@@ -631,7 +585,7 @@ private struct TimesUpCategoryRowView: View {
                         .overlay(
                             Image(systemName: "checkmark")
                                 .font(.caption.bold())
-                                .foregroundColor(.black) // Black check on neon color looks punchy
+                                .foregroundStyle(.black) // Black check on neon color looks punchy
                         )
                         .shadow(color: category.type.color.opacity(0.6), radius: 6, x: 0, y: 0) // Glow effect
                 } else {
@@ -691,18 +645,18 @@ private struct TimeAndWordsSheetView: View {
                 
                 Text("Zeit & Wörter")
                     .font(.title2.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 // Time Slider
                 VStack(alignment: .leading, spacing: 15) {
                     HStack {
                         Label("Zeit pro Zug", systemImage: "timer")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         Text("\(Int(gameManager.gameState.settings.turnTimeLimit)) s")
                             .font(.title3.bold())
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     }
                     
                     Slider(
@@ -717,24 +671,24 @@ private struct TimeAndWordsSheetView: View {
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
-                .cornerRadius(16)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
                 
                 // Words Slider
                 VStack(alignment: .leading, spacing: 15) {
                     HStack {
                         Label("Anzahl Wörter", systemImage: "textformat.123")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         Text("\(gameManager.gameState.settings.wordCount)")
                             .font(.title3.bold())
-                            .foregroundColor(.purple)
+                            .foregroundStyle(.purple)
                     }
                     
                     if gameManager.gameState.settings.selectedCategories.isEmpty {
                          Text("Mindestens eine Kategorie auswählen")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                     } else {
                         Slider(
                             value: Binding(
@@ -758,12 +712,12 @@ private struct TimeAndWordsSheetView: View {
                             }
                         }
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                     }
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
-                .cornerRadius(16)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
                 
                 Spacer()
                 
@@ -772,16 +726,271 @@ private struct TimeAndWordsSheetView: View {
                 } label: {
                     Text("Weiter")
                         .font(.headline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.blue)
-                        .cornerRadius(14)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .padding(.bottom, 20)
             }
             .padding(.horizontal, 24)
         }
+    }
+}
+
+private struct TimesUpDifficultySheet: View {
+    let selected: Difficulty
+    let onSelect: (Difficulty) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                TimesUpSelectionSheetHeader(
+                    icon: "gauge.medium",
+                    title: "SCHWIERIGKEIT",
+                    tint: .orange
+                )
+
+                Text("Wähle, wie streng Fehler und Skips behandelt werden")
+                    .font(.subheadline)
+                    .foregroundStyle(TimesUpStyle.mutedText)
+                    .padding(.top, 8)
+
+                VStack(spacing: 10) {
+                    ForEach(Difficulty.allCases, id: \.self) { difficulty in
+                        let isSelected = selected == difficulty
+
+                        Button {
+                            TimesUpHaptics.impact(.light)
+                            onSelect(difficulty)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(isSelected ? difficultyColor(difficulty).opacity(0.2) : Color.white.opacity(0.06))
+                                        .frame(width: 40, height: 40)
+
+                                    Text(difficultyEmoji(difficulty))
+                                        .font(.system(size: 18))
+                                }
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(LocalizedStringKey(difficulty.rawValue))
+                                        .font(.body.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                    Text(LocalizedStringKey(difficultyDescription(difficulty)))
+                                        .font(.caption)
+                                        .foregroundStyle(isSelected ? difficultyColor(difficulty).opacity(0.95) : TimesUpStyle.mutedText)
+                                        .multilineTextAlignment(.leading)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(isSelected ? difficultyColor(difficulty) : Color.white.opacity(0.25))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isSelected ? difficultyColor(difficulty).opacity(0.12) : Color.black.opacity(0.35))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(isSelected ? difficultyColor(difficulty).opacity(0.45) : Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+
+                Spacer()
+            }
+        }
+    }
+
+    private func difficultyDescription(_ difficulty: Difficulty) -> String {
+        switch difficulty {
+        case .easy:
+            return "Entspannt. Fehler kosten keine zusätzlichen Punkte."
+        case .medium:
+            return "Ausgewogen. Fehler bremsen stärker."
+        case .hard:
+            return "Hart. Für riskante Runden mit mehr Druck."
+        }
+    }
+
+    private func difficultyEmoji(_ difficulty: Difficulty) -> String {
+        switch difficulty {
+        case .easy:
+            return "🙂"
+        case .medium:
+            return "⚡"
+        case .hard:
+            return "🔥"
+        }
+    }
+
+    private func difficultyColor(_ difficulty: Difficulty) -> Color {
+        switch difficulty {
+        case .easy:
+            return .green
+        case .medium:
+            return .orange
+        case .hard:
+            return .red
+        }
+    }
+}
+
+private struct TimesUpGameModeSheet: View {
+    let selected: TimesUpGameMode
+    let onSelect: (TimesUpGameMode) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                TimesUpSelectionSheetHeader(
+                    icon: "gamecontroller.fill",
+                    title: "SPIELMODUS",
+                    tint: .blue
+                )
+
+                Text("Wähle, wie eure Runden aufgebaut sind")
+                    .font(.subheadline)
+                    .foregroundStyle(TimesUpStyle.mutedText)
+                    .padding(.top, 8)
+
+                VStack(spacing: 10) {
+                    ForEach(TimesUpGameMode.allCases, id: \.self) { mode in
+                        let isSelected = selected == mode
+
+                        Button {
+                            TimesUpHaptics.impact(.light)
+                            onSelect(mode)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(isSelected ? modeColor(mode).opacity(0.2) : Color.white.opacity(0.06))
+                                        .frame(width: 40, height: 40)
+
+                                    Image(systemName: modeIcon(mode))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(isSelected ? modeColor(mode) : Color.white.opacity(0.8))
+                                }
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(LocalizedStringKey(mode.rawValue))
+                                        .font(.body.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                    Text(LocalizedStringKey(mode.description))
+                                        .font(.caption)
+                                        .foregroundStyle(isSelected ? modeColor(mode).opacity(0.95) : TimesUpStyle.mutedText)
+                                        .multilineTextAlignment(.leading)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(isSelected ? modeColor(mode) : Color.white.opacity(0.25))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isSelected ? modeColor(mode).opacity(0.12) : Color.black.opacity(0.35))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(isSelected ? modeColor(mode).opacity(0.45) : Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+
+                Spacer()
+            }
+        }
+    }
+
+    private func modeIcon(_ mode: TimesUpGameMode) -> String {
+        switch mode {
+        case .classic:
+            return "list.number"
+        case .withDrawing:
+            return "pencil.and.outline"
+        case .randomOrder:
+            return "shuffle"
+        }
+    }
+
+    private func modeColor(_ mode: TimesUpGameMode) -> Color {
+        switch mode {
+        case .classic:
+            return .blue
+        case .withDrawing:
+            return .purple
+        case .randomOrder:
+            return .mint
+        }
+    }
+}
+
+private struct TimesUpSelectionSheetHeader: View {
+    let icon: String
+    let title: String
+    let tint: Color
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+            }
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(tint)
+                Text(LocalizedStringKey(title))
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .tracking(2)
+            }
+
+            Spacer()
+
+            Color.clear.frame(width: 44, height: 44)
+        }
+        .padding(.horizontal)
+        .padding(.top, 20)
     }
 }
 
@@ -792,7 +1001,7 @@ private struct PerkSettingsDetailView: View {
 
     var body: some View {
         ZStack {
-            SettingsTheme.background.ignoresSafeArea()
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -800,22 +1009,21 @@ private struct PerkSettingsDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .modifier(GlassCircleButtonBackground())
                     }
                     Spacer()
                     Text(LocalizedStringKey("Perks"))
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     Spacer()
                     
                     Toggle("", isOn: $gameManager.gameState.settings.perksEnabled)
                         .labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: .green))
                 }
-                .padding(.horizontal, SettingsTheme.padding)
+                .padding(.horizontal, TimesUpStyle.horizontalPadding)
                 .padding(.top, 10)
                 .padding(.bottom, 20)
 
@@ -826,13 +1034,13 @@ private struct PerkSettingsDetailView: View {
                             VStack(spacing: 20) {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 60))
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(.gray)
                                 Text(LocalizedStringKey("Perks sind deaktiviert"))
                                     .font(.headline)
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(.gray)
                                 Text(LocalizedStringKey("Aktiviere sie oben rechts, um Power-Ups ins Spiel zu bringen."))
                                     .font(.caption)
-                                    .foregroundColor(.gray.opacity(0.7))
+                                    .foregroundStyle(.gray.opacity(0.7))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
                             }
@@ -843,10 +1051,10 @@ private struct PerkSettingsDetailView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(LocalizedStringKey("Party Modus"))
                                         .font(.headline.bold())
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                     Text(LocalizedStringKey("Häufigere Perks bei 3/6/9 Treffern"))
                                         .font(.caption)
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(.gray)
                                 }
                                 Spacer()
                                 Toggle("", isOn: $gameManager.gameState.settings.perkPartyMode)
@@ -855,13 +1063,13 @@ private struct PerkSettingsDetailView: View {
                             }
                             .padding()
                             .background(Color.white.opacity(0.08))
-                            .cornerRadius(16)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
                             
                             // Perk Packs List
                             VStack(spacing: 16) {
                                 Text(LocalizedStringKey("Verfügbare Pakete"))
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 ForEach(PerkPack.allCases) { pack in
@@ -879,7 +1087,7 @@ private struct PerkSettingsDetailView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, SettingsTheme.padding)
+                    .padding(.horizontal, TimesUpStyle.horizontalPadding)
                     .padding(.bottom, 40)
                 }
             }
@@ -942,10 +1150,10 @@ private struct PerkPackCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(LocalizedStringKey(pack.title))
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     Text(LocalizedStringKey(pack.subtitle))
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
                 }
@@ -989,7 +1197,7 @@ private struct CustomPerkSelectionView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(LocalizedStringKey("Individuelle Perks wählen"))
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.top, 10)
             
             ForEach(PerkPack.standardCases) { pack in
@@ -1006,11 +1214,11 @@ private struct CustomPerkSelectionView: View {
                         HStack {
                             Text(LocalizedStringKey(pack.title))
                                 .font(.subheadline.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .rotationEffect(.degrees(expandedPacks.contains(pack.id) ? 90 : 0))
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.gray)
                         }
                         .padding()
                         .background(Color.white.opacity(0.05))
@@ -1022,7 +1230,7 @@ private struct CustomPerkSelectionView: View {
                                 Toggle(isOn: binding(for: perk)) {
                                     Text(LocalizedStringKey(perk.displayName))
                                         .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.9))
+                                        .foregroundStyle(.white.opacity(0.9))
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: .purple))
                                 .padding(.horizontal)
@@ -1034,7 +1242,7 @@ private struct CustomPerkSelectionView: View {
                         .background(Color.black.opacity(0.2))
                     }
                 }
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -1059,11 +1267,11 @@ struct TimesUpLeaderboardView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         ZStack {
-            SettingsTheme.background.ignoresSafeArea()
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
             VStack {
                 Text("Leaderboard")
                     .font(.largeTitle)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Button("Close") { dismiss() }
             }
         }
@@ -1074,11 +1282,11 @@ struct TimesUpInfoSheet: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         ZStack {
-            SettingsTheme.background.ignoresSafeArea()
+            TimesUpStyle.backgroundGradient.ignoresSafeArea()
             VStack(spacing: 20) {
                 Text("Info")
                     .font(.largeTitle)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Button("Close") { dismiss() }
             }
         }

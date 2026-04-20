@@ -266,10 +266,10 @@ struct GameSetupView: View {
                 Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .modifier(GlassCircleButtonBackground())
             }
+            .accessibilityLabel("Zurück")
 
             Spacer()
 
@@ -280,10 +280,10 @@ struct GameSetupView: View {
                     Image(systemName: "person.2.wave.2.fill")
                         .font(.headline)
                         .foregroundStyle(.cyan)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Multiplayer")
 
                 Button {
                     showingLeaderboardSheet = true
@@ -291,10 +291,11 @@ struct GameSetupView: View {
                     Image(systemName: "trophy.fill")
                         .font(.headline)
                         .foregroundStyle(.yellow)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .symbolEffect(.bounce, options: .repeating.speed(0.5))
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Rangliste")
 
                 Button {
                     showingCategoryManagementSheet = true
@@ -302,10 +303,10 @@ struct GameSetupView: View {
                     Image(systemName: "folder.fill")
                         .font(.headline)
                         .foregroundStyle(.orange)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Kategorien")
 
                 Button {
                     showingSettingsSheet = true
@@ -313,10 +314,10 @@ struct GameSetupView: View {
                     Image(systemName: "gearshape.fill")
                         .font(.headline)
                         .foregroundStyle(.gray)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Einstellungen")
 
                 Button {
                     showingInfoSheet = true
@@ -324,10 +325,10 @@ struct GameSetupView: View {
                     Image(systemName: "questionmark")
                         .font(.headline.bold())
                         .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .modifier(GlassCircleButtonBackground())
                 }
+                .accessibilityLabel("Informationen")
             }
         }
         .padding(.horizontal)
@@ -393,9 +394,10 @@ struct GameSetupView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .frame(width: 30, height: 30)
                         .background(Color.white.opacity(0.12))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Weniger Spione")
                 .disabled(gameSettings.randomSpyCount)
                 Text("\(gameSettings.numberOfImposters)")
                     .font(.callout)
@@ -412,9 +414,10 @@ struct GameSetupView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .frame(width: 30, height: 30)
                         .background(Color.white.opacity(0.12))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Mehr Spione")
                 .disabled(gameSettings.randomSpyCount)
             }
             .opacity(gameSettings.randomSpyCount ? 0.5 : 1.0)
@@ -585,6 +588,8 @@ private struct GameSetupSheetsModifier: ViewModifier {
             }
             .sheet(isPresented: $showingSettingsSheet) {
                 ImposterSettingsView()
+                    .presentationBackground(.ultraThinMaterial)
+                    .presentationCornerRadius(28)
             }
     }
 }

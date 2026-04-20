@@ -32,21 +32,20 @@ struct ImposterCategoryDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
+                            .modifier(GlassCircleButtonBackground())
                     }
                     Spacer()
                     Text("Details")
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     Spacer()
                     
                     Button { showingEditSheet = true } label: {
                         Image(systemName: "pencil")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                             .background(Color.blue)
                             .clipShape(Circle())
@@ -56,7 +55,7 @@ struct ImposterCategoryDetailView: View {
                     Button { showingShareSheet = true } label: {
                         Image(systemName: "qrcode")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                             .background(Color.purple)
                             .clipShape(Circle())
@@ -77,12 +76,12 @@ struct ImposterCategoryDetailView: View {
                             
                             Text(category.name)
                                 .font(.largeTitle.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                             
                             if !category.isCustom {
                                 Text("Standard-Kategorie")
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundStyle(.white.opacity(0.6))
                             }
                         }
                         .padding(.bottom, 10)
@@ -91,21 +90,21 @@ struct ImposterCategoryDetailView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Neuer Begriff")
                                 .font(.headline)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.8))
                                 .padding(.leading, 4)
                             
                             HStack(spacing: 12) {
-                                TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundColor(.gray))
+                                TextField("", text: $newWord, prompt: Text("Wort eingeben...").foregroundStyle(.gray))
                                     .padding()
                                     .background(Color.white.opacity(0.08))
-                                    .cornerRadius(12)
-                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(.white)
                                     .onSubmit { addWord() }
                                 
                                 Button(action: addWord) {
                                     Image(systemName: "plus")
                                         .font(.title2.bold())
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         .frame(width: 50, height: 50)
                                         .background(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.green)
                                         .clipShape(Circle())
@@ -120,11 +119,11 @@ struct ImposterCategoryDetailView: View {
                             HStack {
                                 Text("Alle Begriffe")
                                     .font(.headline)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundStyle(.white.opacity(0.8))
                                 Spacer()
                                 Text("\(category.words.count)")
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundStyle(.white.opacity(0.6))
                             }
                             .padding(.horizontal)
                             
@@ -133,7 +132,7 @@ struct ImposterCategoryDetailView: View {
                                     HStack {
                                         Text(word)
                                             .font(.subheadline.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .lineLimit(1)
                                         
                                         Spacer()
@@ -143,7 +142,7 @@ struct ImposterCategoryDetailView: View {
                                             showingWordAlert = true
                                         } label: {
                                             Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.red.opacity(0.7))
+                                                .foregroundStyle(.red.opacity(0.7))
                                         }
                                     }
                                     .imposterRowStyle()
@@ -160,10 +159,10 @@ struct ImposterCategoryDetailView: View {
                                     Text("Kategorie zurücksetzen")
                                 }
                                 .font(.headline)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .padding()
                                 .background(Color.red.opacity(0.1))
-                                .cornerRadius(12)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
                             .padding(.top, 20)
                         }
@@ -264,15 +263,15 @@ struct QRCodeSheetView: View {
                     .frame(width: 200, height: 200)
                     .padding()
                     .background(Color.white)
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
             } else {
                 Text("Fehler beim Erstellen des QR-Codes")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
             }
             
             Text("Lasse einen Freund diesen Code in der App scannen.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
@@ -306,7 +305,7 @@ struct EditCategoryView: View {
     private let backgroundGradient = ImposterStyle.backgroundGradient
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 backgroundGradient.ignoresSafeArea()
                 
@@ -315,19 +314,18 @@ struct EditCategoryView: View {
                         Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .modifier(GlassCircleButtonBackground())
                         }
                         Spacer()
                         Text("Bearbeiten")
                             .font(.title2.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                         Spacer()
                         Button("Fertig") { saveChanges() }
                             .font(.headline.bold())
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -337,23 +335,23 @@ struct EditCategoryView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Name")
                                 .font(.headline)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.8))
                             TextField("", text: $categoryName)
                                 .padding()
                                 .background(Color.white.opacity(0.08))
-                                .cornerRadius(12)
-                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(.white)
                         }
                         
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Emoji")
                                 .font(.headline)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.8))
                             TextField("", text: $categoryEmoji)
                                 .padding()
                                 .background(Color.white.opacity(0.08))
-                                .cornerRadius(12)
-                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(.white)
                         }
                         Spacer()
                     }
