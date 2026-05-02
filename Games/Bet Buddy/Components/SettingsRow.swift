@@ -47,11 +47,15 @@ struct SettingsRow: View {
                 Text(LocalizedStringKey(title))
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 if let detail, !detail.isEmpty, rowType != .groups, rowType != .categories {
                     Text(LocalizedStringKey(detail))
                         .foregroundStyle(BetBuddyTheme.textSilver)
                         .font(.subheadline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
             }
             Spacer()

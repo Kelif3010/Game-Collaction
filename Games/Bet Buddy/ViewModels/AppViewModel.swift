@@ -33,6 +33,8 @@ struct GameHighlights: Codable {
 
 @MainActor
 final class AppViewModel: ObservableObject {
+    static let maxGroupCount = 4
+
     struct VoteEntry: Equatable {
         let groupId: UUID
         let amount: Int
@@ -113,7 +115,8 @@ final class AppViewModel: ObservableObject {
         let defaults = UserDefaults.standard
         
         // Load Settings or use Defaults
-        let initialGroupCount = defaults.integer(forKey: "betbuddy.groupCount") > 0 ? defaults.integer(forKey: "betbuddy.groupCount") : 2
+        let savedGroupCount = defaults.integer(forKey: "betbuddy.groupCount")
+        let initialGroupCount = savedGroupCount > 0 ? min(max(savedGroupCount, 2), Self.maxGroupCount) : 2
         
         var initialCategories: Set<CategoryType> = [.classic]
         if let data = defaults.data(forKey: "betbuddy.selectedCategories"),
@@ -152,8 +155,7 @@ final class AppViewModel: ObservableObject {
             GroupInfo(
                 color: $0,
                 customName: store.loadName(for: $0),
-                player1Name: store.loadPlayer1(for: $0),
-                player2Name: store.loadPlayer2(for: $0)
+                playerNames: store.loadPlayerNames(for: $0)
             )
         }
         
@@ -246,7 +248,7 @@ final class AppViewModel: ObservableObject {
     // MARK: - Methods
 
     func setGroupCount(_ count: Int) {
-        selectedGroupCount = max(2, min(count, GroupColor.allCases.count))
+        selectedGroupCount = max(2, min(count, Self.maxGroupCount))
     }
 
     func updateName(_ name: String, for color: GroupColor) {
@@ -255,21 +257,23 @@ final class AppViewModel: ObservableObject {
             guard group.color == color else { return group }
             return GroupInfo(
                 id: group.id, color: color, customName: name,
-                player1Name: group.player1Name, player2Name: group.player2Name,
+                playerNames: group.playerNames,
                 activePlayerIndex: group.activePlayerIndex, score: group.score
             )
         }
     }
 
     func updatePlayerNames(player1: String, player2: String, for color: GroupColor) {
-        nameStore.savePlayer1(name: player1, for: color)
-        nameStore.savePlayer2(name: player2, for: color)
+        updatePlayerNames([player1, player2], for: color)
+    }
+
+    func updatePlayerNames(_ names: [String], for color: GroupColor) {
+        nameStore.savePlayerNames(names, for: color)
         groups = groups.map { group in
             guard group.color == color else { return group }
             return GroupInfo(
                 id: group.id, color: color, customName: group.customName,
-                player1Name: player1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : player1,
-                player2Name: player2.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : player2,
+                playerNames: names.map { Optional($0) },
                 activePlayerIndex: group.activePlayerIndex, score: group.score
             )
         }
@@ -278,7 +282,7 @@ final class AppViewModel: ObservableObject {
     func randomizeStartingPlayers() {
         groups = groups.map { group in
             var updated = group
-            updated.activePlayerIndex = Bool.random() ? 0 : 1
+            updated.activePlayerIndex = Int.random(in: 0..<updated.playerSlotCount)
             return updated
         }
     }
@@ -286,7 +290,7 @@ final class AppViewModel: ObservableObject {
     func rotateActivePlayers() {
         groups = groups.map { group in
             var updated = group
-            updated.activePlayerIndex = updated.activePlayerIndex == 0 ? 1 : 0
+            updated.activePlayerIndex = (updated.activePlayerIndex + 1) % updated.playerSlotCount
             return updated
         }
     }
@@ -531,7 +535,7 @@ final class AppViewModel: ObservableObject {
     }
 
     private func syncGroups(to count: Int) {
-        let safeCount = max(2, min(count, GroupColor.allCases.count))
+        let safeCount = max(2, min(count, Self.maxGroupCount))
         var updated: [GroupInfo] = []
 
         for (index, color) in GroupColor.allCases.enumerated() {
@@ -542,8 +546,7 @@ final class AppViewModel: ObservableObject {
                 updated.append(GroupInfo(
                     color: color,
                     customName: nameStore.loadName(for: color),
-                    player1Name: nameStore.loadPlayer1(for: color),
-                    player2Name: nameStore.loadPlayer2(for: color)
+                    playerNames: nameStore.loadPlayerNames(for: color)
                 ))
             }
         }

@@ -51,8 +51,10 @@ struct WaveformAnimation: View {
     private func startAnimating() {
         guard isActive else { return }
         let timer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { _ in
-            for i in 0..<phases.count {
-                phases[i] += Double.random(in: 0.3...0.9)
+            Task { @MainActor in
+                for i in 0..<phases.count {
+                    phases[i] += Double.random(in: 0.3...0.9)
+                }
             }
         }
         // Timer läuft bis View verschwindet — Task würde hier zu viel Overhead machen

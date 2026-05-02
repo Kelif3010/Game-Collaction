@@ -400,38 +400,40 @@ struct ChallengeStartView: View {
                 .foregroundStyle(BetBuddyTheme.textSilver)
                 .tracking(2)
 
-            HStack(spacing: 10) {
-                ForEach(teams) { group in
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(group.color.primary)
-                            .frame(width: 8, height: 8)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(teams) { group in
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(group.color.primary)
+                                .frame(width: 8, height: 8)
 
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(group.activePlayerName)
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(group.color.accent)
-                                .lineLimit(1)
-                            Text("macht es")
-                                .font(.system(size: 10))
-                                .foregroundStyle(BetBuddyTheme.textSilver)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(group.activePlayerName)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(group.color.accent)
+                                    .lineLimit(1)
+                                Text("macht es")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(BetBuddyTheme.textSilver)
+                            }
                         }
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(group.color.primary.opacity(0.08))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(group.color.primary.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(group.color.primary.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(group.color.primary.opacity(0.2), lineWidth: 1)
+                                )
+                        )
 
-                    if group.id != teams.last?.id {
-                        Text("vs")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.5))
+                        if group.id != teams.last?.id {
+                            Text("vs")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.5))
+                        }
                     }
                 }
             }

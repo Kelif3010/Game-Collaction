@@ -161,7 +161,7 @@ struct ContentView: View {
                         CompatibleGlassEffectContainer(spacing: 20) {
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
                                 // ... rest of buttons remain the same
-                                // --- SPIEL 1: BET BUDDY ---
+                                // --- SPIEL 1: Ich biete mehr! ---
                                 Button {
                                     statsManager.markGameAsPlayed("BetBuddy")
                                     withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { betBuddyTap = true }
@@ -398,7 +398,7 @@ struct MenuGameCard: View {
         .padding()
         .onAppear {
             hourglassTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-                hourglassFlipped.toggle()
+                Task { @MainActor in hourglassFlipped.toggle() }
             }
         }
         .onDisappear {
@@ -411,7 +411,7 @@ struct MenuGameCard: View {
     }
 }
 
-// MARK: - Spezielle Bet Buddy-Karte (Casino-Theme)
+// MARK: - Spezielle Ich biete mehr!-Karte (Casino-Theme)
 struct BetBuddyGameCard: View {
     @State private var chipRotation = false
     @State private var shimmer = false
@@ -460,7 +460,7 @@ struct BetBuddyGameCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 // Titel
                 HStack(spacing: 6) {
-                    Text("Bet Buddy")
+                    Text("Ich biete mehr!")
                         .font(.system(.title3, design: .rounded).bold())
                         .foregroundStyle(textChampagne)
 

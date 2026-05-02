@@ -35,8 +35,14 @@ struct QuestionsModeContainer: View {
         } message: {
             Text("Diese Akte enthält keine Fragen.")
         }
-        .onAppear(perform: attachTVBoard)
-        .onDisappear(perform: detachTVBoard)
+        .onAppear {
+            attachTVBoard()
+            viewModel.activateMPCHandler { dismiss() }
+        }
+        .onDisappear {
+            detachTVBoard()
+            viewModel.deactivateMPCHandler()
+        }
     }
 
     @ViewBuilder

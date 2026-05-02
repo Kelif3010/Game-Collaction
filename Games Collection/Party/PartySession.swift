@@ -14,7 +14,7 @@ enum PartyGame: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
-        case .betBuddy:       return "Bet Buddy"
+        case .betBuddy:       return "Ich biete mehr!"
         case .timesUp:        return "Time's Up"
         case .question:       return "Finde den Lügner"
         case .imposter:       return "Imposter"

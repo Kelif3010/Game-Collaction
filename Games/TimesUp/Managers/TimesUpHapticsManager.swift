@@ -6,15 +6,17 @@
 //
 
 import CoreHaptics
-import UIKit
+@preconcurrency import UIKit
 
 /// High-End Haptik-Manager für Time's Up
 /// Verwaltet die CoreHaptics Engine und sorgt für stabile Lifecycle-Übergänge.
 class TimesUpHapticsManager {
     static let shared = TimesUpHapticsManager()
     
-    private var engine: CHHapticEngine?
-    private var lifecycleObservers: [NSObjectProtocol] = []
+    // nonisolated(unsafe): CHHapticEngine ist thread-safe; nötig damit deinit und nonisolated
+    // Methoden die Engine ohne MainActor-Kontext aufräumen können (Swift 6).
+    nonisolated(unsafe) private var engine: CHHapticEngine?
+    nonisolated(unsafe) private var lifecycleObservers: [NSObjectProtocol] = []
     
     // Prüft, ob das Gerät Hardware-Haptik unterstützt UND ob Haptik global aktiviert ist
     var supportsHaptics: Bool {
@@ -65,7 +67,7 @@ class TimesUpHapticsManager {
         }
     }
     
-    private func stopEngine() {
+    private nonisolated func stopEngine() {
         engine?.stop()
     }
     

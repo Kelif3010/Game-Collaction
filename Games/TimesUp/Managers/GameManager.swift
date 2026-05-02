@@ -5,7 +5,7 @@ import Combine
 @MainActor
 class GameManager: ObservableObject {
     private final class RepeatingMainTimer {
-        private var timer: Timer?
+        nonisolated(unsafe) private var timer: Timer?
         
         func start(interval: TimeInterval, handler: @escaping @MainActor () -> Void) {
             timer?.invalidate()

@@ -24,13 +24,10 @@ struct PartyChallenges {
         Challenge(text: "Wie viele verschiedene Party-Mottos kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele verschiedene Formen von Partygläsern kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele virale TikTok-Trends kann dein Partner nennen?", category: .party),
-        Challenge(text: "Wie viele Influencer-Paare kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Partyspiele mit Karten kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Tänze, die zu zweit gemacht werden, kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Partysongs aus den 2000ern kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Apps zum Musik hören kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele Song-Remixe kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele Memes kann dein Partner in 30 Sekunden beschreiben?", category: .party),
         Challenge(text: "Wie viele Shots-Arten kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele bekannte Karaoke-Hits fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele Emoji-Kürzel für Flirts kennt dein Partner?", category: .party),
@@ -57,9 +54,6 @@ struct PartyChallenges {
         Challenge(text: "Wie viele deutsche Rapper kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele HipHop-Sänger kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Rap-Crew-Namen fallen deinem Partner ein?", category: .party),
-        Challenge(text: "Wie viele Partysongs mit 'Yeah' im Refrain kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele Lieder, die mit 'I' anfangen, kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele Lieder, die mit S beginnen, kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Songs mit dem Wort \"Party\" im Titel kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele One-Hit-Wonder fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele berühmte Bands kann dein Partner nennen?", category: .party),
@@ -135,18 +129,15 @@ struct PartyChallenges {
         Challenge(text: "Wie viele Kondom-Marken oder -Sorten kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Smartphone-Hersteller (außer Apple & Samsung) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Boybands aus den 90ern kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele Musikinstrumente kann dein Partner aufzählen?", category: .party),
-        Challenge(text: "Wie viele Musik-Streaming-Dienste kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Gewinner des Eurovision Song Contest (ESC) fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele Dinge, die man in einer Handtasche findet, kann dein Partner aufzählen?", category: .party),
-        Challenge(text: "Wie viele Hunderassen kennt dein Partner?", category: .party),
+        Challenge(text: "Wie viele Pokémon der ersten Generation kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Pizzasorten (z.B. Salami, Hawaii) kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Schimpfwörter in einer Fremdsprache kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Stellungen aus dem Kamasutra kann dein Partner benennen?", category: .party),
         Challenge(text: "Wie viele Dinge, die man nicht im Handgepäck haben darf, fallen deinem Partner ein?", category: .party),
 
         // MARK: - Gaming & Nerd
-        Challenge(text: "Wie viele Pokémon der ersten Generation kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Super-Mario-Charaktere (z.B. Luigi, Toad) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Spielkonsolen (PlayStation, Xbox, etc.) kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Charaktere aus 'Star Wars' fallen deinem Partner ein?", category: .party),
@@ -163,7 +154,7 @@ struct PartyChallenges {
 
         // MARK: - Musik, Tanz & Karaoke
         Challenge(text: "Wie viele Musikgenres (z.B. House, Techno, Reggae) kann dein Partner nennen?", category: .party),
-        Challenge(text: "Wie viele bekannte Schlager-Hits kann dein Partner anstimmen oder nennen?", category: .party),
+        Challenge(text: "Wie viele bekannte Schlager-Hits kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Boybands (egal welches Jahrzehnt) fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele Girlgroups (z.B. Spice Girls, Blackpink) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Rock-Hymnen, die jeder mitsingen kann, fallen deinem Partner ein?", category: .party),
@@ -180,7 +171,6 @@ struct PartyChallenges {
         Challenge(text: "Wie viele Lieder, die man auf Hochzeiten spielt, kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Songs aus den 80ern kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Songs, die im Sommer oft im Radio laufen, fallen deinem Partner ein?", category: .party),
-        Challenge(text: "Wie viele Nationalhymnen könnte dein Partner (zumindest die Melodie) erkennen?", category: .party),
 
         // MARK: - Drinks, Nightlife & Feiern
         Challenge(text: "Wie viele Shot-Namen (z.B. Mexikaner, B52) kennt dein Partner?", category: .party),
@@ -207,19 +197,15 @@ struct PartyChallenges {
         Challenge(text: "Wie viele Horrorfilm-Klassiker (z.B. Halloween, Scream) fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele High-School-Filme (z.B. American Pie, High School Musical) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Superhelden von DC (Batman, Superman...) kann dein Partner nennen?", category: .party),
-        Challenge(text: "Wie viele Gewinner von 'Germany's Next Topmodel' fallen deinem Partner ein?", category: .party),
-        Challenge(text: "Wie viele Jury-Mitglieder von DSDS (alle Staffeln) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele deutsche YouTuber mit mehr als 1 Mio. Abos kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Kardashians oder Jenners kann dein Partner namentlich nennen?", category: .party),
-        Challenge(text: "Wie viele Streaming-Anbieter (Netflix, Prime...) fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele Serien, die in einer Schule spielen, kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Filme, die an Weihnachten laufen, kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele berühmte Filmpaare (fiktiv oder echt) fallen deinem Partner ein?", category: .party),
 
         // MARK: - Social, Fun & Lifestyle
-        Challenge(text: "Wie viele verschiedene Emojis nutzt dein Partner regelmäßig?", category: .party),
         Challenge(text: "Wie viele Hashtags, die man unter ein Partybild postet, fallen deinem Partner ein?", category: .party),
-        Challenge(text: "Wie viele Posen für ein Selfie kann dein Partner vormachen/benennen?", category: .party),
+        Challenge(text: "Wie viele Posen für ein Selfie kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Modemarken für Sportbekleidung kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Luxus-Uhrenmarken (Rolex, Breitling...) fallen deinem Partner ein?", category: .party),
         Challenge(text: "Wie viele Arten von Schuhen (Sneaker, High Heels, Stiefel...) kann dein Partner nennen?", category: .party),
@@ -255,10 +241,8 @@ struct PartyChallenges {
         Challenge(text: "Wie viele Zaubersprüche aus Harry Potter kann dein Partner aufsagen?", category: .party),
 
         // MARK: - Random & Lustiges Partywissen
-        Challenge(text: "Wie viele Sternzeichen kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Automarken, die sehr teuer sind (Ferrari, Bugatti...), kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Währungen, die NICHT Euro oder Dollar sind, fallen deinem Partner ein?", category: .party),
-        Challenge(text: "Wie viele US-Präsidenten, die jeder kennt, kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Sprachen, in denen man 'Prost' sagen kann, kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Dinge, die man im Flugzeug beachten muss, kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele typische Geschenke zum 18. Geburtstag fallen deinem Partner ein?", category: .party),
@@ -274,7 +258,7 @@ struct PartyChallenges {
         Challenge(text: "Wie viele verschiedene Kaffeespezialitäten (Cappuccino, Espresso...) kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Energy-Drink-Marken kann dein Partner nennen?", category: .party),
 
-        // MARK: - Neu: Mehr Party-Vielfalt
+        // MARK: - Mehr Party-Vielfalt
         Challenge(text: "Wie viele Songs von Lady Gaga kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Songs von Coldplay kennt dein Partner?", category: .party),
         Challenge(text: "Wie viele Lieder von The Rolling Stones kennt dein Partner?", category: .party),
@@ -289,6 +273,5 @@ struct PartyChallenges {
         Challenge(text: "Wie viele berühmte Promi-Paare kann dein Partner nennen?", category: .party),
         Challenge(text: "Wie viele Songs von Sam Smith kann dein Partner aufzählen?", category: .party),
         Challenge(text: "Wie viele Lieder mit dem Wort 'Baby' im Titel kennt dein Partner?", category: .party),
-        Challenge(text: "Wie viele verschiedene Schriftarten (Fonts) auf einem Computer kennt dein Partner?", category: .party),
     ]
 }

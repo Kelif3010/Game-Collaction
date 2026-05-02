@@ -221,7 +221,7 @@ struct WordGuessResultView: View {
     @State private var revealedText: String = ""
     @State private var glitchEffect = false
     @State private var showPoints = false // Animation State for Points
-    @State private var glitchTimer: Timer?
+    @State private var glitchTask: Task<Void, Never>?
 
     init(
         result: WordGuessResult,
@@ -334,11 +334,17 @@ struct WordGuessResultView: View {
             revealText(target: result.correctWord)
             
             // Glitch effect loop
-            glitchTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
-                withAnimation(.spring(response: 0.1, dampingFraction: 0.1)) {
-                    glitchEffect = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            glitchTask = Task { @MainActor in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(2500))
+                    guard !Task.isCancelled else { break }
+
+                    withAnimation(.spring(response: 0.1, dampingFraction: 0.1)) {
+                        glitchEffect = true
+                    }
+
+                    try? await Task.sleep(for: .milliseconds(100))
+                    guard !Task.isCancelled else { break }
                     glitchEffect = false
                 }
             }
@@ -368,24 +374,24 @@ struct WordGuessResultView: View {
             Text("Der Host möchte eine neue Runde starten.")
         }
         .onDisappear {
-            glitchTimer?.invalidate()
-            glitchTimer = nil
+            glitchTask?.cancel()
+            glitchTask = nil
         }
     }
 
     private func revealText(target: String) {
         let chars = Array(target)
-        var currentIndex = 0
-        
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if currentIndex < chars.count {
-                revealedText += String(chars[currentIndex])
+
+        Task { @MainActor in
+            revealedText = ""
+
+            for character in chars {
+                try? await Task.sleep(for: .milliseconds(100))
+                revealedText += String(character)
                 UISelectionFeedbackGenerator().selectionChanged()
-                currentIndex += 1
-            } else {
-                timer.invalidate()
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
+
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
 }

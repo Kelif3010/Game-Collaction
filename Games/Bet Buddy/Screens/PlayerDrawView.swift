@@ -76,8 +76,9 @@ struct PlayerDrawView: View {
         let tick = spinCounters[group.id, default: 0]
         let names = playerNames(for: group)
 
-        let activeName = isLocked ? group.activePlayerName : names[tick % 2]
-        let biddingName = isLocked ? group.biddingPlayerName : names[(tick + 1) % 2]
+        let activeIndex = tick % names.count
+        let activeName = isLocked ? group.activePlayerName : names[activeIndex]
+        let biddingName = isLocked ? group.biddingPlayerName : names[(activeIndex + 1) % names.count]
 
         return HStack(spacing: 14) {
             // Team-Farb-Indikator
@@ -106,7 +107,7 @@ struct PlayerDrawView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Text("BIETET")
+                    Text(group.playerSlotCount > 2 ? "NÄCHSTE/R" : "BIETET")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(BetBuddyTheme.textSilver)
                         .tracking(1)
@@ -190,12 +191,7 @@ struct PlayerDrawView: View {
     // MARK: - Helpers
 
     private func playerNames(for group: GroupInfo) -> [String] {
-        [
-            group.player1Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
-                ? group.player1Name! : "Spieler 1",
-            group.player2Name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
-                ? group.player2Name! : "Spieler 2"
-        ]
+        group.displayPlayerNames
     }
 
     // MARK: - Spin Animation
@@ -208,19 +204,19 @@ struct PlayerDrawView: View {
 
             Task { @MainActor in
                 for tick in 0..<totalTicks {
-                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    try? await Task.sleep(for: .milliseconds(100))
                     spinCounters[group.id] = tick
                 }
 
                 // Einrasten
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                    lockedGroups.insert(group.id)
+                    _ = lockedGroups.insert(group.id)
                 }
                 HapticsService.impact(.medium)
 
                 // Button nach dem letzten Team zeigen
                 if index == groups.count - 1 {
-                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    try? await Task.sleep(for: .milliseconds(500))
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         showButton = true
                     }

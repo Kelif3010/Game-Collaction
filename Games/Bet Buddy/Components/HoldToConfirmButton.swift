@@ -131,12 +131,13 @@ struct HoldToConfirmButton: View {
         timer?.invalidate()
 
         timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
-            withAnimation(.linear(duration: 0.02)) {
-                progress += 0.02 / duration
-            }
-
-            if progress >= 1.0 {
-                completeAction()
+            Task { @MainActor in
+                withAnimation(.linear(duration: 0.02)) {
+                    progress += 0.02 / duration
+                }
+                if progress >= 1.0 {
+                    completeAction()
+                }
             }
         }
     }

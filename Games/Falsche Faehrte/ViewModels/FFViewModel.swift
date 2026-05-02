@@ -576,7 +576,7 @@ final class FFViewModel: ObservableObject {
         timeRemaining = seconds
         timerTask = Task {
             while timeRemaining > 0 && !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await Task.sleep(for: .seconds(1))
                 if !Task.isCancelled {
                     timeRemaining -= 1
                 }

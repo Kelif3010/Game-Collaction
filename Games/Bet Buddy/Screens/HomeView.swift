@@ -47,8 +47,8 @@ struct HomeView: View {
 
                     SettingsRow(
                         icon: "timer",
-                        title: "Timer läuft weiter",
-                        detail: appModel.isPartyMode ? "Kein Reset bei Treffern" : "Reset nach Treffern",
+                        title: "Zeit läuft weiter",
+                        detail: appModel.isPartyMode ? "Kein Reset" : "Reset bei Treffer",
                         rowType: .partyMode,
                         isToggleOn: appModel.isPartyMode,
                         onTap: {
@@ -61,7 +61,7 @@ struct HomeView: View {
 
                     SettingsRow(
                         icon: "exclamationmark.circle",
-                        title: "Punkte Abzug",
+                        title: "Punktabzug",
                         detail: appModel.isPenaltyEnabled ? appModel.penaltyLevel.title : "Aus",
                         rowType: .penalty,
                         isToggleOn: appModel.isPenaltyEnabled,
@@ -384,7 +384,7 @@ private struct CasinoPenaltySheet: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentRuby)
-                        Text("PUNKTE ABZUG")
+                        Text("PUNKTABZUG")
                             .font(.system(size: 14, weight: .bold, design: .monospaced))
                             .foregroundStyle(BetBuddyTheme.textGold)
                             .tracking(2)
@@ -398,6 +398,7 @@ private struct CasinoPenaltySheet: View {
                 Text("Strafe bei Aufgeben oder Zeitablauf")
                     .font(.subheadline)
                     .foregroundStyle(BetBuddyTheme.textSilver)
+                    .multilineTextAlignment(.center)
                     .padding(.top, 8)
 
                 VStack(spacing: 10) {
@@ -470,9 +471,9 @@ private struct CasinoPenaltySheet: View {
 
     private func penaltyDescription(_ level: PenaltyLevel) -> String {
         switch level {
-        case .normal: return "Abzug = verbleibende Punkte"
-        case .medium: return "Abzug = halbe Anfangspunkte"
-        case .hardcore: return "Abzug = volle Anfangspunkte"
+        case .normal: return "Nur offene Punkte verlieren"
+        case .medium: return "Halbe Wette verlieren"
+        case .hardcore: return "Ganze Wette verlieren"
         }
     }
 

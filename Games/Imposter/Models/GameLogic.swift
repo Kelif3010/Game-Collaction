@@ -9,13 +9,14 @@ import Foundation
 import Combine
 import MultipeerConnectivity
 
+@MainActor
 class GameLogic: ObservableObject {
     @Published var gameSettings: GameSettings
-    private var gameTimer: Timer?
+    nonisolated(unsafe) private var gameTimer: Timer?
     private var lastTickUptime: TimeInterval?
     private var lastTimerSyncUptime: TimeInterval?
     private var preciseTimeRemaining: TimeInterval?
-    private var scheduledStartWorkItem: DispatchWorkItem?
+    private var scheduledStartTask: Task<Void, Never>?
     private var lastRemotePauseState: Bool?
     private var multiplayerVotePreview: [String: String] = [:]
     private var rematchOfferId: UUID?
@@ -23,6 +24,7 @@ class GameLogic: ObservableObject {
     private var roleAssignmentId: UUID?
     private var pendingRoleAcks: Set<String> = []
     private var playerIdByName: [String: UUID] = [:]
+    private var mpcHandler: ImposterMPCHandler?
     private let timerTickInterval: TimeInterval = 0.25
     private let timerSyncInterval: TimeInterval = 1.2
     private let softSyncThreshold: TimeInterval = 0.7
@@ -39,8 +41,8 @@ class GameLogic: ObservableObject {
     deinit {
         gameTimer?.invalidate()
         gameTimer = nil
-        scheduledStartWorkItem?.cancel()
-        scheduledStartWorkItem = nil
+        scheduledStartTask?.cancel()
+        scheduledStartTask = nil
     }
     
     /// Startet das Spiel und weist Begriffe und Imposter zu
@@ -208,10 +210,9 @@ class GameLogic: ObservableObject {
 
         // 3. Warte kurz auf Role-ACKs, damit Reveal nicht zu frueh kommt
         if !pendingRoleAcks.isEmpty {
-            let timeout: TimeInterval = 2.5
-            let deadline = Date().timeIntervalSinceReferenceDate + timeout
+            let deadline = Date().timeIntervalSinceReferenceDate + 2.5
             while !pendingRoleAcks.isEmpty && Date().timeIntervalSinceReferenceDate < deadline {
-                try? await Task.sleep(nanoseconds: 150_000_000)
+                try? await Task.sleep(for: .milliseconds(150))
             }
             if !pendingRoleAcks.isEmpty {
                 print("⚠️ MPC: Role-ACK Timeout fuer: \(pendingRoleAcks)")
@@ -477,9 +478,7 @@ class GameLogic: ObservableObject {
         if gameSettings.randomSpyCount && players.count >= 5 {
             let upperBound = max(1, cap)
             imposterCount = Int.random(in: 1...upperBound)
-            DispatchQueue.main.async { [weak gameSettings] in
-                gameSettings?.numberOfImposters = imposterCount
-            }
+            gameSettings.numberOfImposters = imposterCount
         } else {
             let requested = max(1, gameSettings.numberOfImposters)
             imposterCount = min(requested, cap)
@@ -579,7 +578,7 @@ class GameLogic: ObservableObject {
         }
         lastTimerSyncUptime = nil
         gameTimer = Timer.scheduledTimer(withTimeInterval: timerTickInterval, repeats: true) { [weak self] _ in
-            self?.handleTimerTick()
+            Task { @MainActor [weak self] in self?.handleTimerTick() }
         }
     }
 
@@ -677,16 +676,27 @@ class GameLogic: ObservableObject {
         mpc.sendToHost(event: MPCEventType.imposterTimeSyncPing, object: ping)
     }
 
+    func activateMPCHandler(gameSettings: GameSettings, onNavigate: @escaping (SetupRoute?) -> Void) {
+        let handler = ImposterMPCHandler()
+        handler.activate(gameSettings: gameSettings, gameLogic: self, onNavigate: onNavigate)
+        self.mpcHandler = handler
+    }
+
+    func deactivateMPCHandler() {
+        mpcHandler?.deactivate()
+        mpcHandler = nil
+    }
+
     func stopGameTimer() {
         gameTimer?.invalidate()
         gameTimer = nil
         lastTickUptime = nil
         lastTimerSyncUptime = nil
-        lastClientPingUptime = nil  // Reset Client-Ping-Timer
+        lastClientPingUptime = nil
         preciseTimeRemaining = nil
         lastRemotePauseState = nil
-        scheduledStartWorkItem?.cancel()
-        scheduledStartWorkItem = nil
+        scheduledStartTask?.cancel()
+        scheduledStartTask = nil
         HintService.shared.stopHints()
         VoiceService.shared.stopSpeaking()
     }
@@ -950,8 +960,8 @@ class GameLogic: ObservableObject {
     }
 
     func scheduleMultiplayerStart(startAtHostUptime: TimeInterval) {
-        scheduledStartWorkItem?.cancel()
-        scheduledStartWorkItem = nil
+        scheduledStartTask?.cancel()
+        scheduledStartTask = nil
 
         if gameSettings.timeRemaining <= 0 {
             gameSettings.timeRemaining = gameSettings.timeLimit
@@ -968,21 +978,17 @@ class GameLogic: ObservableObject {
         let startAtClientUptime = startAtHostUptime - gameSettings.hostClockOffset
         let delay = max(0, startAtClientUptime - now)
 
-        let workItem = DispatchWorkItem { [weak self] in
-            guard let self else { return }
+        scheduledStartTask = Task { [weak self] in
+            if delay > 0 {
+                try? await Task.sleep(for: .seconds(delay))
+            }
+            guard let self, !Task.isCancelled else { return }
             self.gameSettings.multiplayerStartAtHostUptime = nil
             self.gameSettings.isTimerPaused = false
             self.lastTickUptime = ProcessInfo.processInfo.systemUptime
             if MultipeerManager.shared.role == .host {
                 self.broadcastGameState()
             }
-        }
-
-        scheduledStartWorkItem = workItem
-        if delay == 0 {
-            workItem.perform()
-        } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
         }
     }
     

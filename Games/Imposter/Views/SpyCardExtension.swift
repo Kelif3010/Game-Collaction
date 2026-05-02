@@ -239,20 +239,20 @@ struct CardBackView: View {
         progress = 0.0
         let totalSteps = 40
         let interval = 1.2 / Double(totalSteps) // 1.2 Sekunden Scanzeit
-        var tickCounter = 0
-        
         scanTimer?.invalidate()
         scanTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
-            if self.progress < 1.0 {
-                self.progress += (1.0 / CGFloat(totalSteps))
-                
-                tickCounter += 1
-                // Haptisches Ticken ca. alle 0.1s (jeder 3. Frame)
-                if tickCounter % 3 == 0 {
-                    ImposterHapticsManager.shared.playScanTick(progress: Float(self.progress))
+            Task { @MainActor in
+                if self.progress < 1.0 {
+                    self.progress += (1.0 / CGFloat(totalSteps))
+                    // Haptisches Ticken ca. alle 0.1s (jeder 3. Frame)
+                    // tickCounter ersetzt durch rechnerisches Äquivalent um Swift 6 captured-var-Fehler zu vermeiden
+                    let tickN = Int(round(self.progress * CGFloat(totalSteps)))
+                    if tickN % 3 == 0 {
+                        ImposterHapticsManager.shared.playScanTick(progress: Float(self.progress))
+                    }
+                } else {
+                    self.completeScan()
                 }
-            } else {
-                self.completeScan()
             }
         }
     }

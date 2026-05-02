@@ -24,7 +24,7 @@ enum QuickActionType: String {
     var title: String {
         switch self {
         case .betBuddy:
-            return NSLocalizedString("Bet Buddy", comment: "Quick action title")
+            return NSLocalizedString("Ich biete mehr!", comment: "Quick action title")
         case .timesUp:
             return NSLocalizedString("Time's Up!", comment: "Quick action title")
         case .question:

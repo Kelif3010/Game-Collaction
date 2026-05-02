@@ -26,7 +26,7 @@ struct BetBuddyInfoSheet: View {
                             title: "Worum geht's?",
                             content: {
                                 VStack(alignment: .leading, spacing: 14) {
-                                    BulletPoint(text: "Bet Buddy ist ein Wettspiel für 2er-Teams.", icon: "person.2.fill")
+                                    BulletPoint(text: "Ich biete mehr! ist ein Wettspiel für Teams mit 2 bis 4 Spielern.", icon: "person.2.fill")
                                     BulletPoint(text: "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').", icon: "hand.raised.fingers.spread.fill")
                                     BulletPoint(text: "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!", icon: "chart.line.uptrend.xyaxis")
                                 }
@@ -71,11 +71,11 @@ struct BetBuddyInfoSheet: View {
                                         .foregroundStyle(Theme.mutedText)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     
-                                    ScoreRow(title: "Normal", value: "- Rest", color: .yellow)
-                                    ScoreRow(title: "Mittel", value: "- ½ Wette", color: .orange)
-                                    ScoreRow(title: "Hardcore", value: "- Ganze Wette", color: .red)
+                                    ScoreRow(title: "Normal", value: "Offene Punkte", color: .yellow)
+                                    ScoreRow(title: "Mittel", value: "Halbe Wette", color: .orange)
+                                    ScoreRow(title: "Hardcore", value: "Ganze Wette", color: .red)
                                     
-                                    Text("Beispiel: Wette 20, es fehlen noch 7. Normal: -7 Pkt, Mittel: -10 Pkt, Hardcore: -20 Pkt.")
+                                    Text("Beispiel: Wette 20, es fehlen noch 7. Normal: 7 weg, Mittel: 10 weg, Hardcore: 20 weg.")
                                         .font(.caption2)
                                         .foregroundStyle(Theme.mutedText)
                                         .padding(.top, 4)
@@ -95,8 +95,8 @@ struct BetBuddyInfoSheet: View {
                             title: "Einstellungen",
                             content: {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    BulletPoint(text: "Timer läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: "timer")
-                                    BulletPoint(text: "Punkte Abzug: Bestimmt das Risiko (Normal, Mittel, Hardcore).", icon: "exclamationmark.circle")
+                                    BulletPoint(text: "Zeit läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: "timer")
+                                    BulletPoint(text: "Punktabzug: Legt fest, wie viele Punkte bei einer verlorenen Runde weg sind.", icon: "exclamationmark.circle")
                                     BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: "square.grid.2x2.fill")
                                 }
                             }

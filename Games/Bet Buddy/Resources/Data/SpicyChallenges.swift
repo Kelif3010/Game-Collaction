@@ -75,7 +75,6 @@ struct SpicyChallenges {
 
         // MARK: - Dirty Talk & Sprache
         Challenge(text: "Wie viele Kosenamen, die man nur im Bett benutzt, fallen deinem Partner ein?", category: .spicy),
-        Challenge(text: "Wie viele Komplimente über den Körper des anderen kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele Wörter für 'kommen' (Orgasmus haben) kennt dein Partner?", category: .spicy),
 
         // MARK: - Medien & Fantasien
@@ -101,11 +100,9 @@ struct SpicyChallenges {
 
         // MARK: - Anatomie & Körper
         Challenge(text: "Wie viele Körperflüssigkeiten kann dein Partner aufzählen?", category: .spicy),
-        Challenge(text: "Wie viele Formen von Schambehaarung (Intimfrisuren) kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Muskeln, die beim Sex beansprucht werden, kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele Hormone, die bei Lust ausgeschüttet werden, kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Slang-Begriffe für Hoden kennt dein Partner?", category: .spicy),
-        Challenge(text: "Wie viele Veränderungen am Körper bei Erregung (Nippel werden hart, Röte...) kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Verhütungsmethoden OHNE Hormone kennt dein Partner?", category: .spicy),
 
         // MARK: - Verschiedenes
@@ -113,7 +110,6 @@ struct SpicyChallenges {
         Challenge(text: "Wie viele Dinge, die man im Bett essen kann (ohne riesige Sauerei), fallen deinem Partner ein?", category: .spicy),
         Challenge(text: "Wie viele Arten von Unterwäsche für Männer (Boxershorts, Slips...) kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele Arten von Unterwäsche für Frauen (Tanga, Panty...) kann dein Partner nennen?", category: .spicy),
-        Challenge(text: "Wie viele Sex-Rekorde (längster Sex, meiste Partner...) könnte dein Partner erraten/nennen?", category: .spicy),
         Challenge(text: "Wie viele Synonyme für 'Rummachen' (Knutschen/Petting) kennt dein Partner?", category: .spicy),
 
         // MARK: - Hemmungen & Tabus
@@ -131,27 +127,20 @@ struct SpicyChallenges {
         // MARK: - Spielzeug & Hilfsmittel
         Challenge(text: "Wie viele Dinge aus der Küche, die man für Sexspiele nutzen könnte (Eiswürfel...), kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Arten von Dildos (Glas, Silikon, Doppeldildo...) kann dein Partner nennen?", category: .spicy),
-        Challenge(text: "Wie viele Marken von Gleitgel mit Geschmack kennt dein Partner?", category: .spicy),
-        Challenge(text: "Wie viele Arten von Cockrings kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Gegenstände, die man zur 'Bestrafung' nutzen kann (Lineal, Löffel...), kennt dein Partner?", category: .spicy),
 
-        // MARK: - Dating & 'Der Markt'
+        // MARK: - Dating & Qualität
         Challenge(text: "Wie viele 'Red Flags' im Bett (z.B. Egoismus) kann dein Partner aufzählen?", category: .spicy),
         Challenge(text: "Wie viele Kriterien für einen 'guten Liebhaber' kennt dein Partner?", category: .spicy),
-        Challenge(text: "Wie viele Lügen, die Männer über ihre Penisgröße erzählen, fallen deinem Partner ein?", category: .spicy),
-        Challenge(text: "Wie viele Lügen, die Frauen über Orgasmen erzählen, kann dein Partner nennen?", category: .spicy),
 
         // MARK: - Pornos & Online
         Challenge(text: "Wie viele Suchbegriffe, die auf Pornoseiten populär sind, fallen deinem Partner ein?", category: .spicy),
-        Challenge(text: "Wie viele Kategorien von Hentai (Anime-Pornos) kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Abkürzungen aus der Dating-Welt (ONS, FWB...) kennt dein Partner?", category: .spicy),
 
         // MARK: - Turn-Ons & Turn-Offs
         Challenge(text: "Wie viele Gerüche, die beim Sex abtörnend sind, kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele Kleidungsstücke bei Männern, die Frauen abtörnend finden (z.B. weiße Tennissocken), fallen deinem Partner ein?", category: .spicy),
         Challenge(text: "Wie viele Dinge, die man beim Küssen falsch machen kann (zu viel Zunge, Sabber...), kennt dein Partner?", category: .spicy),
-        Challenge(text: "Wie viele Sätze, die ein Mann beim Sex hören will, fallen deinem Partner ein?", category: .spicy),
-        Challenge(text: "Wie viele Sätze, die eine Frau beim Sex hören will, kann dein Partner nennen?", category: .spicy),
 
         // MARK: - Sprache der Lust
         Challenge(text: "Wie viele andere Wörter für 'Geschlechtsverkehr' fallen deinem Partner ein?", category: .spicy),
@@ -178,7 +167,7 @@ struct SpicyChallenges {
         Challenge(text: "Wie viele Dinge, die man bei einem Dreier beachten muss, kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Arten von Vorspiel, die gar nicht im Bett stattfinden (Sexting, Blicke...), kennt dein Partner?", category: .spicy),
 
-        // MARK: - Neu: Spicy Vielfalt
+        // MARK: - Spicy Vielfalt
         Challenge(text: "Wie viele weibliche Sexsymbol-Stars (Schauspielerinnen/Sängerinnen) kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele männliche Sexsymbol-Stars (Schauspieler/Sänger) kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele Erotikfilme (Mainstream-Kino, z.B. Eyes Wide Shut) kann dein Partner nennen?", category: .spicy),
@@ -191,7 +180,6 @@ struct SpicyChallenges {
         Challenge(text: "Wie viele Wörter für 'nackt' (Slang oder hochsprachlich) kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Arten von Intim-Piercings kann dein Partner nennen?", category: .spicy),
         Challenge(text: "Wie viele berühmte Sex-Szenen aus der Literatur (z.B. Fifty Shades) kennt dein Partner?", category: .spicy),
-        Challenge(text: "Wie viele Berufe, bei denen man nackt arbeitet (FKK-Kellner, Aktmodell...), kennt dein Partner?", category: .spicy),
         Challenge(text: "Wie viele Schlafzimmer-Accessoires (Spiegel, Kette...) für das perfekte Setup kennt dein Partner?", category: .spicy),
     ]
 }

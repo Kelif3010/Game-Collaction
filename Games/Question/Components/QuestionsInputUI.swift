@@ -329,17 +329,17 @@ struct QuestionsSecureRevealButton: View {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
 
         timer = Timer.scheduledTimer(withTimeInterval: step, repeats: true) { _ in
-            withAnimation(.linear(duration: step)) {
-                progress += CGFloat(step / holdDuration)
-            }
-
-            // Leichte Haptik während des Scans
-            if Int(progress * 10) % 2 == 0 {
-                UISelectionFeedbackGenerator().selectionChanged()
-            }
-
-            if progress >= 1.0 {
-                completeScan()
+            Task { @MainActor in
+                withAnimation(.linear(duration: step)) {
+                    progress += CGFloat(step / holdDuration)
+                }
+                // Leichte Haptik während des Scans
+                if Int(progress * 10) % 2 == 0 {
+                    UISelectionFeedbackGenerator().selectionChanged()
+                }
+                if progress >= 1.0 {
+                    completeScan()
+                }
             }
         }
     }

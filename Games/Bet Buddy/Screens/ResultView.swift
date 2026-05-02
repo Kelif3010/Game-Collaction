@@ -372,27 +372,30 @@ struct ResultView: View {
         }
     }
 
+    @MainActor
     private func startRaceAnimation() {
         for entry in result.leaderboard {
             currentScores[entry.id] = 0
         }
 
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
-            var allDone = true
-
-            for entry in result.leaderboard {
-                let current = currentScores[entry.id, default: 0]
-                let target = entry.score
-
-                if current < target {
-                    let step = max(1, (target - current) / 8)
-                    currentScores[entry.id] = min(current + step, target)
-                    allDone = false
+        Task { @MainActor in
+            while true {
+                var allDone = true
+                for entry in result.leaderboard {
+                    let current = currentScores[entry.id, default: 0]
+                    let target = entry.score
+                    if current < target {
+                        let step = max(1, (target - current) / 8)
+                        currentScores[entry.id] = min(current + step, target)
+                        allDone = false
+                    }
                 }
-            }
 
-            if allDone {
-                timer.invalidate()
+                if allDone {
+                    break
+                }
+
+                try? await Task.sleep(for: .milliseconds(50))
             }
         }
     }

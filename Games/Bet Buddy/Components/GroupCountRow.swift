@@ -34,7 +34,7 @@ struct GroupCountRow: View {
                     (Text("\(count) ") + Text("Gruppen"))
                         .foregroundStyle(BetBuddyTheme.textChampagne)
                         .font(.headline)
-                    Text("je 2 Spieler")
+                    Text("je 2-4 Spieler")
                         .foregroundStyle(BetBuddyTheme.textSilver)
                         .font(.caption)
                 }

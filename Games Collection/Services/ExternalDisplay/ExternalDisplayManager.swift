@@ -29,7 +29,7 @@ final class ExternalDisplayManager: ObservableObject {
         NotificationCenter.default.publisher(for: UIScene.willConnectNotification)
             .sink { [weak self] notification in
                 guard let scene = notification.object as? UIWindowScene,
-                      scene.session.role == .windowExternalDisplay else { return }
+                      scene.session.role == .windowExternalDisplayNonInteractive else { return }
                 self?.handleSceneConnect(scene)
             }
             .store(in: &cancellables)
@@ -37,7 +37,7 @@ final class ExternalDisplayManager: ObservableObject {
         NotificationCenter.default.publisher(for: UIScene.didDisconnectNotification)
             .sink { [weak self] notification in
                 guard let scene = notification.object as? UIWindowScene,
-                      scene.session.role == .windowExternalDisplay else { return }
+                      scene.session.role == .windowExternalDisplayNonInteractive else { return }
                 self?.handleSceneDisconnect()
             }
             .store(in: &cancellables)
@@ -46,7 +46,7 @@ final class ExternalDisplayManager: ObservableObject {
     private func checkInitialConnection() {
         let externalScenes = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .filter { $0.session.role == .windowExternalDisplay }
+            .filter { $0.session.role == .windowExternalDisplayNonInteractive }
 
         if let firstScene = externalScenes.first {
             handleSceneConnect(firstScene)

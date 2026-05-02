@@ -146,7 +146,9 @@ class GameSettings: ObservableObject {
         
         // Factory Reset Listener
         NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
-            self?.resetSettingsToDefaults()
+            Task { @MainActor [weak self] in
+                self?.resetSettingsToDefaults()
+            }
         }
     }
     

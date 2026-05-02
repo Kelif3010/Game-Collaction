@@ -75,7 +75,7 @@
 "Preview / placeholder" = "Preview / placeholder";
 "Alternate icons are not supported on this device." = "Alternate icons are not supported on this device.";
 "OK" = "OK";
-"Bet Buddy" = "Bet Buddy";
+"Ich biete mehr!" = "Ich biete mehr!";
 "Imposter" = "Imposter";
 
 /* GlobalRecapView */
@@ -469,7 +469,7 @@
 "Zeichne diesen Begriff:" = "Draw this term:";
 "Zwangs-Skip aktiv – erst Skip drücken." = "Forced skip active – press Skip first.";
 
-/* Bet Buddy */
+/* Ich biete mehr! */
 "Gruppen" = "Groups";
 "Gruppennamen" = "Group names";
 "Punkte Abzug" = "Point penalty";
@@ -514,7 +514,7 @@
 "in Folge gespielt" = "played in a row";
 "Pechvogel" = "Unlucky";
 "Worum geht's?" = "What's it about?";
-"Bet Buddy ist ein Wettspiel für 2er-Teams." = "Bet Buddy is a betting game for two-player teams.";
+"Ich biete mehr! ist ein Wettspiel für 2er-Teams." = "Ich biete mehr! is a betting game for two-player teams.";
 "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen')." = "You bet that your partner can complete a challenge (e.g. 'name 5 countries starting with K').";
 "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!" = "The higher the bet, the more points - but also more risk!";
 "So wird gespielt" = "How to play";

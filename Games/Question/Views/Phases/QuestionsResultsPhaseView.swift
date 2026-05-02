@@ -178,10 +178,12 @@ private struct AnalysisIntroView: View {
         }
         .onAppear {
             dotsTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { _ in
-                if dots.count >= 3 {
-                    dots = ""
-                } else {
-                    dots += "."
+                Task { @MainActor in
+                    if dots.count >= 3 {
+                        dots = ""
+                    } else {
+                        dots += "."
+                    }
                 }
             }
         }
@@ -418,7 +420,7 @@ private struct DossierView: View {
     private func startCursorBlink() {
         cursorTimer?.invalidate()
         cursorTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-            cursorVisible.toggle()
+            Task { @MainActor in cursorVisible.toggle() }
         }
     }
 }

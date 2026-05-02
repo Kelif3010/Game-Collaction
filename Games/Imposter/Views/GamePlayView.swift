@@ -133,30 +133,20 @@ struct GamePlayView: View {
         .onChange(of: mpc.lastReconnectedPlayerName) { _, newName in
             if let name = newName {
                 reconnectToastName = name
-                withAnimation(.spring()) {
-                    showReconnectToast = true
-                }
-                
-                // Hide after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    withAnimation {
-                        showReconnectToast = false
-                    }
+                withAnimation(.spring()) { showReconnectToast = true }
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    withAnimation { showReconnectToast = false }
                 }
             }
         }
         .onChange(of: mpc.lastDisconnectedPlayerName) { _, newName in
             if let name = newName {
                 disconnectToastName = name
-                withAnimation(.spring()) {
-                    showDisconnectToast = true
-                }
-                
-                // Hide after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    withAnimation {
-                        showDisconnectToast = false
-                    }
+                withAnimation(.spring()) { showDisconnectToast = true }
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    withAnimation { showDisconnectToast = false }
                 }
             }
         }
@@ -396,10 +386,9 @@ struct GamePlayView: View {
         }
         guard !didRequestTimeSync else { return }
         didRequestTimeSync = true
-        let samples = 5
-        for index in 0..<samples {
-            let delay = Double(index) * 0.25
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        Task {
+            for index in 0..<5 {
+                if index > 0 { try? await Task.sleep(for: .milliseconds(250)) }
                 sendTimeSyncPing()
             }
         }
@@ -472,12 +461,10 @@ struct GamePlayView: View {
             gameSettings.isWaitingForOtherPlayers = true
         }
 
-        // Send to Host Logic (even if Host)
         let payload = ImposterCardSeenPayload(playerName: myName)
         if MultipeerManager.shared.role == .host {
-            // Host processes own card-seen event locally via eventPublisher
             let payloadData = try? JSONEncoder().encode(payload)
-            MultipeerManager.shared.eventPublisher.send((type: MPCEventType.imposterCardSeen, payload: payloadData))
+            MultipeerManager.shared.injectLocalEvent(type: MPCEventType.imposterCardSeen, payload: payloadData)
         } else {
             MultipeerManager.shared.sendToHost(event: MPCEventType.imposterCardSeen, object: payload)
         }

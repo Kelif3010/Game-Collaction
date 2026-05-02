@@ -34,7 +34,7 @@ private actor SpyHintCache {
     private var cache: [String: [String]] = [:]
     private var inFlight: [String: Task<[String], Never>] = [:]
     
-    func hints(for key: String, generate: @escaping () async -> [String]) async -> [String] {
+    func hints(for key: String, generate: @escaping @Sendable () async -> [String]) async -> [String] {
         if let cached = cache[key] { return cached }
         if let task = inFlight[key] { return await task.value }
         
@@ -532,12 +532,12 @@ extension AIService {
 
     #if canImport(FoundationModels)
     @available(iOS 26.0, *)
-    private func makeHintSession() -> LanguageModelSession {
+    nonisolated private func makeHintSession() -> LanguageModelSession {
         let instructions = "Du bist Moderator eines Ratespiels. Antworte auf Deutsch, kurz und präzise."
         return LanguageModelSession(instructions: instructions)
     }
     #else
-    private func makeHintSession() -> Any {
+    nonisolated private func makeHintSession() -> Any {
         return ()
     }
     #endif

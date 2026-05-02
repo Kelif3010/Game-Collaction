@@ -373,7 +373,7 @@ private struct TeamsDetailView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    // Custom Header (scrolls with content like in Bet Buddy)
+                    // Custom Header (scrolls with content like in Ich biete mehr!)
                     HStack {
                         Button { dismiss() } label: {
                             Image(systemName: "chevron.left")

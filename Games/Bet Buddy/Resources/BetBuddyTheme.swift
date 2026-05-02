@@ -1,6 +1,6 @@
 //
 //  BetBuddyTheme.swift
-//  Bet Buddy
+//  Ich biete mehr!
 //
 //  Redesigned: "High Stakes Casino / Poker Room" Aesthetic
 //

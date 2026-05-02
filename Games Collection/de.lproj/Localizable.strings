@@ -75,7 +75,7 @@
 "Preview / placeholder" = "Vorschau / Platzhalter";
 "Alternate icons are not supported on this device." = "Alternative App-Icons werden auf diesem Gerät nicht unterstützt.";
 "OK" = "OK";
-"Bet Buddy" = "Bet Buddy";
+"Ich biete mehr!" = "Ich biete mehr!";
 "Imposter" = "Imposter";
 "Time's Up!" = "Time's Up!";
 
@@ -204,7 +204,7 @@
 "Wort verschwindet" = "Wort verschwindet";
 "Wort auf Englisch" = "Wort auf Englisch";
 
-/* Bet Buddy */
+/* Ich biete mehr! */
 "Gruppen" = "Gruppen";
 "Gruppennamen" = "Gruppennamen";
 "An" = "An";
@@ -253,7 +253,7 @@
 "in Folge gespielt" = "in Folge gespielt";
 "Pechvogel" = "Pechvogel";
 "Worum geht's?" = "Worum geht's?";
-"Bet Buddy ist ein Wettspiel für 2er-Teams." = "Bet Buddy ist ein Wettspiel für 2er-Teams.";
+"Ich biete mehr! ist ein Wettspiel für 2er-Teams." = "Ich biete mehr! ist ein Wettspiel für 2er-Teams.";
 "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen')." = "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').";
 "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!" = "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!";
 "So wird gespielt" = "So wird gespielt";

@@ -46,6 +46,7 @@ final class QuestionsGameViewModel: ObservableObject {
     private var inputStartTime: Date? = nil
     private var cancellables = Set<AnyCancellable>()
     private var timerCancellable: AnyCancellable?
+    private var mpcHandler: QuestionsMultiplayerHandler?
 
     init(appModel: AppModel, engine: QuestionsEngine) {
         self.appModel = appModel
@@ -328,34 +329,33 @@ final class QuestionsGameViewModel: ObservableObject {
         guard suddenDeathCandidates.count >= 2 else { return }
 
         if suddenDeathCandidates.count == 2 {
-            let winnerIndex = Int.random(in: 0...1)
-            let winnerID = suddenDeathCandidates[winnerIndex]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                self.resolveSuddenDeath(winnerID: winnerID)
+            let winnerID = suddenDeathCandidates[Int.random(in: 0...1)]
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(1.5))
+                self?.resolveSuddenDeath(winnerID: winnerID)
             }
             return
         }
 
-        var iteration = 0
-        let totalIterations = 20
-        var interval: TimeInterval = 0.1
-        var highlightIndex = 0
+        Task { @MainActor [weak self] in
+            var iteration = 0
+            let totalIterations = 20
+            var interval: TimeInterval = 0.1
+            var highlightIndex = 0
 
-        func tick() {
-            guard iteration < totalIterations else {
-                let winnerID = suddenDeathCandidates[highlightIndex]
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    self.resolveSuddenDeath(winnerID: winnerID)
+            while true {
+                guard iteration < totalIterations else {
+                    let winnerID = suddenDeathCandidates[highlightIndex]
+                    try? await Task.sleep(for: .seconds(0.6))
+                    self?.resolveSuddenDeath(winnerID: winnerID)
+                    break
                 }
-                return
+                highlightIndex = (highlightIndex + 1) % suddenDeathCandidates.count
+                iteration += 1
+                if iteration > 10 { interval *= 1.15 }
+                try? await Task.sleep(for: .seconds(interval))
             }
-            highlightIndex = (highlightIndex + 1) % suddenDeathCandidates.count
-            iteration += 1
-            if iteration > 10 { interval *= 1.15 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + interval) { tick() }
         }
-
-        tick()
     }
 
     private func resolveSuddenDeath(winnerID: UUID) {
@@ -374,6 +374,19 @@ final class QuestionsGameViewModel: ObservableObject {
         liarScrollTarget = nil
         foundRevealLiars.removeAll()
         if clearLast { lastRevealEvaluation = nil }
+    }
+
+    // MARK: - MPC Handler Lifecycle
+
+    func activateMPCHandler(onDismiss: @escaping () -> Void) {
+        let handler = QuestionsMultiplayerHandler()
+        handler.activate(viewModel: self, onDismiss: onDismiss)
+        mpcHandler = handler
+    }
+
+    func deactivateMPCHandler() {
+        mpcHandler?.deactivate()
+        mpcHandler = nil
     }
 
     // MARK: - Multiplayer Sync Helpers

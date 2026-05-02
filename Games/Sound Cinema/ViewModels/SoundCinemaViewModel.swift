@@ -89,7 +89,7 @@ final class SoundCinemaViewModel: ObservableObject {
         timerTask = Task {
             let total = settings.timerMode.rawValue
             while timeRemaining > 0 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
                 timeRemaining -= 1
                 timerProgress = Double(timeRemaining) / Double(total)
@@ -133,7 +133,7 @@ final class SoundCinemaViewModel: ObservableObject {
             showVoteOverlay = true
         }
 
-        try? await Task.sleep(nanoseconds: 1_200_000_000)
+        try? await Task.sleep(for: .milliseconds(1200))
 
         withAnimation {
             showVoteOverlay = false
@@ -150,7 +150,7 @@ final class SoundCinemaViewModel: ObservableObject {
                 if players[currentPlayerIndex].isEliminated {
                     let name = players[currentPlayerIndex].name
                     phase = .eliminated(playerName: name)
-                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    try? await Task.sleep(for: .milliseconds(1500))
 
                     // Nur 1 Spieler übrig → Spiel vorbei
                     if activePlayers.count <= 1 {

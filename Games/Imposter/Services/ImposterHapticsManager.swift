@@ -6,15 +6,15 @@
 //
 
 import CoreHaptics
-import UIKit
+@preconcurrency import UIKit
 
 /// High-End Haptik-Manager für Imposter
 /// Nutzt CoreHaptics für komplexe Texturen wie Herzschlag oder schwere Schläge.
 class ImposterHapticsManager {
     static let shared = ImposterHapticsManager()
     
-    private var engine: CHHapticEngine?
-    private var lifecycleObservers: [NSObjectProtocol] = []
+    nonisolated(unsafe) private var engine: CHHapticEngine?
+    nonisolated(unsafe) private var lifecycleObservers: [NSObjectProtocol] = []
     
     // Prüft, ob Haptik hardwareseitig unterstützt wird UND global aktiviert ist
     private var isHapticsEnabledAndSupported: Bool {

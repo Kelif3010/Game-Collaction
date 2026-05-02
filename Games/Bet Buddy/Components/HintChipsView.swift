@@ -101,9 +101,7 @@ struct FlexibleFlowLayout: Layout {
     }
 
     private func calculateLayout(proposal: ProposedViewSize, subviews: Subviews) -> LayoutResult {
-        // FIX: UIScreen.main ersetzt durch modernen Fallback
-        let screenWidth = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.bounds.width ?? 375
-        let maxWidth = proposal.width ?? screenWidth
+        let maxWidth = proposal.width ?? 375
         
         var rows: [[Int]] = [[]]
         var currentRowWidth: CGFloat = 0

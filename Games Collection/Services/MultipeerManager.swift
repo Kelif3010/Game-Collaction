@@ -1,12 +1,39 @@
 import Foundation
-import MultipeerConnectivity
+@preconcurrency import MultipeerConnectivity
 import SwiftUI
-import Combine
+import Combine // Benötigt für @Published / ObservableObject
+
+// Swift 6: Wrapper für non-Sendable ObjC-Closures (z.B. MultipeerConnectivity invitation handler)
+private final class UncheckedSendable<T>: @unchecked Sendable {
+    nonisolated(unsafe) let value: T
+    nonisolated init(_ value: T) { self.value = value }
+}
 
 // MARK: - Datenmodelle
 struct MPCMessage: Codable, Sendable {
     let type: String
     let payload: Data? // JSON-kodierter Inhalt
+
+    // Explizite Implementierung verhindert Swift 6-Fehler, bei dem die synthesized
+    // Decodable-Konformanz fälschlicherweise als @MainActor-isoliert inferiert wird.
+    private enum CodingKeys: CodingKey { case type, payload }
+
+    init(type: String, payload: Data?) {
+        self.type = type
+        self.payload = payload
+    }
+
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        type = try container.decode(String.self, forKey: .type)
+        payload = try container.decodeIfPresent(Data.self, forKey: .payload)
+    }
+}
+
+/// Eingehendes MPC-Event – wird über `MultipeerManager.events` gestreamt.
+struct MPCEvent: Sendable {
+    let type: String
+    let payload: Data?
 }
 
 enum MPCRole {
@@ -56,17 +83,28 @@ class MultipeerManager: NSObject, ObservableObject {
     private var disconnectTasks: [String: Task<Void, Never>] = [:]
     private let disconnectGraceInterval: TimeInterval = 30
 
-    // MARK: - Event System (Combine-basiert für mehrere Zuhörer)
+    // MARK: - Event System
 
-    /// Publisher für MPC Events - mehrere Views/ViewModels können sich subscriben
-    /// Tuple: (eventType: String, payload: Data?)
-    let eventPublisher = PassthroughSubject<(type: String, payload: Data?), Never>()
+    /// Moderner AsyncStream – bevorzugter Weg für neue Handler.
+    /// Liefert alle eingehenden Spiel-Events (keine internen Lobby-Events).
+    let events: AsyncStream<MPCEvent>
+    private var eventContinuation: AsyncStream<MPCEvent>.Continuation?
 
-    /// Legacy Callback für Abwärtskompatibilität (wird zusätzlich zum Publisher aufgerufen)
-    /// DEPRECATED: Bitte eventPublisher.sink verwenden
+    /// Sendet ein Event lokal an alle Subscriber (für Host-seitige Eigenverarbeitung ohne Netzwerk).
+    func injectLocalEvent(type: String, payload: Data?) {
+        eventContinuation?.yield(MPCEvent(type: type, payload: payload))
+        onEventReceived?(type, payload)
+    }
+
+    /// - Warning: Deprecated. Bitte `events` AsyncStream verwenden.
+    @available(*, deprecated, renamed: "events", message: "Verwende den events AsyncStream statt onEventReceived.")
     var onEventReceived: ((String, Data?) -> Void)?
     
     override init() {
+        // AsyncStream für die Laufzeit des Singletons – wird nie beendet.
+        var cont: AsyncStream<MPCEvent>.Continuation?
+        self.events = AsyncStream(MPCEvent.self, bufferingPolicy: .bufferingNewest(32)) { cont = $0 }
+
         let defaults = UserDefaults.standard
         if let stored = defaults.string(forKey: "mpc.playerId"),
            let uuid = UUID(uuidString: stored) {
@@ -86,9 +124,10 @@ class MultipeerManager: NSObject, ObservableObject {
         } else {
             displayName = deviceName
         }
-        
+
         self.myPeerId = MCPeerID(displayName: displayName)
         super.init()
+        self.eventContinuation = cont
     }
     
     func updatePeerName(name: String) {
@@ -257,8 +296,8 @@ class MultipeerManager: NSObject, ObservableObject {
         
         disconnectTasks[name]?.cancel()
         let task = Task { [weak self] in
-            let nanoseconds = UInt64(self?.disconnectGraceInterval ?? 30) * 1_000_000_000
-            try? await Task.sleep(nanoseconds: nanoseconds)
+            let seconds = self?.disconnectGraceInterval ?? 30
+            try? await Task.sleep(for: .seconds(seconds))
 
             // Prüfen ob Task abgebrochen wurde (z.B. durch stop() oder Reconnect)
             guard !Task.isCancelled else { return }
@@ -315,18 +354,17 @@ extension MultipeerManager: MCSessionDelegate {
         Task { @MainActor in
             self.connectedPeers = currentPeers
 
-            // Wenn Host: Lobby updaten und verteilen (mit kurzer Verzögerung für Stabilität)
-            if self.role == .host {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.broadcastLobbyState()
-                }
-            }
-
             switch state {
             case .connected:
                 print("MPC: Verbunden mit \(peerDisplayName)")
                 self.lastReconnectedPlayerName = peerDisplayName
                 self.clearPeerDisconnected(peerDisplayName)
+                if self.role == .host {
+                    Task { @MainActor [self] in
+                        try? await Task.sleep(for: .milliseconds(500))
+                        self.broadcastLobbyState()
+                    }
+                }
             case .connecting:
                 print("MPC: Verbinde mit \(peerDisplayName)...")
             case .notConnected:
@@ -336,6 +374,12 @@ extension MultipeerManager: MCSessionDelegate {
                 // SVC-03 / UX-18 Fix: Clients erkennen Host-Disconnect und können Alert zeigen
                 if self.role == .peer, peerDisplayName == self.hostPeerName {
                     self.hostDidDisconnect = true
+                }
+                if self.role == .host {
+                    Task { @MainActor [self] in
+                        try? await Task.sleep(for: .milliseconds(500))
+                        self.broadcastLobbyState()
+                    }
                 }
             @unknown default:
                 break
@@ -378,10 +422,7 @@ extension MultipeerManager: MCSessionDelegate {
                 self.receivedMessages.removeFirst(self.receivedMessages.count - 100)
             }
 
-            // Event an alle Subscriber weiterleiten (neues System)
-            self.eventPublisher.send((type: message.type, payload: message.payload))
-
-            // Legacy Callback für Abwärtskompatibilität
+            self.eventContinuation?.yield(MPCEvent(type: message.type, payload: message.payload))
             self.onEventReceived?(message.type, message.payload)
         }
     }
@@ -395,9 +436,10 @@ extension MultipeerManager: MCSessionDelegate {
 extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         print("MPC: Einladung von \(peerID.displayName) erhalten. Akzeptiere automatisch.")
-        // Session-Zugriff muss auf MainActor passieren
+        // UncheckedSendable nötig da MultipeerConnectivity-Handler nicht als @Sendable annotiert ist
+        let box = UncheckedSendable(invitationHandler)
         Task { @MainActor in
-            invitationHandler(true, self.session)
+            box.value(true, self.session)
         }
     }
 

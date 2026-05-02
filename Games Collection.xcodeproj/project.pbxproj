@@ -7,6 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B93316EC2FA5FB430039C91E /* _RopeModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93316EB2FA5FB430039C91E /* _RopeModule */; };
+		B93316EE2FA5FB430039C91E /* BasicContainers in Frameworks */ = {isa = PBXBuildFile; productRef = B93316ED2FA5FB430039C91E /* BasicContainers */; };
+		B93316F02FA5FB430039C91E /* BitCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93316EF2FA5FB430039C91E /* BitCollections */; };
+		B93316F22FA5FB430039C91E /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = B93316F12FA5FB430039C91E /* Collections */; };
+		B93316F42FA5FB430039C91E /* ContainersPreview in Frameworks */ = {isa = PBXBuildFile; productRef = B93316F32FA5FB430039C91E /* ContainersPreview */; };
+		B93316F62FA5FB430039C91E /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93316F52FA5FB430039C91E /* DequeModule */; };
+		B93316F82FA5FB430039C91E /* HashTreeCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93316F72FA5FB430039C91E /* HashTreeCollections */; };
+		B93316FA2FA5FB430039C91E /* HeapModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93316F92FA5FB430039C91E /* HeapModule */; };
+		B93316FC2FA5FB430039C91E /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93316FB2FA5FB430039C91E /* OrderedCollections */; };
+		B93316FE2FA5FB430039C91E /* SortedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93316FD2FA5FB430039C91E /* SortedCollections */; };
+		B93317002FA5FB430039C91E /* TrailingElementsModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93316FF2FA5FB430039C91E /* TrailingElementsModule */; };
+		B93317032FA5FB5B0039C91E /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = B93317022FA5FB5B0039C91E /* Algorithms */; };
+		B93317062FA5FBD00039C91E /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = B93317052FA5FBD00039C91E /* AsyncAlgorithms */; };
+		B93317082FA5FC1D0039C91E /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = B93317072FA5FC1D0039C91E /* Lottie */; };
+		B933170A2FA5FC1D0039C91E /* _RopeModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93317092FA5FC1D0039C91E /* _RopeModule */; };
+		B933170C2FA5FC1D0039C91E /* BasicContainers in Frameworks */ = {isa = PBXBuildFile; productRef = B933170B2FA5FC1D0039C91E /* BasicContainers */; };
+		B933170E2FA5FC1D0039C91E /* BitCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B933170D2FA5FC1D0039C91E /* BitCollections */; };
+		B93317102FA5FC1D0039C91E /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = B933170F2FA5FC1D0039C91E /* Collections */; };
+		B93317122FA5FC1D0039C91E /* ContainersPreview in Frameworks */ = {isa = PBXBuildFile; productRef = B93317112FA5FC1D0039C91E /* ContainersPreview */; };
+		B93317142FA5FC1D0039C91E /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93317132FA5FC1D0039C91E /* DequeModule */; };
+		B93317162FA5FC1D0039C91E /* HashTreeCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93317152FA5FC1D0039C91E /* HashTreeCollections */; };
+		B93317182FA5FC1D0039C91E /* HeapModule in Frameworks */ = {isa = PBXBuildFile; productRef = B93317172FA5FC1D0039C91E /* HeapModule */; };
+		B933171A2FA5FC1D0039C91E /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B93317192FA5FC1D0039C91E /* OrderedCollections */; };
+		B933171C2FA5FC1D0039C91E /* SortedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = B933171B2FA5FC1D0039C91E /* SortedCollections */; };
+		B933171E2FA5FC1D0039C91E /* TrailingElementsModule in Frameworks */ = {isa = PBXBuildFile; productRef = B933171D2FA5FC1D0039C91E /* TrailingElementsModule */; };
+		B93317202FA5FC1D0039C91E /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = B933171F2FA5FC1D0039C91E /* Algorithms */; };
+		B93317222FA5FC1D0039C91E /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = B93317212FA5FC1D0039C91E /* AsyncAlgorithms */; };
+		B93317252FA5FC420039C91E /* SFSafeSymbols in Frameworks */ = {isa = PBXBuildFile; productRef = B93317242FA5FC420039C91E /* SFSafeSymbols */; };
+		B93317282FA5FC7B0039C91E /* Pow in Frameworks */ = {isa = PBXBuildFile; productRef = B93317272FA5FC7B0039C91E /* Pow */; };
+		B933172A2FA5FC880039C91E /* SFSafeSymbols in Frameworks */ = {isa = PBXBuildFile; productRef = B93317292FA5FC880039C91E /* SFSafeSymbols */; };
+		B933172C2FA5FC880039C91E /* Pow in Frameworks */ = {isa = PBXBuildFile; productRef = B933172B2FA5FC880039C91E /* Pow */; };
 		BE763CED2F8EA66C004DE460 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = BE763CEC2F8EA66C004DE460 /* Lottie */; };
 /* End PBXBuildFile section */
 
@@ -32,18 +63,57 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B93317252FA5FC420039C91E /* SFSafeSymbols in Frameworks */,
+				B933172C2FA5FC880039C91E /* Pow in Frameworks */,
+				B93316FC2FA5FB430039C91E /* OrderedCollections in Frameworks */,
+				B933170C2FA5FC1D0039C91E /* BasicContainers in Frameworks */,
+				B933170E2FA5FC1D0039C91E /* BitCollections in Frameworks */,
+				B93316FE2FA5FB430039C91E /* SortedCollections in Frameworks */,
+				B93317162FA5FC1D0039C91E /* HashTreeCollections in Frameworks */,
+				B93317182FA5FC1D0039C91E /* HeapModule in Frameworks */,
+				B93316F02FA5FB430039C91E /* BitCollections in Frameworks */,
+				B93316EE2FA5FB430039C91E /* BasicContainers in Frameworks */,
+				B93317102FA5FC1D0039C91E /* Collections in Frameworks */,
+				B93316F22FA5FB430039C91E /* Collections in Frameworks */,
+				B93317082FA5FC1D0039C91E /* Lottie in Frameworks */,
+				B93317122FA5FC1D0039C91E /* ContainersPreview in Frameworks */,
+				B933170A2FA5FC1D0039C91E /* _RopeModule in Frameworks */,
+				B93316F62FA5FB430039C91E /* DequeModule in Frameworks */,
+				B93317282FA5FC7B0039C91E /* Pow in Frameworks */,
+				B933171A2FA5FC1D0039C91E /* OrderedCollections in Frameworks */,
+				B93317032FA5FB5B0039C91E /* Algorithms in Frameworks */,
+				B933171C2FA5FC1D0039C91E /* SortedCollections in Frameworks */,
+				B93316F42FA5FB430039C91E /* ContainersPreview in Frameworks */,
+				B933172A2FA5FC880039C91E /* SFSafeSymbols in Frameworks */,
+				B93317202FA5FC1D0039C91E /* Algorithms in Frameworks */,
+				B93317002FA5FB430039C91E /* TrailingElementsModule in Frameworks */,
+				B93316EC2FA5FB430039C91E /* _RopeModule in Frameworks */,
+				B93316F82FA5FB430039C91E /* HashTreeCollections in Frameworks */,
+				B933171E2FA5FC1D0039C91E /* TrailingElementsModule in Frameworks */,
+				B93317142FA5FC1D0039C91E /* DequeModule in Frameworks */,
+				B93316FA2FA5FB430039C91E /* HeapModule in Frameworks */,
 				BE763CED2F8EA66C004DE460 /* Lottie in Frameworks */,
+				B93317062FA5FBD00039C91E /* AsyncAlgorithms in Frameworks */,
+				B93317222FA5FC1D0039C91E /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B93316EA2FA5FB420039C91E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		BED0076D2EFFFB2B008E5FDB = {
 			isa = PBXGroup;
 			children = (
 				BED007852EFFFBB5008E5FDB /* Games */,
 				BED007782EFFFB2B008E5FDB /* Games Collection */,
+				B93316EA2FA5FB420039C91E /* Frameworks */,
 				BED007772EFFFB2B008E5FDB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -107,6 +177,11 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */,
+				B93317012FA5FB5B0039C91E /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				B93317042FA5FBD00039C91E /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
+				B93317232FA5FC420039C91E /* XCRemoteSwiftPackageReference "SFSafeSymbols" */,
+				B93317262FA5FC7B0039C91E /* XCRemoteSwiftPackageReference "Pow" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BED007772EFFFB2B008E5FDB /* Products */;
@@ -277,14 +352,16 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Games-Collection-Info.plist";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Um Freunde für Spiele in der Nähe zu finden.";
+				INFOPLIST_KEY_NSGKFriendListUsageDescription = "This app uses your Game Center friends list to show friend-based multiplayer and leaderboard features.\n";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Games Collection benötigt Zugriff auf das lokale Netzwerk, um Multiplayer-Spiele mit anderen Geräten in deiner Nähe zu ermöglichen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -293,11 +370,15 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Ken.Games-Collection";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -315,14 +396,16 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Games-Collection-Info.plist";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Um Freunde für Spiele in der Nähe zu finden.";
+				INFOPLIST_KEY_NSGKFriendListUsageDescription = "This app uses your Game Center friends list to show friend-based multiplayer and leaderboard features.\n";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Games Collection benötigt Zugriff auf das lokale Netzwerk, um Multiplayer-Spiele mit anderen Geräten in deiner Nähe zu ermöglichen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -331,11 +414,15 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Ken.Games-Collection";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -364,6 +451,46 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.1;
+			};
+		};
+		B93317012FA5FB5B0039C91E /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
+		B93317042FA5FBD00039C91E /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.3;
+			};
+		};
+		B93317232FA5FC420039C91E /* XCRemoteSwiftPackageReference "SFSafeSymbols" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SFSafeSymbols/SFSafeSymbols";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
+		B93317262FA5FC7B0039C91E /* XCRemoteSwiftPackageReference "Pow" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/EmergeTools/Pow";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.6;
+			};
+		};
 		BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
@@ -375,6 +502,161 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B93316EB2FA5FB430039C91E /* _RopeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = _RopeModule;
+		};
+		B93316ED2FA5FB430039C91E /* BasicContainers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = BasicContainers;
+		};
+		B93316EF2FA5FB430039C91E /* BitCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = BitCollections;
+		};
+		B93316F12FA5FB430039C91E /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+		B93316F32FA5FB430039C91E /* ContainersPreview */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = ContainersPreview;
+		};
+		B93316F52FA5FB430039C91E /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+		B93316F72FA5FB430039C91E /* HashTreeCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = HashTreeCollections;
+		};
+		B93316F92FA5FB430039C91E /* HeapModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = HeapModule;
+		};
+		B93316FB2FA5FB430039C91E /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
+		};
+		B93316FD2FA5FB430039C91E /* SortedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = SortedCollections;
+		};
+		B93316FF2FA5FB430039C91E /* TrailingElementsModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = TrailingElementsModule;
+		};
+		B93317022FA5FB5B0039C91E /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317012FA5FB5B0039C91E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		B93317052FA5FBD00039C91E /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317042FA5FBD00039C91E /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
+		};
+		B93317072FA5FC1D0039C91E /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
+		};
+		B93317092FA5FC1D0039C91E /* _RopeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = _RopeModule;
+		};
+		B933170B2FA5FC1D0039C91E /* BasicContainers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = BasicContainers;
+		};
+		B933170D2FA5FC1D0039C91E /* BitCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = BitCollections;
+		};
+		B933170F2FA5FC1D0039C91E /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+		B93317112FA5FC1D0039C91E /* ContainersPreview */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = ContainersPreview;
+		};
+		B93317132FA5FC1D0039C91E /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+		B93317152FA5FC1D0039C91E /* HashTreeCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = HashTreeCollections;
+		};
+		B93317172FA5FC1D0039C91E /* HeapModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = HeapModule;
+		};
+		B93317192FA5FC1D0039C91E /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
+		};
+		B933171B2FA5FC1D0039C91E /* SortedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = SortedCollections;
+		};
+		B933171D2FA5FC1D0039C91E /* TrailingElementsModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93316E92FA5FB110039C91E /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = TrailingElementsModule;
+		};
+		B933171F2FA5FC1D0039C91E /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317012FA5FB5B0039C91E /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		B93317212FA5FC1D0039C91E /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317042FA5FBD00039C91E /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
+		};
+		B93317242FA5FC420039C91E /* SFSafeSymbols */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317232FA5FC420039C91E /* XCRemoteSwiftPackageReference "SFSafeSymbols" */;
+			productName = SFSafeSymbols;
+		};
+		B93317272FA5FC7B0039C91E /* Pow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317262FA5FC7B0039C91E /* XCRemoteSwiftPackageReference "Pow" */;
+			productName = Pow;
+		};
+		B93317292FA5FC880039C91E /* SFSafeSymbols */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317232FA5FC420039C91E /* XCRemoteSwiftPackageReference "SFSafeSymbols" */;
+			productName = SFSafeSymbols;
+		};
+		B933172B2FA5FC880039C91E /* Pow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B93317262FA5FC7B0039C91E /* XCRemoteSwiftPackageReference "Pow" */;
+			productName = Pow;
+		};
 		BE763CEC2F8EA66C004DE460 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BE763CEB2F8EA66C004DE460 /* XCRemoteSwiftPackageReference "lottie-ios" */;

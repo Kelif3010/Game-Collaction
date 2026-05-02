@@ -1,0 +1,60 @@
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BinaryInteger\ extensions.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+BitwiseOperations.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+ChunkedBitsIterators.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Codable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Collection.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Copy.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+CustomReflectable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Descriptions.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Equatable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+ExpressibleByArrayLiteral.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+ExpressibleByStringLiteral.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Extras.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Fill.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Hashable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Initializers.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Invariants.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+LosslessStringConvertible.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+RandomBits.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+RangeReplaceableCollection.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Shifts.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray+Testing.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray._UnsafeHandle.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitArray/BitArray.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+BidirectionalCollection.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Codable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+CustomDebugStringConvertible.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+CustomReflectable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+CustomStringConvertible.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Equatable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+ExpressibleByArrayLiteral.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Extras.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Hashable.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Initializers.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Invariants.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Random.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ basics.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ conformance.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ formIntersection.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ formSymmetricDifference.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ formUnion.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ intersection.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isDisjoint.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isEqualSet.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isStrictSubset.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isStrictSuperset.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isSubset.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ isSuperset.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ subtract.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ subtracting.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ symmetricDifference.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+SetAlgebra\ union.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet+Sorted\ Collection\ APIs.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet.Counted.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet.Index.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet._UnsafeHandle.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/BitSet/BitSet.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/Shared/Range+Utilities.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/Shared/Slice+Utilities.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/Shared/UInt+Tricks.swift
+/Users/keno/Library/Developer/Xcode/DerivedData/Games_Collection-cyrvscpbumnxpwfrmnzcxsveqbnx/SourcePackages/checkouts/swift-collections/Sources/BitCollections/Shared/_Word.swift

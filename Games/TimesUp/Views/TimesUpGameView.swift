@@ -432,10 +432,12 @@ struct SlotMachineCard: View {
     private func startTimer() {
         stopTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            guard !symbolPool.isEmpty else { return }
-            for i in 0..<3 {
-                if let symbol = symbolPool.randomElement() {
-                    reelSymbols[i] = symbol
+            Task { @MainActor in
+                guard !symbolPool.isEmpty else { return }
+                for i in 0..<3 {
+                    if let symbol = symbolPool.randomElement() {
+                        reelSymbols[i] = symbol
+                    }
                 }
             }
         }

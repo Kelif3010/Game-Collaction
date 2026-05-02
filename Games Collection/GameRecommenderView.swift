@@ -369,7 +369,7 @@ struct GameRecommenderView: View {
         
         // --- LOGIC ---
         
-        // 1. Bet Buddy
+        // 1. Ich biete mehr!
         var betScore = 70
         if players >= 2 && players <= 8 { betScore += 20 }
         if mood == .communication || mood == .funny { betScore += 15 }
@@ -380,7 +380,7 @@ struct GameRecommenderView: View {
         
         list.append(GameRecommendation(
             id: "BetBuddy",
-            name: "Bet Buddy",
+            name: "Ich biete mehr!",
             description: "Wettet aufeinander. Wer kennt die Gruppe am besten?",
             imageName: "BetBuddyIcon",
             matchScore: clampScore(betScore),
