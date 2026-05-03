@@ -1,6 +1,6 @@
 import Foundation
 
-struct LeaderboardEntry: Identifiable, Hashable {
+struct LeaderboardEntry: Identifiable, Hashable, Sendable {
     let id = UUID()
     let groupId: UUID
     let name: String

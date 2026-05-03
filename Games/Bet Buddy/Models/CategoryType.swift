@@ -1,6 +1,7 @@
 import SwiftUI
+import SFSafeSymbols
 
-enum CategoryType: String, CaseIterable, Identifiable, Codable {
+enum CategoryType: String, CaseIterable, Identifiable, Codable, Sendable {
     case classic
     case party
     case spicy
@@ -29,13 +30,13 @@ enum CategoryType: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var iconName: String {
+    var iconSymbol: SFSymbol {
         switch self {
-        case .classic: return "sparkles"
-        case .party: return "party.popper"
-        case .spicy: return "flame.fill"
-        case .active: return "figure.run"
-        case .alphabet: return "textformat.abc"
+        case .classic: return .sparkles
+        case .party: return .partyPopper
+        case .spicy: return .flameFill
+        case .active: return .figureRun
+        case .alphabet: return .textformatCharacters
         }
     }
 

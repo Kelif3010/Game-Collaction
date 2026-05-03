@@ -6,10 +6,11 @@
 //
 
 import Foundation
-import Combine
+import Algorithms
 
 /// Manager-Klasse für die Verwaltung von Spion-Hinweisen
-class HintsManager: ObservableObject {
+@Observable
+class HintsManager {
     private static var hintRotation: [String: Int] = [:]
 
     private static func pickHint(from hints: [String], key: String, word: String) -> String? {
@@ -62,7 +63,7 @@ class HintsManager: ObservableObject {
             components.append("Mitspione:")
             
             // Namen in Gruppen von 3 aufteilen (wie in Skizze)
-            let chunkedNames = otherSpyNames.chunked(into: 3)
+            let chunkedNames = otherSpyNames.chunks(ofCount: 3)
             for chunk in chunkedNames {
                 components.append(chunk.joined(separator: ", "))
             }
@@ -112,7 +113,7 @@ class HintsManager: ObservableObject {
             components.append("Mitspione:")
             
             // Namen in Gruppen von 3 aufteilen
-            let chunkedNames = otherSpyNames.chunked(into: 3)
+            let chunkedNames = otherSpyNames.chunks(ofCount: 3)
             for chunk in chunkedNames {
                 components.append(chunk.joined(separator: ", "))
             }

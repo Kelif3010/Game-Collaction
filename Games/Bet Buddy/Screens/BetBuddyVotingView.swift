@@ -1,8 +1,11 @@
 import SwiftUI
+import SFSafeSymbols
+import Pow
 
 struct BetBuddyVotingView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(AppViewModel.self) private var appModel
 
     var onClose: () -> Void
     var onConfirm: () -> Void
@@ -34,11 +37,13 @@ struct BetBuddyVotingView: View {
                             value: leadingScore,
                             color: leaderColor
                         )
+                        .changeEffect(.jump(height: 10), value: leadingScore, isEnabled: leadingScore > 0)
                     } else {
                         FlipCounterView(
                             value: leadingScore,
                             color: leaderColor
                         )
+                        .changeEffect(.jump(height: 10), value: leadingScore, isEnabled: leadingScore > 0)
                     }
 
                     questionText
@@ -79,16 +84,15 @@ struct BetBuddyVotingView: View {
             appModel.resetVotes()
             didNavigateToGame = false
         }
-        // BB-03: Stale Votes auch nach App-Hintergrund zurücksetzen
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            if !appModel.votesLocked {
-                appModel.resetVotes()
-            }
-        }
         .onChange(of: appModel.votesLocked) { _, locked in
             if locked && !didNavigateToGame {
                 didNavigateToGame = true
                 onConfirm()
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active, !appModel.votesLocked {
+                appModel.resetVotes()
             }
         }
     }
@@ -100,7 +104,7 @@ struct BetBuddyVotingView: View {
 
             // Casino-Style Titel
             HStack(spacing: 8) {
-                Image(systemName: "suit.spade.fill")
+                Image(systemSymbol: .suitSpadeFill)
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
 
@@ -109,7 +113,7 @@ struct BetBuddyVotingView: View {
                     .foregroundStyle(BetBuddyTheme.textGold)
                     .tracking(2)
 
-                Image(systemName: "suit.diamond.fill")
+                Image(systemSymbol: .suitDiamondFill)
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
             }
@@ -120,7 +124,7 @@ struct BetBuddyVotingView: View {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemName: "xmark")
+                Image(systemSymbol: .xmark)
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)

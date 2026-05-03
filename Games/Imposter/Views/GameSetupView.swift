@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct GameSetupView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
-    @StateObject var gameLogic: GameLogic
+    @State var gameLogic = GameLogic(gameSettings: GameSettings())
     @ObservedObject var mpc = MultipeerManager.shared
 
     @State var showingAlert = false
@@ -28,10 +28,6 @@ struct GameSetupView: View {
     @State private var addPlayersSheetDetent: PresentationDetent = .medium
     @State var route: SetupRoute?
 
-    init() {
-        self._gameLogic = StateObject(wrappedValue: GameLogic(gameSettings: GameSettings()))
-    }
-    
     private var isMultiplayerActive: Bool {
         mpc.role != .unknown
     }
@@ -97,6 +93,7 @@ struct GameSetupView: View {
 
     var body: some View {
         mainView
+            .environment(gameLogic)
             .modifier(GameSetupSheetsModifier(
                 showingAddPlayersSheet: $showingAddPlayersSheet,
                 addPlayersSheetDetent: $addPlayersSheetDetent,
@@ -118,8 +115,13 @@ struct GameSetupView: View {
             .onChange(of: gameSettings.requestExitToMain) { _, newValue in
                 guard newValue else { return }
                 dismiss()
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     gameSettings.requestExitToMain = false
+                }
+            }
+            .task {
+                if gameLogic.gameSettings !== gameSettings {
+                    gameLogic.gameSettings = gameSettings
                 }
             }
             .onChange(of: gameSettings.shouldDismissSheets) { _, newValue in
@@ -136,7 +138,7 @@ struct GameSetupView: View {
                 showingSettingsSheet = false
                 showingAddPlayersSheet = false
                 
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     gameSettings.shouldDismissSheets = false
                 }
             }
@@ -511,8 +513,8 @@ struct GameSetupView: View {
         switch route {
         case .game:
             GamePlayView()
-                .environmentObject(gameLogic)
-                .environmentObject(gameSettings)
+                .environment(gameLogic)
+                .environment(gameSettings)
         }
     }
 
@@ -535,7 +537,7 @@ private struct GameSetupSheetsModifier: ViewModifier {
         content
             .sheet(isPresented: $showingAddPlayersSheet) {
                 PlayerManagementSheet()
-                .environmentObject(gameSettings)
+                .environment(gameSettings)
                 .presentationDetents([.medium, .large], selection: $addPlayersSheetDetent)
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
@@ -559,7 +561,7 @@ private struct GameSetupSheetsModifier: ViewModifier {
             }
             .sheet(isPresented: $showingSpyOptionsSheet) {
                 SpyOptionsView()
-                    .environmentObject(gameSettings)
+                    .environment(gameSettings)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
@@ -570,7 +572,7 @@ private struct GameSetupSheetsModifier: ViewModifier {
             }
             .sheet(isPresented: $showingCategoryManagementSheet) {
                 CategoriesView()
-                    .environmentObject(gameSettings)
+                    .environment(gameSettings)
             }
             .sheet(isPresented: $showingLeaderboardSheet) {
                 LeaderboardView()
@@ -607,5 +609,5 @@ private extension View {
 
 #Preview {
     GameSetupView()
-        .environmentObject(GameSettings())
+        .environment(GameSettings())
 }

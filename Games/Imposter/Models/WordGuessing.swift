@@ -6,11 +6,11 @@
 //
 
 import Foundation
-import Combine
 
 /// Verwaltet das "Wort erraten" Feature für Spione
-class WordGuessingManager: ObservableObject {
-    @Published var guessResult: WordGuessResult?
+@Observable
+class WordGuessingManager {
+    var guessResult: WordGuessResult?
     
     private let gameSettings: GameSettings
     

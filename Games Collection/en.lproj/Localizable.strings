@@ -1104,6 +1104,7 @@
 "soundcinema_timer_medium_desc" = "Normal – 8 seconds";
 "soundcinema_timer_long_desc" = "Relaxed – 10 seconds";
 "Geräusch-Kino" = "Sound Cinema";
+"Imitiert Sounds und erratet die Szene." = "Imitate sounds and guess the scene.";
 
 /* Falsche Fährte */
 "ff.pack.klassisch" = "Classic";
@@ -1114,6 +1115,7 @@
 "ff.pack.pervers" = "18+";
 "ff.pack.unnuetz" = "Useless";
 "Falsche Fährte" = "Red Herring";
+"Lügen erkennen, Hinweise lesen, Bluff entlarven." = "Spot lies, read clues, expose the bluff.";
 "ff.tagline" = "Bluff & Expose";
 "ff.setup.players" = "Players";
 "ff.setup.packs" = "Question Pack";

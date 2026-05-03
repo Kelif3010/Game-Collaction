@@ -1,7 +1,8 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct HomeView: View {
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
     @Environment(\.dismiss) private var dismiss
     
     var onSelectGroups: () -> Void
@@ -29,7 +30,7 @@ struct HomeView: View {
 
                 VStack(spacing: 12) {
                     SettingsRow(
-                        icon: "person.2.fill",
+                        icon: .person2Fill,
                         title: "Gruppen",
                         detail: "\(appModel.selectedGroupCount)",
                         rowType: .groups,
@@ -37,7 +38,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "brain.head.profile",
+                        icon: .brainHeadProfile,
                         title: "Kategorien",
                         // Hier wird jetzt automatisch "Mix" angezeigt (durch ViewModel Logik)
                         detail: appModel.selectedCategoriesDisplay,
@@ -46,7 +47,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "timer",
+                        icon: .timer,
                         title: "Zeit läuft weiter",
                         detail: appModel.isPartyMode ? "Kein Reset" : "Reset bei Treffer",
                         rowType: .partyMode,
@@ -60,7 +61,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "exclamationmark.circle",
+                        icon: .exclamationmarkCircle,
                         title: "Punktabzug",
                         detail: appModel.isPenaltyEnabled ? appModel.penaltyLevel.title : "Aus",
                         rowType: .penalty,
@@ -79,7 +80,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "lightbulb.fill",
+                        icon: .lightbulbFill,
                         title: "Hinweise",
                         detail: appModel.isHintsEnabled ? "An" : "Aus",
                         rowType: .hints,
@@ -93,7 +94,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: "clock.fill",
+                        icon: .clockFill,
                         title: "Zeitlimit",
                         detail: appModel.isTimerEnabled ? "\(appModel.timerSelection)s" : "Aus",
                         rowType: .timer,
@@ -161,8 +162,8 @@ struct HomeView: View {
             if !checkPerformed {
                 checkPerformed = true
                 if !hasSeenOnboarding {
-                    // Kleine Verzögerung für schönere UX beim Start
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(500))
                         showInfoSheet = true
                     }
                 }
@@ -175,7 +176,7 @@ struct HomeView: View {
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemSymbol: .chevronLeft)
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
@@ -195,7 +196,7 @@ struct HomeView: View {
                 HapticsService.impact(.light)
                 showLeaderboardSheet = true
             } label: {
-                Image(systemName: "trophy.fill")
+                Image(systemSymbol: .trophyFill)
                     .font(.headline)
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .frame(width: 44, height: 44)
@@ -214,7 +215,7 @@ struct HomeView: View {
                 HapticsService.impact(.light)
                 showInfoSheet = true
             } label: {
-                Image(systemName: "questionmark")
+                Image(systemSymbol: .questionmark)
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
@@ -249,14 +250,14 @@ private struct CasinoTimerSheet: View {
                 // Header
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "xmark")
+                        Image(systemSymbol: .xmark)
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                     }
                     Spacer()
                     HStack(spacing: 6) {
-                        Image(systemName: "clock.fill")
+                        Image(systemSymbol: .clockFill)
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentGold)
                         Text("ZEITLIMIT")
@@ -291,7 +292,7 @@ private struct CasinoTimerSheet: View {
                                                 ? BetBuddyTheme.accentGold.opacity(0.2)
                                                 : Color.white.opacity(0.06))
                                             .frame(width: 36, height: 36)
-                                        Image(systemName: "timer")
+                                        Image(systemSymbol: .timer)
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundStyle(isSelected
                                                 ? BetBuddyTheme.accentGold
@@ -310,11 +311,11 @@ private struct CasinoTimerSheet: View {
                                     Spacer()
 
                                     if isSelected {
-                                        Image(systemName: "checkmark.circle.fill")
+                                        Image(systemSymbol: .checkmarkCircleFill)
                                             .font(.title3)
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                     } else {
-                                        Image(systemName: "circle")
+                                        Image(systemSymbol: .circle)
                                             .font(.title3)
                                             .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
                                     }
@@ -374,14 +375,14 @@ private struct CasinoPenaltySheet: View {
                 // Header
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "xmark")
+                        Image(systemSymbol: .xmark)
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                     }
                     Spacer()
                     HStack(spacing: 6) {
-                        Image(systemName: "exclamationmark.triangle.fill")
+                        Image(systemSymbol: .exclamationmarkTriangleFill)
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentRuby)
                         Text("PUNKTABZUG")
@@ -434,11 +435,11 @@ private struct CasinoPenaltySheet: View {
                                 Spacer()
 
                                 if isSelected {
-                                    Image(systemName: "checkmark.circle.fill")
+                                    Image(systemSymbol: .checkmarkCircleFill)
                                         .font(.title3)
                                         .foregroundStyle(BetBuddyTheme.accentGold)
                                 } else {
-                                    Image(systemName: "circle")
+                                    Image(systemSymbol: .circle)
                                         .font(.title3)
                                         .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
                                 }

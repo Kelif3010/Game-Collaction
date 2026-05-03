@@ -14,7 +14,7 @@ enum LeaderboardTab: String, CaseIterable {
 }
 
 struct LeaderboardView: View {
-    @ObservedObject private var statsService = StatsService.shared
+    private let statsService = StatsService.shared
     @Environment(\.dismiss) var dismiss
     @State private var selectedTab: LeaderboardTab = .overall
     @State private var showDeleteConfirmation = false

@@ -7,6 +7,9 @@
 //
 
 import SwiftUI
+import AsyncAlgorithms
+import Pow
+import SFSafeSymbols
 
 private extension Character {
     var isEmojiLike: Bool {
@@ -22,6 +25,7 @@ struct SpyCardView: View {
     @State private var isMovingOut = false
     @State private var rotationAngle: Double = 0
     @State private var offset: CGSize = .zero
+    @State private var cardSelectionFeedbackTrigger = 0
     
     let onCardTap: () -> Void
     let onCardDismissed: () -> Void
@@ -34,36 +38,27 @@ struct SpyCardView: View {
     
     var body: some View {
         ZStack {
-            // Kartenrückseite mit integriertem Scanner
-            CardBackView(
-                playerName: card.player.name,
-                isImposter: card.isImposter,
-                animationName: gameSettings.currentCardBackAnimation
-            ) {
-                // Wird aufgerufen, wenn Scan abgeschlossen ist
-                flipCard()
-                onCardTap()
-            }
-            .opacity(isFlipped ? 0 : 1)
-            .rotation3DEffect(
-                .degrees(rotationAngle),
-                axis: (x: 0, y: 1, z: 0)
-            )
-            
-            // Kartenvorderseite
-            SpyCardFrontView(
-                card: card,
-                gameSettings: gameSettings,
-                isMultiplayer: isMultiplayer,
-                onDismiss: {
-                    moveCardOut()
+            if isFlipped {
+                SpyCardFrontView(
+                    card: card,
+                    gameSettings: gameSettings,
+                    isMultiplayer: isMultiplayer,
+                    onDismiss: {
+                        moveCardOut()
+                    }
+                )
+                .transition(.movingParts.flip)
+            } else {
+                CardBackView(
+                    playerName: card.player.name,
+                    isImposter: card.isImposter,
+                    animationName: gameSettings.currentCardBackAnimation
+                ) {
+                    flipCard()
+                    onCardTap()
                 }
-            )
-            .opacity(isFlipped ? 1 : 0)
-            .rotation3DEffect(
-                .degrees(rotationAngle + 180),
-                axis: (x: 0, y: 1, z: 0)
-            )
+                .transition(.movingParts.flip)
+            }
         }
         .frame(width: 320, height: 500)
         .offset(offset)
@@ -72,18 +67,18 @@ struct SpyCardView: View {
         .onTapGesture {
             // Nur im lokalen Modus schließt Tap die Karte (wenn umgedreht)
             if isFlipped && !isMovingOut && !isMultiplayer {
-                UISelectionFeedbackGenerator().selectionChanged()
+                cardSelectionFeedbackTrigger += 1
                 moveCardOut()
             }
         }
+        .sensoryFeedback(.selection, trigger: cardSelectionFeedbackTrigger)
         .animation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0), value: rotationAngle)
         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: offset)
         .animation(.easeIn(duration: 0.3), value: isMovingOut)
     }
     
     private func flipCard() {
-        withAnimation {
-            rotationAngle += 180
+        withAnimation(.interpolatingSpring(mass: 1, stiffness: 10, damping: 10, initialVelocity: 10)) {
             isFlipped = true
         }
     }
@@ -92,7 +87,8 @@ struct SpyCardView: View {
         offset = CGSize(width: -450, height: 0)
         isMovingOut = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.35))
             onCardDismissed()
         }
     }
@@ -108,7 +104,7 @@ struct CardBackView: View {
     // Scanner State
     @State private var progress: CGFloat = 0.0
     @State private var isScanning = false
-    @State private var scanTimer: Timer?
+    @State private var scanTask: Task<Void, Never>?
     @State private var showSuccess = false
     
     // Haptik
@@ -239,19 +235,20 @@ struct CardBackView: View {
         progress = 0.0
         let totalSteps = 40
         let interval = 1.2 / Double(totalSteps) // 1.2 Sekunden Scanzeit
-        scanTimer?.invalidate()
-        scanTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
-            Task { @MainActor in
-                if self.progress < 1.0 {
-                    self.progress += (1.0 / CGFloat(totalSteps))
-                    // Haptisches Ticken ca. alle 0.1s (jeder 3. Frame)
-                    // tickCounter ersetzt durch rechnerisches Äquivalent um Swift 6 captured-var-Fehler zu vermeiden
-                    let tickN = Int(round(self.progress * CGFloat(totalSteps)))
+        let stepDuration = Duration.milliseconds(Int64((interval * 1000).rounded()))
+        scanTask?.cancel()
+        scanTask = Task { @MainActor in
+            for await _ in AsyncTimerSequence(interval: stepDuration, clock: .continuous) {
+                guard !Task.isCancelled else { break }
+                if progress < 1.0 {
+                    progress += (1.0 / CGFloat(totalSteps))
+                    let tickN = Int(round(progress * CGFloat(totalSteps)))
                     if tickN % 3 == 0 {
-                        ImposterHapticsManager.shared.playScanTick(progress: Float(self.progress))
+                        ImposterHapticsManager.shared.playScanTick(progress: Float(progress))
                     }
                 } else {
-                    self.completeScan()
+                    completeScan()
+                    break
                 }
             }
         }
@@ -263,8 +260,8 @@ struct CardBackView: View {
         SoundManager.shared.stopSound()
         
         isScanning = false
-        scanTimer?.invalidate()
-        scanTimer = nil
+        scanTask?.cancel()
+        scanTask = nil
         // Kein Herzschlag mehr zu stoppen
         
         withAnimation(.easeOut(duration: 0.3)) {
@@ -276,8 +273,8 @@ struct CardBackView: View {
         // Scan-Sound stoppen bevor der Success-Sound kommt
         SoundManager.shared.stopSound()
         
-        scanTimer?.invalidate()
-        scanTimer = nil
+        scanTask?.cancel()
+        scanTask = nil
         // Kein Herzschlag mehr zu stoppen
         
         isScanning = false
@@ -290,7 +287,8 @@ struct CardBackView: View {
         // Sound-Effekt abspielen
         SoundManager.shared.playSound(named: "computer-processing-sound-effects-short-click-select-01-122134")
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.4))
             onUnlocked()
         }
     }
@@ -423,7 +421,7 @@ struct SpyCardFrontView: View {
             
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: card.cardIcon)
+                    Image(systemSymbol: card.cardIcon)
                     Text(card.cardTitle.uppercased())
                         .font(.system(size: 14, weight: .bold))
                         .tracking(1)

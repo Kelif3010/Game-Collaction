@@ -11,7 +11,7 @@ enum AppRoute: Hashable {
 }
 
 struct BetBuddyRootView: View {
-    // WICHTIG: Wir bekommen das Model vom Wrapper (kein @StateObject hier!)
+    // Das Model wird vom Wrapper bereitgestellt und ueber die View-Hierarchie verteilt.
     let viewModel: AppViewModel
     
     // WICHTIG: Wir nutzen ein echtes Array [AppRoute], damit die Navigation nicht hängt
@@ -78,13 +78,11 @@ struct BetBuddyRootView: View {
                         )
                     }
                 }
-                // WICHTIG: Hier impfen wir jede Unterseite mit dem ViewModel
-                .environmentObject(viewModel)
+                .environment(viewModel)
             }
             .background(Theme.background.ignoresSafeArea())
         }
-        // Auch die HomeView braucht das Model
-        .environmentObject(viewModel)
+        .environment(viewModel)
     }
 }
 

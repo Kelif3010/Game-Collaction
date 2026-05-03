@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct ImposterSettingsView: View {
-    @ObservedObject private var settings = SettingsService.shared
-    @ObservedObject private var aiService = AIService.shared
+    @Bindable private var settings = SettingsService.shared
+    private let aiService = AIService.shared
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {

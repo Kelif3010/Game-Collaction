@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 
 /// Struktur für Abstimmungsergebnisse
 struct VoteResult: Identifiable {
@@ -24,27 +23,27 @@ struct VoteResult: Identifiable {
 }
 
 /// Voting-Zustand und -Logik
-class VotingManager: ObservableObject {
-    @Published var selectedPlayers: Set<UUID> = []  // Ausgewählte Spieler zum Voten
-    @Published var isVotingActive = false
-    @Published var showResults = false
-    @Published var lastRoundResult: VotingRoundResult?
-    
-    /// Gesamtanzahl abgegebener Stimmen
+@Observable
+class VotingManager {
+    var selectedPlayers: Set<UUID> = []
+    var isVotingActive = false
+    var showResults = false
+    var lastRoundResult: VotingRoundResult?
+
     var totalVotes: Int {
         selectedPlayers.count
     }
-    
-    @Published var votingRound = 1
-    @Published var foundSpies: Set<UUID> = []  // Bereits gefundene Spione
-    @Published var gameEnded = false
-    @Published var playersWon = false
-    @Published var jesterWon = false // NEU: Hat der Narr gewonnen?
-    @Published var lastRescueMessage: String? // Für Leibwächter-Rettung
-    
+
+    var votingRound = 1
+    var foundSpies: Set<UUID> = []
+    var gameEnded = false
+    var playersWon = false
+    var jesterWon = false
+    var lastRescueMessage: String?
+
     // Shootout (Geheimagenten-Jagd)
-    @Published var isSpyShootoutActive = false
-    @Published var shooter: Player?
+    var isSpyShootoutActive = false
+    var shooter: Player?
     
     private let gameSettings: GameSettings
     private var wasTimerPausedBefore = false

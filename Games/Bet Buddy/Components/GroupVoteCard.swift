@@ -1,4 +1,6 @@
 import SwiftUI
+import SFSafeSymbols
+import Pow
 
 struct GroupVoteCard: View {
     let group: GroupInfo
@@ -8,10 +10,9 @@ struct GroupVoteCard: View {
     var isLeader: Bool
     var showLeader: Bool
 
-    @State private var animate = false
-    @State private var chipPulse = false
     @State private var showCoinAnimation = false
     @State private var coinAnimationID = UUID()
+    @State private var raiseCount = 0
 
     var body: some View {
         ZStack {
@@ -58,8 +59,12 @@ struct GroupVoteCard: View {
             radius: isLeader ? 12 : 8,
             y: 4
         )
-        .scaleEffect(animate ? 1.02 : 1.0)
-        .animation(.easeOut(duration: 0.15), value: animate)
+        .changeEffect(.jump(height: 10), value: raiseCount)
+        .changeEffect(.spray(origin: .center) {
+            Image(systemSymbol: .circleFill)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(BetBuddyTheme.accentGold)
+        }, value: raiseCount)
     }
 
     // MARK: - Poker Felt Background
@@ -127,12 +132,12 @@ struct GroupVoteCard: View {
                 Spacer()
                 ZStack {
                     // Glow
-                    Image(systemName: "crown.fill")
+                    Image(systemSymbol: .crownFill)
                         .font(.system(size: 18))
                         .foregroundStyle(BetBuddyTheme.accentGold)
                         .blur(radius: 6)
 
-                    Image(systemName: "crown.fill")
+                    Image(systemSymbol: .crownFill)
                         .font(.system(size: 18))
                         .foregroundStyle(BetBuddyTheme.accentGold)
                 }
@@ -192,7 +197,7 @@ struct GroupVoteCard: View {
                             lineWidth: 2
                         )
                         .frame(width: 56, height: 56)
-                    Image(systemName: "minus")
+                    Image(systemSymbol: .minus)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(
                             locked
@@ -211,22 +216,15 @@ struct GroupVoteCard: View {
                 guard !locked else { return }
                 onIncrement()
                 HapticsService.impact(.medium)
+                raiseCount += 1
 
                 // Trigger coin animation
                 coinAnimationID = UUID()
                 showCoinAnimation = true
 
-                // Reset animation after it plays
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(700))
                     showCoinAnimation = false
-                }
-
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                    animate.toggle()
-                }
-                // Reset animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    animate = false
                 }
             } label: {
                 ZStack {
@@ -262,7 +260,7 @@ struct GroupVoteCard: View {
                         )
                         .frame(width: 56, height: 56)
 
-                    Image(systemName: "plus")
+                    Image(systemSymbol: .plus)
                         .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(locked ? BetBuddyTheme.textSilver : .white)
                 }
@@ -285,7 +283,7 @@ struct GroupVoteCard: View {
                 .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.6))
                 .tracking(1)
 
-            Image(systemName: "arrow.up.right")
+            Image(systemSymbol: .arrowUpRight)
                 .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(BetBuddyTheme.accentEmerald.opacity(0.6))
         }
@@ -295,7 +293,7 @@ struct GroupVoteCard: View {
 // MARK: - Coin Fall Animation
 struct CoinFallAnimationView: View {
     var body: some View {
-        LottieView(
+        BetBuddyLottieView(
             filename: "3D coin flip",
             loopMode: .playOnce,
             isPlaying: true,

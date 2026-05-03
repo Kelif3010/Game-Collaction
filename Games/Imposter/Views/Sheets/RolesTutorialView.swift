@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SFSafeSymbols
 
 struct RolesTutorialView: View {
     @Environment(\.dismiss) var dismiss
@@ -35,7 +36,7 @@ struct RolesTutorialView: View {
     ] + RoleType.allCases.map { role in
         TutorialRole(
             name: role.rawValue,
-            icon: role.icon,
+            icon: role.icon.rawValue,
             team: role.team,
             ability: role.description,
             mission: getMissionText(for: role),

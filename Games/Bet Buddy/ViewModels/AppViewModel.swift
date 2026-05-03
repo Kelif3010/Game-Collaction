@@ -1,5 +1,7 @@
 import SwiftUI
-import Combine
+import Observation
+import DequeModule
+import OrderedCollections
 
 // MARK: - Highlights & Statistik (Persistent)
 
@@ -32,7 +34,8 @@ struct GameHighlights: Codable {
 }
 
 @MainActor
-final class AppViewModel: ObservableObject {
+@Observable
+final class AppViewModel {
     static let maxGroupCount = 4
 
     struct VoteEntry: Equatable {
@@ -41,15 +44,15 @@ final class AppViewModel: ObservableObject {
     }
 
     // MARK: - Properties
-    @Published var selectedGroupCount: Int {
+    var selectedGroupCount: Int {
         didSet {
             syncGroups(to: selectedGroupCount)
             UserDefaults.standard.set(selectedGroupCount, forKey: "betbuddy.groupCount")
         }
     }
 
-    @Published private(set) var groups: [GroupInfo]
-    @Published private(set) var selectedCategories: Set<CategoryType> {
+    private(set) var groups: [GroupInfo]
+    private(set) var selectedCategories: OrderedSet<CategoryType> {
         didSet {
             refreshChallenge()
             if let data = try? JSONEncoder().encode(selectedCategories) {
@@ -57,24 +60,24 @@ final class AppViewModel: ObservableObject {
             }
         }
     }
-    @Published private(set) var currentChallenge: Challenge
+    private(set) var currentChallenge: Challenge
     
-    @Published var timerSelection: Int {
+    var timerSelection: Int {
         didSet { UserDefaults.standard.set(timerSelection, forKey: "betbuddy.timerSelection") }
     }
-    @Published var isTimerEnabled: Bool {
+    var isTimerEnabled: Bool {
         didSet { UserDefaults.standard.set(isTimerEnabled, forKey: "betbuddy.isTimerEnabled") }
     }
-    @Published var isHintsEnabled: Bool {
+    var isHintsEnabled: Bool {
         didSet { UserDefaults.standard.set(isHintsEnabled, forKey: "betbuddy.isHintsEnabled") }
     }
-    @Published var isPartyMode: Bool {
+    var isPartyMode: Bool {
         didSet { UserDefaults.standard.set(isPartyMode, forKey: "betbuddy.isPartyMode") }
     }
-    @Published var isPenaltyEnabled: Bool {
+    var isPenaltyEnabled: Bool {
         didSet { UserDefaults.standard.set(isPenaltyEnabled, forKey: "betbuddy.isPenaltyEnabled") }
     }
-    @Published var penaltyLevel: PenaltyLevel {
+    var penaltyLevel: PenaltyLevel {
         didSet {
             if let data = try? JSONEncoder().encode(penaltyLevel) {
                 UserDefaults.standard.set(data, forKey: "betbuddy.penaltyLevel")
@@ -82,13 +85,13 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    @Published var timerRemaining: Int = 0
-    @Published var votesLocked: Bool = false
-    @Published var voteCounters: [UUID: Int] = [:]
-    @Published private(set) var voteHistory: [VoteEntry] = []
+    var timerRemaining: Int = 0
+    var votesLocked: Bool = false
+    var voteCounters: [UUID: Int] = [:]
+    private(set) var voteHistory: Deque<VoteEntry> = []
     
     // Session Scores (nur für das aktuelle Spiel / ResultView)
-    @Published private(set) var scores: [UUID: Int] = [:] {
+    private(set) var scores: [UUID: Int] = [:] {
         didSet {
             guard !isInitializing else { return }
             saveSessionScores()
@@ -96,7 +99,7 @@ final class AppViewModel: ObservableObject {
     }
     private var isInitializing = true
     
-    @Published var highlights = GameHighlights()
+    var highlights = GameHighlights()
 
     private var playedChallengeIDs: Set<UUID> = []
     private var lastChallengeCategory: CategoryType?
@@ -105,7 +108,7 @@ final class AppViewModel: ObservableObject {
     // BB-14: Dependency Injection für Testbarkeit
     private let challengeService: any ChallengeProviding
     private var nameStore = GroupNamePersistence()
-    private var timer: Timer?
+    private var timerTask: Task<Void, Never>?
     
     private let statsStorageKey = "BetBuddy_GlobalStats_V1"
 
@@ -118,11 +121,19 @@ final class AppViewModel: ObservableObject {
         let savedGroupCount = defaults.integer(forKey: "betbuddy.groupCount")
         let initialGroupCount = savedGroupCount > 0 ? min(max(savedGroupCount, 2), Self.maxGroupCount) : 2
         
-        var initialCategories: Set<CategoryType> = [.classic]
+        var initialCategories: OrderedSet<CategoryType> = [.classic]
         if let data = defaults.data(forKey: "betbuddy.selectedCategories"),
-           let decoded = try? JSONDecoder().decode(Set<CategoryType>.self, from: data),
+           let decoded = try? JSONDecoder().decode(OrderedSet<CategoryType>.self, from: data),
            !decoded.isEmpty {
             initialCategories = decoded
+        } else if let data = defaults.data(forKey: "betbuddy.selectedCategories"),
+                  let decoded = try? JSONDecoder().decode([CategoryType].self, from: data),
+                  !decoded.isEmpty {
+            initialCategories = OrderedSet(decoded)
+        } else if let data = defaults.data(forKey: "betbuddy.selectedCategories"),
+                  let decoded = try? JSONDecoder().decode(Set<CategoryType>.self, from: data),
+                  !decoded.isEmpty {
+            initialCategories = OrderedSet(decoded)
         }
 
         let initialTimer = defaults.integer(forKey: "betbuddy.timerSelection") > 0 ? defaults.integer(forKey: "betbuddy.timerSelection") : 60
@@ -160,7 +171,7 @@ final class AppViewModel: ObservableObject {
         }
         
         let startResult = challengeService.randomChallenge(
-            for: initialCategories,
+            for: Set(initialCategories),
             excluding: [],
             avoiding: nil
         )
@@ -297,7 +308,7 @@ final class AppViewModel: ObservableObject {
 
     func refreshChallenge() {
         let result = challengeService.randomChallenge(
-            for: selectedCategories,
+            for: Set(selectedCategories),
             excluding: playedChallengeIDs,
             avoiding: lastChallengeCategory
         )
@@ -344,10 +355,10 @@ final class AppViewModel: ObservableObject {
     func toggleCategory(_ category: CategoryType) {
         if selectedCategories.contains(category) {
             if selectedCategories.count > 1 {
-                selectedCategories.remove(category)
+                _ = selectedCategories.remove(category)
             }
         } else {
-            selectedCategories.insert(category)
+            selectedCategories.append(category)
         }
     }
 
@@ -512,13 +523,18 @@ final class AppViewModel: ObservableObject {
         stopTimer()
         guard timerSelection > 0 else { return }
         
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                if self.timerRemaining > 0 {
+        timerTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+
+                if self.timerRemaining > 1 {
                     self.timerRemaining -= 1
                 } else {
+                    self.timerRemaining = 0
                     self.lockVotes()
+                    return
                 }
             }
         }
@@ -530,8 +546,8 @@ final class AppViewModel: ObservableObject {
     }
 
     func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+        timerTask?.cancel()
+        timerTask = nil
     }
 
     private func syncGroups(to count: Int) {

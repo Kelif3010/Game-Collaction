@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SoundCinemaSetupView: View {
     @EnvironmentObject private var viewModel: SoundCinemaViewModel
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
     @Environment(\.dismiss) private var dismiss
 
     // Lokaler Setup-State

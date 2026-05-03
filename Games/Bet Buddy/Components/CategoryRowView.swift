@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct CategoryRowView: View {
     let category: CategoryType
@@ -25,7 +26,7 @@ struct CategoryRowView: View {
                     .stroke(category.accent.opacity(0.4), lineWidth: 1)
                     .frame(width: 48, height: 48)
 
-                Image(systemName: category.iconName)
+                Image(systemSymbol: category.iconSymbol)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(category.accent)
             }
@@ -48,7 +49,7 @@ struct CategoryRowView: View {
                     Circle()
                         .fill(Color.white.opacity(0.1))
                         .frame(width: 28, height: 28)
-                    Image(systemName: "lock.fill")
+                    Image(systemSymbol: .lockFill)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(BetBuddyTheme.textSilver)
                 }
@@ -64,7 +65,7 @@ struct CategoryRowView: View {
                         )
                         .frame(width: 28, height: 28)
                     if isSelected {
-                        Image(systemName: "checkmark")
+                        Image(systemSymbol: .checkmark)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white)
                     }

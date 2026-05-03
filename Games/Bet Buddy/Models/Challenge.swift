@@ -1,12 +1,12 @@
 import Foundation
 
 // 1. Dieser Enum hat gefehlt, weshalb GameResult und AlphabetChallenges Fehler warfen
-enum ChallengeInputType: String, Codable, Hashable {
+enum ChallengeInputType: String, Codable, Hashable, Sendable {
     case numeric // Standard (Zahlen)
     case alphabet // Buchstaben (A-Z)
 }
 
-struct Challenge: Identifiable, Hashable, Codable {
+struct Challenge: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     let text: String
     let category: CategoryType

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SFSafeSymbols
 
 enum RoleTeam: String, Codable {
     case citizen = "Team Bürger"
@@ -57,16 +58,16 @@ enum RoleType: String, CaseIterable, Codable, Identifiable {
         }
     }
     
-    var icon: String {
+    var icon: SFSymbol {
         switch self {
-        case .secretAgent: return "eye.circle.fill"
-        case .twins: return "person.2.circle.fill"
-        case .bodyguard: return "shield.fill"
-        case .saboteur: return "hammer.fill"
-        case .hacker: return "terminal.fill"
-        case .mole: return "ant.fill"
-        case .fool: return "theatermasks.circle.fill"
-        case .confused: return "questionmark.circle.fill"
+        case .secretAgent: return .eyeCircleFill
+        case .twins: return .person2CircleFill
+        case .bodyguard: return .shieldFill
+        case .saboteur: return .hammerFill
+        case .hacker: return .appleTerminalFill
+        case .mole: return .antFill
+        case .fool: return .theatermasksCircleFill
+        case .confused: return .questionmarkCircleFill
         }
     }
     
@@ -76,7 +77,7 @@ enum RoleType: String, CaseIterable, Codable, Identifiable {
         self.rawValue.uppercased()
     }
     
-    var cardIcon: String {
+    var cardIcon: SFSymbol {
         self.icon
     }
     

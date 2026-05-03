@@ -4,7 +4,7 @@ struct PartySetupView: View {
     var manager: PartySessionManager
     @Environment(\.dismiss) var dismiss
 
-    @StateObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
 
     // Auswahl-State
     @State private var selectedPlayerIDs: Set<UUID> = []

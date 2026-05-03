@@ -8,10 +8,11 @@
 
 import SwiftUI
 import MultipeerConnectivity
+import Pow
 
 struct TimeOutResultView: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameSettings.self) var gameSettings
+    @Environment(GameLogic.self) var gameLogic
     @Environment(\.dismiss) var dismiss
 
     @State private var showContent = false
@@ -112,22 +113,31 @@ struct TimeOutResultView: View {
 
                 // Main Content
                 VStack(spacing: 32) {
-                    // Icon
-                    ZStack {
-                        Circle()
-                            .fill(theme.accentColor.opacity(0.1))
-                            .frame(width: 100, height: 100)
+                    if showContent {
+                        ZStack {
+                            LottieView(
+                                filename: "Radar animation",
+                                loopMode: .loop,
+                                isPlaying: true,
+                                animationSpeed: 0.7
+                            )
+                            .frame(width: 180, height: 180)
+                            .opacity(theme.isVictory ? 0.2 : 0.12)
 
-                        Circle()
-                            .stroke(theme.accentColor.opacity(0.3), lineWidth: 2)
-                            .frame(width: 100, height: 100)
+                            Circle()
+                                .fill(theme.accentColor.opacity(0.1))
+                                .frame(width: 100, height: 100)
 
-                        Image(systemName: theme.icon)
-                            .font(.system(size: 40, weight: .medium))
-                            .foregroundStyle(theme.accentColor)
+                            Circle()
+                                .stroke(theme.accentColor.opacity(0.3), lineWidth: 2)
+                                .frame(width: 100, height: 100)
+
+                            Image(systemName: theme.icon)
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundStyle(theme.accentColor)
+                        }
+                        .transition(.movingParts.pop(theme.accentColor).combined(with: .opacity))
                     }
-                    .scaleEffect(showContent ? 1 : 0.8)
-                    .opacity(showContent ? 1 : 0)
 
                     // Text
                     VStack(spacing: 12) {

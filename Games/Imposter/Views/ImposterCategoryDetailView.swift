@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ImposterCategoryDetailView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     
     @State var category: Category
@@ -174,7 +174,7 @@ struct ImposterCategoryDetailView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingEditSheet) {
             EditCategoryView(category: $category)
-                .environmentObject(gameSettings)
+                .environment(gameSettings)
         }
         .sheet(isPresented: $showingShareSheet) { // NEU: Share Sheet
             QRCodeSheetView(category: category)
@@ -287,7 +287,7 @@ struct QRCodeSheetView: View {
 
 // MARK: - Edit Category View (Refactored)
 struct EditCategoryView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     
     @Binding var category: Category
@@ -399,6 +399,6 @@ struct EditCategoryView: View {
 #Preview {
     NavigationStack {
         ImposterCategoryDetailView(category: Category.defaultCategories[0])
-            .environmentObject(GameSettings())
+            .environment(GameSettings())
     }
 }

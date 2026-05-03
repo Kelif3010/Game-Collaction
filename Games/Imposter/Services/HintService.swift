@@ -6,15 +6,15 @@
 //
 
 import Foundation
-import Combine
+import AsyncAlgorithms
 
 /// Intelligentes Hinweise-System mit echten und falschen Hinweisen sowie Challenges
-@MainActor
-class HintService: ObservableObject {
+@MainActor @Observable
+class HintService {
     static let shared = HintService()
-    
-    @Published var activeHints: [GameHint] = []
-    @Published var hintHistory: [GameHint] = []
+
+    var activeHints: [GameHint] = []
+    var hintHistory: [GameHint] = []
     
     private let aiService = AIService.shared
     private let settings = SettingsService.shared
@@ -25,7 +25,7 @@ class HintService: ObservableObject {
     private let hintInterval: TimeInterval = 45.0 // Hinweise alle 45 Sekunden
     private let hintProbability: Double = 0.5 // 50% Chance pro Intervall
     
-    private var hintTimer: Timer?
+    private var hintTask: Task<Void, Never>?
     private var currentWord: String = ""
     private var currentCategory: Category?
     private var currentPlayers: [String] = []
@@ -56,8 +56,8 @@ class HintService: ObservableObject {
     
     /// Stoppt das Hinweise-System
     func stopHints() {
-        hintTimer?.invalidate()
-        hintTimer = nil
+        hintTask?.cancel()
+        hintTask = nil
         activeHints.removeAll()
         currentWord = ""
         currentCategory = nil
@@ -78,10 +78,13 @@ class HintService: ObservableObject {
     // MARK: - Private Methods
     
     private func startHintTimer() {
-        hintTimer?.invalidate()
-        hintTimer = Timer.scheduledTimer(withTimeInterval: hintInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                await self?.checkForHint()
+        hintTask?.cancel()
+        let interval = Duration.milliseconds(Int64((hintInterval * 1000).rounded()))
+        hintTask = Task { @MainActor [weak self] in
+            for await _ in AsyncTimerSequence(interval: interval, clock: .continuous) {
+                guard let self else { break }
+                guard !Task.isCancelled else { break }
+                await self.checkForHint()
             }
         }
     }
@@ -250,7 +253,8 @@ class HintService: ObservableObject {
         await voiceService.speakHint(hint)
         
         // Hinweis nach 45 Sekunden entfernen (etwas länger sichtbar lassen)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(45))
             self.activeHints.removeAll { $0.id == hint.id }
         }
     }

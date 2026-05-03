@@ -14,7 +14,7 @@ struct ImposterMultiplayerSheet: View {
     @State private var pendingAction: PendingAction?
     @State private var showExitConfirmation = false
     @State private var currentDetent: PresentationDetent = .medium
-    @State private var previousOnEventReceived: ((String, Data?) -> Void)?
+    @State private var listenerTask: Task<Void, Never>?
     
     // NEU: Bereit-Status (zentral im MPC gespeichert)
 
@@ -137,9 +137,8 @@ struct ImposterMultiplayerSheet: View {
             }
         }
         .onDisappear {
-            if let previousOnEventReceived {
-                mpc.onEventReceived = previousOnEventReceived
-            }
+            listenerTask?.cancel()
+            listenerTask = nil
         }
         .onChange(of: isConnected) { _, connected in
             // Wenn wir im Code-Eingabe Modus sind und die Verbindung steht -> Ab in die Lobby
@@ -337,35 +336,36 @@ struct ImposterMultiplayerSheet: View {
     // MARK: - Logic
     
     private func setupMPCListener() {
-        previousOnEventReceived = mpc.onEventReceived
-        mpc.onEventReceived = { type, payload in
-            if type == MPCEventType.playerReadyUpdate, let data = payload {
-                if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
-                    withAnimation {
-                        if info.isReady {
-                            mpc.readyPlayers.insert(info.playerName)
-                        } else {
-                            mpc.readyPlayers.remove(info.playerName)
-                        }
-                    }
-                    syncReadyStateIfHost()
-                }
-            } else if type == MPCEventType.lobbyStateSync, let data = payload {
-                // Für neu beigetretene Spieler: Empfange kompletten Status
-                if let list = try? JSONDecoder().decode([String].self, from: data) {
-                    withAnimation {
-                        mpc.readyPlayers = Set(list)
-                    }
-                }
-            } else if type == MPCEventType.imposterRevealStart {
-                previousOnEventReceived?(type, payload)
-                dismiss()
-            } else if type == MPCEventType.gameStart {
-                previousOnEventReceived?(type, payload)
-                dismiss()
-            } else {
-                previousOnEventReceived?(type, payload)
+        listenerTask?.cancel()
+        listenerTask = Task { @MainActor in
+            for await event in mpc.events {
+                guard !Task.isCancelled else { break }
+                handleMPCEvent(event)
             }
+        }
+    }
+
+    private func handleMPCEvent(_ event: MPCEvent) {
+        if event.type == MPCEventType.playerReadyUpdate, let data = event.payload {
+            if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
+                withAnimation {
+                    if info.isReady {
+                        mpc.readyPlayers.insert(info.playerName)
+                    } else {
+                        mpc.readyPlayers.remove(info.playerName)
+                    }
+                }
+                syncReadyStateIfHost()
+            }
+        } else if event.type == MPCEventType.lobbyStateSync, let data = event.payload {
+            // Für neu beigetretene Spieler: Empfange kompletten Status
+            if let list = try? JSONDecoder().decode([String].self, from: data) {
+                withAnimation {
+                    mpc.readyPlayers = Set(list)
+                }
+            }
+        } else if event.type == MPCEventType.imposterRevealStart || event.type == MPCEventType.gameStart {
+            dismiss()
         }
     }
     

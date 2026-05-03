@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct GroupCountRow: View {
     let count: Int
@@ -53,7 +54,7 @@ struct GroupCountRow: View {
                         )
                         .frame(width: 28, height: 28)
                     if isSelected {
-                        Image(systemName: "checkmark")
+                        Image(systemSymbol: .checkmark)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white)
                     }

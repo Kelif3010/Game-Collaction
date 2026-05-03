@@ -1,9 +1,13 @@
 import UIKit
 
 enum HapticsService {
-    private static var isEnabled: Bool {
-        guard UserDefaults.standard.object(forKey: "isHapticsEnabled") != nil else { return true }
-        return UserDefaults.standard.bool(forKey: "isHapticsEnabled")
+    private enum Key {
+        static let isHapticsEnabled = "isHapticsEnabled"
+    }
+
+    static var isEnabled: Bool {
+        guard UserDefaults.standard.object(forKey: Key.isHapticsEnabled) != nil else { return true }
+        return UserDefaults.standard.bool(forKey: Key.isHapticsEnabled)
     }
 
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {

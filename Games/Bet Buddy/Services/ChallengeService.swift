@@ -1,4 +1,5 @@
 import Foundation
+import Algorithms
 
 protocol ChallengeProviding {
     func randomChallenge(
@@ -17,12 +18,11 @@ struct ChallengeService: ChallengeProviding {
         excluding history: Set<UUID>,
         avoiding lastCategory: CategoryType? = nil
     ) -> (challenge: Challenge, didReset: Bool) {
-        var pool: [Challenge] = []
+        let basePool = categories
+            .flatMap { ChallengeData.getChallenges(for: $0) }
+            .uniqued(on: \.id)
         
-        // 1. Pool aufbauen
-        for category in categories {
-            pool.append(contentsOf: ChallengeData.getChallenges(for: category))
-        }
+        var pool = Array(basePool)
         
         // Fallback falls leer
         if pool.isEmpty {

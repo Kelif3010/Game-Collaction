@@ -8,15 +8,16 @@
 
 import SwiftUI
 import MultipeerConnectivity
+import Pow
 
 // MARK: - Main View
 struct VotingResultsView: View {
-    @ObservedObject var votingManager: VotingManager
+    var votingManager: VotingManager
     let gameSettings: GameSettings
     let onNewGame: () -> Void
     let onContinueToGameplay: () -> Void
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameLogic.self) var gameLogic
 
     @State private var showContent = false
     @State private var showBadge = false
@@ -225,22 +226,33 @@ struct VotingResultsView: View {
 
                 // MARK: - Main Content (Clean & Minimal)
                 VStack(spacing: 32) {
-                    // Icon (smaller, cleaner)
-                    ZStack {
-                        Circle()
-                            .fill(theme.accentColor.opacity(0.1))
-                            .frame(width: 100, height: 100)
+                    if showContent {
+                        ZStack {
+                            if votingManager.gameEnded {
+                                LottieView(
+                                    filename: "Radar animation",
+                                    loopMode: .loop,
+                                    isPlaying: true,
+                                    animationSpeed: 0.75
+                                )
+                                .frame(width: 180, height: 180)
+                                .opacity(0.22)
+                            }
 
-                        Circle()
-                            .stroke(theme.accentColor.opacity(0.3), lineWidth: 2)
-                            .frame(width: 100, height: 100)
+                            Circle()
+                                .fill(theme.accentColor.opacity(0.1))
+                                .frame(width: 100, height: 100)
 
-                        Image(systemName: theme.icon)
-                            .font(.system(size: 40, weight: .medium))
-                            .foregroundStyle(theme.accentColor)
+                            Circle()
+                                .stroke(theme.accentColor.opacity(0.3), lineWidth: 2)
+                                .frame(width: 100, height: 100)
+
+                            Image(systemName: theme.icon)
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundStyle(theme.accentColor)
+                        }
+                        .transition(.movingParts.pop(theme.accentColor).combined(with: .opacity))
                     }
-                    .scaleEffect(showContent ? 1 : 0.8)
-                    .opacity(showContent ? 1 : 0)
 
                     // Text
                     VStack(spacing: 12) {

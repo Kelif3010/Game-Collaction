@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct PlayerManagementSheet: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
 
     @State private var newPlayerName = ""
     @FocusState private var isInputFocused: Bool
@@ -267,5 +267,5 @@ struct ScaleButtonStyle: ButtonStyle {
         Player(name: "Charlie")
     ]
     return PlayerManagementSheet()
-        .environmentObject(settings)
+        .environment(settings)
 }

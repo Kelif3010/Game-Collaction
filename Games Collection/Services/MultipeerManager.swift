@@ -86,25 +86,19 @@ class MultipeerManager: NSObject, ObservableObject {
     // MARK: - Event System
 
     /// Moderner AsyncStream – bevorzugter Weg für neue Handler.
-    /// Liefert alle eingehenden Spiel-Events (keine internen Lobby-Events).
-    let events: AsyncStream<MPCEvent>
-    private var eventContinuation: AsyncStream<MPCEvent>.Continuation?
+    /// Jeder Zugriff erzeugt einen eigenen Stream, damit mehrere Listener dieselben Events erhalten.
+    var events: AsyncStream<MPCEvent> {
+        makeEventStream()
+    }
+
+    private var eventContinuations: [UUID: AsyncStream<MPCEvent>.Continuation] = [:]
 
     /// Sendet ein Event lokal an alle Subscriber (für Host-seitige Eigenverarbeitung ohne Netzwerk).
     func injectLocalEvent(type: String, payload: Data?) {
-        eventContinuation?.yield(MPCEvent(type: type, payload: payload))
-        onEventReceived?(type, payload)
+        broadcastEvent(MPCEvent(type: type, payload: payload))
     }
-
-    /// - Warning: Deprecated. Bitte `events` AsyncStream verwenden.
-    @available(*, deprecated, renamed: "events", message: "Verwende den events AsyncStream statt onEventReceived.")
-    var onEventReceived: ((String, Data?) -> Void)?
     
     override init() {
-        // AsyncStream für die Laufzeit des Singletons – wird nie beendet.
-        var cont: AsyncStream<MPCEvent>.Continuation?
-        self.events = AsyncStream(MPCEvent.self, bufferingPolicy: .bufferingNewest(32)) { cont = $0 }
-
         let defaults = UserDefaults.standard
         if let stored = defaults.string(forKey: "mpc.playerId"),
            let uuid = UUID(uuidString: stored) {
@@ -127,7 +121,6 @@ class MultipeerManager: NSObject, ObservableObject {
 
         self.myPeerId = MCPeerID(displayName: displayName)
         super.init()
-        self.eventContinuation = cont
     }
     
     func updatePeerName(name: String) {
@@ -340,6 +333,24 @@ class MultipeerManager: NSObject, ObservableObject {
         myPeerId = MCPeerID(displayName: displayName)
         print("MPC: Name synchronisiert zu \(displayName)")
     }
+
+    private func makeEventStream() -> AsyncStream<MPCEvent> {
+        AsyncStream(MPCEvent.self, bufferingPolicy: .bufferingNewest(32)) { continuation in
+            let id = UUID()
+            eventContinuations[id] = continuation
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.eventContinuations.removeValue(forKey: id)
+                }
+            }
+        }
+    }
+
+    private func broadcastEvent(_ event: MPCEvent) {
+        for continuation in eventContinuations.values {
+            continuation.yield(event)
+        }
+    }
 }
 
 // MARK: - Delegates
@@ -422,8 +433,7 @@ extension MultipeerManager: MCSessionDelegate {
                 self.receivedMessages.removeFirst(self.receivedMessages.count - 100)
             }
 
-            self.eventContinuation?.yield(MPCEvent(type: message.type, payload: message.payload))
-            self.onEventReceived?(message.type, message.payload)
+            self.broadcastEvent(MPCEvent(type: message.type, payload: message.payload))
         }
     }
 

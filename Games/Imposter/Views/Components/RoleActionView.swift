@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SFSafeSymbols
 
 struct RoleActionView: View {
     let role: RoleType
@@ -30,7 +31,7 @@ struct RoleActionView: View {
                         
                         if let role = revealedRole {
                             VStack(spacing: 8) {
-                                Image(systemName: role.icon)
+                                Image(systemSymbol: role.icon)
                                     .font(.system(size: 50))
                                     .foregroundStyle(.purple)
                                 Text(role.rawValue)

@@ -3,7 +3,7 @@ import SwiftUI
 struct QuestionsPlayerManagementSheet: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.dismiss) var dismiss
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
 
     @State private var newPlayerName = ""
     @FocusState private var isInputFocused: Bool

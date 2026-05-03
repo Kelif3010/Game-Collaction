@@ -990,7 +990,7 @@ struct SoundCinemaGameCard: View {
 
                 // Mini Waveform Dekoration
                 HStack(alignment: .center, spacing: 3) {
-                    ForEach([0.3, 0.7, 0.5, 1.0, 0.6, 0.8, 0.4, 0.9, 0.5, 0.3], id: \.self) { h in
+                    ForEach(Array([0.3, 0.7, 0.5, 1.0, 0.6, 0.8, 0.4, 0.9, 0.5, 0.3].enumerated()), id: \.offset) { _, h in
                         Capsule()
                             .fill(accentCyan.opacity(wavePulse ? 0.12 : 0.06))
                             .frame(width: 3, height: 40 * h)
@@ -1094,7 +1094,7 @@ struct FalscheFaehrteGameCard: View {
 
                 // Fragezeichen-Deko im Hintergrund
                 HStack(spacing: 10) {
-                    ForEach(["?", "!", "?"], id: \.self) { sym in
+                    ForEach(Array(["?", "!", "?"].enumerated()), id: \.offset) { _, sym in
                         Text(sym)
                             .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundStyle(accentViolet.opacity(maskPulse ? 0.1 : 0.05))

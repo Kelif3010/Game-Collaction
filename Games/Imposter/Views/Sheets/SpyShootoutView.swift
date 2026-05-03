@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Pow
 
 struct SpyShootoutView: View {
     let shooter: Player
@@ -84,6 +85,15 @@ struct SpyShootoutView: View {
                 // Trigger
                 if let target = selectedTarget {
                     VStack(spacing: 10) {
+                        LottieView(
+                            filename: "Radar animation",
+                            loopMode: .loop,
+                            isPlaying: true,
+                            animationSpeed: 0.85
+                        )
+                        .frame(width: 96, height: 96)
+                        .opacity(0.25)
+
                         Text("Ziel erfasst: \(target.name)")
                             .font(.caption.bold())
                             .foregroundStyle(.red)
@@ -105,7 +115,7 @@ struct SpyShootoutView: View {
                         }
                         .padding(.horizontal, 40)
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.movingParts.vanish.combined(with: .opacity))
                     .padding(.bottom, 40)
                 }
             }

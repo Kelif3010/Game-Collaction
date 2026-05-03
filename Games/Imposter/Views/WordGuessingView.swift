@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct WordGuessingView: View {
-    @ObservedObject var gameSettings: GameSettings
-    @StateObject private var wordGuessingManager: WordGuessingManager
-    @EnvironmentObject var gameLogic: GameLogic
+    var gameSettings: GameSettings
+    @State private var wordGuessingManager: WordGuessingManager
+    @Environment(GameLogic.self) var gameLogic
     @Environment(\.dismiss) var dismiss
     private let startWithImmediateWinFlag: Bool
 
@@ -23,7 +23,7 @@ struct WordGuessingView: View {
         self.gameSettings = gameSettings
         self.startWithImmediateWinFlag = startWithImmediateWin
         let manager = WordGuessingManager(gameSettings: gameSettings)
-        self._wordGuessingManager = StateObject(wrappedValue: manager)
+        self._wordGuessingManager = State(wrappedValue: manager)
     }
     
     var body: some View {
@@ -58,7 +58,8 @@ struct WordGuessingView: View {
                     onExitToMain: {
                         dismiss()
                         // Kurze Verzögerung, damit die WordGuessingView Dismissal-Animation beginnen kann
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(100))
                             gameSettings.markRoundCompleted()
                             gameSettings.resetGame()
                             gameSettings.requestExitToSetup = true
@@ -83,7 +84,7 @@ struct WordGuessingView: View {
 
 // MARK: - Aktive Eingabe ("Terminal" Style)
 struct WordGuessingActiveView: View {
-    @ObservedObject var wordGuessingManager: WordGuessingManager
+    var wordGuessingManager: WordGuessingManager
     @Environment(\.dismiss) var dismiss
     @State private var showContent = false
     @State private var scanLineY: CGFloat = -100
@@ -214,8 +215,8 @@ struct WordGuessResultView: View {
     let onExitToMain: () -> Void
     let showActions: Bool
     
-    @EnvironmentObject var gameSettings: GameSettings
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameSettings.self) var gameSettings
+    @Environment(GameLogic.self) var gameLogic
 
     @State private var showContent = false
     @State private var revealedText: String = ""
@@ -350,7 +351,8 @@ struct WordGuessResultView: View {
             }
             
             // XP Animation Delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.5))
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                     showPoints = true
                 }

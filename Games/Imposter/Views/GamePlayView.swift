@@ -8,11 +8,10 @@
 import SwiftUI
 import MultipeerConnectivity
 import Foundation
-import Combine
 
 struct GamePlayView: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameSettings.self) var gameSettings
+    @Environment(GameLogic.self) var gameLogic
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var mpc = MultipeerManager.shared
     
@@ -35,7 +34,7 @@ struct GamePlayView: View {
     @State private var reconnectToastName = ""
     
     // KI-Services
-    @ObservedObject private var hintService = HintService.shared
+    private let hintService = HintService.shared
 
     private var isMultiplayerActive: Bool {
         MultipeerManager.shared.role != .unknown
@@ -561,7 +560,7 @@ private struct PlayerIdentity: Equatable {
 
 // MARK: - Multiplayer Waiting View
 struct MultiplayerWaitingView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     
     var body: some View {
         ZStack {
@@ -615,7 +614,7 @@ struct MultiplayerWaitingView: View {
 
 // MARK: - Game Header View (Spy/Terminal HUD)
 struct ImposterGameHeaderView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
 
     private var isMultiplayerActive: Bool {
         MultipeerManager.shared.role != .unknown
@@ -786,8 +785,8 @@ struct StartingPlayerAnnouncementView: View {
 
 // MARK: - Game Timer View (Playing Phase)
 struct GameTimerView: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameSettings.self) var gameSettings
+    @Environment(GameLogic.self) var gameLogic
 
     @State private var showVotingView = false
     @State private var showWordGuessingView = false
@@ -799,6 +798,7 @@ struct GameTimerView: View {
     // Kritische Zeit Animation States
     @State private var criticalPulse = false
     @State private var criticalGlow = false
+    @State private var criticalTimeFeedbackTrigger = 0
 
     private var isHostOrLocal: Bool {
         let role = MultipeerManager.shared.role
@@ -927,12 +927,13 @@ struct GameTimerView: View {
                             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
                                 criticalGlow = true
                             }
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            criticalTimeFeedbackTrigger += 1
                         } else {
                             criticalPulse = false
                             criticalGlow = false
                         }
                     }
+                    .sensoryFeedback(.impact(weight: .medium), trigger: criticalTimeFeedbackTrigger)
 
                     // Pause-Hinweis
                     if isHostOrLocal {
@@ -996,7 +997,7 @@ struct GameTimerView: View {
         // Modals
         .sheet(isPresented: $showVotingView) {
             VotingView(gameSettings: gameSettings)
-                .environmentObject(gameLogic)
+                .environment(gameLogic)
                 .interactiveDismissDisabled(true)
                 .onDisappear {
                     if MultipeerManager.shared.role != .unknown {
@@ -1054,7 +1055,7 @@ struct GameTimerView: View {
         }
         .fullScreenCover(isPresented: $showWordGuessingView) {
             WordGuessingView(gameSettings: gameSettings, startWithImmediateWin: startWordGuessImmediateWin)
-                .environmentObject(gameLogic)
+                .environment(gameLogic)
                 .onDisappear {
                     if !wasTimerPausedBeforeWordGuess {
                         gameSettings.isTimerPaused = false
@@ -1246,7 +1247,7 @@ struct SpyActionButton: View {
 
 // MARK: - Game Footer View (Redesigned Exit Button)
 struct GameFooterView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     @State private var showExitConfirmation = false
     
@@ -1295,6 +1296,6 @@ struct GameFooterView: View {
     let settings = GameSettings()
     settings.players = [Player(name: "Demo"), Player(name: "Demo 2")]
     return GamePlayView()
-        .environmentObject(settings)
-        .environmentObject(GameLogic(gameSettings: settings))
+        .environment(settings)
+        .environment(GameLogic(gameSettings: settings))
 }

@@ -7,17 +7,19 @@
 
 import SwiftUI
 import MultipeerConnectivity
+import Pow
 
 struct VotingView: View {
-    @ObservedObject var gameSettings: GameSettings
-    @StateObject private var votingManager: VotingManager
+    var gameSettings: GameSettings
+    @State private var votingManager: VotingManager
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameLogic.self) var gameLogic
     
     // Multiplayer State
     @State private var hasVotedMultiplayer = false
     @State private var isLockingAnimationActive = false
+    @State private var voteLockFeedbackTrigger = 0
     
     private var isMultiplayer: Bool {
         MultipeerManager.shared.role != .unknown
@@ -40,7 +42,7 @@ struct VotingView: View {
     
     init(gameSettings: GameSettings) {
         self.gameSettings = gameSettings
-        self._votingManager = StateObject(wrappedValue: VotingManager(gameSettings: gameSettings))
+        self._votingManager = State(wrappedValue: VotingManager(gameSettings: gameSettings))
     }
     
     var body: some View {
@@ -108,6 +110,7 @@ struct VotingView: View {
                 .animation(.spring(response: 0.45, dampingFraction: 0.85), value: isLockingAnimationActive)
                 .animation(.spring(response: 0.45, dampingFraction: 0.85), value: votingManager.isSpyShootoutActive)
         }
+        .sensoryFeedback(.impact(weight: .medium), trigger: voteLockFeedbackTrigger)
     }
 
     @ViewBuilder
@@ -126,7 +129,7 @@ struct VotingView: View {
                     .foregroundStyle(.orange)
                     .tracking(2)
             }
-            .transition(.scale.combined(with: .opacity))
+            .transition(.movingParts.pop(.orange).combined(with: .opacity))
         } else if votingManager.isSpyShootoutActive, let shooter = votingManager.shooter {
             SpyShootoutView(
                 shooter: shooter,
@@ -194,10 +197,11 @@ struct VotingView: View {
                     
                     // Sound & Haptik
                     SoundManager.shared.playSound(named: "computer-processing-sound-effects-short-click-select-01-122134")
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    voteLockFeedbackTrigger += 1
                     
                     // Kurze Verzögerung für die Animation (1.5 Sekunden)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(1.5))
                         withAnimation {
                             isLockingAnimationActive = false
                             if isMultiplayer {
@@ -361,7 +365,7 @@ struct VotingView: View {
 
 // MARK: - Aktive Abstimmung (Spy-Theme)
 struct VotingActiveView: View {
-    @ObservedObject var votingManager: VotingManager
+    var votingManager: VotingManager
     let gameSettings: GameSettings
     let isMultiplayer: Bool
     let maxSelections: Int
@@ -536,7 +540,7 @@ struct MultiplayerVotingWaitView: View {
 // MARK: - Spieler-Karte für Abstimmung (Spy-Theme)
 struct VotingPlayerCard: View {
     let player: Player
-    @ObservedObject var votingManager: VotingManager
+    var votingManager: VotingManager
     let gameSettings: GameSettings
     let maxSelections: Int
     let voteCount: Int
@@ -680,5 +684,5 @@ struct VotingPlayerCard: View {
     // Hinweis: Hier wird kein VotingManager injected, da er im Init der View erstellt wird,
     // aber für Previews ist das ok.
     return VotingView(gameSettings: settings)
-        .environmentObject(GameLogic(gameSettings: settings))
+        .environment(GameLogic(gameSettings: settings))
 }

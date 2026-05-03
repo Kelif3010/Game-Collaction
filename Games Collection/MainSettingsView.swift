@@ -7,8 +7,9 @@ struct MainSettingsView: View {
     @AppStorage("useSystemLanguage")    private var useSystemLanguage    = true
     @AppStorage("isHapticsEnabled")     private var isHapticsEnabled     = true
     @AppStorage("myPlayerName")         private var myPlayerName         = ""
+    @AppStorage("global_sound_enabled") private var isSoundEnabled       = true
 
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
 
     @State private var showAddPlayer  = false
     @State private var showResetAlert = false
@@ -17,10 +18,14 @@ struct MainSettingsView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
+    private var languageDisplayName: String {
+        if useSystemLanguage { return "System" }
+        return selectedLanguageCode == "de" ? "Deutsch" : "English"
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background — identisch mit Rest der App
                 LinearGradient(
                     colors: [.black, Color.indigo.opacity(0.5), Color.purple.opacity(0.4)],
                     startPoint: .top,
@@ -47,25 +52,18 @@ struct MainSettingsView: View {
                                     icon: "iphone.radiowaves.left.and.right",
                                     accentColor: isHapticsEnabled ? .green : .gray,
                                     title: "Haptik",
-                                    isOn: Binding(
-                                        get: { isHapticsEnabled },
-                                        set: {
-                                            isHapticsEnabled = $0
-                                            if $0 { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
-                                        }
-                                    ),
+                                    isOn: $isHapticsEnabled,
                                     hasDivider: true
                                 )
+                                .sensoryFeedback(trigger: isHapticsEnabled) { _, newValue in
+                                    newValue ? .impact(weight: .medium) : nil
+                                }
 
                                 ToggleRow(
-                                    icon: SoundManager.shared.isSoundEnabled
-                                        ? "speaker.wave.2.fill" : "speaker.slash.fill",
-                                    accentColor: SoundManager.shared.isSoundEnabled ? .blue : .gray,
+                                    icon: isSoundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill",
+                                    accentColor: isSoundEnabled ? .blue : .gray,
                                     title: "Sound",
-                                    isOn: Binding(
-                                        get: { SoundManager.shared.isSoundEnabled },
-                                        set: { SoundManager.shared.isSoundEnabled = $0 }
-                                    ),
+                                    isOn: $isSoundEnabled,
                                     hasDivider: true
                                 )
 
@@ -74,9 +72,7 @@ struct MainSettingsView: View {
                                         icon: "globe",
                                         accentColor: .orange,
                                         title: "Sprache",
-                                        value: useSystemLanguage
-                                            ? "System"
-                                            : (selectedLanguageCode == "de" ? "Deutsch" : "English"),
+                                        value: languageDisplayName,
                                         hasDivider: true
                                     )
                                 }
@@ -134,25 +130,33 @@ struct MainSettingsView: View {
                             }
                         }
 
-                        // ── Footer ────────────────────────────────────────
-                        VStack(spacing: 16) {
+                        // ── Gefahrenzone ──────────────────────────────────
+                        SettingsSection(label: "Gefahrenzone") {
                             Button(role: .destructive) {
                                 showResetAlert = true
                             } label: {
-                                Text("Alle Daten löschen")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.red.opacity(0.6))
+                                NavRow(
+                                    icon: "trash.fill",
+                                    accentColor: .red,
+                                    title: "Alle Daten löschen",
+                                    value: "",
+                                    hasDivider: false
+                                )
                             }
+                            .sensoryFeedback(trigger: showResetAlert) { _, newValue in
+                                newValue ? .warning : nil
+                            }
+                        }
 
-                            VStack(spacing: 3) {
-                                Text("KELIF")
-                                    .font(.system(size: 10, weight: .black, design: .rounded))
-                                    .tracking(5)
-                                    .foregroundStyle(.white.opacity(0.18))
-                                Text("Version \(appVersion)")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.white.opacity(0.12))
-                            }
+                        // ── Footer ────────────────────────────────────────
+                        VStack(spacing: 3) {
+                            Text("KELIF")
+                                .font(.system(size: 10, weight: .black, design: .rounded))
+                                .tracking(5)
+                                .foregroundStyle(.white.opacity(0.18))
+                            Text("Version \(appVersion)")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.white.opacity(0.12))
                         }
                         .padding(.top, 4)
 
@@ -160,16 +164,21 @@ struct MainSettingsView: View {
                     }
                     .padding(.horizontal)
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
             .navigationTitle("Einstellungen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fertig") { dismiss() }
-                        .foregroundStyle(.white)
+                    if #available(iOS 26, *) {
+                        Button("Fertig") { dismiss() }
+                            .buttonStyle(.glass)
+                    } else {
+                        Button("Fertig") { dismiss() }
+                            .foregroundStyle(.white)
+                    }
                 }
             }
-            // ── Sheets & Alerts ───────────────────────────────────────────
             .sheet(isPresented: $showAddPlayer) {
                 AddPlayerSheet { name in
                     playerManager.addPlayer(name: name)
@@ -197,40 +206,59 @@ struct MainSettingsView: View {
             HStack(spacing: 18) {
                 ForEach(playerManager.players) { player in
                     PlayerBubble(player: player) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        withAnimation(.snappy) {
                             playerManager.removePlayer(id: player.id)
                         }
                     }
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.5).combined(with: .opacity),
+                        removal:   .scale(scale: 0.5).combined(with: .opacity)
+                    ))
                 }
 
-                // Add Button
-                Button { showAddPlayer = true } label: {
-                    VStack(spacing: 8) {
-                        ZStack {
-                            Circle()
-                                .fill(.white.opacity(0.05))
-                                .frame(width: 64, height: 64)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])
-                                        )
-                                        .foregroundStyle(.white.opacity(0.2))
-                                )
-
-                            Image(systemName: "plus")
-                                .font(.system(size: 22, weight: .light))
-                                .foregroundStyle(.white.opacity(0.45))
-                        }
-
-                        Text("Hinzufügen")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.3))
-                    }
-                }
+                addCrewButton
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .animation(.snappy, value: playerManager.players.count)
+        }
+    }
+
+    private var addCrewButton: some View {
+        Button { showAddPlayer = true } label: {
+            VStack(spacing: 8) {
+                if #available(iOS 26, *) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .light))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(width: 64, height: 64)
+                        .glassEffect(.regular.interactive(), in: Circle())
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill(.white.opacity(0.05))
+                            .frame(width: 64, height: 64)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(
+                                        style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])
+                                    )
+                                    .foregroundStyle(.white.opacity(0.2))
+                            )
+                        Image(systemName: "plus")
+                            .font(.system(size: 22, weight: .light))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                }
+
+                Text("Hinzufügen")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+        }
+        .accessibilityLabel("Crew-Mitglied hinzufügen")
+        .sensoryFeedback(trigger: showAddPlayer) { _, newValue in
+            newValue ? .impact(weight: .light) : nil
         }
     }
 }
@@ -249,16 +277,22 @@ private struct SettingsSection<Content: View>: View {
                 .foregroundStyle(.white.opacity(0.38))
                 .padding(.horizontal, 4)
 
-            content
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.white.opacity(0.05))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .strokeBorder(.white.opacity(0.08), lineWidth: 1)
-                        )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+            if #available(iOS 26, *) {
+                content
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .glassEffect(.regular, in: .rect(cornerRadius: 20))
+            } else {
+                content
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.white.opacity(0.05))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .strokeBorder(.white.opacity(0.08), lineWidth: 1)
+                            )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+            }
         }
     }
 }
@@ -316,9 +350,11 @@ private struct NavRow: View {
 
             Spacer()
 
-            Text(value)
-                .font(.system(size: 13))
-                .foregroundStyle(.white.opacity(0.38))
+            if !value.isEmpty {
+                Text(value)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.38))
+            }
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
@@ -343,13 +379,21 @@ private struct IconBadge: View {
     let color: Color
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 9)
-                .fill(color.opacity(0.18))
-                .frame(width: 34, height: 34)
+        if #available(iOS 26, *) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(color)
+                .frame(width: 34, height: 34)
+                .glassEffect(.regular.tint(color), in: .rect(cornerRadius: 9))
+        } else {
+            ZStack {
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(color.opacity(0.18))
+                    .frame(width: 34, height: 34)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(color)
+            }
         }
     }
 }
@@ -408,6 +452,8 @@ struct PlayerBubble: View {
                 .lineLimit(1)
                 .frame(width: 68)
         }
+        .accessibilityLabel("\(player.name), Crew-Mitglied")
+        .accessibilityHint("Lange drücken zum Entfernen")
     }
 }
 
@@ -421,7 +467,6 @@ struct AddPlayerSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Handle
             Capsule()
                 .fill(.white.opacity(0.2))
                 .frame(width: 36, height: 4)
@@ -438,7 +483,6 @@ struct AddPlayerSheet: View {
             }
             .padding(.bottom, 28)
 
-            // Input Row
             HStack(spacing: 10) {
                 TextField("Name...", text: $name)
                     .font(.system(size: 19, weight: .medium, design: .rounded))
@@ -457,7 +501,7 @@ struct AddPlayerSheet: View {
                     .transition(.scale.combined(with: .opacity))
                 }
             }
-            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: name.isEmpty)
+            .animation(.snappy(duration: 0.25), value: name.isEmpty)
             .padding(.horizontal, 20)
             .padding(.vertical, 15)
             .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
@@ -470,6 +514,9 @@ struct AddPlayerSheet: View {
             Spacer()
         }
         .onAppear { isFocused = true }
+        .sensoryFeedback(trigger: name) { old, new in
+            old.isEmpty && !new.trimmingCharacters(in: .whitespaces).isEmpty ? .success : nil
+        }
     }
 
     private func confirm() {
@@ -486,20 +533,31 @@ struct GamerIDCard: View {
     @Binding var name: String
     @FocusState private var isFocused: Bool
 
-    var body: some View {
+    private static let palettes: [[Color]] = [
+        [.blue, .cyan], [.purple, .indigo], [.orange, .pink], [.green, .teal],
+        [.red, .orange], [.indigo, .blue], [.pink, .purple], [.teal, .green],
+    ]
+
+    private var avatarColors: [Color] {
+        guard !name.isEmpty else { return [.blue, .cyan] }
+        let idx = abs(name.hashValue) % Self.palettes.count
+        return Self.palettes[idx]
+    }
+
+    private var cardContent: some View {
         HStack(spacing: 16) {
-            // Avatar
             ZStack {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [.blue, .cyan],
+                            colors: avatarColors,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 60, height: 60)
-                    .shadow(color: .blue.opacity(0.35), radius: 8, y: 4)
+                    .shadow(color: avatarColors[0].opacity(0.35), radius: 8, y: 4)
+                    .animation(.smooth(duration: 0.4), value: name)
 
                 if name.isEmpty {
                     Image(systemName: "person.fill")
@@ -537,14 +595,23 @@ struct GamerIDCard: View {
         .animation(.easeInOut(duration: 0.2), value: isFocused)
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(.white.opacity(0.05))
-                .overlay(
+    }
+
+    var body: some View {
+        if #available(iOS 26, *) {
+            cardContent
+                .glassEffect(.regular, in: .rect(cornerRadius: 22))
+        } else {
+            cardContent
+                .background(
                     RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+                        .fill(.white.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22)
+                                .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+                        )
                 )
-        )
+        }
     }
 }
 
@@ -564,55 +631,78 @@ private struct LanguageSelectionView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 16) {
-                // System Toggle
-                HStack {
-                    Text("Systemsprache")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Toggle("", isOn: $useSystemLanguage)
-                        .labelsHidden()
-                        .tint(.blue)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 13)
-                .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal)
+                systemToggleRow
+                    .padding(.horizontal)
 
                 if !useSystemLanguage {
-                    VStack(spacing: 0) {
-                        LanguageRow(title: "Deutsch", isSelected: selectedLanguageCode == "de") {
-                            selectedLanguageCode = "de"
-                        }
-                        Rectangle()
-                            .fill(.white.opacity(0.07))
-                            .frame(height: 0.5)
-                            .padding(.leading, 16)
-                        LanguageRow(title: "English", isSelected: selectedLanguageCode == "en") {
-                            selectedLanguageCode = "en"
-                        }
-                    }
-                    .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .padding(.horizontal)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    languagePickerRows
+                        .padding(.horizontal)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 Spacer()
             }
             .padding(.top, 20)
-            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: useSystemLanguage)
+            .animation(.smooth(duration: 0.35), value: useSystemLanguage)
         }
         .navigationTitle("Sprache")
     }
+
+    private var systemToggleRow: some View {
+        HStack {
+            IconBadge(icon: "globe", color: .orange)
+            Text("Systemsprache")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.white)
+            Spacer()
+            Toggle("", isOn: $useSystemLanguage)
+                .labelsHidden()
+                .tint(.blue)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .modifier(GlassOrFallbackCard(cornerRadius: 16))
+    }
+
+    private var languagePickerRows: some View {
+        VStack(spacing: 0) {
+            LanguageRow(title: "🇩🇪  Deutsch", isSelected: selectedLanguageCode == "de") {
+                selectedLanguageCode = "de"
+            }
+            Rectangle()
+                .fill(.white.opacity(0.07))
+                .frame(height: 0.5)
+                .padding(.leading, 16)
+            LanguageRow(title: "🇬🇧  English", isSelected: selectedLanguageCode == "en") {
+                selectedLanguageCode = "en"
+            }
+        }
+        .modifier(GlassOrFallbackCard(cornerRadius: 16))
+    }
 }
+
+// MARK: - Reusable glass-or-fallback modifier
+
+private struct GlassOrFallbackCard: ViewModifier {
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+        } else {
+            content
+                .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(.white.opacity(0.08), lineWidth: 1)
+                )
+        }
+    }
+}
+
+// MARK: - Language Row
 
 struct LanguageRow: View {
     let title: String
@@ -637,7 +727,7 @@ struct LanguageRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.spring(response: 0.25), value: isSelected)
+        .animation(.snappy(duration: 0.25), value: isSelected)
     }
 }
 

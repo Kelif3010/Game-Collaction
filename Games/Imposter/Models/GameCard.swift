@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SFSafeSymbols
 
 struct GameCard: Identifiable {
     let id = UUID()
@@ -53,11 +54,11 @@ struct GameCard: Identifiable {
     }
     
     /// Gibt das Icon für die Karte zurück
-    var cardIcon: String {
+    var cardIcon: SFSymbol {
         if let roleType = roleType {
             return roleType.cardIcon
         }
-        return isImposter ? "eye.slash.fill" : "eye.fill"
+        return isImposter ? .eyeSlashFill : .eyeFill
     }
     
     var cardTitle: String {

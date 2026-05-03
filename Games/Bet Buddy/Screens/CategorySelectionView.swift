@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CategorySelectionView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
 
     var onContinue: () -> Void
     var onBackToGroups: () -> Void

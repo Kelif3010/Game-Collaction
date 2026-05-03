@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Combine
+import OrderedCollections
 
 // MARK: - Models
 
@@ -54,11 +54,11 @@ enum GamePoints {
 }
 
 // MARK: - Service
-@MainActor
-class StatsService: ObservableObject {
+@MainActor @Observable
+class StatsService {
     static let shared = StatsService()
-    
-    @Published private(set) var stats: [String: PlayerStats] = [:]
+
+    private(set) var stats: OrderedDictionary<String, PlayerStats> = [:]
     
     private let defaults = UserDefaults.standard
     private let key = "imposter_game_stats_v1"
@@ -174,7 +174,7 @@ class StatsService: ObservableObject {
     private func loadStats() {
         guard let data = defaults.data(forKey: key) else { return }
         do {
-            stats = try JSONDecoder().decode([String: PlayerStats].self, from: data)
+            stats = try JSONDecoder().decode(OrderedDictionary<String, PlayerStats>.self, from: data)
         } catch {
             print("Failed to load stats: \(error)")
         }

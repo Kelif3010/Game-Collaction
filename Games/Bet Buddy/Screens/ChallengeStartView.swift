@@ -1,8 +1,10 @@
 import SwiftUI
+import SFSafeSymbols
+import Pow
 
 struct ChallengeStartView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
 
     var onStart: () -> Void
     var onClose: () -> Void
@@ -11,6 +13,7 @@ struct ChallengeStartView: View {
     @State private var cardAppeared = false
     @State private var shuffleRotation: Double = 0
     @State private var shimmerOffset: CGFloat = -200
+    @State private var challengeEffectTrigger = 0
 
     var body: some View {
         ZStack {
@@ -36,6 +39,7 @@ struct ChallengeStartView: View {
                             .degrees(cardAppeared ? 0 : 180),
                             axis: (x: 0, y: 1, z: 0)
                         )
+                        .changeEffect(.shine, value: challengeEffectTrigger)
 
                     // Shuffle / Change Button
                     shuffleButton
@@ -70,11 +74,12 @@ struct ChallengeStartView: View {
         }
         .onAppear {
             appModel.refreshChallenge()
+            challengeEffectTrigger += 1
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
                 cardAppeared = true
             }
-            // Shimmer sweep nach Card-Eingang
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(900))
                 withAnimation(.easeInOut(duration: 0.7)) {
                     shimmerOffset = 300
                 }
@@ -108,7 +113,7 @@ struct ChallengeStartView: View {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemName: "xmark")
+                Image(systemSymbol: .xmark)
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
@@ -205,7 +210,7 @@ struct ChallengeStartView: View {
                 .tracking(2)
 
             HStack(spacing: 8) {
-                Image(systemName: appModel.currentChallenge.category.iconName)
+                Image(systemSymbol: appModel.currentChallenge.category.iconSymbol)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(appModel.currentChallenge.category.accent)
 
@@ -276,7 +281,7 @@ struct ChallengeStartView: View {
                         .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 2)
                         .frame(width: 70, height: 70)
 
-                    Image(systemName: appModel.currentChallenge.category.iconName)
+                    Image(systemSymbol: appModel.currentChallenge.category.iconSymbol)
                         .font(.system(size: 30, weight: .bold))
                         .foregroundStyle(BetBuddyTheme.accentGold)
                 }
@@ -357,21 +362,22 @@ struct ChallengeStartView: View {
 
             HapticsService.impact(.medium)
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(200))
                 appModel.refreshChallenge()
+                challengeEffectTrigger += 1
                 shimmerOffset = -200
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     cardAppeared = true
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                    withAnimation(.easeInOut(duration: 0.7)) {
-                        shimmerOffset = 300
-                    }
+                try? await Task.sleep(for: .milliseconds(700))
+                withAnimation(.easeInOut(duration: 0.7)) {
+                    shimmerOffset = 300
                 }
             }
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "shuffle")
+                Image(systemSymbol: .shuffle)
                     .font(.system(size: 16, weight: .bold))
                     .rotationEffect(.degrees(shuffleRotation))
 
@@ -461,7 +467,7 @@ struct ChallengeStartView: View {
                     .font(.system(size: 18, weight: .black, design: .rounded))
                     .tracking(2)
 
-                Image(systemName: "arrow.right")
+                Image(systemSymbol: .arrowRight)
                     .font(.system(size: 16, weight: .bold))
             }
             .foregroundStyle(BetBuddyTheme.textOnLight)

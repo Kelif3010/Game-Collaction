@@ -1,6 +1,6 @@
 import Foundation
 
-struct GroupInfo: Identifiable, Hashable {
+struct GroupInfo: Identifiable, Hashable, Sendable {
     static let minPlayerCount = 2
     static let maxPlayerCount = 4
 

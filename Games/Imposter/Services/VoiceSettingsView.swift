@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 
 struct VoiceSettingsView: View {
-    @ObservedObject private var voiceService = VoiceService.shared
+    private let voiceService = VoiceService.shared
     @State private var selectedIdentifier: String? = VoiceService.shared.preferredVoiceIdentifier()
     @State private var isSpeaking = false
     

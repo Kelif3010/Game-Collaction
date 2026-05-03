@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FFSetupView: View {
     @EnvironmentObject private var viewModel: FFViewModel
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    private let playerManager = GlobalPlayerManager.shared
     @Environment(\.dismiss) private var dismiss
 
     // Lokaler Setup-State

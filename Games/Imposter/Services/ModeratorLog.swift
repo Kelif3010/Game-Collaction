@@ -6,15 +6,14 @@
 //
 
 import Foundation
-import Combine
 
 /// Moderator-Log für Debugging und Transparenz
-@MainActor
-class ModeratorLog: ObservableObject {
+@MainActor @Observable
+class ModeratorLog {
     static let shared = ModeratorLog()
-    
-    @Published var logs: [LogEntry] = []
-    @Published var isEnabled = true
+
+    var logs: [LogEntry] = []
+    var isEnabled = true
     
     private let aiService = AIService.shared
     private let maxLogEntries = 100

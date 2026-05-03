@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CategorySelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var gameSettings: GameSettings
+    var gameSettings: GameSettings
 
     private var isRolesLocked: Bool {
         gameSettings.gameMode == .roles

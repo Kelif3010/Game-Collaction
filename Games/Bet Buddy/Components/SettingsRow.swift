@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct SettingsRow: View {
     enum RowType {
@@ -10,7 +11,7 @@ struct SettingsRow: View {
         case penalty
     }
 
-    var icon: String
+    var icon: SFSymbol
     var title: String
     var detail: String?
     var rowType: RowType
@@ -38,7 +39,7 @@ struct SettingsRow: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 1)
                     )
-                Image(systemName: icon)
+                Image(systemSymbol: icon)
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .font(.headline)
             }
@@ -72,7 +73,7 @@ struct SettingsRow: View {
                             .foregroundStyle(BetBuddyTheme.textSilver)
                             .font(.subheadline.weight(.semibold))
                     }
-                    Image(systemName: "chevron.right")
+                    Image(systemSymbol: .chevronRight)
                         .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
                         .font(.subheadline)
                 }

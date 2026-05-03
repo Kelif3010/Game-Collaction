@@ -1,8 +1,9 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct SpyOptionsView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @State private var selectedTab = 0
     @State private var showTutorial = false
     @State private var roleToExplain: RoleType?
@@ -12,7 +13,8 @@ struct SpyOptionsView: View {
     @State private var showAIAlert = false
 
     var body: some View {
-        ZStack {
+        @Bindable var gameSettings = gameSettings
+        return ZStack {
             ImposterStyle.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -176,7 +178,7 @@ struct SpyOptionsView: View {
                     Spacer()
                     RoleCardView(role: TutorialRole(
                         name: role.rawValue,
-                        icon: role.icon,
+                        icon: role.icon.rawValue,
                         team: role.team,
                         ability: role.description,
                         mission: getMissionText(for: role),
@@ -196,7 +198,7 @@ private struct RoleGroupView: View {
     let teamName: String
     let teamColor: Color
     let roles: [RoleType]
-    @ObservedObject var settings: GameSettings
+    var settings: GameSettings
     var onInfo: (RoleType) -> Void
     
     var body: some View {
@@ -240,7 +242,7 @@ private struct RoleToggleRow: View {
                     .fill(isSelected ? color.opacity(0.2) : Color.gray.opacity(0.1))
                     .frame(width: 44, height: 44)
                 
-                Image(systemName: role.icon)
+                Image(systemSymbol: role.icon)
                     .font(.title3)
                     .foregroundStyle(isSelected ? color : .gray)
             }

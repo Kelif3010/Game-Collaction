@@ -1,7 +1,7 @@
 import Foundation
 
-struct GameResult: Hashable {
-    enum Outcome: String, Hashable {
+struct GameResult: Hashable, Sendable {
+    enum Outcome: String, Hashable, Sendable {
         case win
         case lose
     }

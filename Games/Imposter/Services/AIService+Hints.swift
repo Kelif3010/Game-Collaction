@@ -23,12 +23,6 @@ enum GameContentType: String, Codable {
     case challenge = "challenge"
 }
 
-struct GameContentDTO: Codable {
-    let type: String
-    let content: String
-    let isTrue: Bool
-}
-
 private actor SpyHintCache {
     static let shared = SpyHintCache()
     private var cache: [String: [String]] = [:]
@@ -108,19 +102,19 @@ extension AIService {
             Typ: "\(requestType)"
             Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
             Stil: 1 Satz, 6–12 Wörter.
-            hint/fake_hint: beginne mit "Es". challenge: kurze Frage/Aufgabe.
-            Antworte NUR JSON: {"type":"\(requestType)","content":"...","isTrue":true/false}
+            hint/fake_hint: beginne mit "Es". challenge: kurze Frage oder Aufgabe.
+            Setze type exakt auf "\(requestType)" und isTrue auf \(requestType == "hint" ? "true" : requestType == "fake_hint" ? "false" : "true").
             """
             
             for _ in 0..<3 {
                 do {
-                    let text = try await AIRequestLimiter.shared.withPermit {
+                    let generated = try await AIRequestLimiter.shared.withPermit {
                         let localSession = makeHintSession()
-                        let response = try await localSession.respond(to: prompt)
+                        let response = try await localSession.respond(to: prompt, generating: AIGeneratedGameContent.self)
                         return response.content
                     }
                     
-                    if let content = decodeGameContent(from: text, category: category.name, word: word, expectedType: expectedType) {
+                    if let content = decodeGameContent(from: generated, category: category.name, word: word, expectedType: expectedType) {
                         return content
                     }
                 } catch {
@@ -147,17 +141,17 @@ extension AIService {
             let prompt = """
             Wort: "\(word)" (Kategorie: \(category.name))
             Erzeuge einen kurzen \(mustBeTrue ? "wahren" : "falschen/irreführenden") Hinweis auf Deutsch.
-            Antworte NUR JSON: {"type": "\(type)", "content": "...", "isTrue": \(mustBeTrue)}
+            Beginne mit "Es". Setze type exakt auf "\(type)" und isTrue auf \(mustBeTrue ? "true" : "false").
             """
             
             do {
-                let responseText = try await AIRequestLimiter.shared.withPermit {
+                let generated = try await AIRequestLimiter.shared.withPermit {
                     let localSession = makeHintSession()
-                    let response = try await localSession.respond(to: prompt)
+                    let response = try await localSession.respond(to: prompt, generating: AIGeneratedGameContent.self)
                     return response.content
                 }
                 let expectedType = GameContentType(rawValue: type) ?? .hint
-                if let content = decodeGameContent(from: responseText, category: category.name, word: word, expectedType: expectedType) {
+                if let content = decodeGameContent(from: generated, category: category.name, word: word, expectedType: expectedType) {
                     return GameHint(content: content.content, type: .general, isTrue: content.isTrue, word: word, category: category)
                 }
             } catch {
@@ -172,37 +166,23 @@ extension AIService {
     
     // MARK: - Decoding Logic
     
-    private func decodeGameContent(from text: String, category: String, word: String, expectedType: GameContentType? = nil) -> GameContent? {
-        guard let data = extractJSON(from: text) else { return nil }
-        
-        do {
-            let dto = try JSONDecoder().decode(GameContentDTO.self, from: data)
-            let type = GameContentType(rawValue: dto.type) ?? .hint
-            
-            if let expectedType, expectedType != type {
-                return nil
-            }
-            
-            let cleaned = cleanHintText(dto.content)
-            guard isGameContentValid(cleaned, type: type, word: word, categoryName: category) else { return nil }
-            
-            return GameContent(
-                type: type,
-                content: cleaned,
-                category: category,
-                isTrue: dto.isTrue
-            )
-        } catch {
-            print("JSON Decode Error: \(error)")
+    @available(iOS 26.0, *)
+    private func decodeGameContent(from generated: AIGeneratedGameContent, category: String, word: String, expectedType: GameContentType? = nil) -> GameContent? {
+        let type = GameContentType(rawValue: generated.type) ?? .hint
+
+        if let expectedType, expectedType != type {
             return nil
         }
-    }
 
-    nonisolated private func extractJSON(from text: String) -> Data? {
-        guard let start = text.firstIndex(of: "{"),
-              let end = text.lastIndex(of: "}") else { return nil }
-        let jsonStr = String(text[start...end])
-        return jsonStr.data(using: .utf8)
+        let cleaned = cleanHintText(generated.content)
+        guard isGameContentValid(cleaned, type: type, word: word, categoryName: category) else { return nil }
+
+        return GameContent(
+            type: type,
+            content: cleaned,
+            category: category,
+            isTrue: generated.isTrue
+        )
     }
     
     // MARK: - Spy Hint Generation (Beibehalten aber optimiert)
@@ -223,7 +203,7 @@ extension AIService {
                 Erstelle \(count) vage Hinweise (ein Satz, 6–12 Wörter).
                 Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
                 Beginne jeden Hinweis mit "Es".
-                Antworte NUR JSON Array: ["Es ...", ...]
+                Gib genau \(count) Hinweise zurück.
                 """
                 
                 var collected: [String] = []
@@ -231,13 +211,13 @@ extension AIService {
                 
                 for _ in 0..<3 {
                     do {
-                        let responseText = try await AIRequestLimiter.shared.withPermit {
+                        let generated = try await AIRequestLimiter.shared.withPermit {
                             let localSession = self.makeHintSession()
-                            let response = try await localSession.respond(to: prompt)
+                            let response = try await localSession.respond(to: prompt, generating: AISpyHintsResponse.self)
                             return response.content
                         }
-                        if let data = self.extractJSONArray(from: responseText),
-                           let rawHints = try? JSONDecoder().decode([String].self, from: data) {
+                        let rawHints = generated.hints
+                        if !rawHints.isEmpty {
                             let filtered = self.filterSpyHints(rawHints, word: word, categoryName: categoryName)
                             for hint in filtered {
                                 let key = self.normalizeForMatching(hint)
@@ -274,13 +254,6 @@ extension AIService {
         return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
         #endif
         return generateFallbackSpyHints(for: word, categoryName: categoryName, count: count)
-    }
-    
-    nonisolated private func extractJSONArray(from text: String) -> Data? {
-        guard let start = text.firstIndex(of: "["),
-              let end = text.lastIndex(of: "]") else { return nil }
-        let jsonStr = String(text[start...end])
-        return jsonStr.data(using: .utf8)
     }
     
     nonisolated private func generateFallbackSpyHints(for word: String, categoryName: String, count: Int) -> [String] {
@@ -572,13 +545,13 @@ extension AIService {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             guard isAvailable, let session = session as? LanguageModelSession else { return Array(repeating: "Besucher", count: count) }
-            let prompt = "Nenne \(count) verschiedene typische Rollen für '\(location)'. Antworte als JSON Array string."
+            let prompt = "Nenne \(count) verschiedene typische Rollen für '\(location)'. Antworte mit einzelnen deutschen Rollenbezeichnungen."
             do {
-                let res = try await session.respond(to: prompt)
-                if let data = extractJSONArray(from: res.content),
-                   let roles = try? JSONDecoder().decode([String].self, from: data) {
-                    return roles
-                }
+                let res = try await session.respond(to: prompt, generating: AIRoleListResponse.self)
+                let roles = res.content.roles
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+                if !roles.isEmpty { return Array(roles.prefix(count)) }
             } catch { }
             return Array(repeating: "Besucher", count: count)
         }

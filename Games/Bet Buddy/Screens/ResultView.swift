@@ -1,10 +1,12 @@
 import SwiftUI
 import StoreKit
 import Foundation
+import SFSafeSymbols
+import Pow
 
 struct ResultView: View {
     let result: GameResult
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
 
     var onRestart: () -> Void
     var onNewChallenge: () -> Void
@@ -17,6 +19,7 @@ struct ResultView: View {
     @State private var showOutcome = false
     @State private var showLeaderboard = false
     @State private var jackpotPulse = false
+    @State private var outcomeEffectTrigger = 0
 
     /// Normiert den Top-Score auf 0.6–1.0 — höherer Score = intensiverer Geldregen
     private var winIntensity: CGFloat {
@@ -37,15 +40,18 @@ struct ResultView: View {
         }
     }
 
+    private var topAnimatedScore: Int {
+        guard let leaderID = animatedLeaderboard.first?.id else { return 0 }
+        return currentScores[leaderID, default: 0]
+    }
+
     var body: some View {
         ZStack {
             BetBuddyBackgroundView(intensity: 1.0)
 
-            // Lottie Money Rain (Win) or Subtle Rain (Lose)
+            // Lottie Money Rain fuer Win-Momente
             if result.outcome == .win {
                 MoneyRainLottieView(intensity: winIntensity)
-            } else {
-                ParticleEffectView(type: .rain)
             }
 
             VStack(spacing: 0) {
@@ -63,10 +69,17 @@ struct ResultView: View {
                             : Color.clear,
                         radius: jackpotPulse ? 20 : 0
                     )
+                    .changeEffect(.spray(origin: .center) {
+                        Image(systemSymbol: .sparkles)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(BetBuddyTheme.accentGold)
+                    }, value: outcomeEffectTrigger, isEnabled: result.outcome == .win)
+                    .changeEffect(.shake, value: outcomeEffectTrigger, isEnabled: result.outcome == .lose)
 
                 // Score Display
                 scoreDisplay
                     .padding(.bottom, 16)
+                    .changeEffect(.jump(height: 12), value: topAnimatedScore, isEnabled: topAnimatedScore > 0)
 
                 // Challenge Text
                 challengeText
@@ -99,29 +112,37 @@ struct ResultView: View {
         } message: {
             Text("Möchtest du die Punkte behalten oder alles auf 0 setzen?")
         }
+        .sensoryFeedback(trigger: outcomeEffectTrigger) {
+            guard HapticsService.isEnabled, outcomeEffectTrigger > 0 else { return nil }
+            return result.outcome == .win ? .success : .warning
+        }
         .onAppear {
-            // JACKPOT: federnder Bounce-Eingang + Gold-Glow-Pulse
-            // BUST: schneller, abrupter Eingang ohne Bounce
-            if result.outcome == .win {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.45).delay(0.2)) {
-                    showOutcome = true
-                }
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true).delay(0.7)) {
-                    jackpotPulse = true
-                }
-            } else {
-                withAnimation(.easeIn(duration: 0.22).delay(0.2)) {
-                    showOutcome = true
-                }
-            }
-            withAnimation(.easeOut(duration: 0.5).delay(0.5)) {
-                showLeaderboard = true
-            }
-
             startRaceAnimation()
             recordStats()
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(200))
+                if result.outcome == .win {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.45)) {
+                        showOutcome = true
+                    }
+                    outcomeEffectTrigger += 1
+                    try? await Task.sleep(for: .milliseconds(500))
+                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                        jackpotPulse = true
+                    }
+                } else {
+                    withAnimation(.easeIn(duration: 0.22)) {
+                        showOutcome = true
+                    }
+                    outcomeEffectTrigger += 1
+                }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                try? await Task.sleep(for: .milliseconds(300))
+                withAnimation(.easeOut(duration: 0.5)) {
+                    showLeaderboard = true
+                }
+
+                try? await Task.sleep(for: .seconds(1))
                 requestReview()
             }
         }
@@ -132,7 +153,7 @@ struct ResultView: View {
         HStack {
             // Results Title
             HStack(spacing: 8) {
-                Image(systemName: result.outcome == .win ? "crown.fill" : "xmark.circle.fill")
+                Image(systemSymbol: result.outcome == .win ? .crownFill : .xmarkCircleFill)
                     .font(.system(size: 14))
                     .foregroundStyle(result.outcome == .win ? BetBuddyTheme.accentGold : BetBuddyTheme.accentRuby)
 
@@ -147,7 +168,7 @@ struct ResultView: View {
             Button {
                 onRestart()
             } label: {
-                Image(systemName: "xmark")
+                Image(systemSymbol: .xmark)
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
@@ -167,7 +188,7 @@ struct ResultView: View {
     private var outcomeBanner: some View {
         HStack(spacing: 12) {
             if result.outcome == .win {
-                Image(systemName: "trophy.fill")
+                Image(systemSymbol: .trophyFill)
                     .font(.system(size: 24))
                     .foregroundStyle(BetBuddyTheme.accentGold)
 
@@ -176,11 +197,11 @@ struct ResultView: View {
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .tracking(2)
 
-                Image(systemName: "trophy.fill")
+                Image(systemSymbol: .trophyFill)
                     .font(.system(size: 24))
                     .foregroundStyle(BetBuddyTheme.accentGold)
             } else {
-                Image(systemName: "hand.thumbsdown.fill")
+                Image(systemSymbol: .handThumbsdownFill)
                     .font(.system(size: 22))
                     .foregroundStyle(BetBuddyTheme.accentRuby)
 
@@ -189,7 +210,7 @@ struct ResultView: View {
                     .foregroundStyle(BetBuddyTheme.accentRuby)
                     .tracking(2)
 
-                Image(systemName: "hand.thumbsdown.fill")
+                Image(systemSymbol: .handThumbsdownFill)
                     .font(.system(size: 22))
                     .foregroundStyle(BetBuddyTheme.accentRuby)
             }
@@ -223,19 +244,18 @@ struct ResultView: View {
 
     // MARK: - Score Display
     private var scoreDisplay: some View {
-        let topScore = currentScores[animatedLeaderboard.first?.id ?? UUID()] ?? 0
         let displayColor = result.outcome == .win ? BetBuddyTheme.accentGold : BetBuddyTheme.accentRuby
 
         return Group {
             if result.inputType == .alphabet {
                 LetterFlipView(
-                    value: topScore,
+                    value: topAnimatedScore,
                     color: displayColor
                 )
                 .id(animatedLeaderboard.first?.id)
             } else {
                 FlipCounterView(
-                    value: topScore,
+                    value: topAnimatedScore,
                     color: displayColor
                 )
                 .id(animatedLeaderboard.first?.id)
@@ -304,7 +324,7 @@ struct ResultView: View {
                 showRestartAlert = true
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.counterclockwise")
+                    Image(systemSymbol: .arrowCounterclockwise)
                         .font(.system(size: 14, weight: .bold))
                     Text("Neustart")
                         .font(.system(size: 15, weight: .bold))
@@ -330,7 +350,7 @@ struct ResultView: View {
                 HStack(spacing: 8) {
                     Text("Nächste Runde")
                         .font(.system(size: 15, weight: .bold))
-                    Image(systemName: "arrow.right")
+                    Image(systemSymbol: .arrowRight)
                         .font(.system(size: 14, weight: .bold))
                 }
                 .foregroundStyle(BetBuddyTheme.textOnLight)
@@ -421,12 +441,12 @@ struct LeaderboardRowView: View {
         }
     }
 
-    private var rankIcon: String {
+    private var rankIcon: SFSymbol {
         switch index {
-        case 0: return "crown.fill"
-        case 1: return "medal.fill"
-        case 2: return "medal.fill"
-        default: return ""
+        case 0: return .crownFill
+        case 1: return .medalFill
+        case 2: return .medalFill
+        default: return .circleFill
         }
     }
 
@@ -439,7 +459,7 @@ struct LeaderboardRowView: View {
                         .fill(rankColor.opacity(0.2))
                         .frame(width: 32, height: 32)
 
-                    Image(systemName: rankIcon)
+                    Image(systemSymbol: rankIcon)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(rankColor)
                 } else {
@@ -480,7 +500,7 @@ struct LeaderboardRowView: View {
                     .foregroundStyle(index == 0 ? BetBuddyTheme.accentGold : BetBuddyTheme.textChampagne)
                     .contentTransition(.numericText())
 
-                Image(systemName: "circle.fill")
+                Image(systemSymbol: .circleFill)
                     .font(.system(size: 8))
                     .foregroundStyle(rankColor.opacity(0.6))
             }
@@ -512,7 +532,7 @@ struct MoneyRainLottieView: View {
     var intensity: CGFloat = 1.0
 
     var body: some View {
-        LottieView(
+        BetBuddyLottieView(
             filename: "Money rain",
             loopMode: .loop,
             isPlaying: true,
@@ -522,133 +542,5 @@ struct MoneyRainLottieView: View {
         .opacity(0.6 + (intensity * 0.4))
         .ignoresSafeArea()
         .allowsHitTesting(false)
-    }
-}
-
-struct ParticleEffectView: View {
-    enum EffectType {
-        case confetti
-        case rain
-    }
-    
-    let type: EffectType
-    
-    private var particleCount: Int {
-        type == .rain ? 200 : 50
-    }
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                ForEach(0..<particleCount, id: \.self) { index in
-                    Particle(type: type, screenSize: geometry.size)
-                        .id("\(geometry.size.width)-\(index)")
-                }
-            }
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-    }
-}
-
-struct Particle: View {
-    let type: ParticleEffectView.EffectType
-    let screenSize: CGSize
-    
-    @State private var position: CGPoint = CGPoint(x: -100, y: -100)
-    @State private var opacity: Double = 0
-    @State private var rotation: Double = 0
-    @State private var scale: CGFloat = 1.0
-    
-    let speed: Double
-    let size: CGFloat
-    let color: Color
-    let delay: Double
-    
-    init(type: ParticleEffectView.EffectType, screenSize: CGSize) {
-        self.type = type
-        self.screenSize = screenSize
-        self.delay = Double.random(in: 0...2.0)
-        
-        if type == .confetti {
-            self.speed = Double.random(in: 2.0...5.0)
-            self.size = CGFloat.random(in: 6...12)
-            self.color = [Color.red, .blue, .green, .yellow, .pink, .purple, .cyan].randomElement()!
-        } else {
-            self.speed = Double.random(in: 0.8...1.6)
-            self.size = CGFloat.random(in: 20...40)
-            self.color = Color.white.opacity(Double.random(in: 0.1...0.4))
-        }
-    }
-    
-    var body: some View {
-        Group {
-            if type == .confetti {
-                if Bool.random() {
-                    Circle().fill(color)
-                } else {
-                    Rectangle().fill(color)
-                }
-            } else {
-                Rectangle()
-                    .fill(LinearGradient(
-                        colors: [color.opacity(0), color],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ))
-                    .frame(width: 2, height: size)
-            }
-        }
-        .frame(width: type == .confetti ? size : 2, height: size)
-        .scaleEffect(type == .rain ? scale : 1.0)
-        .position(position)
-        .opacity(opacity)
-        .rotationEffect(.degrees(rotation))
-        .onAppear {
-            configureAndAnimate()
-        }
-    }
-    
-    private func configureAndAnimate() {
-        opacity = 1.0
-        if type == .rain {
-            scale = CGFloat.random(in: 0.5...1.0)
-            rotation = 10
-        }
-        
-        let safePadding: CGFloat = 100
-        let minX = -safePadding
-        let maxX = screenSize.width + safePadding
-        
-        let startX = Double.random(in: minX...maxX)
-        let startY = Double.random(in: -200 ... -50)
-        
-        position = CGPoint(x: startX, y: startY)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            withAnimation(
-                .linear(duration: speed)
-                .repeatForever(autoreverses: false)
-            ) {
-                let endY = screenSize.height + 100
-                let xOffset = type == .rain ? CGFloat(tan(10 * .pi / 180) * endY) : 0
-                
-                position.y = endY
-                position.x += xOffset
-                
-                if type == .confetti {
-                    rotation = Double.random(in: 0...360)
-                }
-            }
-            
-            if type == .confetti {
-                withAnimation(
-                    .easeInOut(duration: Double.random(in: 1...3))
-                    .repeatForever(autoreverses: true)
-                ) {
-                    position.x += CGFloat.random(in: -30...30)
-                }
-            }
-        }
     }
 }

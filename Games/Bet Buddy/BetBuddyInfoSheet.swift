@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct BetBuddyInfoSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -21,14 +22,14 @@ struct BetBuddyInfoSheet: View {
                         
                         // SEITE 1: Intro (Worum geht's?)
                         InfoPage(
-                            icon: "person.2.wave.2.fill", // Passendes Icon für Partner/Teams
+                            icon: .person2Wave2Fill,
                             color: .cyan,
                             title: "Worum geht's?",
                             content: {
                                 VStack(alignment: .leading, spacing: 14) {
-                                    BulletPoint(text: "Ich biete mehr! ist ein Wettspiel für Teams mit 2 bis 4 Spielern.", icon: "person.2.fill")
-                                    BulletPoint(text: "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').", icon: "hand.raised.fingers.spread.fill")
-                                    BulletPoint(text: "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!", icon: "chart.line.uptrend.xyaxis")
+                                    BulletPoint(text: "Ich biete mehr! ist ein Wettspiel für Teams mit 2 bis 4 Spielern.", icon: .person2Fill)
+                                    BulletPoint(text: "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').", icon: .handRaisedFingersSpreadFill)
+                                    BulletPoint(text: "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!", icon: .chartLineUptrendXyaxis)
                                 }
                             }
                         )
@@ -36,7 +37,7 @@ struct BetBuddyInfoSheet: View {
 
                         // SEITE 2: Ablauf (So wird gespielt)
                         InfoPage(
-                            icon: "list.number",
+                            icon: .listNumber,
                             color: .mint,
                             title: "So wird gespielt",
                             content: {
@@ -52,7 +53,7 @@ struct BetBuddyInfoSheet: View {
 
                         // SEITE 3: Punkte & Risiko (Deine Logik!)
                         InfoPage(
-                            icon: "trophy.fill",
+                            icon: .trophyFill,
                             color: .yellow,
                             title: "Punkte & Wertung",
                             content: {
@@ -90,14 +91,14 @@ struct BetBuddyInfoSheet: View {
 
                         // SEITE 4: Einstellungen
                         InfoPage(
-                            icon: "slider.horizontal.3",
+                            icon: .sliderHorizontal3,
                             color: .pink,
                             title: "Einstellungen",
                             content: {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    BulletPoint(text: "Zeit läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: "timer")
-                                    BulletPoint(text: "Punktabzug: Legt fest, wie viele Punkte bei einer verlorenen Runde weg sind.", icon: "exclamationmark.circle")
-                                    BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: "square.grid.2x2.fill")
+                                    BulletPoint(text: "Zeit läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: .timer)
+                                    BulletPoint(text: "Punktabzug: Legt fest, wie viele Punkte bei einer verlorenen Runde weg sind.", icon: .exclamationmarkCircle)
+                                    BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: .squareGrid2x2Fill)
                                 }
                             }
                         )
@@ -156,7 +157,7 @@ struct BetBuddyInfoSheet: View {
 
 // 1. Die generelle Seite (Container)
 struct InfoPage<Content: View>: View {
-    var icon: String
+    var icon: SFSymbol
     var color: Color
     var title: String
     @ViewBuilder var content: Content
@@ -169,7 +170,7 @@ struct InfoPage<Content: View>: View {
                     Circle()
                         .fill(color.opacity(0.2))
                         .frame(width: 90, height: 90)
-                    Image(systemName: icon)
+                    Image(systemSymbol: icon)
                         .font(.system(size: 36))
                         .foregroundStyle(color)
                 }
@@ -191,11 +192,11 @@ struct InfoPage<Content: View>: View {
 // 2. Ein schöner Listenpunkt mit Icon
 struct BulletPoint: View {
     var text: String
-    var icon: String
+    var icon: SFSymbol
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
+            Image(systemSymbol: icon)
                 .foregroundStyle(BetBuddyTheme.accentGold)
                 .font(.body)
                 .frame(width: 24)

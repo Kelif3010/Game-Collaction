@@ -9,8 +9,8 @@ import SwiftUI
 
 /// Overlay für aktive Hinweise im Spiel - Jetzt oben platziert und neutral gestaltet
 struct HintOverlay: View {
-    @ObservedObject var hintService: HintService
-    @ObservedObject private var settings = SettingsService.shared
+    var hintService: HintService
+    private let settings = SettingsService.shared
     @State private var showHistory = false
     
     var body: some View {

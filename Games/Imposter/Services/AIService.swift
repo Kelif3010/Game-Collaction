@@ -6,19 +6,18 @@
 //
 
 import Foundation
-import Combine
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
 import AVFoundation
 
 /// Zentrale KI-Service für alle AI-Features
-@MainActor
-class AIService: ObservableObject {
+@MainActor @Observable
+class AIService {
     static let shared = AIService()
-    
-    @Published var isAvailable = false
-    @Published var isResponding = false
+
+    var isAvailable = false
+    var isResponding = false
     
     // Text-to-Speech
     private let synthesizer = AVSpeechSynthesizer()

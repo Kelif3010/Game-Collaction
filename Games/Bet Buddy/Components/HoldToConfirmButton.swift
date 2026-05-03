@@ -1,4 +1,6 @@
 import SwiftUI
+import SFSafeSymbols
+import Pow
 
 struct HoldToConfirmButton: View {
     var title: String = "Halten zum Bestätigen"
@@ -8,8 +10,9 @@ struct HoldToConfirmButton: View {
 
     @State private var isPressing = false
     @State private var progress: CGFloat = 0
-    @State private var timer: Timer?
+    @State private var progressTask: Task<Void, Never>?
     @State private var glowPulse = false
+    @State private var completionTrigger = 0
 
     var body: some View {
         ZStack(alignment: .leading) {
@@ -51,7 +54,7 @@ struct HoldToConfirmButton: View {
                     Circle()
                         .stroke(disabled ? Color.gray.opacity(0.3) : BetBuddyTheme.accentGold.opacity(0.5), lineWidth: 1.5)
                         .frame(width: 32, height: 32)
-                    Image(systemName: "hand.point.up.left.fill")
+                    Image(systemSymbol: .handPointUpLeftFill)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(disabled ? Color.gray : BetBuddyTheme.accentGold)
                 }
@@ -123,20 +126,35 @@ struct HoldToConfirmButton: View {
             stopProgress()
         }
         .animation(.easeInOut, value: disabled)
+        .changeEffect(.shine, value: isPressing, isEnabled: !disabled && isPressing)
+        .changeEffect(.spray(origin: .center) {
+            Image(systemSymbol: .sparkles)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(BetBuddyTheme.accentGold)
+        }, value: completionTrigger)
+        .sensoryFeedback(trigger: completionTrigger) {
+            guard HapticsService.isEnabled, completionTrigger > 0 else { return nil }
+            return .success
+        }
     }
 
     private func startProgress() {
         isPressing = true
         progress = 0
-        timer?.invalidate()
+        progressTask?.cancel()
 
-        timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
-            Task { @MainActor in
+        progressTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(20))
+                guard !Task.isCancelled, isPressing else { return }
+
                 withAnimation(.linear(duration: 0.02)) {
                     progress += 0.02 / duration
                 }
+
                 if progress >= 1.0 {
                     completeAction()
+                    return
                 }
             }
         }
@@ -144,8 +162,8 @@ struct HoldToConfirmButton: View {
 
     private func stopProgress() {
         isPressing = false
-        timer?.invalidate()
-        timer = nil
+        progressTask?.cancel()
+        progressTask = nil
 
         withAnimation(.easeOut(duration: 0.2)) {
             progress = 0
@@ -154,10 +172,10 @@ struct HoldToConfirmButton: View {
 
     private func completeAction() {
         isPressing = false
-        timer?.invalidate()
-        timer = nil
+        progressTask?.cancel()
+        progressTask = nil
         progress = 1.0
-        HapticsService.success()
+        completionTrigger += 1
         action()
     }
 }

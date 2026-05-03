@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct FloatingStartButton: View {
-    @EnvironmentObject var gameSettings: GameSettings
-    @EnvironmentObject var gameLogic: GameLogic
+    @Environment(GameSettings.self) var gameSettings
+    @Environment(GameLogic.self) var gameLogic
     let canStart: Bool
     let hintText: String
     let onStart: () -> Void
@@ -39,8 +39,8 @@ struct FloatingStartButton: View {
                 // Main Floating Button
                 if canStart {
                     NavigationLink(destination: GamePlayView()
-                        .environmentObject(gameSettings)
-                        .environmentObject(gameLogic)) {
+                        .environment(gameSettings)
+                        .environment(gameLogic)) {
                         FloatingButtonContent(
                             title: "Spiel starten",
                             icon: "play.circle.fill",
@@ -59,7 +59,8 @@ struct FloatingStartButton: View {
                         
                         // Hint automatisch nach 3 Sekunden verstecken
                         if showingHint {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(3))
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     showingHint = false
                                 }
@@ -153,8 +154,8 @@ struct FloatingButtonContent: View {
             onStart: { print("Cannot start yet") }
         )
     }
-    .environmentObject(settings)
-    .environmentObject(logic)
+    .environment(settings)
+    .environment(logic)
     .padding(40)
     .background(
         LinearGradient(

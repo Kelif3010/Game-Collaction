@@ -277,6 +277,18 @@ struct CasinoCardBackground: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(highlightColor.opacity(0.08))
             }
+
+            if #available(iOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.clear)
+                    .glassEffect(
+                        highlighted
+                            ? .regular.tint(highlightColor.opacity(0.12))
+                            : .regular.tint(BetBuddyTheme.accentGold.opacity(0.06)),
+                        in: RoundedRectangle(cornerRadius: 16)
+                    )
+                    .opacity(highlighted ? 1.0 : 0.8)
+            }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 16)

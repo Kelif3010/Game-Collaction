@@ -1,14 +1,13 @@
 import Foundation
-import Combine
 
-@MainActor
-final class SettingsService: ObservableObject {
+@MainActor @Observable
+final class SettingsService {
     static let shared = SettingsService()
 
     // UserDefaults keys
     private let enableHintsKey = "settings.enableHints"
 
-    @Published var enableHints: Bool {
+    var enableHints: Bool {
         didSet { UserDefaults.standard.set(enableHints, forKey: enableHintsKey) }
     }
 

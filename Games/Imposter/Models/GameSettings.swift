@@ -6,101 +6,101 @@
 //
 
 import Foundation
-import Combine
 
-class GameSettings: ObservableObject {
-    @Published var players: [Player] = []
-    @Published var numberOfImposters: Int {
+@Observable
+class GameSettings {
+    var players: [Player] = []
+    var numberOfImposters: Int {
         didSet { UserDefaults.standard.set(numberOfImposters, forKey: "imposter.numberOfImposters") }
     }
-    @Published var selectedCategory: Category?
-    @Published var selectedCategoryIds: Set<UUID> = []
-    @Published var isMixAllCategories: Bool = false
-    @Published var roundCategory: Category?
-    @Published var timeLimit: Int {
+    var selectedCategory: Category?
+    var selectedCategoryIds: Set<UUID> = []
+    var isMixAllCategories: Bool = false
+    var roundCategory: Category?
+    var timeLimit: Int {
         didSet { UserDefaults.standard.set(timeLimit, forKey: "imposter.timeLimit") }
     }
-    @Published var gameMode: ImposterGameMode {
+    var gameMode: ImposterGameMode {
         didSet {
             if let data = try? JSONEncoder().encode(gameMode) {
                 UserDefaults.standard.set(data, forKey: "imposter.gameMode")
             }
         }
     }
-    @Published var categories: [Category] = Category.defaultCategories
-    
-    @Published var fairnessPolicy: FairnessPolicy = FairnessPolicy(
-        maxConsecutive: 2,                    // Max 2x hintereinander Spion
-        minCooldownRounds: 1,                 // 1 Runde Pause nach Spion
-        recentWindow: 3,                      // 3 Runden "recent" Penalty
-        alphaFrequencyPenalty: 0.6,           // Stärkere Häufigkeits-Penalty
-        betaDistanceBonus: 0.2,               // Stärkerer Bonus für lange Pause
-        newPlayerHardCooldownRounds: 0,       // Keine Hard-Cooldown für neue Spieler
-        newPlayerSoftPenaltyRounds: 2,        // 2 Runden Soft-Penalty für neue Spieler
-        newPlayerPenaltyFactor: 0.4           // 40% Gewichtung für neue Spieler
+    var categories: [Category] = Category.defaultCategories
+
+    var fairnessPolicy: FairnessPolicy = FairnessPolicy(
+        maxConsecutive: 2,
+        minCooldownRounds: 1,
+        recentWindow: 3,
+        alphaFrequencyPenalty: 0.6,
+        betaDistanceBonus: 0.2,
+        newPlayerHardCooldownRounds: 0,
+        newPlayerSoftPenaltyRounds: 2,
+        newPlayerPenaltyFactor: 0.4
     )
-    @Published var fairnessState: FairnessState = FairnessState()
-    
+    var fairnessState: FairnessState = FairnessState()
+
     // Spielername-Manager
-    @Published var savedPlayersManager = SavedPlayersManager()
-    
+    var savedPlayersManager = SavedPlayersManager()
+
     // Spiel-Optionen für Imposter/Spione
-    @Published var spyCanSeeCategory: Bool {
+    var spyCanSeeCategory: Bool {
         didSet { UserDefaults.standard.set(spyCanSeeCategory, forKey: "imposter.spyCanSeeCategory") }
     }
-    @Published var spiesCanSeeEachOther: Bool {
+    var spiesCanSeeEachOther: Bool {
         didSet { UserDefaults.standard.set(spiesCanSeeEachOther, forKey: "imposter.spiesCanSeeEachOther") }
     }
-    @Published var randomSpyCount: Bool {
+    var randomSpyCount: Bool {
         didSet { UserDefaults.standard.set(randomSpyCount, forKey: "imposter.randomSpyCount") }
     }
-    @Published var showSpyHints: Bool {
+    var showSpyHints: Bool {
         didSet { UserDefaults.standard.set(showSpyHints, forKey: "imposter.showSpyHints") }
     }
-    @Published var activeRoles: Set<RoleType> = [] {
+    var activeRoles: Set<RoleType> = [] {
         didSet {
             if let data = try? JSONEncoder().encode(activeRoles) {
                 UserDefaults.standard.set(data, forKey: "imposter.activeRoles")
             }
         }
     }
-    
+
     // Spielzustand
-    @Published var currentPlayerIndex: Int = 0
-    @Published var gamePhase: ImposterGamePhase = .setup
-    @Published var timeRemaining: Int = 300
-    @Published var isTimerPaused: Bool = false
-    @Published var startingPlayerName: String? = nil
-    @Published var currentCardBackAnimation: String = "Fingerprint biometric scan" // Animation für die aktuelle Runde
-    @Published var multiplayerStartAtHostUptime: TimeInterval? = nil
-    @Published var hostClockOffset: TimeInterval = 0
+    var currentPlayerIndex: Int = 0
+    var gamePhase: ImposterGamePhase = .setup
+    var timeRemaining: Int = 300
+    var isTimerPaused: Bool = false
+    var startingPlayerName: String? = nil
+    var currentCardBackAnimation: String = "Fingerprint biometric scan"
+    var multiplayerStartAtHostUptime: TimeInterval? = nil
+    var hostClockOffset: TimeInterval = 0
     var hostClockOffsetRTT: TimeInterval = .greatestFiniteMagnitude
-    
+
     // Multiplayer Sync State
-    @Published var revealProgress: (ready: Int, total: Int)? = nil
-    @Published var isWaitingForOtherPlayers: Bool = false
+    var revealProgress: (ready: Int, total: Int)? = nil
+    var isWaitingForOtherPlayers: Bool = false
 
     // Multiplayer Voting State
-    @Published var shouldPresentVoting: Bool = false
-    @Published var multiplayerVotingProgress: ImposterVotingStatusPayload? = nil
-    @Published var multiplayerVotingSelection: [String]? = nil
-    @Published var multiplayerVotingResult: ImposterVotingResultPayload? = nil
-    @Published var multiplayerWordGuessResult: ImposterWordGuessResultPayload? = nil
-    @Published var multiplayerRematchOffer: ImposterRematchOfferPayload? = nil
-    @Published var multiplayerRematchWaiting: Bool = false
-    @Published var multiplayerVoteTally: [String: Int] = [:]
-    
+    var shouldPresentVoting: Bool = false
+    var multiplayerVotingProgress: ImposterVotingStatusPayload? = nil
+    var multiplayerVotingSelection: [String]? = nil
+    var multiplayerVotingResult: ImposterVotingResultPayload? = nil
+    var multiplayerWordGuessResult: ImposterWordGuessResultPayload? = nil
+    var multiplayerRematchOffer: ImposterRematchOfferPayload? = nil
+    var multiplayerRematchWaiting: Bool = false
+    var multiplayerVoteTally: [String: Int] = [:]
+
     // Multiplayer Voting State (Host Only)
-    @Published var multiplayerVotes: [String: [String]] = [:] // VoterName -> [VotedForName]
-    
+    var multiplayerVotes: [String: [String]] = [:]
+
     /// Signal an übergeordnete Views, bis ins Hauptmenü zurückzunavigieren
-    @Published var requestExitToMain: Bool = false
-    
+    var requestExitToMain: Bool = false
+
     /// Signal an übergeordnete Views, das laufende Spiel zu beenden und zum Setup zurückzukehren
-    @Published var requestExitToSetup: Bool = false
-    
+    var requestExitToSetup: Bool = false
+
     /// Signal, um alle offenen Sheets (z.B. Lobby) zu schließen (wichtig für Rejoin)
-    @Published var shouldDismissSheets: Bool = false
+    var shouldDismissSheets: Bool = false
     
     private let customCategoryStore = CustomCategoryStore.shared
     private var customCategories: [Category] = []

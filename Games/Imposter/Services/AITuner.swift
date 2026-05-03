@@ -6,12 +6,11 @@
 //
 
 import Foundation
-import Combine
 
 /// Liefert Gewichtungs-Multiplikatoren für die Spionauswahl.
 /// Nutzt deterministische Regeln; optional später durch On-Device-KI verfeinerbar.
-@MainActor
-final class AITuner: ObservableObject {
+@MainActor @Observable
+final class AITuner {
     static let shared = AITuner()
     
     private init() {}

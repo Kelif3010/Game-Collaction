@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ExpandableSpyOptionsSection: View {
-    @ObservedObject var gameSettings: GameSettings
+    @Bindable var gameSettings: GameSettings
     @Binding var isExpanded: Bool
     @Environment(\.colorScheme) var colorScheme
     

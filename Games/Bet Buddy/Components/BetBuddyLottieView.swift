@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct LottieView: View {
+struct BetBuddyLottieView: View {
     var filename: String
     var loopMode: LoopMode = .loop
     var isPlaying: Bool = true

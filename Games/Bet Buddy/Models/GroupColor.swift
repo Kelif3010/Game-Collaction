@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum GroupColor: String, CaseIterable, Identifiable {
+enum GroupColor: String, CaseIterable, Identifiable, Sendable {
     case blue
     case purple
     case green

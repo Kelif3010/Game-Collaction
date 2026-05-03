@@ -6,11 +6,10 @@
 //
 
 import Foundation
-import Combine
 
-@MainActor
-class SavedPlayersManager: ObservableObject {
-    @Published var savedPlayerNames: [String] = []
+@MainActor @Observable
+class SavedPlayersManager {
+    var savedPlayerNames: [String] = []
     
     private let store = UserDefaultsPlayerProfilesStore.shared
     

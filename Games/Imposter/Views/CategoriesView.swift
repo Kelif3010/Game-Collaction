@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CategoriesView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     @State private var showingAddCategory = false
     
@@ -58,7 +58,7 @@ struct CategoriesView: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(gameSettings.categories) { category in
-                                NavigationLink(destination: ImposterCategoryDetailView(category: category).environmentObject(gameSettings)) {
+                                NavigationLink(destination: ImposterCategoryDetailView(category: category).environment(gameSettings)) {
                                     CategoryRow(category: category)
                                 }
                                 .buttonStyle(.plain)
@@ -72,7 +72,7 @@ struct CategoriesView: View {
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingAddCategory) {
                 ImposterAddCategoryView()
-                    .environmentObject(gameSettings)
+                    .environment(gameSettings)
             }
         }
     }
@@ -122,7 +122,7 @@ private struct CategoryRow: View {
 
 // MARK: - Add Category View (Refactored)
 struct ImposterAddCategoryView: View {
-    @EnvironmentObject var gameSettings: GameSettings
+    @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     
     @State private var categoryName: String = ""
@@ -309,5 +309,5 @@ struct ImposterAddCategoryView: View {
 
 #Preview {
     CategoriesView()
-        .environmentObject(GameSettings())
+        .environment(GameSettings())
 }

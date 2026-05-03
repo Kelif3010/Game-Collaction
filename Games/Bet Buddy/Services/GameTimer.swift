@@ -1,12 +1,13 @@
 import Foundation
-import Combine
+import Observation
 
 @MainActor
-final class GameTimer: ObservableObject {
-    @Published private(set) var remaining: Int = 0
-    @Published private(set) var isPaused: Bool = false
+@Observable
+final class GameTimer {
+    private(set) var remaining: Int = 0
+    private(set) var isPaused: Bool = false
 
-    private var timer: Timer?
+    private var countdownTask: Task<Void, Never>?
     private var onTimeout: (() -> Void)?
 
     func start(seconds: Int, onTimeout: @escaping () -> Void) {
@@ -20,15 +21,13 @@ final class GameTimer: ObservableObject {
             return
         }
         
-        // Timer startet auf dem aktuellen RunLoop (Main), da wir im MainActor sind.
-        // Wir nutzen den Block-basierten Timer, der auf dem Main-Thread feuert, wenn er dort geplant wurde.
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            // Da wir wissen, dass dieser Timer auf dem MainThread läuft (weil hier gestartet),
-            // können wir MainActor.assumeIsolated nutzen oder Task.
-            // Sicherer für Swift 6 Concurrency ist ein Task.
-            Task { @MainActor [weak self] in
-                guard let self = self else { return }
+        countdownTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
                 self.tick()
+                guard self.remaining > 0 || self.onTimeout != nil else { return }
             }
         }
     }
@@ -54,8 +53,8 @@ final class GameTimer: ObservableObject {
     }
 
     func stop() {
-        timer?.invalidate()
-        timer = nil
+        countdownTask?.cancel()
+        countdownTask = nil
         onTimeout = nil
         isPaused = false
     }

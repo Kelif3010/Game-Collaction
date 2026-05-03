@@ -6,23 +6,25 @@
 //
 
 import Foundation
-import Combine
 import MultipeerConnectivity
+import AsyncAlgorithms
+import OrderedCollections
 
 @MainActor
-class GameLogic: ObservableObject {
-    @Published var gameSettings: GameSettings
-    nonisolated(unsafe) private var gameTimer: Timer?
+@Observable
+class GameLogic {
+    var gameSettings: GameSettings
+    private var gameTimerTask: Task<Void, Never>?
     private var lastTickUptime: TimeInterval?
     private var lastTimerSyncUptime: TimeInterval?
     private var preciseTimeRemaining: TimeInterval?
     private var scheduledStartTask: Task<Void, Never>?
     private var lastRemotePauseState: Bool?
-    private var multiplayerVotePreview: [String: String] = [:]
+    private var multiplayerVotePreview: OrderedDictionary<String, String> = [:]
     private var rematchOfferId: UUID?
-    private var rematchResponses: [String: Bool] = [:]
+    private var rematchResponses: OrderedDictionary<String, Bool> = [:]
     private var roleAssignmentId: UUID?
-    private var pendingRoleAcks: Set<String> = []
+    private var pendingRoleAcks: OrderedSet<String> = []
     private var playerIdByName: [String: UUID] = [:]
     private var mpcHandler: ImposterMPCHandler?
     private let timerTickInterval: TimeInterval = 0.25
@@ -38,9 +40,9 @@ class GameLogic: ObservableObject {
         self.gameSettings = gameSettings
     }
 
-    deinit {
-        gameTimer?.invalidate()
-        gameTimer = nil
+    isolated deinit {
+        gameTimerTask?.cancel()
+        gameTimerTask = nil
         scheduledStartTask?.cancel()
         scheduledStartTask = nil
     }
@@ -138,7 +140,7 @@ class GameLogic: ObservableObject {
 
         let assignmentId = UUID()
         roleAssignmentId = assignmentId
-        pendingRoleAcks = Set(allPeers.filter { $0 != mpc.myPeerId.displayName })
+        pendingRoleAcks = OrderedSet(allPeers.filter { $0 != mpc.myPeerId.displayName })
 
         // Indices for Imposters
         var indices = Array(0..<totalPlayers)
@@ -571,14 +573,19 @@ class GameLogic: ObservableObject {
     }
 
     private func startGameTimer() {
-        guard gameTimer == nil else { return }
+        guard gameTimerTask == nil else { return }
         lastTickUptime = ProcessInfo.processInfo.systemUptime
         if preciseTimeRemaining == nil {
             preciseTimeRemaining = Double(gameSettings.timeRemaining)
         }
         lastTimerSyncUptime = nil
-        gameTimer = Timer.scheduledTimer(withTimeInterval: timerTickInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.handleTimerTick() }
+        let interval = Duration.milliseconds(Int64((timerTickInterval * 1000).rounded()))
+        gameTimerTask = Task { @MainActor [weak self] in
+            for await _ in AsyncTimerSequence(interval: interval, clock: .continuous) {
+                guard let self else { break }
+                guard !Task.isCancelled else { break }
+                self.handleTimerTick()
+            }
         }
     }
 
@@ -688,8 +695,8 @@ class GameLogic: ObservableObject {
     }
 
     func stopGameTimer() {
-        gameTimer?.invalidate()
-        gameTimer = nil
+        gameTimerTask?.cancel()
+        gameTimerTask = nil
         lastTickUptime = nil
         lastTimerSyncUptime = nil
         lastClientPingUptime = nil
@@ -954,7 +961,7 @@ class GameLogic: ObservableObject {
         }
 
         lastTickUptime = now
-        if gameTimer == nil {
+        if gameTimerTask == nil {
             startGameTimer()
         }
     }
@@ -970,7 +977,7 @@ class GameLogic: ObservableObject {
         preciseTimeRemaining = Double(gameSettings.timeRemaining)
         gameSettings.isTimerPaused = true
 
-        if gameTimer == nil {
+        if gameTimerTask == nil {
             startGameTimer()
         }
 

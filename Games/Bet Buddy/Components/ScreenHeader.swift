@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct ScreenHeader: View {
     var title: String
@@ -13,7 +14,7 @@ struct ScreenHeader: View {
                 Button {
                     backAction?() ?? dismiss()
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemSymbol: .chevronLeft)
                         .font(.headline.bold())
                         .foregroundStyle(BetBuddyTheme.textChampagne)
                         .frame(width: 44, height: 44)

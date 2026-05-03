@@ -1,4 +1,5 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct HintItem: Identifiable, Hashable {
     let id = UUID()
@@ -31,7 +32,7 @@ struct HintChipsView: View {
                                 )
                                 .frame(width: 20, height: 20)
                             if item.isChecked {
-                                Image(systemName: "checkmark")
+                                Image(systemSymbol: .checkmark)
                                     .font(.system(size: 10, weight: .bold))
                                     .foregroundStyle(.white)
                             }

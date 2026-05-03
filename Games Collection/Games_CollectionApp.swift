@@ -32,17 +32,15 @@ struct Games_CollectionApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                ContentView()
-                
-                if !hasSeenOnboarding {
+            Group {
+                if hasSeenOnboarding {
+                    ContentView()
+                } else {
                     OnboardingView()
-                        .transition(.opacity)
-                        .zIndex(1)
                 }
             }
             .environment(\.locale, activeLocale)
-            .animation(.easeInOut, value: hasSeenOnboarding)
+            .animation(.smooth, value: hasSeenOnboarding)
             .onAppear {
                 lifecycleManager.onAppLaunch()
                 QuickActionManager.shared.updateQuickActions()

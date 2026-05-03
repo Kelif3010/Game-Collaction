@@ -23,7 +23,7 @@ struct FFMultiplayerSheet: View {
     @State private var pendingAction: PendingAction?
     @State private var showExitConfirmation = false
     @State private var currentDetent: PresentationDetent = .medium
-    @State private var previousOnEventReceived: ((String, Data?) -> Void)?
+    @State private var listenerTask: Task<Void, Never>?
     @FocusState private var codeFocused: Bool
 
     // Client: empfangene Konfiguration
@@ -104,9 +104,8 @@ struct FFMultiplayerSheet: View {
             }
         }
         .onDisappear {
-            if let prev = previousOnEventReceived {
-                mpc.onEventReceived = prev
-            }
+            listenerTask?.cancel()
+            listenerTask = nil
         }
         .onChange(of: isConnected) { _, connected in
             if connected && mode == .enterCode {
@@ -407,40 +406,43 @@ struct FFMultiplayerSheet: View {
     // MARK: - Logik
 
     private func setupMPCListener() {
-        previousOnEventReceived = mpc.onEventReceived
-        mpc.onEventReceived = { type, payload in
-            if type == MPCEventType.playerReadyUpdate, let data = payload {
-                if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
-                    withAnimation {
-                        if info.isReady { mpc.readyPlayers.insert(info.playerName) }
-                        else { mpc.readyPlayers.remove(info.playerName) }
-                    }
-                    if isHost { syncReadyState() }
-                }
-            } else if type == MPCEventType.lobbyStateSync, let data = payload {
-                if let list = try? JSONDecoder().decode([String].self, from: data) {
-                    withAnimation { mpc.readyPlayers = Set(list) }
-                }
-            } else if type == MPCEventType.ffGameConfig, let data = payload {
-                // Client: Spielkonfiguration empfangen
-                if let config = try? JSONDecoder().decode(FFGameConfigPayload.self, from: data) {
-                    receivedConfig = config
-                    // Falls GAME_START bereits empfangen
-                    if gameStartReceived { triggerClientGameStart(config: config) }
-                }
-            } else if type == MPCEventType.gameStart {
-                if isHost {
-                    previousOnEventReceived?(type, payload)
-                } else {
-                    gameStartReceived = true
-                    if let config = receivedConfig { triggerClientGameStart(config: config) }
-                    // Sonst warten auf FF_GAME_CONFIG (kommt kurz danach)
-                }
-            } else if type == MPCEventType.gameAbort {
-                exitLobby()
-            } else {
-                previousOnEventReceived?(type, payload)
+        listenerTask?.cancel()
+        listenerTask = Task { @MainActor in
+            for await event in mpc.events {
+                guard !Task.isCancelled else { break }
+                handleMPCEvent(event)
             }
+        }
+    }
+
+    private func handleMPCEvent(_ event: MPCEvent) {
+        if event.type == MPCEventType.playerReadyUpdate, let data = event.payload {
+            if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
+                withAnimation {
+                    if info.isReady { mpc.readyPlayers.insert(info.playerName) }
+                    else { mpc.readyPlayers.remove(info.playerName) }
+                }
+                if isHost { syncReadyState() }
+            }
+        } else if event.type == MPCEventType.lobbyStateSync, let data = event.payload {
+            if let list = try? JSONDecoder().decode([String].self, from: data) {
+                withAnimation { mpc.readyPlayers = Set(list) }
+            }
+        } else if event.type == MPCEventType.ffGameConfig, let data = event.payload {
+            // Client: Spielkonfiguration empfangen
+            if let config = try? JSONDecoder().decode(FFGameConfigPayload.self, from: data) {
+                receivedConfig = config
+                // Falls GAME_START bereits empfangen
+                if gameStartReceived { triggerClientGameStart(config: config) }
+            }
+        } else if event.type == MPCEventType.gameStart {
+            if !isHost {
+                gameStartReceived = true
+                if let config = receivedConfig { triggerClientGameStart(config: config) }
+                // Sonst warten auf FF_GAME_CONFIG (kommt kurz danach)
+            }
+        } else if event.type == MPCEventType.gameAbort {
+            exitLobby()
         }
     }
 

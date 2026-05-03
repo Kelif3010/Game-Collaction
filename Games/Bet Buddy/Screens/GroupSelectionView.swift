@@ -1,8 +1,9 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct GroupSelectionView: View {
-    @EnvironmentObject private var appModel: AppViewModel
-    @ObservedObject private var playerManager = GlobalPlayerManager.shared
+    @Environment(AppViewModel.self) private var appModel
+    private let playerManager = GlobalPlayerManager.shared
     var onContinue: () -> Void
 
     // BB-08: State für Crew-Import Sheet
@@ -71,7 +72,7 @@ struct GroupSelectionView: View {
                                         HapticsService.impact(.light)
                                         showCrewImport = true
                                     } label: {
-                                        Label("Crew", systemImage: "person.2.fill")
+                                        Label("Crew", systemSymbol: .person2Fill)
                                             .font(.caption.bold())
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                             .padding(.horizontal, 12)
@@ -93,7 +94,7 @@ struct GroupSelectionView: View {
 
                     if hasDuplicateNames {
                         HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
+                            Image(systemSymbol: .exclamationmarkTriangleFill)
                                 .font(.caption.bold())
                                 .foregroundStyle(BetBuddyTheme.accentGold)
                             Text("Zwei Gruppen haben denselben Namen")
@@ -197,7 +198,7 @@ private struct TeamSetupCard: View {
 
                 Spacer()
 
-                Image(systemName: "person.3.fill")
+                Image(systemSymbol: .person3Fill)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(group.color.primary)
             }
@@ -241,7 +242,7 @@ private struct PlayerNamesSection: View {
                         players.append("")
                         onChange(players)
                     } label: {
-                        Label("Hinzufügen", systemImage: "plus.circle.fill")
+                        Label("Hinzufügen", systemSymbol: .plusCircleFill)
                             .font(.caption.bold())
                             .foregroundStyle(group.color.accent)
                     }
@@ -294,7 +295,7 @@ private struct PlayerNamesSection: View {
                     players.remove(at: index)
                     onChange(players)
                 } label: {
-                    Image(systemName: "minus.circle.fill")
+                    Image(systemSymbol: .minusCircleFill)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.75))
                         .frame(width: 30, height: 30)
@@ -338,7 +339,7 @@ private struct CrewImportSheet: View {
             VStack(spacing: 0) {
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "xmark")
+                        Image(systemSymbol: .xmark)
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
@@ -378,10 +379,10 @@ private struct CrewImportSheet: View {
                                         .foregroundStyle(.white)
                                     Spacer()
                                     if isSelected {
-                                        Image(systemName: "checkmark.circle.fill")
+                                        Image(systemSymbol: .checkmarkCircleFill)
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                     } else {
-                                        Image(systemName: "circle")
+                                        Image(systemSymbol: .circle)
                                             .foregroundStyle(BetBuddyTheme.textSilver)
                                     }
                                 }

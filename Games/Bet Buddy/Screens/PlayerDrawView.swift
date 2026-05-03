@@ -1,11 +1,15 @@
 import SwiftUI
+import SFSafeSymbols
 
 struct PlayerDrawView: View {
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
     var onContinue: () -> Void
 
     @State private var spinCounters: [UUID: Int] = [:]
     @State private var lockedGroups: Set<UUID> = []
+    @State private var flippingGroups: Set<UUID> = []
+    @State private var coinFlipTriggers: [UUID: Int] = [:]
+    @State private var flipCompletionTasks: [UUID: Task<Void, Never>] = [:]
     @State private var showButton = false
     @State private var headerAppeared = false
 
@@ -39,11 +43,19 @@ struct PlayerDrawView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             appModel.randomizeStartingPlayers()
+            lockedGroups = []
+            flippingGroups = []
+            showButton = false
             spinCounters = Dictionary(uniqueKeysWithValues: appModel.activeGroups.map { ($0.id, 0) })
+            coinFlipTriggers = Dictionary(uniqueKeysWithValues: appModel.activeGroups.map { ($0.id, 0) })
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 headerAppeared = true
             }
             startSpinning()
+        }
+        .onDisappear {
+            flipCompletionTasks.values.forEach { $0.cancel() }
+            flipCompletionTasks.removeAll()
         }
     }
 
@@ -125,12 +137,24 @@ struct PlayerDrawView: View {
 
             // Lock-Icon wenn fertig
             if isLocked {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemSymbol: .checkmarkCircleFill)
                     .font(.system(size: 22))
                     .foregroundStyle(group.color.primary)
                     .transition(.scale.combined(with: .opacity))
+            } else if flippingGroups.contains(group.id) {
+                BetBuddyLottieView(
+                    filename: "3D coin flip",
+                    loopMode: .playOnce,
+                    isPlaying: true,
+                    contentMode: .scaleAspectFit,
+                    animationSpeed: 1.15,
+                    playTrigger: coinFlipTriggers[group.id, default: 0]
+                ) {
+                    finishCoinFlip(for: group.id)
+                }
+                .frame(width: 56, height: 56)
             } else {
-                Image(systemName: "shuffle")
+                Image(systemSymbol: .shuffle)
                     .font(.system(size: 18))
                     .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
             }
@@ -163,7 +187,7 @@ struct PlayerDrawView: View {
                 Text("LOS GEHT'S")
                     .font(.system(size: 18, weight: .black, design: .rounded))
                     .tracking(2)
-                Image(systemName: "arrow.right")
+                Image(systemSymbol: .arrowRight)
                     .font(.system(size: 16, weight: .bold))
             }
             .foregroundStyle(BetBuddyTheme.textOnLight)
@@ -208,21 +232,41 @@ struct PlayerDrawView: View {
                     spinCounters[group.id] = tick
                 }
 
-                // Einrasten
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                    _ = lockedGroups.insert(group.id)
-                }
-                HapticsService.impact(.medium)
-
-                // Button nach dem letzten Team zeigen
-                if index == groups.count - 1 {
-                    try? await Task.sleep(for: .milliseconds(500))
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                        showButton = true
-                    }
-                    HapticsService.impact(.light)
-                }
+                flippingGroups.insert(group.id)
+                coinFlipTriggers[group.id, default: 0] += 1
+                scheduleFlipFallback(for: group.id)
             }
+        }
+    }
+
+    private func finishCoinFlip(for groupID: UUID) {
+        guard flippingGroups.contains(groupID) else { return }
+        flippingGroups.remove(groupID)
+        flipCompletionTasks[groupID]?.cancel()
+        flipCompletionTasks[groupID] = nil
+
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            _ = lockedGroups.insert(groupID)
+        }
+        HapticsService.impact(.medium)
+
+        if lockedGroups.count == appModel.activeGroups.count {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    showButton = true
+                }
+                HapticsService.impact(.light)
+            }
+        }
+    }
+
+    private func scheduleFlipFallback(for groupID: UUID) {
+        flipCompletionTasks[groupID]?.cancel()
+        flipCompletionTasks[groupID] = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1400))
+            guard !Task.isCancelled else { return }
+            finishCoinFlip(for: groupID)
         }
     }
 }

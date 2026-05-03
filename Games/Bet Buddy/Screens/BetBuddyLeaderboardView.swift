@@ -1,9 +1,10 @@
 import SwiftUI
 import Foundation
+import SFSafeSymbols
 
 struct BetBuddyLeaderboardView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appModel: AppViewModel
+    @Environment(AppViewModel.self) private var appModel
     
     @State private var showResetStatsAlert = false
     
@@ -60,7 +61,7 @@ struct BetBuddyLeaderboardView: View {
                         Button {
                             showResetStatsAlert = true
                         } label: {
-                            Image(systemName: "trash")
+                            Image(systemSymbol: .trash)
                                 .foregroundStyle(.red)
                         }
                     }
@@ -121,7 +122,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("+\(win.value)"),
                             teamName: win.teamName,
                             color: .green,
-                            icon: "trophy.fill"
+                            icon: .trophyFill
                         )
                     }
                     
@@ -132,7 +133,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("\(most.value) ") + Text("Siege"),
                             teamName: most.teamName,
                             color: .yellow,
-                            icon: "crown.fill"
+                            icon: .crownFill
                         )
                     }
                     
@@ -144,7 +145,7 @@ struct BetBuddyLeaderboardView: View {
                             subLabel: "Restzeit auf der Uhr",
                             teamName: fast.teamName,
                             color: .cyan,
-                            icon: "bolt.fill"
+                            icon: .boltFill
                         )
                     }
                     
@@ -156,7 +157,7 @@ struct BetBuddyLeaderboardView: View {
                             subLabel: "in Folge gespielt",
                             teamName: streak.teamName,
                             color: .orange,
-                            icon: "flame.fill"
+                            icon: .flameFill
                         )
                     }
                     
@@ -167,7 +168,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("-\(loss.value)"),
                             teamName: loss.teamName,
                             color: .red,
-                            icon: "hand.thumbsdown.fill"
+                            icon: .handThumbsdownFill
                         )
                     }
                 }
@@ -184,7 +185,7 @@ private struct HighlightCard: View {
     var subLabel: String? = nil
     var teamName: String
     var color: Color
-    var icon: String
+    var icon: SFSymbol
 
     private var displayName: String {
         NSLocalizedString(teamName, comment: "")
@@ -193,7 +194,7 @@ private struct HighlightCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: icon)
+                Image(systemSymbol: icon)
                     .foregroundStyle(color)
                     .font(.headline)
                     .padding(8)

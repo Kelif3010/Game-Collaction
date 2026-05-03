@@ -6,19 +6,18 @@
 //
 
 import Foundation
-import Combine
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
 import AVFoundation
 
 /// KI-Voice-Service für Text-to-Speech und Audio-Features
-@MainActor
-class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+@MainActor @Observable
+class VoiceService: NSObject, AVSpeechSynthesizerDelegate {
     static let shared = VoiceService()
-    
-    @Published var isSpeaking = false
-    @Published var isEnabled = true
+
+    var isSpeaking = false
+    var isEnabled = true
     
     private let synthesizer = AVSpeechSynthesizer()
     private let aiService = AIService.shared
@@ -215,13 +214,12 @@ class VoiceService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
 
 // MARK: - Voice Settings
 
-class VoiceSettings: ObservableObject {
-    @Published var selectedVoice: AVSpeechSynthesisVoice?
-    @Published var speechRate: Float = 0.5
-    @Published var pitchMultiplier: Float = 1.0
-    @Published var volume: Float = 0.8
-    
-    init() {
-        // Standard-Einstellungen
-    }
+@Observable
+class VoiceSettings {
+    var selectedVoice: AVSpeechSynthesisVoice?
+    var speechRate: Float = 0.5
+    var pitchMultiplier: Float = 1.0
+    var volume: Float = 0.8
+
+    init() {}
 }
