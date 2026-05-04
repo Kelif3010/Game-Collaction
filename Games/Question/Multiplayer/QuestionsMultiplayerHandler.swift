@@ -170,8 +170,3 @@ final class QuestionsMultiplayerHandler {
         }
     }
 }
-
-private struct ReadyStatusPayload: Codable {
-    let playerName: String
-    let isReady: Bool
-}

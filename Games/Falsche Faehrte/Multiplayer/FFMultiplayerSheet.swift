@@ -7,7 +7,6 @@ import MultipeerConnectivity
 struct FFMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var mpc = MultipeerManager.shared
-    @AppStorage("myPlayerName") private var myPlayerName = ""
 
     // Callbacks vom Parent (FFSetupView)
     /// Wird aufgerufen wenn das Spiel startet (beide Seiten)
@@ -15,43 +14,14 @@ struct FFMultiplayerSheet: View {
     /// Host ruft das auf um die Spielkonfiguration zu generieren
     var getHostConfig: (_ lobbyPlayers: [String]) -> FFGameConfigPayload
 
-    @State private var mode: Mode = .menu
-    @State private var generatedCode = ""
-    @State private var inputCode = ""
-    @State private var showNamePrompt = false
-    @State private var pendingName = ""
-    @State private var pendingAction: PendingAction?
-    @State private var showExitConfirmation = false
-    @State private var currentDetent: PresentationDetent = .medium
-    @State private var listenerTask: Task<Void, Never>?
+    @State private var lobby = MultiplayerLobbyCoordinator()
     @FocusState private var codeFocused: Bool
 
     // Client: empfangene Konfiguration
     @State private var receivedConfig: FFGameConfigPayload? = nil
     @State private var gameStartReceived = false
 
-    enum Mode { case menu, enterCode, lobby }
-    private enum PendingAction { case host, join }
-
-    // MARK: - Computed
-
-    private var lobbyNames: [String] {
-        if mpc.lobbyPeers.count > 1 { return mpc.lobbyPeers }
-        var list = [mpc.myPeerId.displayName]
-        list.append(contentsOf: mpc.connectedPeers.map { $0.displayName })
-        return list.unique()
-    }
-
-    private var isHost: Bool { mpc.role == .host }
-    private var isConnected: Bool { !mpc.connectedPeers.isEmpty || isHost }
-    private var needsNamePrompt: Bool { myPlayerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-
-    private var displayRoomCode: String {
-        if isHost { return generatedCode.isEmpty ? (mpc.activeRoomCode ?? "") : generatedCode }
-        return inputCode.isEmpty ? (mpc.activeRoomCode ?? "") : inputCode
-    }
-
-    private var canStartGame: Bool { lobbyNames.count >= 2 }
+    private var canStartGame: Bool { lobby.lobbyNames.count >= 2 }
 
     // MARK: - Body
 
@@ -63,9 +33,9 @@ struct FFMultiplayerSheet: View {
                 headerView
                 Spacer()
 
-                switch mode {
+                switch lobby.mode {
                 case .menu:
-                    if isConnected { lobbyView } else { menuView }
+                    if lobby.isConnected { lobbyView } else { menuView }
                 case .enterCode:
                     enterCodeView
                 case .lobby:
@@ -75,20 +45,20 @@ struct FFMultiplayerSheet: View {
                 Spacer()
             }
         }
-        .presentationDetents([.medium, .large], selection: $currentDetent)
+        .presentationDetents([.medium, .large], selection: $lobby.currentDetent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
-        .interactiveDismissDisabled(!isHost && mode == .lobby)
-        .alert("Wie heißt du?", isPresented: $showNamePrompt) {
-            TextField("Dein Name", text: $pendingName)
+        .interactiveDismissDisabled(!lobby.isHost && lobby.mode == .lobby)
+        .alert("Wie heißt du?", isPresented: $lobby.showNamePrompt) {
+            TextField("Dein Name", text: $lobby.pendingName)
                 .submitLabel(.done)
-                .onSubmit { confirmNameAndContinue() }
-            Button("OK") { confirmNameAndContinue() }
-            Button("Abbrechen", role: .cancel) { pendingAction = nil }
+                .onSubmit { lobby.confirmNameAndContinue() }
+            Button("OK") { lobby.confirmNameAndContinue() }
+            Button("Abbrechen", role: .cancel) { lobby.showNamePrompt = false }
         } message: {
             Text("Bitte gib deinen Namen ein, damit die anderen dich sehen.")
         }
-        .confirmationDialog("Lobby verlassen?", isPresented: $showExitConfirmation, titleVisibility: .visible) {
+        .confirmationDialog("Lobby verlassen?", isPresented: $lobby.showExitConfirmation, titleVisibility: .visible) {
             Button("Abbrechen", role: .cancel) { }
             Button("Verlassen", role: .destructive) { exitLobby() }
         } message: {
@@ -96,27 +66,16 @@ struct FFMultiplayerSheet: View {
         }
         .onAppear {
             setupMPCListener()
-            if isConnected && mode == .menu {
-                if let code = mpc.activeRoomCode {
-                    if isHost { generatedCode = code } else { inputCode = code }
-                }
-                withAnimation { mode = .lobby; currentDetent = .large }
-            }
+            lobby.handleAppear()
         }
         .onDisappear {
-            listenerTask?.cancel()
-            listenerTask = nil
+            lobby.stopListening()
         }
-        .onChange(of: isConnected) { _, connected in
-            if connected && mode == .enterCode {
-                withAnimation { mode = .lobby; currentDetent = .large }
-            }
+        .onChange(of: lobby.isConnected) { _, connected in
+            lobby.handleConnectionChange(connected: connected)
         }
         .onChange(of: mpc.lobbyPeers) { _, newPeers in
-            let valid = Set(newPeers)
-            let filtered = mpc.readyPlayers.intersection(valid)
-            if filtered != mpc.readyPlayers { mpc.readyPlayers = filtered }
-            if isHost { mpc.sendToAll(event: MPCEventType.lobbyStateSync, object: Array(filtered)) }
+            lobby.handleLobbyPeersChange(newPeers)
         }
     }
 
@@ -125,9 +84,9 @@ struct FFMultiplayerSheet: View {
     private var headerView: some View {
         HStack {
             Button {
-                if mode == .menu { dismiss() } else { showExitConfirmation = true }
+                lobby.handleCloseTap(dismiss: dismiss)
             } label: {
-                Image(systemName: mode == .menu ? "xmark" : "chevron.left")
+                Image(systemName: lobby.mode == .menu ? "xmark" : "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
@@ -136,7 +95,7 @@ struct FFMultiplayerSheet: View {
 
             Spacer()
 
-            Text(headerTitle)
+            Text(lobby.headerTitle)
                 .font(.headline)
                 .foregroundStyle(.white)
 
@@ -147,15 +106,6 @@ struct FFMultiplayerSheet: View {
         .padding(.horizontal)
         .padding(.top, 20)
         .padding(.bottom, 10)
-    }
-
-    private var headerTitle: String {
-        if mode == .menu && isConnected { return isHost ? "Lobby (Host)" : "Lobby (Gast)" }
-        switch mode {
-        case .menu:      return "Multiplayer"
-        case .enterCode: return "Beitreten"
-        case .lobby:     return isHost ? "Lobby (Host)" : "Lobby (Gast)"
-        }
     }
 
     // MARK: - Menu View
@@ -182,7 +132,7 @@ struct FFMultiplayerSheet: View {
             )
             .padding(.horizontal)
 
-            Button { handleHostTap() } label: {
+            Button { lobby.handleHostTap() } label: {
                 HStack {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                     Text("Spiel hosten")
@@ -195,7 +145,7 @@ struct FFMultiplayerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             }
 
-            Button { handleJoinTap() } label: {
+            Button { lobby.handleJoinTap() } label: {
                 HStack {
                     Image(systemName: "person.3.fill")
                     Text("Spiel beitreten")
@@ -211,8 +161,7 @@ struct FFMultiplayerSheet: View {
 
             if let lastCode = mpc.lastJoinedRoomCode {
                 Button {
-                    inputCode = lastCode
-                    joinGame()
+                    lobby.joinLastSession()
                 } label: {
                     HStack {
                         Image(systemName: "arrow.counterclockwise")
@@ -246,7 +195,7 @@ struct FFMultiplayerSheet: View {
                 .font(.body)
                 .foregroundStyle(FFStyle.textMuted)
 
-            TextField("0000", text: $inputCode)
+            TextField("0000", text: $lobby.inputCode)
                 .font(.system(size: 50, weight: .bold, design: .monospaced))
                 .multilineTextAlignment(.center)
                 .keyboardType(.numberPad)
@@ -260,25 +209,25 @@ struct FFMultiplayerSheet: View {
                 .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 .overlay(RoundedRectangle(cornerRadius: 20).stroke(FFStyle.accentViolet.opacity(0.4), lineWidth: 1.5))
-                .onChange(of: inputCode) { _, v in
-                    if v.count > 4 { inputCode = String(v.prefix(4)) }
+                .onChange(of: lobby.inputCode) { _, v in
+                    if v.count > 4 { lobby.inputCode = String(v.prefix(4)) }
                 }
                 .frame(maxWidth: 200)
 
-            Button { joinGame() } label: {
+            Button { lobby.joinGame() } label: {
                 if mpc.connectedPeers.isEmpty {
                     Text("Verbinden")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(inputCode.count == 4 ? FFStyle.accentViolet : Color.white.opacity(0.12))
+                        .background(lobby.inputCode.count == 4 ? FFStyle.accentViolet : Color.white.opacity(0.12))
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 } else {
                     ProgressView().tint(.white)
                 }
             }
-            .disabled(inputCode.count != 4)
+            .disabled(lobby.inputCode.count != 4)
             .padding(.horizontal, 40)
         }
     }
@@ -295,7 +244,7 @@ struct FFMultiplayerSheet: View {
                     .foregroundStyle(FFStyle.textMuted)
                     .tracking(2)
 
-                Text(displayRoomCode)
+                Text(lobby.displayRoomCode)
                     .font(.system(size: 60, weight: .heavy, design: .monospaced))
                     .foregroundStyle(
                         LinearGradient(colors: [FFStyle.accentViolet, FFStyle.accentIndigo], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -309,11 +258,11 @@ struct FFMultiplayerSheet: View {
             // Spieler-Liste
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("LOBBY (\(lobbyNames.count))")
+                    Text("LOBBY (\(lobby.lobbyNames.count))")
                         .font(.caption.bold())
                         .foregroundStyle(FFStyle.textMuted)
                     Spacer()
-                    if isHost {
+                    if lobby.isHost {
                         Label("Du bist Host", systemImage: "crown.fill")
                             .font(.caption)
                             .foregroundStyle(FFStyle.accentGold)
@@ -323,7 +272,7 @@ struct FFMultiplayerSheet: View {
 
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 10)], spacing: 10) {
-                        ForEach(lobbyNames, id: \.self) { player in
+                        ForEach(lobby.lobbyNames, id: \.self) { player in
                             FFLobbyPlayerCard(
                                 name: player,
                                 isMe: player == mpc.myPeerId.displayName,
@@ -342,11 +291,11 @@ struct FFMultiplayerSheet: View {
             // Aktions-Bereich
             VStack(spacing: 12) {
                 // Ready-Toggle für Gäste
-                if !isHost {
+                if !lobby.isHost {
                     let amIReady = mpc.readyPlayers.contains(mpc.myPeerId.displayName)
                     Button {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        toggleReadyState(isReady: !amIReady)
+                        lobby.toggleReadyState(isReady: !amIReady)
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: amIReady ? "checkmark.circle.fill" : "circle")
@@ -369,9 +318,9 @@ struct FFMultiplayerSheet: View {
                 }
 
                 // Spiel-Starten (nur Host)
-                if isHost {
+                if lobby.isHost {
                     let readyCount = mpc.readyPlayers.count
-                    let total = lobbyNames.count
+                    let total = lobby.lobbyNames.count
 
                     Button { startGame() } label: {
                         HStack(spacing: 10) {
@@ -406,44 +355,31 @@ struct FFMultiplayerSheet: View {
     // MARK: - Logik
 
     private func setupMPCListener() {
-        listenerTask?.cancel()
-        listenerTask = Task { @MainActor in
-            for await event in mpc.events {
-                guard !Task.isCancelled else { break }
-                handleMPCEvent(event)
-            }
-        }
+        lobby.startListening(customHandler: handleMPCEvent)
     }
 
-    private func handleMPCEvent(_ event: MPCEvent) {
-        if event.type == MPCEventType.playerReadyUpdate, let data = event.payload {
-            if let info = try? JSONDecoder().decode(ReadyStatusPayload.self, from: data) {
-                withAnimation {
-                    if info.isReady { mpc.readyPlayers.insert(info.playerName) }
-                    else { mpc.readyPlayers.remove(info.playerName) }
-                }
-                if isHost { syncReadyState() }
-            }
-        } else if event.type == MPCEventType.lobbyStateSync, let data = event.payload {
-            if let list = try? JSONDecoder().decode([String].self, from: data) {
-                withAnimation { mpc.readyPlayers = Set(list) }
-            }
-        } else if event.type == MPCEventType.ffGameConfig, let data = event.payload {
+    private func handleMPCEvent(_ event: MPCEvent) -> Bool {
+        if event.type == MPCEventType.ffGameConfig, let data = event.payload {
             // Client: Spielkonfiguration empfangen
             if let config = try? JSONDecoder().decode(FFGameConfigPayload.self, from: data) {
                 receivedConfig = config
                 // Falls GAME_START bereits empfangen
                 if gameStartReceived { triggerClientGameStart(config: config) }
             }
+            return true
         } else if event.type == MPCEventType.gameStart {
-            if !isHost {
+            if !lobby.isHost {
                 gameStartReceived = true
                 if let config = receivedConfig { triggerClientGameStart(config: config) }
                 // Sonst warten auf FF_GAME_CONFIG (kommt kurz danach)
             }
+            return true
         } else if event.type == MPCEventType.gameAbort {
             exitLobby()
+            return true
         }
+
+        return false
     }
 
     private func triggerClientGameStart(config: FFGameConfigPayload) {
@@ -455,7 +391,7 @@ struct FFMultiplayerSheet: View {
         guard canStartGame else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
 
-        let config = getHostConfig(lobbyNames)
+        let config = getHostConfig(lobby.lobbyNames)
 
         // Config an Clients senden (vor GAME_START, damit Clients vorbereitet sind)
         mpc.sendToAll(event: MPCEventType.ffGameConfig, object: config)
@@ -468,80 +404,10 @@ struct FFMultiplayerSheet: View {
         dismiss()
     }
 
-    private func toggleReadyState(isReady: Bool) {
-        let name = mpc.myPeerId.displayName
-        if isReady { mpc.readyPlayers.insert(name) }
-        else { mpc.readyPlayers.remove(name) }
-
-        let payload = ReadyStatusPayload(playerName: name, isReady: isReady)
-        mpc.sendToAll(event: MPCEventType.playerReadyUpdate, object: payload)
-    }
-
-    private func syncReadyState() {
-        let valid = Set(lobbyNames)
-        let filtered = mpc.readyPlayers.intersection(valid)
-        if filtered != mpc.readyPlayers { mpc.readyPlayers = filtered }
-        mpc.sendToAll(event: MPCEventType.lobbyStateSync, object: Array(filtered))
-    }
-
-    private func startHosting() {
-        generatedCode = String(Int.random(in: 1000...9999))
-        mode = .lobby
-        currentDetent = .large
-        mpc.readyPlayers.removeAll()
-        mpc.startHosting(roomCode: generatedCode)
-    }
-
-    private func joinGame() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        mpc.joinSession(roomCode: inputCode)
-    }
-
     private func exitLobby() {
-        mpc.stop()
-        mode = .menu
-        currentDetent = .medium
-        generatedCode = ""
-        inputCode = ""
-        mpc.readyPlayers.removeAll()
+        lobby.exitLobby()
         receivedConfig = nil
         gameStartReceived = false
-    }
-
-    private func handleHostTap() {
-        if needsNamePrompt { requestName(for: .host); return }
-        startHosting()
-    }
-
-    private func handleJoinTap() {
-        if needsNamePrompt { requestName(for: .join); return }
-        mode = .enterCode
-    }
-
-    private func requestName(for action: PendingAction) {
-        pendingAction = action
-        pendingName = ""
-        showNamePrompt = true
-    }
-
-    private func confirmNameAndContinue() {
-        let trimmed = pendingName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        myPlayerName = trimmed
-        mpc.updatePeerName(name: trimmed)
-        showNamePrompt = false
-        let action = pendingAction
-        pendingAction = nil
-        switch action {
-        case .host:  startHosting()
-        case .join:  mode = .enterCode
-        case .none:  break
-        }
-    }
-
-    private struct ReadyStatusPayload: Codable {
-        let playerName: String
-        let isReady: Bool
     }
 }
 

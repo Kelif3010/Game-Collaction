@@ -1,14 +1,7 @@
-//
-//  QuestionsMultiplayerSheet.swift
-//  Games Collection
-//
-//  Created by Gemini on 17.01.2026.
-//
-
 import SwiftUI
 import MultipeerConnectivity
 
-struct QuestionsMultiplayerSheet: View {
+struct ImposterMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var mpc = MultipeerManager.shared
     @State private var lobby = MultiplayerLobbyCoordinator()
@@ -17,9 +10,10 @@ struct QuestionsMultiplayerSheet: View {
     
     var body: some View {
         ZStack {
-            QuestionsStyle.backgroundGradient.ignoresSafeArea()
+            ImposterStyle.backgroundGradient.ignoresSafeArea()
             
             VStack(spacing: 0) {
+                // Header
                 headerView
                 
                 Spacer()
@@ -68,7 +62,10 @@ struct QuestionsMultiplayerSheet: View {
             Text("Die Verbindung wird getrennt.")
         }
         .onAppear {
-            lobby.startListening()
+            lobby.startListening(
+                dismissEvents: [MPCEventType.imposterRevealStart, MPCEventType.gameStart],
+                onDismissEvent: { dismiss() }
+            )
             lobby.handleAppear()
         }
         .onDisappear {
@@ -104,6 +101,7 @@ struct QuestionsMultiplayerSheet: View {
             
             Spacer()
             
+            // Placeholder for symmetry
             Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal)
@@ -113,7 +111,7 @@ struct QuestionsMultiplayerSheet: View {
     
     @ViewBuilder
     private var lobbyView: some View {
-        QuestionsLobbyView(
+        UnifiedLobbyView(
             roomCode: lobby.displayRoomCode,
             isHost: lobby.isHost,
             players: lobby.lobbyNames,
@@ -166,6 +164,7 @@ struct QuestionsMultiplayerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             
+            // NEU: Rejoin Button
             if let lastCode = mpc.lastJoinedRoomCode {
                 Button {
                     lobby.joinLastSession()
@@ -238,8 +237,9 @@ struct QuestionsMultiplayerSheet: View {
     
 }
 
-// MARK: - Questions Lobby View
-private struct QuestionsLobbyView: View {
+// MARK: - Unified Lobby View
+// Diese View ist nun das Herzstück für Host UND Gast
+private struct UnifiedLobbyView: View {
     let roomCode: String
     let isHost: Bool
     let players: [String]
@@ -248,14 +248,11 @@ private struct QuestionsLobbyView: View {
     let myPlayerName: String
     let onOpenSettings: () -> Void
     let onToggleReady: (Bool) -> Void
-    @ObservedObject private var mpc = MultipeerManager.shared
-
-    private var hostActivityText: String {
-        mpc.hostActivity.isEmpty ? "wartet..." : mpc.hostActivity
-    }
     
     var body: some View {
         VStack(spacing: 24) {
+            
+            // 1. Raum Code (Prominent)
             VStack(spacing: 8) {
                 Text("RAUM-CODE")
                     .font(.caption.bold())
@@ -265,14 +262,17 @@ private struct QuestionsLobbyView: View {
                 Text(roomCode)
                     .font(.system(size: 60, weight: .heavy, design: .monospaced))
                     .foregroundStyle(
-                        LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
-                    .shadow(color: .red.opacity(0.5), radius: 10)
+                    .shadow(color: .orange.opacity(0.5), radius: 10, x: 0, y: 0)
             }
             .padding(.vertical, 10)
             
-            Divider().background(Color.white.opacity(0.2)).padding(.horizontal, 40)
+            Divider()
+                .background(Color.white.opacity(0.2))
+                .padding(.horizontal, 40)
             
+            // 2. Spieler Liste
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text("LOBBY (\(players.count))")
@@ -280,7 +280,9 @@ private struct QuestionsLobbyView: View {
                         .foregroundStyle(.white.opacity(0.6))
                     Spacer()
                     if isHost {
-                        Label("Host", systemImage: "crown.fill").font(.caption).foregroundStyle(.yellow)
+                        Label("Du bist Host", systemImage: "crown.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
                     }
                 }
                 .padding(.horizontal)
@@ -288,7 +290,7 @@ private struct QuestionsLobbyView: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         ForEach(players, id: \.self) { player in
-                            QuestionsLobbyPlayerCard(
+                            LobbyPlayerCard(
                                 name: player,
                                 isMe: player == myPlayerName,
                                 isReady: readyPlayers.contains(player),
@@ -298,45 +300,45 @@ private struct QuestionsLobbyView: View {
                     }
                     .padding(.horizontal)
                 }
-                
-                if !isHost {
-                    Text("Host: \(hostActivityText)")
-                        .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Capsule())
-                }
             }
             
             Spacer()
             
+            // 3. Action Area
             VStack(spacing: 12) {
-                let amIReady = readyPlayers.contains(myPlayerName)
-                
-                Button {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    onToggleReady(!amIReady)
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: amIReady ? "checkmark.circle.fill" : "circle")
-                        Text(amIReady ? "Bereit!" : "Ich bin bereit")
-                    }
-                    .font(.headline.bold())
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(amIReady ? Color.green : Color.white.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                if !disconnectedPlayers.isEmpty {
+                    Text("Verbindung getrennt… \(disconnectedPlayers.count) Spieler hat 30 Sekunden zum Wiederverbinden.")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
                 }
-                
                 if isHost {
+                    let amIReady = readyPlayers.contains(myPlayerName)
+                    
+                    Button {
+                        HapticsService.impact(.medium)
+                        onToggleReady(!amIReady)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: amIReady ? "checkmark.circle.fill" : "circle")
+                            Text(amIReady ? "Bereit!" : "Ich bin bereit")
+                        }
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            amIReady ? Color.green : Color.white.opacity(0.15)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .animation(.easeInOut, value: amIReady)
+                    }
+                    
                     Button(action: onOpenSettings) {
                         HStack(spacing: 10) {
                             Image(systemName: "slider.horizontal.3")
-                            Text("Einstellungen")
+                            Text("Spieleinstellungen")
                         }
                         .font(.headline.bold())
                         .foregroundStyle(.white.opacity(0.9))
@@ -345,11 +347,48 @@ private struct QuestionsLobbyView: View {
                         .background(Color.white.opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                     }
+                    
+                    Text("\(readyPlayers.count) von \(players.count) bereit")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                } else {
+                    // Gast Ansicht
+                    let amIReady = readyPlayers.contains(myPlayerName)
+                    let hostActivity = MultipeerManager.shared.hostActivity
+                    
+                    Button {
+                        HapticsService.impact(.medium)
+                        onToggleReady(!amIReady)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: amIReady ? "checkmark.circle.fill" : "circle")
+                            Text(amIReady ? "Bereit" : "Ich bin bereit")
+                        }
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            amIReady ? Color.green : Color.white.opacity(0.15)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .animation(.easeInOut, value: amIReady)
+                    }
+                    
+                    if amIReady {
+                        Text("Warte auf Host...")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    
+                    if !hostActivity.isEmpty {
+                        Text(hostActivity)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 2)
+                    }
                 }
-                
-                Text("\(readyPlayers.count) von \(players.count) bereit")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 20)
@@ -357,7 +396,7 @@ private struct QuestionsLobbyView: View {
     }
 }
 
-private struct QuestionsLobbyPlayerCard: View {
+private struct LobbyPlayerCard: View {
     let name: String
     let isMe: Bool
     let isReady: Bool
@@ -379,12 +418,25 @@ private struct QuestionsLobbyPlayerCard: View {
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                     .lineLimit(1)
+                
+                if isMe {
+                    Text("(Du)")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
             .padding(12)
             .frame(maxWidth: .infinity)
             .background(Color.black.opacity(0.2))
             .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isMe ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)
+            )
             
+            // Status Icon (Ecke rechts oben)
+            // Nur anzeigen, wenn Spieler NICHT der Host ist (optional), 
+            // oder einfach immer Status anzeigen (besser für Klarheit)
             let statusIcon = isDisconnected ? "wifi.slash" : (isReady ? "checkmark.circle.fill" : "xmark.circle.fill")
             let statusColor: Color = isDisconnected ? .orange : (isReady ? .green : .red.opacity(0.5))
             Image(systemName: statusIcon)
@@ -392,6 +444,7 @@ private struct QuestionsLobbyPlayerCard: View {
                 .background(Circle().fill(.white).padding(2))
                 .clipShape(Circle())
                 .offset(x: 5, y: -5)
+                .shadow(radius: 2)
         }
         .padding(4)
         .opacity(isDisconnected ? 0.6 : 1.0)

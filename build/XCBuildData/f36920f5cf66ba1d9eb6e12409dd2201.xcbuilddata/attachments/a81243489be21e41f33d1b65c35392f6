@@ -1,4 +1,0 @@
-module TrailingElementsModule {
-header "TrailingElementsModule-Swift.h"
-export *
-}

@@ -1,4 +1,0 @@
-module BasicContainers {
-header "BasicContainers-Swift.h"
-export *
-}

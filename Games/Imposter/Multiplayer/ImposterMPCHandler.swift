@@ -159,7 +159,7 @@ final class ImposterMPCHandler {
 
         case MPCEventType.playerReadyUpdate:
             guard let d = event.payload,
-                  let info = try? decoder.decode(ImposterReadyStatusPayload.self, from: d) else { return }
+                  let info = try? decoder.decode(ReadyStatusPayload.self, from: d) else { return }
             if info.isReady {
                 mpc.readyPlayers.insert(info.playerName)
             } else {
@@ -342,10 +342,4 @@ final class ImposterMPCHandler {
             break
         }
     }
-}
-
-// Lokales Payload-Struct für Ready-Status (nur intern)
-private struct ImposterReadyStatusPayload: Codable {
-    let playerName: String
-    let isReady: Bool
 }
