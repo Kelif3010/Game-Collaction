@@ -43,3 +43,14 @@ struct PrimaryButton: View {
         .disabled(isDisabled)
     }
 }
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 20) {
+            PrimaryButton(title: "Start Game", action: {})
+            PrimaryButton(title: "Disabled", action: {}, isDisabled: true)
+        }
+        .padding()
+    }
+}

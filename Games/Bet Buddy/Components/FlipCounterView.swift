@@ -95,3 +95,13 @@ struct CasinoChipDigit: View {
         .shadow(color: BetBuddyTheme.accentGold.opacity(0.15), radius: 8, y: 4)
     }
 }
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 20) {
+            FlipCounterView(value: 42, color: .green)
+            FlipCounterView(value: 123, color: .orange)
+        }
+    }
+}

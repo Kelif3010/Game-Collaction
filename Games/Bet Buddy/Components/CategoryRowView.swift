@@ -49,7 +49,7 @@ struct CategoryRowView: View {
                     Circle()
                         .fill(Color.white.opacity(0.1))
                         .frame(width: 28, height: 28)
-                    Image(systemSymbol: .lockFill)
+                    Image(systemName: "lock.fill")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(BetBuddyTheme.textSilver)
                 }
@@ -65,7 +65,7 @@ struct CategoryRowView: View {
                         )
                         .frame(width: 28, height: 28)
                     if isSelected {
-                        Image(systemSymbol: .checkmark)
+                        Image(systemName: "checkmark")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white)
                     }
@@ -90,5 +90,21 @@ struct CategoryRowView: View {
             color: isSelected ? category.accent.opacity(0.15) : Color.clear,
             radius: isSelected ? 10 : 0
         )
+    }
+}
+
+#Preview("Selected") {
+    ZStack {
+        BetBuddyBackgroundView()
+        CategoryRowView(category: .classic, isSelected: true)
+            .padding()
+    }
+}
+
+#Preview("Unselected") {
+    ZStack {
+        BetBuddyBackgroundView()
+        CategoryRowView(category: .party, isSelected: false)
+            .padding()
     }
 }

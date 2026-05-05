@@ -6,7 +6,7 @@ import SwiftUI
 struct FalscheFaehrteWrapper: View {
     var partyContext: PartyGameLaunchContext? = nil
 
-    @StateObject private var viewModel = FFViewModel()
+    @State private var viewModel = FFViewModel()
 
     var body: some View {
         ZStack {
@@ -31,7 +31,7 @@ struct FalscheFaehrteWrapper: View {
             }
             .transition(.opacity.combined(with: .scale(scale: 0.97)))
         }
-        .environmentObject(viewModel)
+        .environment(viewModel)
         .animation(.easeInOut(duration: 0.3), value: viewModel.gamePhase)
         .preferredColorScheme(.dark)
         .onAppear {

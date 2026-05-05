@@ -1,7 +1,6 @@
 import Foundation
 @preconcurrency import MultipeerConnectivity
 import SwiftUI
-import Combine // Benötigt für @Published / ObservableObject
 
 // Swift 6: Wrapper für non-Sendable ObjC-Closures (z.B. MultipeerConnectivity invitation handler)
 private final class UncheckedSendable<T>: @unchecked Sendable {
@@ -43,35 +42,36 @@ enum MPCRole {
 }
 
 // MARK: - Manager
+@Observable
 @MainActor
-class MultipeerManager: NSObject, ObservableObject {
+class MultipeerManager: NSObject {
     static let shared = MultipeerManager()
-    
+
     // Konfiguration
     private let serviceType = "gc-party" // Max 15 Zeichen, keine Sonderzeichen
-    
+
     let playerId: UUID
-    @Published var myPeerId: MCPeerID
-    @Published var connectedPeers: [MCPeerID] = []
-    @Published var role: MPCRole = .unknown
-    @Published var receivedMessages: [MPCMessage] = [] // Für Debugging/Log
-    @Published var lastError: String? // Fehleranzeige für UI
-    
+    var myPeerId: MCPeerID
+    var connectedPeers: [MCPeerID] = []
+    var role: MPCRole = .unknown
+    var receivedMessages: [MPCMessage] = [] // Für Debugging/Log
+    var lastError: String? // Fehleranzeige für UI
+
     // NEU: Liste aller Spieler in der Lobby (vom Host empfangen)
-    @Published var lobbyPeers: [String] = []
-    @Published var readyPlayers: Set<String> = []
-    @Published var activeRoomCode: String? = nil
-    @Published var hostActivity: String = ""
-    @Published var disconnectedPeers: Set<String> = []
+    var lobbyPeers: [String] = []
+    var readyPlayers: Set<String> = []
+    var activeRoomCode: String? = nil
+    var hostActivity: String = ""
+    var disconnectedPeers: Set<String> = []
 
     // Explizit gespeicherter Host-Name (SVC-06 Fix: nicht mehr Konvention "erster in Array")
-    @Published private(set) var hostPeerName: String? = nil
+    private(set) var hostPeerName: String? = nil
     // Host-Disconnect Alert für Clients (SVC-03 / UX-18 Fix)
-    @Published var hostDidDisconnect: Bool = false
+    var hostDidDisconnect: Bool = false
 
     // NEU: Für UI-Benachrichtigungen
-    @Published var lastDisconnectedPlayerName: String? = nil
-    @Published var lastReconnectedPlayerName: String? = nil
+    var lastDisconnectedPlayerName: String? = nil
+    var lastReconnectedPlayerName: String? = nil
     
     // MC Objekte
     private var session: MCSession?

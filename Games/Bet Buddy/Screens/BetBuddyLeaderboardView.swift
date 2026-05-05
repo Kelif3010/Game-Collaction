@@ -61,7 +61,7 @@ struct BetBuddyLeaderboardView: View {
                         Button {
                             showResetStatsAlert = true
                         } label: {
-                            Image(systemSymbol: .trash)
+                            Image(systemName: "trash")
                                 .foregroundStyle(.red)
                         }
                     }
@@ -122,7 +122,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("+\(win.value)"),
                             teamName: win.teamName,
                             color: .green,
-                            icon: .trophyFill
+                            icon: "trophy.fill"
                         )
                     }
                     
@@ -133,7 +133,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("\(most.value) ") + Text("Siege"),
                             teamName: most.teamName,
                             color: .yellow,
-                            icon: .crownFill
+                            icon: "crown.fill"
                         )
                     }
                     
@@ -145,7 +145,7 @@ struct BetBuddyLeaderboardView: View {
                             subLabel: "Restzeit auf der Uhr",
                             teamName: fast.teamName,
                             color: .cyan,
-                            icon: .boltFill
+                            icon: "bolt.fill"
                         )
                     }
                     
@@ -157,7 +157,7 @@ struct BetBuddyLeaderboardView: View {
                             subLabel: "in Folge gespielt",
                             teamName: streak.teamName,
                             color: .orange,
-                            icon: .flameFill
+                            icon: "flame.fill"
                         )
                     }
                     
@@ -168,7 +168,7 @@ struct BetBuddyLeaderboardView: View {
                             value: Text("-\(loss.value)"),
                             teamName: loss.teamName,
                             color: .red,
-                            icon: .handThumbsdownFill
+                            icon: "hand.thumbsdown.fill"
                         )
                     }
                 }
@@ -185,7 +185,7 @@ private struct HighlightCard: View {
     var subLabel: String? = nil
     var teamName: String
     var color: Color
-    var icon: SFSymbol
+    var icon: String
 
     private var displayName: String {
         NSLocalizedString(teamName, comment: "")
@@ -194,7 +194,7 @@ private struct HighlightCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemSymbol: icon)
+                Image(systemName: icon)
                     .foregroundStyle(color)
                     .font(.headline)
                     .padding(8)
@@ -238,14 +238,15 @@ private struct HighlightCard: View {
         }
         .padding(14)
         .frame(width: 155, height: 140)
-        .background(
-            LinearGradient(
-                colors: [Color.white.opacity(0.08), Color.white.opacity(0.03)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .background {
+            if #available(iOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 20)
+                    .glassEffect(.regular.tint(color.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
+            } else {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.08))
+            }
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
@@ -266,6 +267,8 @@ private struct LeaderboardRow: View {
     
     var body: some View {
         let displayName = NSLocalizedString(entry.teamName, comment: "")
+        let color = Color(hex: entry.colorHex) ?? .gray
+
         HStack(spacing: 16) {
             Text("\(index + 1).")
                 .font(.title3.weight(.bold))
@@ -274,7 +277,7 @@ private struct LeaderboardRow: View {
 
             // Farbe aus Hex string wiederherstellen (einfacher Fall)
             Circle()
-                .fill(Color(hex: entry.colorHex) ?? .gray)
+                .fill(color)
                 .frame(width: 44, height: 44)
                 .overlay(
                     Text(String(displayName.prefix(1)))
@@ -298,8 +301,15 @@ private struct LeaderboardRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background {
+            if #available(iOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 16)
+                    .glassEffect(.regular.tint(color.opacity(0.05)), in: RoundedRectangle(cornerRadius: 16))
+            } else {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.06))
+            }
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(rankColor(for: index).opacity(index == 0 ? 0.5 : 0.0), lineWidth: 1)
@@ -339,4 +349,9 @@ extension Color {
 
         self.init(red: r, green: g, blue: b)
     }
+}
+
+#Preview {
+    BetBuddyLeaderboardView()
+        .environment(AppViewModel())
 }

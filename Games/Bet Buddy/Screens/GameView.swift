@@ -66,7 +66,7 @@ struct GameView: View {
                         // Aktiver Spieler anzeigen (nur wenn Namen vorhanden)
                         if let winner = winningGroup, winner.hasPlayerNames, !appModel.isDrawResult {
                             HStack(spacing: 5) {
-                                Image(systemSymbol: .personFill)
+                                Image(systemName: "person.fill")
                                     .font(.system(size: 11))
                                 Text("\(winner.activePlayerName) ist dran")
                                     .font(.system(size: 13, weight: .semibold))
@@ -118,7 +118,7 @@ struct GameView: View {
                                         )
                                         .frame(width: 32, height: 32)
 
-                                    Image(systemSymbol: gameTimer.isPaused ? .playFill : .pauseFill)
+                                    Image(systemName: gameTimer.isPaused ? "play.fill" : "pause.fill")
                                         .font(.system(size: 14, weight: .bold))
                                         .foregroundStyle(
                                             gameTimer.isPaused
@@ -167,7 +167,7 @@ struct GameView: View {
                     VStack(spacing: 0) {
                         // Header
                         HStack(spacing: 8) {
-                            Image(systemSymbol: .lightbulbFill)
+                            Image(systemName: "lightbulb.fill")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(BetBuddyTheme.accentGold)
 
@@ -178,7 +178,8 @@ struct GameView: View {
 
                             Spacer()
 
-                            Text("\(hintItems.filter { $0.isChecked }.count)/\(hintItems.count)")
+                            let checkedCount = hintItems.filter { $0.isChecked }.count
+                            Text("\(checkedCount)/\(hintItems.count)")
                                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                                 .foregroundStyle(BetBuddyTheme.accentEmerald)
                         }
@@ -230,7 +231,7 @@ struct GameView: View {
                                     .stroke(BetBuddyTheme.accentRuby.opacity(0.4), lineWidth: 2)
                                     .frame(width: 76, height: 76)
 
-                                Image(systemSymbol: appModel.currentChallenge.inputType == .alphabet ? .chevronDown : .chevronUp)
+                                Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.down" : "chevron.up")
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundStyle(BetBuddyTheme.textChampagne.opacity(0.8))
                             }
@@ -275,7 +276,7 @@ struct GameView: View {
                                     )
                                     .frame(width: 76, height: 76)
 
-                                Image(systemSymbol: appModel.currentChallenge.inputType == .alphabet ? .chevronUp : .chevronDown)
+                                Image(systemName: appModel.currentChallenge.inputType == .alphabet ? "chevron.up" : "chevron.down")
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundStyle(BetBuddyTheme.textOnLight)
                             }
@@ -366,7 +367,7 @@ struct GameView: View {
         HStack {
             // Casino-Style Header
             HStack(spacing: 6) {
-                Image(systemSymbol: .suitClubFill)
+                Image(systemName: "suit.club.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
 
@@ -375,7 +376,7 @@ struct GameView: View {
                     .foregroundStyle(BetBuddyTheme.textGold)
                     .tracking(2)
 
-                Image(systemSymbol: .suitHeartFill)
+                Image(systemName: "suit.heart.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentRuby.opacity(0.6))
             }
@@ -386,18 +387,11 @@ struct GameView: View {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemSymbol: .xmark)
+                Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
         }
     }
@@ -486,4 +480,9 @@ struct GameView: View {
             hintItems = sorted.map { HintItem(text: $0, isChecked: solvedHints.contains($0)) }
         }
     }
+}
+
+#Preview {
+    GameView(onWin: { _ in }, onLose: { _ in })
+        .environment(AppViewModel())
 }

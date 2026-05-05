@@ -2,7 +2,7 @@ import SwiftUI
 
 struct QuestionsRevealedPhaseView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
     
     var body: some View {
         ZStack {

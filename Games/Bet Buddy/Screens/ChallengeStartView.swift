@@ -1,6 +1,6 @@
 import SwiftUI
-import SFSafeSymbols
 import Pow
+import SFSafeSymbols
 
 struct ChallengeStartView: View {
     @Environment(\.dismiss) private var dismiss
@@ -113,18 +113,11 @@ struct ChallengeStartView: View {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemSymbol: .xmark)
+                Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
         }
         .padding(.horizontal, Theme.padding)
@@ -377,7 +370,7 @@ struct ChallengeStartView: View {
             }
         } label: {
             HStack(spacing: 10) {
-                Image(systemSymbol: .shuffle)
+                Image(systemName: "shuffle")
                     .font(.system(size: 16, weight: .bold))
                     .rotationEffect(.degrees(shuffleRotation))
 
@@ -467,7 +460,7 @@ struct ChallengeStartView: View {
                     .font(.system(size: 18, weight: .black, design: .rounded))
                     .tracking(2)
 
-                Image(systemSymbol: .arrowRight)
+                Image(systemName: "arrow.right")
                     .font(.system(size: 16, weight: .bold))
             }
             .foregroundStyle(BetBuddyTheme.textOnLight)
@@ -491,4 +484,9 @@ struct ChallengeStartView: View {
             )
         }
     }
+}
+
+#Preview {
+    ChallengeStartView(onStart: {}, onClose: {})
+        .environment(AppViewModel())
 }

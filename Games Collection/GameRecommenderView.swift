@@ -26,10 +26,10 @@ struct GameRecommenderView: View {
             }
         }
 
-        var icon: SFSymbol {
+        var icon: String {
             switch self {
-            case .singleDevice: return .iphone
-            case .multiplayer: return .antennaRadiowavesLeftAndRight
+            case .singleDevice: return "iphone"
+            case .multiplayer: return "antenna.radiowaves.left.and.right"
             }
         }
     }
@@ -90,7 +90,7 @@ struct GameRecommenderView: View {
         let id: String
         let name: LocalizedStringKey
         let description: LocalizedStringKey
-        let icon: SFSymbol
+        let icon: String
         let iconTint: Color
         let matchScore: Int // 0-100
         let reasons: [LocalizedStringKey]
@@ -135,7 +135,7 @@ struct GameRecommenderView: View {
                                                     playerCount -= 1 
                                                 } 
                                             }) {
-                                                Image(systemSymbol: .minusCircleFill)
+                                                Image(systemName: "minus.circle.fill")
                                                     .font(.title2)
                                                     .foregroundStyle(.white.opacity(0.6))
                                             }
@@ -151,7 +151,7 @@ struct GameRecommenderView: View {
                                                     playerCount += 1 
                                                 } 
                                             }) {
-                                                Image(systemSymbol: .plusCircleFill)
+                                                Image(systemName: "plus.circle.fill")
                                                     .font(.title2)
                                                     .foregroundStyle(.white)
                                             }
@@ -172,7 +172,7 @@ struct GameRecommenderView: View {
                                         
                                         Picker("Mode", selection: $playMode) {
                                             ForEach(PlayMode.allCases) { mode in
-                                                Image(systemSymbol: mode.icon).tag(mode)
+                                                Image(systemName: mode.icon).tag(mode)
                                             }
                                         }
                                         .pickerStyle(.segmented)
@@ -399,7 +399,7 @@ struct GameRecommenderView: View {
             id: "BetBuddy",
             name: "Ich biete mehr!",
             description: "Wettet aufeinander. Wer kennt die Gruppe am besten?",
-            icon: .suitSpadeFill,
+            icon: "suit.spade.fill",
             iconTint: .orange,
             matchScore: clampScore(betScore),
             reasons: betReasons
@@ -420,7 +420,7 @@ struct GameRecommenderView: View {
             id: "Imposter",
             name: "Imposter",
             description: "Findet den Spion, bevor die Zeit abläuft!",
-            icon: .personFillViewfinder,
+            icon: "person.fill.viewfinder",
             iconTint: .red,
             matchScore: clampScore(impScore),
             reasons: impReasons
@@ -439,7 +439,7 @@ struct GameRecommenderView: View {
             id: "TimesUp",
             name: "Time's Up",
             description: "Erklären, Pantomime, Zeichnen. Pures Chaos.",
-            icon: .hourglassBottomhalfFilled,
+            icon: "hourglass.bottomhalf.filled",
             iconTint: .cyan,
             matchScore: clampScore(timeScore),
             reasons: timeReasons
@@ -457,7 +457,7 @@ struct GameRecommenderView: View {
             id: "Question",
             name: "Question",
             description: "Deep Talk oder lustige Fragen.",
-            icon: .waveformPathEcg,
+            icon: "waveform.path.ecg",
             iconTint: .purple,
             matchScore: clampScore(questScore),
             reasons: questReasons
@@ -477,7 +477,7 @@ struct GameRecommenderView: View {
             id: "SoundCinema",
             name: "Geräusch-Kino",
             description: "Imitiert Sounds und erratet die Szene.",
-            icon: .waveformCircleFill,
+            icon: "waveform.circle.fill",
             iconTint: .cyan,
             matchScore: clampScore(soundScore),
             reasons: soundReasons
@@ -497,7 +497,7 @@ struct GameRecommenderView: View {
             id: "FalscheFaehrte",
             name: "Falsche Fährte",
             description: "Lügen erkennen, Hinweise lesen, Bluff entlarven.",
-            icon: .magnifyingglassCircleFill,
+            icon: "magnifyingglass.circle.fill",
             iconTint: .indigo,
             matchScore: clampScore(ffScore),
             reasons: ffReasons
@@ -643,7 +643,7 @@ struct HeroRecommendationCard: View {
                     
                     if !game.isPlayableNow {
                         HStack(spacing: 4) {
-                            Image(systemSymbol: .infoCircleFill)
+                            Image(systemName: "info.circle.fill")
                             Text("Bedingungen prüfen")
                         }
                         .font(.caption.bold())
@@ -674,7 +674,7 @@ struct HeroRecommendationCard: View {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(Array(game.reasons.enumerated()), id: \.offset) { _, reason in
                             HStack(spacing: 8) {
-                                Image(systemSymbol: .exclamationmarkTriangleFill)
+                                Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.caption)
                                     .foregroundStyle(.yellow)
                                 Text(reason)
@@ -691,7 +691,7 @@ struct HeroRecommendationCard: View {
                 HStack {
                     Text("Jetzt Starten")
                         .font(.headline)
-                    Image(systemSymbol: .playFill)
+                    Image(systemName: "play.fill")
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -759,7 +759,7 @@ private struct MatchScoreGauge: View {
         .background(Color.black.opacity(0.3), in: Capsule())
         .changeEffect(.jump(height: 8), value: animatedScore, isEnabled: animatedScore > 0)
         .changeEffect(.spray(origin: .center) {
-            Image(systemSymbol: .sparkles)
+            Image(systemName: "sparkles")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.yellow)
         }, value: animatedScore, isEnabled: animatedScore >= 85)
@@ -817,7 +817,7 @@ struct SmallRecommendationCard: View {
 }
 
 private struct RecommenderGameIcon: View {
-    let symbol: SFSymbol
+    let symbol: String
     let tint: Color
     let size: CGFloat
 
@@ -826,7 +826,7 @@ private struct RecommenderGameIcon: View {
             RoundedRectangle(cornerRadius: size * 0.23)
                 .fill(LinearGradient(colors: [tint, tint.opacity(0.55)], startPoint: .topLeading, endPoint: .bottomTrailing))
 
-            Image(systemSymbol: symbol)
+            Image(systemName: symbol)
                 .font(.system(size: size * 0.43, weight: .bold))
                 .foregroundStyle(.black.opacity(0.82))
         }

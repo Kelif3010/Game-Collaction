@@ -38,3 +38,9 @@ struct BetBuddyLottieView: View {
         }
     }
 }
+
+#Preview {
+    BetBuddyLottieView(filename: "3D coin flip")
+        .frame(width: 200, height: 200)
+        .background(BetBuddyTheme.background)
+}

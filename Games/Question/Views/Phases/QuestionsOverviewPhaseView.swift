@@ -2,7 +2,7 @@ import SwiftUI
 
 struct QuestionsOverviewPhaseView: View {
     @ObservedObject var viewModel: QuestionsGameViewModel
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
     @AppStorage("question.hint.overview") private var overviewHintSeen = false
 
     private var revealGridColumns: [GridItem] {

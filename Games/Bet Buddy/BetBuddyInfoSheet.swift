@@ -22,14 +22,14 @@ struct BetBuddyInfoSheet: View {
                         
                         // SEITE 1: Intro (Worum geht's?)
                         InfoPage(
-                            icon: .person2Wave2Fill,
+                            icon: "person.2.wave.2.fill",
                             color: .cyan,
                             title: "Worum geht's?",
                             content: {
                                 VStack(alignment: .leading, spacing: 14) {
-                                    BulletPoint(text: "Ich biete mehr! ist ein Wettspiel für Teams mit 2 bis 4 Spielern.", icon: .person2Fill)
-                                    BulletPoint(text: "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').", icon: .handRaisedFingersSpreadFill)
-                                    BulletPoint(text: "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!", icon: .chartLineUptrendXyaxis)
+                                    BulletPoint(text: "Ich biete mehr! ist ein Wettspiel für Teams mit 2 bis 4 Spielern.", icon: "person.2.fill")
+                                    BulletPoint(text: "Ihr wettet darauf, dass euer Partner eine Challenge schafft (z.B. '5 Länder mit K nennen').", icon: "hand.raised.fingers.spread.fill")
+                                    BulletPoint(text: "Je höher die Wette, desto mehr Punkte – aber auch mehr Risiko!", icon: "chart.line.uptrend.xyaxis")
                                 }
                             }
                         )
@@ -37,7 +37,7 @@ struct BetBuddyInfoSheet: View {
 
                         // SEITE 2: Ablauf (So wird gespielt)
                         InfoPage(
-                            icon: .listNumber,
+                            icon: "list.number",
                             color: .mint,
                             title: "So wird gespielt",
                             content: {
@@ -53,7 +53,7 @@ struct BetBuddyInfoSheet: View {
 
                         // SEITE 3: Punkte & Risiko (Deine Logik!)
                         InfoPage(
-                            icon: .trophyFill,
+                            icon: "trophy.fill",
                             color: .yellow,
                             title: "Punkte & Wertung",
                             content: {
@@ -83,22 +83,29 @@ struct BetBuddyInfoSheet: View {
                                         .multilineTextAlignment(.center)
                                 }
                                 .padding()
-                                .background(Color.white.opacity(0.05))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .background {
+                                    if #available(iOS 26.0, *) {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .glassEffect(.regular.tint(.white.opacity(0.05)), in: RoundedRectangle(cornerRadius: 12))
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+                                    }
+                                }
                             }
                         )
                         .tag(2)
 
                         // SEITE 4: Einstellungen
                         InfoPage(
-                            icon: .sliderHorizontal3,
+                            icon: "slider.horizontal.3",
                             color: .pink,
                             title: "Einstellungen",
                             content: {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    BulletPoint(text: "Zeit läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: .timer)
-                                    BulletPoint(text: "Punktabzug: Legt fest, wie viele Punkte bei einer verlorenen Runde weg sind.", icon: .exclamationmarkCircle)
-                                    BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: .squareGrid2x2Fill)
+                                    BulletPoint(text: "Zeit läuft weiter: Bei Treffern startet die Zeit nicht neu.", icon: "timer")
+                                    BulletPoint(text: "Punktabzug: Legt fest, wie viele Punkte bei einer verlorenen Runde weg sind.", icon: "exclamationmark.circle")
+                                    BulletPoint(text: "Kategorien: Wählt Themen wie 'Deep', 'Aktiv' oder 'Buchstaben'.", icon: "square.grid.2x2.fill")
                                 }
                             }
                         )
@@ -157,7 +164,7 @@ struct BetBuddyInfoSheet: View {
 
 // 1. Die generelle Seite (Container)
 struct InfoPage<Content: View>: View {
-    var icon: SFSymbol
+    var icon: String
     var color: Color
     var title: String
     @ViewBuilder var content: Content
@@ -170,7 +177,7 @@ struct InfoPage<Content: View>: View {
                     Circle()
                         .fill(color.opacity(0.2))
                         .frame(width: 90, height: 90)
-                    Image(systemSymbol: icon)
+                    Image(systemName: icon)
                         .font(.system(size: 36))
                         .foregroundStyle(color)
                 }
@@ -192,11 +199,11 @@ struct InfoPage<Content: View>: View {
 // 2. Ein schöner Listenpunkt mit Icon
 struct BulletPoint: View {
     var text: String
-    var icon: SFSymbol
+    var icon: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemSymbol: icon)
+            Image(systemName: icon)
                 .foregroundStyle(BetBuddyTheme.accentGold)
                 .font(.body)
                 .frame(width: 24)
@@ -231,8 +238,15 @@ struct StepRow: View {
             Spacer()
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background {
+            if #available(iOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 12)
+                    .glassEffect(.regular.tint(.white.opacity(0.05)), in: RoundedRectangle(cornerRadius: 12))
+            } else {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.05))
+            }
+        }
     }
 }
 
@@ -253,4 +267,8 @@ struct ScoreRow: View {
                 .foregroundStyle(color)
         }
     }
+}
+
+#Preview {
+    BetBuddyInfoSheet()
 }

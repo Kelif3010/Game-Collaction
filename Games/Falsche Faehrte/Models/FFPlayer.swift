@@ -1,6 +1,6 @@
 import Foundation
 
-struct FFPlayer: Identifiable, Codable, Equatable {
+struct FFPlayer: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var name: String
     var score: Int

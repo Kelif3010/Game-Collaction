@@ -21,11 +21,7 @@ class GameSettings {
         didSet { UserDefaults.standard.set(timeLimit, forKey: "imposter.timeLimit") }
     }
     var gameMode: ImposterGameMode {
-        didSet {
-            if let data = try? JSONEncoder().encode(gameMode) {
-                UserDefaults.standard.set(data, forKey: "imposter.gameMode")
-            }
-        }
+        didSet { UserDefaults.standard.set(gameMode.rawValue, forKey: "imposter.gameMode") }
     }
     var categories: [Category] = Category.defaultCategories
 
@@ -77,7 +73,7 @@ class GameSettings {
     var hostClockOffsetRTT: TimeInterval = .greatestFiniteMagnitude
 
     // Multiplayer Sync State
-    var revealProgress: (ready: Int, total: Int)? = nil
+    var revealProgress: RevealProgress? = nil
     var isWaitingForOtherPlayers: Bool = false
 
     // Multiplayer Voting State
@@ -113,9 +109,14 @@ class GameSettings {
         self.numberOfImposters = defaults.integer(forKey: "imposter.numberOfImposters") > 0 ? defaults.integer(forKey: "imposter.numberOfImposters") : 1
         self.timeLimit = defaults.integer(forKey: "imposter.timeLimit") > 0 ? defaults.integer(forKey: "imposter.timeLimit") : 300
         
-        if let data = defaults.data(forKey: "imposter.gameMode"),
-           let mode = try? JSONDecoder().decode(ImposterGameMode.self, from: data) {
+        let gameModeKey = "imposter.gameMode"
+        if let raw = defaults.string(forKey: gameModeKey),
+           let mode = ImposterGameMode(rawValue: raw) {
             self.gameMode = mode
+        } else if let data = defaults.data(forKey: gameModeKey),
+                  let mode = try? JSONDecoder().decode(ImposterGameMode.self, from: data) {
+            self.gameMode = mode
+            defaults.set(mode.rawValue, forKey: gameModeKey)
         } else {
             self.gameMode = .classic
         }
@@ -145,8 +146,8 @@ class GameSettings {
         rebuildCategories()
         
         // Factory Reset Listener
-        NotificationCenter.default.addObserver(forName: Notification.Name("AppDidReset"), object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor [weak self] in
+        Task { @MainActor [weak self] in
+            for await _ in NotificationCenter.default.notifications(named: Notification.Name("AppDidReset")) {
                 self?.resetSettingsToDefaults()
             }
         }
@@ -412,6 +413,15 @@ class GameSettings {
         }
     }
 }
+
+// MARK: - RevealProgress
+
+struct RevealProgress {
+    let ready: Int
+    let total: Int
+}
+
+// MARK: - ImposterGameMode
 
 enum ImposterGameMode: String, CaseIterable, Codable {
     case classic = "Klassisch"

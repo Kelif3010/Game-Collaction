@@ -54,11 +54,11 @@ struct GameCard: Identifiable {
     }
     
     /// Gibt das Icon für die Karte zurück
-    var cardIcon: SFSymbol {
+    var cardIcon: String {
         if let roleType = roleType {
             return roleType.cardIcon
         }
-        return isImposter ? .eyeSlashFill : .eyeFill
+        return isImposter ? "eye.slash.fill" : "eye.fill"
     }
     
     var cardTitle: String {

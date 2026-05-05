@@ -1,7 +1,8 @@
 import Foundation
+import OrderedCollections
 
 // MARK: - Eingereichte Antwort eines Spielers
-struct FFSubmission: Identifiable, Equatable {
+struct FFSubmission: Identifiable, Equatable, Sendable {
     let id: UUID
     let playerId: UUID
     let playerName: String
@@ -22,13 +23,13 @@ struct FFSubmission: Identifiable, Equatable {
 }
 
 // MARK: - Eine Spielrunde
-struct FFRound: Identifiable {
+struct FFRound: Identifiable, Sendable {
     let id: UUID
     let roundNumber: Int
     let question: FFQuestion
     var submissions: [FFSubmission]  // Lügen der Spieler + echte Antwort
     var displayOrder: [UUID]         // Zufällige Anzeigereihenfolge der submission IDs
-    var votes: [UUID: UUID]          // playerId → submissionId
+    var votes: OrderedDictionary<UUID, UUID>  // playerId → submissionId (deterministic order)
     var phase: FFRoundPhase
     var currentInputPlayerIndex: Int  // Für Single-Device-Modus
 
@@ -58,7 +59,7 @@ struct FFRound: Identifiable {
 }
 
 // MARK: - Rundenphase
-enum FFRoundPhase: Equatable {
+enum FFRoundPhase: Equatable, Sendable {
     case bluffing       // Spieler tippen ihre Lügen ein
     case voting         // Alle stimmen ab
     case reveal         // Auflösung + Punkte-Vergabe

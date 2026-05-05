@@ -6,7 +6,7 @@ import MultipeerConnectivity
 
 struct FFMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
 
     // Callbacks vom Parent (FFSetupView)
     /// Wird aufgerufen wenn das Spiel startet (beide Seiten)
@@ -16,6 +16,7 @@ struct FFMultiplayerSheet: View {
 
     @State private var lobby = MultiplayerLobbyCoordinator()
     @FocusState private var codeFocused: Bool
+    @State private var mediumHaptic = false
 
     // Client: empfangene Konfiguration
     @State private var receivedConfig: FFGameConfigPayload? = nil
@@ -64,6 +65,7 @@ struct FFMultiplayerSheet: View {
         } message: {
             Text("Die Verbindung wird getrennt.")
         }
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
         .onAppear {
             setupMPCListener()
             lobby.handleAppear()
@@ -294,7 +296,7 @@ struct FFMultiplayerSheet: View {
                 if !lobby.isHost {
                     let amIReady = mpc.readyPlayers.contains(mpc.myPeerId.displayName)
                     Button {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        mediumHaptic.toggle()
                         lobby.toggleReadyState(isReady: !amIReady)
                     } label: {
                         HStack(spacing: 12) {
@@ -336,7 +338,7 @@ struct FFMultiplayerSheet: View {
                             Capsule()
                                 .fill(canStartGame
                                       ? AnyShapeStyle(FFStyle.primaryGradient)
-                                      : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing)))
+                                      : AnyShapeStyle(Color.white.opacity(0.08)))
                                 .shadow(color: canStartGame ? FFStyle.accentViolet.opacity(0.4) : .clear, radius: 12, y: 4)
                         )
                     }
@@ -389,7 +391,7 @@ struct FFMultiplayerSheet: View {
 
     private func startGame() {
         guard canStartGame else { return }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        mediumHaptic.toggle()
 
         let config = getHostConfig(lobby.lobbyNames)
 

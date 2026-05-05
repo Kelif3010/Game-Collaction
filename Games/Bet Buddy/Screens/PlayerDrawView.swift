@@ -137,7 +137,7 @@ struct PlayerDrawView: View {
 
             // Lock-Icon wenn fertig
             if isLocked {
-                Image(systemSymbol: .checkmarkCircleFill)
+                Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 22))
                     .foregroundStyle(group.color.primary)
                     .transition(.scale.combined(with: .opacity))
@@ -154,7 +154,7 @@ struct PlayerDrawView: View {
                 }
                 .frame(width: 56, height: 56)
             } else {
-                Image(systemSymbol: .shuffle)
+                Image(systemName: "shuffle")
                     .font(.system(size: 18))
                     .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
             }
@@ -187,7 +187,7 @@ struct PlayerDrawView: View {
                 Text("LOS GEHT'S")
                     .font(.system(size: 18, weight: .black, design: .rounded))
                     .tracking(2)
-                Image(systemSymbol: .arrowRight)
+                Image(systemName: "arrow.right")
                     .font(.system(size: 16, weight: .bold))
             }
             .foregroundStyle(BetBuddyTheme.textOnLight)
@@ -269,4 +269,9 @@ struct PlayerDrawView: View {
             finishCoinFlip(for: groupID)
         }
     }
+}
+
+#Preview {
+    PlayerDrawView(onContinue: {})
+        .environment(AppViewModel())
 }

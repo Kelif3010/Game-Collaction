@@ -2,7 +2,7 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct MPCDebugView: View {
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
     @Environment(\.dismiss) var dismiss
     
     @State private var messageText = ""

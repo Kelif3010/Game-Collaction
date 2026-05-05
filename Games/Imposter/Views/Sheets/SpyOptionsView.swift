@@ -178,7 +178,7 @@ struct SpyOptionsView: View {
                     Spacer()
                     RoleCardView(role: TutorialRole(
                         name: role.rawValue,
-                        icon: role.icon.rawValue,
+                        icon: role.icon,
                         team: role.team,
                         ability: role.description,
                         mission: getMissionText(for: role),
@@ -242,7 +242,7 @@ private struct RoleToggleRow: View {
                     .fill(isSelected ? color.opacity(0.2) : Color.gray.opacity(0.1))
                     .frame(width: 44, height: 44)
                 
-                Image(systemSymbol: role.icon)
+                Image(systemName: role.icon)
                     .font(.title3)
                     .foregroundStyle(isSelected ? color : .gray)
             }

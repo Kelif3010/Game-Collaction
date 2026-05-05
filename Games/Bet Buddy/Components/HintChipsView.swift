@@ -32,7 +32,7 @@ struct HintChipsView: View {
                                 )
                                 .frame(width: 20, height: 20)
                             if item.isChecked {
-                                Image(systemSymbol: .checkmark)
+                                Image(systemName: "checkmark")
                                     .font(.system(size: 10, weight: .bold))
                                     .foregroundStyle(.white)
                             }
@@ -154,5 +154,21 @@ struct FlexibleFlowLayout: Layout {
         }
         
         return LayoutResult(size: CGSize(width: maxWidth, height: currentY - spacing), frames: frames)
+    }
+}
+
+#Preview {
+    @Previewable @State var items = [
+        HintItem(text: "Apple", isChecked: false),
+        HintItem(text: "Banana", isChecked: true),
+        HintItem(text: "Cherry", isChecked: false),
+        HintItem(text: "Date", isChecked: false),
+        HintItem(text: "Elderberry", isChecked: true)
+    ]
+    
+    return ZStack {
+        BetBuddyBackgroundView()
+        HintChipsView(items: $items)
+            .padding()
     }
 }

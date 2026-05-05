@@ -14,7 +14,7 @@ struct ScreenHeader: View {
                 Button {
                     backAction?() ?? dismiss()
                 } label: {
-                    Image(systemSymbol: .chevronLeft)
+                    Image(systemName: "chevron.left")
                         .font(.headline.bold())
                         .foregroundStyle(BetBuddyTheme.textChampagne)
                         .frame(width: 44, height: 44)
@@ -37,5 +37,16 @@ struct ScreenHeader: View {
             Color.clear.frame(width: 44, height: 44)
         }
         .padding(.bottom, 8)
+    }
+}
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 20) {
+            ScreenHeader(title: "Categories")
+            ScreenHeader(title: "No Back Button", showBack: false)
+        }
+        .padding()
     }
 }

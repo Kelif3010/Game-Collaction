@@ -1,17 +1,24 @@
 import SwiftUI
-import Combine
 import MultipeerConnectivity
+import Observation
+import AsyncAlgorithms
+import Algorithms
+import OrderedCollections
 
 // MARK: - Haupt-ViewModel für Falsche Fährte
 @MainActor
-final class FFViewModel: ObservableObject {
+@Observable
+final class FFViewModel {
+
+    // MARK: Sprache
+    var languageCode: String = UserDefaults.standard.string(forKey: "selectedLanguageCode") ?? "de"
 
     // MARK: Spielzustand
-    @Published var gamePhase: FFGamePhase = .setup
-    @Published var players: [FFPlayer] = []
-    @Published var settings: FFSettings = FFSettings()
-    @Published var rounds: [FFRound] = []
-    @Published var currentRoundIndex: Int = 0
+    var gamePhase: FFGamePhase = .setup
+    var players: [FFPlayer] = []
+    var settings: FFSettings = FFSettings()
+    var rounds: [FFRound] = []
+    var currentRoundIndex: Int = 0
 
     // MARK: Aktuelle Runde (Convenience)
     var currentRound: FFRound? {
@@ -24,8 +31,8 @@ final class FFViewModel: ObservableObject {
     var isLastRound: Bool { currentRoundIndex >= totalRounds - 1 }
 
     // MARK: Bluff-Eingabe-Tracking (Single-Device)
-    @Published var currentBluffText: String = ""
-    @Published var currentInputPlayerIndex: Int = 0
+    var currentBluffText: String = ""
+    var currentInputPlayerIndex: Int = 0
 
     var currentInputPlayer: FFPlayer? {
         guard let round = currentRound,
@@ -40,7 +47,7 @@ final class FFViewModel: ObservableObject {
     }
 
     // MARK: Timer
-    @Published var timeRemaining: Int = 0
+    var timeRemaining: Int = 0
     private var timerTask: Task<Void, Never>?
 
     // MARK: Fragen-Pool
@@ -48,22 +55,22 @@ final class FFViewModel: ObservableObject {
 
     // MARK: - Multiplayer-State
 
-    @Published var isMultiplayer: Bool = false
-    @Published var isHost: Bool = false
-    @Published var hasSubmittedBluff: Bool = false
-    @Published var hasVoted: Bool = false
-    @Published var bluffSubmittedCount: Int = 0
-    @Published var voteCount: Int = 0
-    @Published var totalMultiplayerPlayers: Int = 0
-    @Published var myBluffText: String = ""   // eigene Lüge merken (MP)
-    @Published var isShowingRevealScores: Bool = false
+    var isMultiplayer: Bool = false
+    var isHost: Bool = false
+    var hasSubmittedBluff: Bool = false
+    var hasVoted: Bool = false
+    var bluffSubmittedCount: Int = 0
+    var voteCount: Int = 0
+    var totalMultiplayerPlayers: Int = 0
+    var myBluffText: String = ""
+    var isShowingRevealScores: Bool = false
 
     // Für Clients: Empfangene anonyme Submissions (Voting-Phase)
-    @Published var mpSubmissions: [FFMPCSubmission] = []
+    var mpSubmissions: [FFMPCSubmission] = []
     // Für Clients: Empfangene Auflösung (Reveal-Phase)
-    @Published var mpRevealData: FFRevealPayload? = nil
+    var mpRevealData: FFRevealPayload? = nil
     // Für Clients: Game Over Daten
-    @Published var mpGameOverData: FFGameOverPayload? = nil
+    var mpGameOverData: FFGameOverPayload? = nil
 
     // Host-interne Puffer
     private var hostCollectedBluffs: [FFBluffSubmitPayload] = []
@@ -81,9 +88,8 @@ final class FFViewModel: ObservableObject {
         rounds = []
         currentRoundIndex = 0
 
-        let count = min(settings.roundCount.rawValue, questionPool.count)
-        for i in 0..<count {
-            let question = questionPool[i]
+        let selected = questionPool.randomSample(count: min(settings.roundCount.rawValue, questionPool.count))
+        for (i, question) in selected.enumerated() {
             rounds.append(FFRound(number: i + 1, question: question))
         }
 
@@ -186,7 +192,7 @@ final class FFViewModel: ObservableObject {
         let realAnswer = FFSubmission(
             playerId: UUID(),
             playerName: "WAHRHEIT",
-            text: round.question.localizedAnswer,
+            text: round.question.localizedAnswer(languageCode: languageCode),
             isAnswer: true
         )
         round.submissions.append(realAnswer)
@@ -258,7 +264,7 @@ final class FFViewModel: ObservableObject {
         let realAnswer = FFSubmission(
             playerId: UUID(),
             playerName: "WAHRHEIT",
-            text: round.question.localizedAnswer,
+            text: round.question.localizedAnswer(languageCode: languageCode),
             isAnswer: true
         )
         round.submissions.append(realAnswer)
@@ -575,11 +581,9 @@ final class FFViewModel: ObservableObject {
         timerTask?.cancel()
         timeRemaining = seconds
         timerTask = Task {
-            while timeRemaining > 0 && !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                if !Task.isCancelled {
-                    timeRemaining -= 1
-                }
+            for await _ in AsyncTimerSequence.repeating(every: .seconds(1), clock: .continuous) {
+                guard !Task.isCancelled, timeRemaining > 0 else { break }
+                timeRemaining -= 1
             }
         }
     }
@@ -637,5 +641,34 @@ final class FFViewModel: ObservableObject {
     private func resetVoteState() {
         hasVoted = false
         voteCount = 0
+    }
+
+    // MARK: - Previews
+
+    static var preview: FFViewModel {
+        let vm = FFViewModel()
+        vm.players = [
+            FFPlayer(name: "Anna"),
+            FFPlayer(name: "Ben"),
+            FFPlayer(name: "Charlie"),
+            FFPlayer(name: "Diana")
+        ]
+        vm.settings.roundCount = .eight
+        vm.settings.bluffTimer = .forty
+        
+        // Dummy Runde vorbereiten für Phasen-Previews
+        if let sampleQ = FFQuestionDatabase.all.first {
+            var round = FFRound(number: 1, question: sampleQ)
+            
+            // Dummy Lügen hinzufügen
+            round.submissions.append(FFSubmission(playerId: vm.players[0].id, playerName: "Anna", text: "Fake Answer 1", isAnswer: false))
+            round.submissions.append(FFSubmission(playerId: vm.players[1].id, playerName: "Ben", text: "Fake Answer 2", isAnswer: false))
+            round.submissions.append(FFSubmission(playerId: UUID(), playerName: "WAHRHEIT", text: sampleQ.localizedAnswer(languageCode: "de"), isAnswer: true))
+            
+            vm.rounds = [round]
+            vm.currentRoundIndex = 0
+        }
+        
+        return vm
     }
 }

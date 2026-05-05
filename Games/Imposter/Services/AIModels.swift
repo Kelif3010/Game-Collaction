@@ -36,6 +36,27 @@ struct AIRoleListResponse {
     @Guide(description: "Distinct German role names")
     var roles: [String]
 }
+
+@available(iOS 26.0, *)
+@Generable(description: "Eine kurze Mission-Beschreibung für einen Spion")
+struct MissionFlavor {
+    @Guide(description: "Ein spannender Satz auf Deutsch, maximal 80 Zeichen, geheimnisvoller Ton")
+    var text: String
+}
+
+@available(iOS 26.0, *)
+@Generable(description: "Ein kurzes Moderator-Log zur Imposter-Auswahl")
+struct ModeratorLogEntry {
+    @Guide(description: "Technische Erklärung der Auswahl in 1-2 Sätzen auf Deutsch")
+    var text: String
+}
+
+@available(iOS 26.0, *)
+@Generable(description: "Eine typische Rolle für einen bestimmten Ort")
+struct LocationRole {
+    @Guide(description: "Eine einzelne deutsche Rollenbezeichnung wie 'Koch', 'Wachmann' oder 'Arzt'")
+    var role: String
+}
 #endif
 
 // JSON-Strukturen für KI-Antworten (Guided via Prompt-Constraints)

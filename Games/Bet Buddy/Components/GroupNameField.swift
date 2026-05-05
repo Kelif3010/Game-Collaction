@@ -67,3 +67,14 @@ struct GroupNameField: View {
         )
     }
 }
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 20) {
+            GroupNameField(group: GroupInfo(color: .blue, customName: "Team Alpha")) { _ in }
+            GroupNameField(group: GroupInfo(color: .red)) { _ in }
+        }
+        .padding()
+    }
+}

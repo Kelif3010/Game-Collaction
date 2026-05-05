@@ -1,6 +1,6 @@
 import SwiftUI
-import SFSafeSymbols
 import Pow
+import SFSafeSymbols
 
 struct BetBuddyVotingView: View {
     @Environment(\.dismiss) private var dismiss
@@ -104,7 +104,7 @@ struct BetBuddyVotingView: View {
 
             // Casino-Style Titel
             HStack(spacing: 8) {
-                Image(systemSymbol: .suitSpadeFill)
+                Image(systemName: "suit.spade.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
 
@@ -113,7 +113,7 @@ struct BetBuddyVotingView: View {
                     .foregroundStyle(BetBuddyTheme.textGold)
                     .tracking(2)
 
-                Image(systemSymbol: .suitDiamondFill)
+                Image(systemName: "suit.diamond.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
             }
@@ -124,18 +124,11 @@ struct BetBuddyVotingView: View {
                 HapticsService.impact(.medium)
                 showExitAlert = true
             } label: {
-                Image(systemSymbol: .xmark)
+                Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
         }
     }
@@ -155,13 +148,18 @@ struct BetBuddyVotingView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
-                .background(
+                .background {
+                    if #available(iOS 26.0, *) {
+                        RoundedRectangle(cornerRadius: 12)
+                            .glassEffect(.regular.tint(BetBuddyTheme.accentGold.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.4))
+                    }
+                }
+                .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.4))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(BetBuddyTheme.accentGold.opacity(0.15), lineWidth: 1)
-                        )
+                        .stroke(BetBuddyTheme.accentGold.opacity(0.15), lineWidth: 1)
                 )
         }
         .padding(.top, 8)
@@ -217,4 +215,9 @@ struct BetBuddyVotingView: View {
     private var leaderColor: Color {
         leaderGroup?.color.primary ?? .white
     }
+}
+
+#Preview {
+    BetBuddyVotingView(onClose: {}, onConfirm: {})
+        .environment(AppViewModel())
 }

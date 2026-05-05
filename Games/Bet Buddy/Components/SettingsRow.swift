@@ -11,7 +11,7 @@ struct SettingsRow: View {
         case penalty
     }
 
-    var icon: SFSymbol
+    var icon: String
     var title: String
     var detail: String?
     var rowType: RowType
@@ -39,7 +39,7 @@ struct SettingsRow: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 1)
                     )
-                Image(systemSymbol: icon)
+                Image(systemName: icon)
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .font(.headline)
             }
@@ -73,7 +73,7 @@ struct SettingsRow: View {
                             .foregroundStyle(BetBuddyTheme.textSilver)
                             .font(.subheadline.weight(.semibold))
                     }
-                    Image(systemSymbol: .chevronRight)
+                    Image(systemName: "chevron.right")
                         .foregroundStyle(BetBuddyTheme.accentGold.opacity(0.6))
                         .font(.subheadline)
                 }
@@ -93,5 +93,36 @@ struct SettingsRow: View {
         .onTapGesture {
             onTap?()
         }
+    }
+}
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 12) {
+            SettingsRow(
+                icon: "person.2.fill",
+                title: "Groups",
+                detail: "2",
+                rowType: .groups
+            )
+            
+            SettingsRow(
+                icon: "timer",
+                title: "Timer",
+                detail: "Reset on hit",
+                rowType: .partyMode,
+                isToggleOn: true
+            )
+            
+            SettingsRow(
+                icon: "lightbulb.fill",
+                title: "Hints",
+                detail: "Off",
+                rowType: .hints,
+                isToggleOn: false
+            )
+        }
+        .padding()
     }
 }

@@ -126,3 +126,20 @@ struct LetterFlipView: View {
         .shadow(color: Color.black.opacity(0.4), radius: 8, y: 4)
     }
 }
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 40) {
+            HStack(spacing: 20) {
+                LetterFlipView(value: 1, color: .blue)
+                LetterFlipView(value: 2, remaining: 5, color: .red)
+            }
+            
+            HStack(spacing: 20) {
+                LetterFlipView(value: 26, color: .green)
+                LetterFlipView(value: 27, color: .purple)
+            }
+        }
+    }
+}

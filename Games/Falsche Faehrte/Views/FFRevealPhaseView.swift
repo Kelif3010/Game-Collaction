@@ -5,12 +5,14 @@ import SwiftUI
 // Screen 2: Punkte-Zwischenstand (Push-Transition)
 
 struct FFRevealPhaseView: View {
-    @EnvironmentObject private var viewModel: FFViewModel
+    @Environment(FFViewModel.self) private var viewModel
 
     @State private var appeared       = false
     @State private var cardsVisible   = false
     @State private var nextEnabled    = false
-    @State private var showScores     = false   // Wechsel zu Screen 2
+    @State private var showScores     = false
+    @State private var lightHaptic    = false
+    @State private var mediumHaptic   = false
 
     private var round: FFRound? { viewModel.currentRound }
 
@@ -53,22 +55,35 @@ struct FFRevealPhaseView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: isShowingScores)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightHaptic)
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
+        .animation(.spring(duration: 0.5, bounce: 0.1), value: isShowingScores)
         .onAppear {
+            let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            if isPreview {
+                appeared = true
+                cardsVisible = true
+                nextEnabled = true
+                showScores = false
+                return
+            }
+            
             appeared = false
             cardsVisible = false
             nextEnabled = false
             showScores = false
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05)) {
+            withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(0.05)) {
                 appeared = true
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.4))
                 withAnimation { cardsVisible = true }
             }
             let enableDelay = 0.4 + Double(submissionCount) * 0.14 + 0.4
-            DispatchQueue.main.asyncAfter(deadline: .now() + enableDelay) {
-                withAnimation(.spring(response: 0.3)) { nextEnabled = true }
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(enableDelay))
+                withAnimation(.snappy) { nextEnabled = true }
+                lightHaptic.toggle()
             }
         }
     }
@@ -85,7 +100,7 @@ struct FFRevealPhaseView: View {
                     questionBanner
                         .opacity(appeared ? 1 : 0)
                         .offset(y: appeared ? 0 : 12)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: appeared)
+                        .animation(.spring(duration: 0.5, bounce: 0.2).delay(0.05), value: appeared)
 
                     if cardsVisible {
                         answersSection
@@ -110,7 +125,7 @@ struct FFRevealPhaseView: View {
     private var topBar: some View {
         HStack {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                lightHaptic.toggle()
                 viewModel.returnToSetup()
             } label: {
                 Image(systemName: "xmark")
@@ -146,7 +161,7 @@ struct FFRevealPhaseView: View {
                 .foregroundStyle(FFStyle.primaryGradient)
                 .frame(width: 28)
 
-            Text(round?.question.localizedQuestion ?? "")
+            Text(round?.question.localizedQuestion(languageCode: viewModel.languageCode) ?? "")
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.85))
                 .lineLimit(3)
@@ -183,13 +198,13 @@ struct FFRevealPhaseView: View {
                 ForEach(Array(mpRevealSubmissions.enumerated()), id: \.element.id) { idx, sub in
                     mpRevealCard(sub, index: idx)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(Double(idx) * 0.14), value: cardsVisible)
+                        .animation(.spring(duration: 0.5, bounce: 0.22).delay(Double(idx) * 0.14), value: cardsVisible)
                 }
             } else {
                 ForEach(Array(orderedSubmissions.enumerated()), id: \.element.id) { idx, sub in
                     revealCard(sub, index: idx)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(Double(idx) * 0.14), value: cardsVisible)
+                        .animation(.spring(duration: 0.5, bounce: 0.22).delay(Double(idx) * 0.14), value: cardsVisible)
                 }
             }
         }
@@ -317,11 +332,11 @@ struct FFRevealPhaseView: View {
             .padding(.vertical, 18)
         } else {
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                mediumHaptic.toggle()
                 if viewModel.isMultiplayer {
                     viewModel.showRevealScores()
                 } else {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                    withAnimation(.spring(duration: 0.5, bounce: 0.1)) {
                         showScores = true
                     }
                 }
@@ -344,18 +359,19 @@ struct FFRevealPhaseView: View {
                 )
             }
             .disabled(!nextEnabled)
-            .animation(.spring(response: 0.3), value: nextEnabled)
+            .animation(.snappy, value: nextEnabled)
         }
     }
 }
 
 // MARK: - Screen 2: Punkte-Zwischenstand
 struct FFScoreInterludeView: View {
-    @EnvironmentObject private var viewModel: FFViewModel
+    @Environment(FFViewModel.self) private var viewModel
     let onNext: () -> Void
 
-    @State private var appeared   = false
+    @State private var appeared    = false
     @State private var rowsVisible = false
+    @State private var mediumHaptic = false
 
     private var sorted: [FFPlayer] { viewModel.sortedPlayers }
     private var isLastRound: Bool { viewModel.isLastRound }
@@ -376,7 +392,7 @@ struct FFScoreInterludeView: View {
                         .opacity(rowsVisible ? 1 : 0)
                         .offset(x: rowsVisible ? 0 : 40)
                         .animation(
-                            .spring(response: 0.45, dampingFraction: 0.8)
+                            .spring(duration: 0.45, bounce: 0.2)
                                 .delay(Double(idx) * 0.08),
                             value: rowsVisible
                         )
@@ -393,14 +409,15 @@ struct FFScoreInterludeView: View {
                 .padding(.top, 12)
                 .opacity(appeared ? 1 : 0)
         }
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.8).delay(0.05)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.2).delay(0.05)) {
                 appeared = true
             }
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.8).delay(0.2)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.2).delay(0.2)) {
                 rowsVisible = true
             }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            mediumHaptic.toggle()
         }
     }
 
@@ -420,7 +437,7 @@ struct FFScoreInterludeView: View {
         .padding(.vertical, 20)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 10)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: appeared)
+        .animation(.spring(duration: 0.5, bounce: 0.2).delay(0.05), value: appeared)
     }
 
     // MARK: - Zeile
@@ -516,7 +533,7 @@ struct FFScoreInterludeView: View {
             .padding(.vertical, 18)
         } else {
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                mediumHaptic.toggle()
                 onNext()
             } label: {
                 HStack(spacing: 10) {
@@ -579,4 +596,9 @@ private struct FlowLayout: Layout {
             rowHeight = max(rowHeight, size.height)
         }
     }
+}
+
+#Preview {
+    FFRevealPhaseView()
+        .environment(FFViewModel.preview)
 }

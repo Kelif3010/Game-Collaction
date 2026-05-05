@@ -54,7 +54,7 @@ struct GroupCountRow: View {
                         )
                         .frame(width: 28, height: 28)
                     if isSelected {
-                        Image(systemSymbol: .checkmark)
+                        Image(systemName: "checkmark")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white)
                     }
@@ -79,5 +79,21 @@ struct GroupCountRow: View {
                 radius: isSelected ? 12 : 0
             )
         }
+    }
+}
+
+#Preview("Selected") {
+    ZStack {
+        BetBuddyBackgroundView()
+        GroupCountRow(count: 2, isSelected: true) {}
+            .padding()
+    }
+}
+
+#Preview("Unselected") {
+    ZStack {
+        BetBuddyBackgroundView()
+        GroupCountRow(count: 3, isSelected: false) {}
+            .padding()
     }
 }

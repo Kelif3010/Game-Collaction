@@ -32,23 +32,35 @@ Vorgehen: **Eine Phase nach der anderen.** Warte auf "go" bevor du weitermachst.
 
 ---
 
-## Phase 3 — ContentView.swift aufteilen ⏳
-**Datei:** `ContentView.swift` (1135 Zeilen)
-**Problem:** Die Eingangstür der ganzen App ist 1100+ Zeilen groß.
-**Lösung:** Aufteilen in:
-- `AppRouter.swift` — nur Navigation, wer zeigt was
-- Pro-Spiel ein eigener kleiner Einstiegspunkt
+## Phase 3 — ContentView.swift aufteilen ✅ ERLEDIGT
+**Datei:** `ContentView.swift` (1136 Zeilen → 131 Zeilen)
+**Was passiert ist:**
+- `AppRouter.swift` — `ObservableObject` mit allen `isPresented`-States + `openGame(for:)` Logik
+- `Views/AppBackground.swift` — MeshGradient/Fallback-Hintergrund
+- `Views/PartyBannerButton.swift` — Party-starten Banner
+- `Views/SnowView.swift` — Winter-Schneeeffekt + `SnowParticle`
+- `Views/SessionKingCard.swift` — Session King Anzeige
+- `Views/GameCards/MenuGameCard.swift` — Time's Up Karte
+- `Views/GameCards/BetBuddyGameCard.swift` — Casino-Theme Karte
+- `Views/GameCards/ImposterGameCard.swift` — Spy-Theme Karte
+- `Views/GameCards/LugnerGameCard.swift` — Lügendetektor Karte
+- `Views/GameCards/SoundCinemaGameCard.swift` — Geräusch-Kino Karte
+- `Views/GameCards/FalscheFaehrteGameCard.swift` — Detektiv-Theme Karte
+- `Shared/GlassEffects.swift` — `CompatibleGlassEffectContainer` + `compatibleGlassCardEffect` hinzugefügt
+- `ContentView.swift` konsolidierter `gameButton`-Helper: 6 identische Button-Blöcke → 1 generische Funktion
+- Keine Compiler-Fehler
 
 ---
 
-## Phase 4 — TimesUp GameManager.swift aufteilen ⏳
-**Datei:** `Games/TimesUp/Managers/GameManager.swift` (1880 Zeilen)
-**Problem:** Timer-Logik, Spielstand, Rundensteuerung, Ergebnisse — alles in einer Datei.
-**Lösung:** Aufteilen in:
-- `TimesUpState.swift` — nur Daten/Zustand
-- `TimesUpTimer.swift` — nur Timer-Logik
-- `TimesUpScoring.swift` — nur Punkteberechnung
-- `TimesUpGameManager.swift` — koordiniert die Teile (< 300 Zeilen)
+## Phase 4 — TimesUp GameManager.swift aufteilen ✅ ERLEDIGT
+**Datei:** `Games/TimesUp/Managers/GameManager.swift` (1880 Zeilen → gelöscht)
+**Was passiert ist:**
+- `TimesUpGameManager.swift` — Koordinator: alle Properties, Init, Team/Category-Management, Game-Flow (538 Zeilen)
+- `TimesUpTimer.swift` — Timer, Freeze, Time Bomb, Rush, Slow Motion (186 Zeilen)
+- `TimesUpScoring.swift` — Punkte, Strafen, Streaks, Combos, Perks (338 Zeilen)
+- `TimesUpState.swift` — Nested Types (PerkToast, AwardedPerk etc.) + UI-Queries + Visual Effects + Slot Machine (601 Zeilen)
+- Swift-Extension-Ansatz: Klasse bleibt `GameManager`, Properties in Hauptdatei, Methoden in Extensions
+- Keine Compiler-Fehler
 
 ---
 
@@ -139,4 +151,4 @@ Vorgehen: **Eine Phase nach der anderen.** Warte auf "go" bevor du weitermachst.
 ---
 Skills benutzten falls sinvoll und Nötig
 
-*Letzte Aktualisierung: Phase 1 abgeschlossen*
+*Letzte Aktualisierung: Phase 4 abgeschlossen*

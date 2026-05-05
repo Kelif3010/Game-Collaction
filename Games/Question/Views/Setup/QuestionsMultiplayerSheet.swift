@@ -10,7 +10,7 @@ import MultipeerConnectivity
 
 struct QuestionsMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
     @State private var lobby = MultiplayerLobbyCoordinator()
     
     // MARK: - Body
@@ -248,7 +248,7 @@ private struct QuestionsLobbyView: View {
     let myPlayerName: String
     let onOpenSettings: () -> Void
     let onToggleReady: (Bool) -> Void
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
 
     private var hostActivityText: String {
         mpc.hostActivity.isEmpty ? "wartet..." : mpc.hostActivity

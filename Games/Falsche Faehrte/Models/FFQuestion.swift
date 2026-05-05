@@ -1,7 +1,8 @@
 import SwiftUI
+import Algorithms
 
 // MARK: - Fragen-Pack
-enum FFPack: String, Codable, CaseIterable, Identifiable {
+enum FFPack: String, Codable, CaseIterable, Identifiable, Sendable {
     case klassisch = "klassisch"
     case krass     = "krass"
     case extrem    = "extrem"
@@ -14,13 +15,13 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
 
     var localizedName: String {
         switch self {
-        case .klassisch: return NSLocalizedString("ff.pack.klassisch", comment: "")
-        case .krass:     return NSLocalizedString("ff.pack.krass", comment: "")
-        case .extrem:    return NSLocalizedString("ff.pack.extrem", comment: "")
-        case .lustig:    return NSLocalizedString("ff.pack.lustig", comment: "")
-        case .verrueckt: return NSLocalizedString("ff.pack.verrueckt", comment: "")
-        case .pervers:   return NSLocalizedString("ff.pack.pervers", comment: "")
-        case .unnuetz:   return NSLocalizedString("ff.pack.unnuetz", comment: "")
+        case .klassisch: return String(localized: "ff.pack.klassisch")
+        case .krass:     return String(localized: "ff.pack.krass")
+        case .extrem:    return String(localized: "ff.pack.extrem")
+        case .lustig:    return String(localized: "ff.pack.lustig")
+        case .verrueckt: return String(localized: "ff.pack.verrueckt")
+        case .pervers:   return String(localized: "ff.pack.pervers")
+        case .unnuetz:   return String(localized: "ff.pack.unnuetz")
         }
     }
 
@@ -50,7 +51,7 @@ enum FFPack: String, Codable, CaseIterable, Identifiable {
 }
 
 // MARK: - Frage-Modell
-struct FFQuestion: Identifiable, Codable {
+struct FFQuestion: Identifiable, Codable, Sendable {
     let id: String
     let de_question: String
     let en_question: String
@@ -59,28 +60,33 @@ struct FFQuestion: Identifiable, Codable {
     let category: String
     let pack: FFPack
 
-    var localizedQuestion: String {
-        let code = UserDefaults.standard.string(forKey: "selectedLanguageCode") ?? "de"
-        return code == "en" ? en_question : de_question
+    func localizedQuestion(languageCode: String = "de") -> String {
+        languageCode == "en" ? en_question : de_question
     }
 
-    var localizedAnswer: String {
-        let code = UserDefaults.standard.string(forKey: "selectedLanguageCode") ?? "de"
-        return code == "en" ? en_answer : de_answer
+    func localizedAnswer(languageCode: String = "de") -> String {
+        languageCode == "en" ? en_answer : de_answer
     }
 }
 
 // MARK: - Datenbank
 enum FFQuestionDatabase {
     static var all: [FFQuestion] = {
-        guard let url = Bundle.main.url(forResource: "ff_questions", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let questions = try? JSONDecoder().decode([FFQuestion].self, from: data)
-        else { return [] }
-        return questions
+        guard let url = Bundle.main.url(forResource: "ff_questions", withExtension: "json") else {
+            assertionFailure("ff_questions.json nicht im Bundle gefunden")
+            return []
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode([FFQuestion].self, from: data)
+        } catch {
+            assertionFailure("ff_questions.json Decodierfehler: \(error)")
+            return []
+        }
     }()
 
     static func questions(for packs: Set<FFPack>) -> [FFQuestion] {
-        all.filter { packs.contains($0.pack) }.shuffled()
+        let pool = all.filter { packs.contains($0.pack) }
+        return pool.randomSample(count: pool.count)
     }
 }

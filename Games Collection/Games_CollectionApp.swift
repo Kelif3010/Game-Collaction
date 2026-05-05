@@ -40,6 +40,7 @@ struct Games_CollectionApp: App {
                 }
             }
             .environment(\.locale, activeLocale)
+            .environment(MultipeerManager.shared)
             .animation(.smooth, value: hasSeenOnboarding)
             .onAppear {
                 lifecycleManager.onAppLaunch()

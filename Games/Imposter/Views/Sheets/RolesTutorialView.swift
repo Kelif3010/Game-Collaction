@@ -36,7 +36,7 @@ struct RolesTutorialView: View {
     ] + RoleType.allCases.map { role in
         TutorialRole(
             name: role.rawValue,
-            icon: role.icon.rawValue,
+            icon: role.icon,
             team: role.team,
             ability: role.description,
             mission: getMissionText(for: role),

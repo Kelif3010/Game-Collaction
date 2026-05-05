@@ -85,7 +85,7 @@ final class ImposterMPCHandler {
             gs.timeRemaining = gs.timeLimit
             gs.isWaitingForOtherPlayers = false
             gs.multiplayerStartAtHostUptime = nil
-            gs.revealProgress = (0, max(1, gs.players.count))
+            gs.revealProgress = RevealProgress(ready: 0, total: max(1, gs.players.count))
             onNavigate?(.game)
 
         case MPCEventType.gameStart:
@@ -111,7 +111,7 @@ final class ImposterMPCHandler {
         case MPCEventType.imposterRevealProgress:
             guard let d = event.payload,
                   let progress = try? decoder.decode(ImposterRevealProgressPayload.self, from: d) else { return }
-            gs.revealProgress = (progress.readyCount, progress.totalCount)
+            gs.revealProgress = RevealProgress(ready: progress.readyCount, total: progress.totalCount)
 
         case MPCEventType.imposterTimerSync:
             guard let d = event.payload,
@@ -249,7 +249,7 @@ final class ImposterMPCHandler {
             gs.startingPlayerName = state.gameState.startingPlayerName
             gs.multiplayerStartAtHostUptime = state.multiplayerStartAtHostUptime
             if let progress = state.revealProgress {
-                gs.revealProgress = (progress.readyCount, progress.totalCount)
+                gs.revealProgress = RevealProgress(ready: progress.readyCount, total: progress.totalCount)
             } else {
                 gs.revealProgress = nil
             }
@@ -302,7 +302,7 @@ final class ImposterMPCHandler {
             let totalCount = gs.players.count
             let progressPayload = ImposterRevealProgressPayload(readyCount: readyCount, totalCount: totalCount)
             mpc.sendToAll(event: MPCEventType.imposterRevealProgress, object: progressPayload)
-            gs.revealProgress = (readyCount, totalCount)
+            gs.revealProgress = RevealProgress(ready: readyCount, total: totalCount)
             if readyCount == totalCount, gs.multiplayerStartAtHostUptime == nil {
                 Task { @MainActor [weak self] in
                     try? await Task.sleep(for: .seconds(1))

@@ -57,3 +57,8 @@ struct CategorySelectionView: View {
         true
     }
 }
+
+#Preview {
+    CategorySelectionView(onContinue: {}, onBackToGroups: {})
+        .environment(AppViewModel())
+}

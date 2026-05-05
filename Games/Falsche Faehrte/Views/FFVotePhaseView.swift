@@ -2,12 +2,14 @@ import SwiftUI
 
 // MARK: - Vote-Phase: Alle wählen gleichzeitig (oder reihum) was die Wahrheit ist
 struct FFVotePhaseView: View {
-    @EnvironmentObject private var viewModel: FFViewModel
+    @Environment(FFViewModel.self) private var viewModel
 
     @State private var appeared = false
     @State private var currentVoterIndex = 0
     @State private var selectedSubmissionId: UUID? = nil
     @State private var showVoterTransition = false
+    @State private var lightHaptic = false
+    @State private var mediumHaptic = false
 
     // Multiplayer-State
     @State private var mpSelectedId: String? = nil
@@ -85,11 +87,13 @@ struct FFVotePhaseView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightHaptic)
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
         .onAppear {
             currentVoterIndex = 0
             selectedSubmissionId = nil
             mpSelectedId = nil
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.82).delay(0.05)) {
+            withAnimation(.spring(duration: 0.5, bounce: 0.15).delay(0.05)) {
                 appeared = true
             }
         }
@@ -99,7 +103,7 @@ struct FFVotePhaseView: View {
     private var voteHeader: some View {
         HStack {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                lightHaptic.toggle()
                 viewModel.returnToSetup()
             } label: {
                 Image(systemName: "xmark")
@@ -132,7 +136,7 @@ struct FFVotePhaseView: View {
                 .font(.system(size: 22))
                 .foregroundStyle(FFStyle.primaryGradient)
 
-            Text(round?.question.localizedQuestion ?? "")
+            Text(round?.question.localizedQuestion(languageCode: viewModel.languageCode) ?? "")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
                 .lineLimit(3)
@@ -179,72 +183,28 @@ struct FFVotePhaseView: View {
         .ffCard()
     }
 
-    // MARK: - Antworten
+    // MARK: - Antworten (Single-Device)
     private var answersStack: some View {
         VStack(spacing: 10) {
             ForEach(Array(orderedSubmissions.enumerated()), id: \.element.id) { idx, submission in
-                answerCard(submission: submission, index: idx)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: appeared ? 0 : CGFloat(idx * 8))
-                    .animation(.spring(response: 0.45, dampingFraction: 0.82).delay(Double(idx) * 0.06), value: appeared)
+                FFVoteAnswerCard(
+                    index: idx,
+                    text: submission.text,
+                    isSelected: selectedSubmissionId == submission.id,
+                    isOwnEntry: submission.playerId == currentVoter?.id
+                ) {
+                    lightHaptic.toggle()
+                    withAnimation(.snappy) {
+                        selectedSubmissionId = selectedSubmissionId == submission.id ? nil : submission.id
+                    }
+                }
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : CGFloat(idx * 8))
+                .animation(.spring(duration: 0.45, bounce: 0.15).delay(Double(idx) * 0.06), value: appeared)
+                .accessibilityLabel("Antwort \(String(UnicodeScalar(65 + idx)!)): \(submission.text)")
+                .accessibilityAddTraits(selectedSubmissionId == submission.id ? .isSelected : [])
             }
         }
-    }
-
-    private func answerCard(submission: FFSubmission, index: Int) -> some View {
-        let isSelected = selectedSubmissionId == submission.id
-        // Spieler können nicht für sich selbst voten
-        let isOwnSubmission = submission.playerId == currentVoter?.id
-
-        return Button {
-            guard !isOwnSubmission else { return }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(.spring(response: 0.3)) {
-                selectedSubmissionId = (selectedSubmissionId == submission.id) ? nil : submission.id
-            }
-        } label: {
-            HStack(spacing: 14) {
-                // Buchstaben-Badge (A, B, C…)
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? FFStyle.accentViolet.opacity(0.25) : Color.white.opacity(0.08))
-                        .frame(width: 36, height: 36)
-                    Text(String(UnicodeScalar(65 + index)!))
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(isSelected ? FFStyle.accentViolet : FFStyle.textMuted)
-                }
-
-                Text(submission.text)
-                    .font(.system(size: 15, weight: isSelected ? .bold : .semibold))
-                    .foregroundStyle(isSelected ? .white : Color.white.opacity(0.85))
-                    .lineLimit(3)
-                    .lineSpacing(2)
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(FFStyle.accentViolet)
-                } else if isOwnSubmission {
-                    Image(systemName: "hand.raised.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(FFStyle.textSubtle)
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? FFStyle.accentViolet.opacity(0.1) : Color.white.opacity(0.04))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(isSelected ? FFStyle.accentViolet.opacity(0.55) : Color.white.opacity(0.07), lineWidth: isSelected ? 1.5 : 1)
-            )
-        }
-        .disabled(isOwnSubmission)
-        .opacity(isOwnSubmission ? 0.4 : 1)
     }
 
     // MARK: - Bestätigen-Button
@@ -254,7 +214,7 @@ struct FFVotePhaseView: View {
         return Button {
             guard hasVoted, let voteId = selectedSubmissionId,
                   let voter = currentVoter else { return }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            mediumHaptic.toggle()
 
             viewModel.castVote(voterId: voter.id, forSubmissionId: voteId)
 
@@ -267,7 +227,8 @@ struct FFVotePhaseView: View {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     showVoterTransition = true
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(1.2))
                     currentVoterIndex = nextIdx
                     selectedSubmissionId = nil
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -289,13 +250,12 @@ struct FFVotePhaseView: View {
                 Capsule()
                     .fill(hasVoted
                           ? AnyShapeStyle(FFStyle.primaryGradient)
-                          : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)],
-                                                         startPoint: .leading, endPoint: .trailing)))
+                          : AnyShapeStyle(Color.white.opacity(0.08)))
                     .shadow(color: hasVoted ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 16, y: 6)
             )
         }
         .disabled(!hasVoted)
-        .animation(.spring(response: 0.3), value: hasVoted)
+        .animation(.snappy, value: hasVoted)
         .padding(.horizontal, 24)
     }
 
@@ -310,59 +270,23 @@ struct FFVotePhaseView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             ForEach(Array(viewModel.mpSubmissions.enumerated()), id: \.element.id) { idx, submission in
-                let isSelected = mpSelectedId == submission.id
                 let isOwnBluff = submission.text == viewModel.myBluffText
-
-                Button {
-                    guard !isOwnBluff else { return }
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.spring(response: 0.3)) {
-                        mpSelectedId = (mpSelectedId == submission.id) ? nil : submission.id
+                FFVoteAnswerCard(
+                    index: idx,
+                    text: submission.text,
+                    isSelected: mpSelectedId == submission.id,
+                    isOwnEntry: isOwnBluff
+                ) {
+                    lightHaptic.toggle()
+                    withAnimation(.snappy) {
+                        mpSelectedId = mpSelectedId == submission.id ? nil : submission.id
                     }
-                } label: {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            Circle()
-                                .fill(isSelected ? FFStyle.accentViolet.opacity(0.25) : Color.white.opacity(0.08))
-                                .frame(width: 36, height: 36)
-                            Text(String(UnicodeScalar(65 + idx)!))
-                                .font(.system(size: 15, weight: .black, design: .rounded))
-                                .foregroundStyle(isSelected ? FFStyle.accentViolet : FFStyle.textMuted)
-                        }
-
-                        Text(submission.text)
-                            .font(.system(size: 15, weight: isSelected ? .bold : .semibold))
-                            .foregroundStyle(isSelected ? .white : Color.white.opacity(0.85))
-                            .lineLimit(3)
-                            .lineSpacing(2)
-
-                        Spacer()
-
-                        if isOwnBluff {
-                            Image(systemName: "hand.raised.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(FFStyle.textSubtle)
-                        } else if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(FFStyle.accentViolet)
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(isSelected ? FFStyle.accentViolet.opacity(0.1) : Color.white.opacity(0.04))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(isSelected ? FFStyle.accentViolet.opacity(0.55) : Color.white.opacity(0.07), lineWidth: isSelected ? 1.5 : 1)
-                    )
                 }
-                .disabled(isOwnBluff)
                 .opacity(isOwnBluff ? 0.4 : (appeared ? 1 : 0))
                 .offset(y: appeared ? 0 : CGFloat(idx * 8))
-                .animation(.spring(response: 0.45, dampingFraction: 0.82).delay(Double(idx) * 0.06), value: appeared)
+                .animation(.spring(duration: 0.45, bounce: 0.15).delay(Double(idx) * 0.06), value: appeared)
+                .accessibilityLabel("Antwort \(String(UnicodeScalar(65 + idx)!)): \(submission.text)")
+                .accessibilityAddTraits(mpSelectedId == submission.id ? .isSelected : [])
             }
         }
     }
@@ -374,7 +298,7 @@ struct FFVotePhaseView: View {
 
         return Button {
             guard hasVoted, let id = mpSelectedId else { return }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            mediumHaptic.toggle()
             viewModel.castVoteMultiplayer(submissionId: id)
         } label: {
             HStack(spacing: 10) {
@@ -390,12 +314,12 @@ struct FFVotePhaseView: View {
                 Capsule()
                     .fill(hasVoted
                           ? AnyShapeStyle(FFStyle.primaryGradient)
-                          : AnyShapeStyle(LinearGradient(colors: [Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing)))
+                          : AnyShapeStyle(Color.white.opacity(0.08)))
                     .shadow(color: hasVoted ? FFStyle.accentViolet.opacity(0.5) : .clear, radius: 16, y: 6)
             )
         }
         .disabled(!hasVoted)
-        .animation(.spring(response: 0.3), value: hasVoted)
+        .animation(.snappy, value: hasVoted)
         .padding(.horizontal, 24)
     }
 
@@ -439,7 +363,7 @@ struct FFVotePhaseView: View {
                         Capsule()
                             .fill(FFStyle.primaryGradient)
                             .frame(width: total > 0 ? geo.size.width * CGFloat(voted) / CGFloat(total) : 0, height: 6)
-                            .animation(.spring(response: 0.5), value: voted)
+                            .animation(.smooth(duration: 0.5), value: voted)
                     }
                 }
                 .frame(height: 6)
@@ -487,4 +411,65 @@ struct FFVotePhaseView: View {
         }
         .transition(.opacity)
     }
+}
+
+// MARK: - Wiederverwendbare Antwort-Karte (Single-Device + Multiplayer)
+private struct FFVoteAnswerCard: View {
+    let index: Int
+    let text: String
+    let isSelected: Bool
+    let isOwnEntry: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? FFStyle.accentViolet.opacity(0.25) : Color.white.opacity(0.08))
+                        .frame(width: 36, height: 36)
+                    Text(String(UnicodeScalar(65 + index)!))
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(isSelected ? FFStyle.accentViolet : FFStyle.textMuted)
+                }
+
+                Text(text)
+                    .font(.system(size: 15, weight: isSelected ? .bold : .semibold))
+                    .foregroundStyle(isSelected ? .white : Color.white.opacity(0.85))
+                    .lineLimit(3)
+                    .lineSpacing(2)
+
+                Spacer()
+
+                if isOwnEntry {
+                    Image(systemName: "hand.raised.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(FFStyle.textSubtle)
+                } else if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(FFStyle.accentViolet)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isSelected ? FFStyle.accentViolet.opacity(0.1) : Color.white.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        isSelected ? FFStyle.accentViolet.opacity(0.55) : Color.white.opacity(0.07),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+        .disabled(isOwnEntry)
+    }
+}
+
+#Preview {
+    FFVotePhaseView()
+        .environment(FFViewModel.preview)
 }

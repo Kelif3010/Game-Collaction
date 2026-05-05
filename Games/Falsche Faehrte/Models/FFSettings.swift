@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Rundenanzahl
-enum FFRoundCount: Int, CaseIterable, Identifiable {
+enum FFRoundCount: Int, CaseIterable, Identifiable, Sendable {
     case two   = 2
     case five  = 5
     case eight = 8
@@ -14,7 +14,7 @@ enum FFRoundCount: Int, CaseIterable, Identifiable {
 }
 
 // MARK: - Bluff-Eingabe-Timer
-enum FFBluffTimer: Int, CaseIterable, Identifiable {
+enum FFBluffTimer: Int, CaseIterable, Identifiable, Sendable {
     case thirty  = 30
     case forty   = 40
     case sixty   = 60
@@ -26,7 +26,7 @@ enum FFBluffTimer: Int, CaseIterable, Identifiable {
 }
 
 // MARK: - Abstimmungs-Timer
-enum FFVoteTimer: Int, CaseIterable, Identifiable {
+enum FFVoteTimer: Int, CaseIterable, Identifiable, Sendable {
     case twenty  = 20
     case thirty  = 30
     case fortyfive = 45
@@ -37,7 +37,7 @@ enum FFVoteTimer: Int, CaseIterable, Identifiable {
 }
 
 // MARK: - Einstellungen
-struct FFSettings {
+struct FFSettings: Sendable {
     var selectedPacks: Set<FFPack>
     var roundCount: FFRoundCount
     var bluffTimer: FFBluffTimer

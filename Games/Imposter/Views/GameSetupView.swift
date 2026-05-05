@@ -11,7 +11,7 @@ struct GameSetupView: View {
     @Environment(GameSettings.self) var gameSettings
     @Environment(\.dismiss) private var dismiss
     @State var gameLogic = GameLogic(gameSettings: GameSettings())
-    @ObservedObject var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) var mpc
 
     @State var showingAlert = false
     @State var alertMessage = ""

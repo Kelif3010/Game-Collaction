@@ -6,6 +6,7 @@
 //
 
 import Foundation
+internal import RealModule
 
 /// Simple protocol so we can inject a deterministic RNG in tests.
 protocol RandomNumberGeneratorLike {
@@ -125,7 +126,7 @@ final class ImposterPicker {
                 if let last = state.pairLastRound[key] {
                     let d = max(0, round - last)
                     if d <= policy.pairRecentWindow {
-                        penalty += policy.gammaPairPenalty * exp(-policy.pairPenaltyDecay * Double(d))
+                        penalty += policy.gammaPairPenalty * Double.exp(-policy.pairPenaltyDecay * Double(d))
                     }
                 }
             }
@@ -285,7 +286,7 @@ final class ImposterPicker {
                 if let last = state.pairLastRound[key] {
                     let d = max(0, round - last)
                     if d <= policy.pairRecentWindow {
-                        penalty += policy.gammaPairPenalty * exp(-policy.pairPenaltyDecay * Double(d))
+                        penalty += policy.gammaPairPenalty * Double.exp(-policy.pairPenaltyDecay * Double(d))
                     }
                 }
             }

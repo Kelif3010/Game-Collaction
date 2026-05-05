@@ -519,34 +519,28 @@ extension AIService {
     
     @MainActor
     func generateRole(for location: String, playerName: String? = nil) async -> String? {
-        // ... (Logik bleibt erhalten, Platzhalter für Verkürzung im Diff)
-        // Um Codelänge zu sparen, nutzen wir hier einen einfachen Aufruf,
-        // da der User diesen Teil nicht kritisiert hat.
-        // Wir können die bestehende Implementierung aus der vorherigen Datei übernehmen
-        // oder eine vereinfachte Version nutzen, falls der User es nicht explizit geändert haben wollte.
-        // Da die Datei komplett ersetzt wird, muss ich die Funktion wiederherstellen.
-        
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            guard isAvailable, let session = session as? LanguageModelSession else { return "Besucher" }
-            let prompt = "Nenne EINE typische Rolle (Beruf/Person) für den Ort '\(location)'. Nur das Wort."
+            guard isAvailable else { return "Besucher" }
+            let prompt = "Nenne EINE typische Rolle für den Ort '\(location)'."
             do {
-                let res = try await session.respond(to: prompt)
-                return res.content.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .replacingOccurrences(of: "\"", with: "")
+                let session = makeHintSession()
+                let res = try await session.respond(to: prompt, generating: LocationRole.self)
+                return res.content.role.trimmingCharacters(in: .whitespacesAndNewlines)
             } catch { return "Besucher" }
         }
         #endif
         return "Besucher"
     }
-    
+
     @MainActor
     func generateRoles(for location: String, count: Int) async -> [String] {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            guard isAvailable, let session = session as? LanguageModelSession else { return Array(repeating: "Besucher", count: count) }
+            guard isAvailable else { return Array(repeating: "Besucher", count: count) }
             let prompt = "Nenne \(count) verschiedene typische Rollen für '\(location)'. Antworte mit einzelnen deutschen Rollenbezeichnungen."
             do {
+                let session = makeHintSession()
                 let res = try await session.respond(to: prompt, generating: AIRoleListResponse.self)
                 let roles = res.content.roles
                     .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }

@@ -1,6 +1,6 @@
 import SwiftUI
-import SFSafeSymbols
 import Pow
+import SFSafeSymbols
 
 struct GroupVoteCard: View {
     let group: GroupInfo
@@ -61,7 +61,7 @@ struct GroupVoteCard: View {
         )
         .changeEffect(.jump(height: 10), value: raiseCount)
         .changeEffect(.spray(origin: .center) {
-            Image(systemSymbol: .circleFill)
+            Image(systemName: "circle.fill")
                 .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(BetBuddyTheme.accentGold)
         }, value: raiseCount)
@@ -132,12 +132,12 @@ struct GroupVoteCard: View {
                 Spacer()
                 ZStack {
                     // Glow
-                    Image(systemSymbol: .crownFill)
+                    Image(systemName: "crown.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(BetBuddyTheme.accentGold)
                         .blur(radius: 6)
 
-                    Image(systemSymbol: .crownFill)
+                    Image(systemName: "crown.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(BetBuddyTheme.accentGold)
                 }
@@ -197,7 +197,7 @@ struct GroupVoteCard: View {
                             lineWidth: 2
                         )
                         .frame(width: 56, height: 56)
-                    Image(systemSymbol: .minus)
+                    Image(systemName: "minus")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(
                             locked
@@ -260,7 +260,7 @@ struct GroupVoteCard: View {
                         )
                         .frame(width: 56, height: 56)
 
-                    Image(systemSymbol: .plus)
+                    Image(systemName: "plus")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(locked ? BetBuddyTheme.textSilver : .white)
                 }
@@ -283,7 +283,7 @@ struct GroupVoteCard: View {
                 .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.6))
                 .tracking(1)
 
-            Image(systemSymbol: .arrowUpRight)
+            Image(systemName: "arrow.up.right")
                 .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(BetBuddyTheme.accentEmerald.opacity(0.6))
         }
@@ -300,5 +300,31 @@ struct CoinFallAnimationView: View {
             animationSpeed: 1.2
         )
             .frame(width: 120, height: 120)
+    }
+}
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+            GroupVoteCard(
+                group: GroupInfo(color: .blue, customName: "Team A"),
+                onIncrement: {},
+                onDecrement: {},
+                locked: false,
+                isLeader: true,
+                showLeader: true
+            )
+            
+            GroupVoteCard(
+                group: GroupInfo(color: .red, customName: "Team B"),
+                onIncrement: {},
+                onDecrement: {},
+                locked: false,
+                isLeader: false,
+                showLeader: true
+            )
+        }
+        .padding()
     }
 }

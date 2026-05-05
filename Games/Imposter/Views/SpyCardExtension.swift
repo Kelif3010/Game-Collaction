@@ -421,7 +421,7 @@ struct SpyCardFrontView: View {
             
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemSymbol: card.cardIcon)
+                    Image(systemName: card.cardIcon)
                     Text(card.cardTitle.uppercased())
                         .font(.system(size: 14, weight: .bold))
                         .tracking(1)

@@ -2,12 +2,14 @@ import SwiftUI
 
 // MARK: - Game Over: Endergebnis + Sieger-Banner
 struct FFGameOverView: View {
-    @EnvironmentObject private var viewModel: FFViewModel
+    @Environment(FFViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var appeared = false
     @State private var crownScale: CGFloat = 0
     @State private var showStats = false
+    @State private var lightHaptic = false
+    @State private var mediumHaptic = false
 
     private var sorted: [FFPlayer] { viewModel.sortedPlayers }
     private var winner: FFPlayer? { sorted.first }
@@ -63,12 +65,14 @@ struct FFGameOverView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightHaptic)
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
         .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.75).delay(0.1)) {
+            withAnimation(.bouncy(duration: 0.6).delay(0.1)) {
                 appeared = true
                 crownScale = 1
             }
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.7)) {
+            withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(0.7)) {
                 showStats = true
             }
         }
@@ -299,7 +303,7 @@ struct FFGameOverView: View {
         VStack(spacing: 12) {
             // Nochmal spielen
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                mediumHaptic.toggle()
                 viewModel.restartGame()
             } label: {
                 HStack(spacing: 10) {
@@ -320,7 +324,7 @@ struct FFGameOverView: View {
 
             // Zur Übersicht
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                lightHaptic.toggle()
                 viewModel.returnToSetup()
             } label: {
                 Text("Zur Übersicht")
@@ -337,4 +341,9 @@ struct FFGameOverView: View {
         }
         .padding(.horizontal, 24)
     }
+}
+
+#Preview {
+    FFGameOverView()
+        .environment(FFViewModel.preview)
 }

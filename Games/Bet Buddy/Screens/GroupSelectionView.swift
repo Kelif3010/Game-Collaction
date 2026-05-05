@@ -72,7 +72,7 @@ struct GroupSelectionView: View {
                                         HapticsService.impact(.light)
                                         showCrewImport = true
                                     } label: {
-                                        Label("Crew", systemSymbol: .person2Fill)
+                                        Label("Crew", systemImage: "person.2.fill")
                                             .font(.caption.bold())
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                             .padding(.horizontal, 12)
@@ -94,7 +94,7 @@ struct GroupSelectionView: View {
 
                     if hasDuplicateNames {
                         HStack(spacing: 8) {
-                            Image(systemSymbol: .exclamationmarkTriangleFill)
+                            Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption.bold())
                                 .foregroundStyle(BetBuddyTheme.accentGold)
                             Text("Zwei Gruppen haben denselben Namen")
@@ -198,7 +198,7 @@ private struct TeamSetupCard: View {
 
                 Spacer()
 
-                Image(systemSymbol: .person3Fill)
+                Image(systemName: "person.3.fill")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(group.color.primary)
             }
@@ -242,7 +242,7 @@ private struct PlayerNamesSection: View {
                         players.append("")
                         onChange(players)
                     } label: {
-                        Label("Hinzufügen", systemSymbol: .plusCircleFill)
+                        Label("Hinzufügen", systemImage: "plus.circle.fill")
                             .font(.caption.bold())
                             .foregroundStyle(group.color.accent)
                     }
@@ -295,7 +295,7 @@ private struct PlayerNamesSection: View {
                     players.remove(at: index)
                     onChange(players)
                 } label: {
-                    Image(systemSymbol: .minusCircleFill)
+                    Image(systemName: "minus.circle.fill")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.75))
                         .frame(width: 30, height: 30)
@@ -339,7 +339,7 @@ private struct CrewImportSheet: View {
             VStack(spacing: 0) {
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemSymbol: .xmark)
+                        Image(systemName: "xmark")
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
@@ -379,10 +379,10 @@ private struct CrewImportSheet: View {
                                         .foregroundStyle(.white)
                                     Spacer()
                                     if isSelected {
-                                        Image(systemSymbol: .checkmarkCircleFill)
+                                        Image(systemName: "checkmark.circle.fill")
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                     } else {
-                                        Image(systemSymbol: .circle)
+                                        Image(systemName: "circle")
                                             .foregroundStyle(BetBuddyTheme.textSilver)
                                     }
                                 }
@@ -419,4 +419,21 @@ private struct CrewImportSheet: View {
             }
         }
     }
+}
+
+#Preview {
+    GroupSelectionView(onContinue: {})
+        .environment(AppViewModel())
+}
+
+#Preview("Crew Import Sheet") {
+    CrewImportSheet(
+        players: [
+            GlobalPlayer(name: "Alice", avatarColorHex: "#FF0000"),
+            GlobalPlayer(name: "Bob", avatarColorHex: "#00FF00"),
+            GlobalPlayer(name: "Charlie", avatarColorHex: "#0000FF")
+        ],
+        groupCount: 2,
+        onImport: { _ in }
+    )
 }

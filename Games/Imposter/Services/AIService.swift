@@ -22,72 +22,40 @@ class AIService {
     // Text-to-Speech
     private let synthesizer = AVSpeechSynthesizer()
     
-    var session: Any?
     private let fallbackService = FallbackAIService()
     private let settings = SettingsService.shared
-    
+
     private init() {
         checkAvailability()
     }
-    
+
     /// Prüft ob Apple Intelligence verfügbar ist
     private func checkAvailability() {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            let model = SystemLanguageModel.default
-            
-            switch model.availability {
-            case .available:
-                isAvailable = true
-                setupSession()
-            case .unavailable:
-                isAvailable = false
-            }
+            isAvailable = SystemLanguageModel.default.isAvailable
             return
         }
         #endif
         isAvailable = false
     }
-    
-    /// Erstellt eine neue KI-Session
-    #if canImport(FoundationModels)
-    @available(iOS 26.0, *)
-    private func setupSession() {
-        let instructions = """
-        Du bist ein intelligenter Moderator für ein Spion-Spiel.
-        Deine Aufgabe ist es, Hinweise, Rollen und Moderations-Logs zu liefern,
-        die das Spiel interessanter und fairer machen.
 
-        Wichtige Regeln:
-        - Antworte immer auf Deutsch
-        - Sei kreativ aber fair
-        - Halte Antworten kurz und prägnant
-        - Verwende einen spannenden, geheimnisvollen Ton
-        """
-        session = LanguageModelSession(instructions: instructions)
-    }
-    #endif
-    
     /// Generiert Mission-Flavor für Imposter
     func generateMissionFlavor(for player: Player, category: Category) async -> String {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            guard isAvailable, let session = session as? LanguageModelSession else {
+            guard isAvailable else {
                 return fallbackService.generateMissionFlavor(for: player, category: category)
             }
-            
+
             isResponding = true
             defer { isResponding = false }
-            
+
             do {
-                let prompt = """
-                Generiere eine kurze, spannende Mission-Beschreibung für \(player.name) 
-                in der Kategorie "\(category.name)". 
-                Maximal 2 Sätze, geheimnisvoller Ton.
-                """
-                
-                let response = try await session.respond(to: prompt)
-                return response.content
+                let session = LanguageModelSession(instructions: "Du bist Moderator eines Spion-Spiels. Antworte auf Deutsch, geheimnisvoll und knapp.")
+                let prompt = "Generiere eine kurze Mission-Beschreibung für \(player.name) in der Kategorie \"\(category.name)\". Maximal 80 Zeichen."
+                let response = try await session.respond(to: prompt, generating: MissionFlavor.self)
+                return response.content.text
             } catch {
                 return fallbackService.generateMissionFlavor(for: player, category: category)
             }
@@ -95,22 +63,23 @@ class AIService {
         #endif
         return fallbackService.generateMissionFlavor(for: player, category: category)
     }
-    
+
     /// Generiert Moderator-Log Erklärung
     func generateModeratorLog(for selection: ImposterSelection) async -> String {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            guard isAvailable, let session = session as? LanguageModelSession else {
+            guard isAvailable else {
                 return fallbackService.generateModeratorLog(for: selection)
             }
-            
+
             isResponding = true
             defer { isResponding = false }
-            
+
             do {
-                let prompt = createModeratorLogPrompt(selection: selection)
-                let response = try await session.respond(to: prompt)
-                return response.content
+                let session = LanguageModelSession(instructions: "Du bist ein technischer Moderator. Antworte auf Deutsch, sachlich und kurz.")
+                let prompt = "Erkläre die Imposter-Auswahl: \(selection.selectedImposters.map { $0.name }.joined(separator: ", ")). Fairness-Score: \(selection.fairnessScore). Grund: \(selection.reason)."
+                let response = try await session.respond(to: prompt, generating: ModeratorLogEntry.self)
+                return response.content.text
             } catch {
                 return fallbackService.generateModeratorLog(for: selection)
             }
@@ -163,18 +132,6 @@ class AIService {
         synthesizer.speak(utterance)
     }
     
-    private func createModeratorLogPrompt(selection: ImposterSelection) -> String {
-        return """
-        Erkläre die Imposter-Auswahl in einem kurzen Moderator-Log:
-        
-        Ausgewählte Imposter: \(selection.selectedImposters.map { $0.name }.joined(separator: ", "))
-        Fairness-Score: \(selection.fairnessScore)
-        Cooldown-Status: \(selection.cooldownStatus)
-        Grund: \(selection.reason)
-        
-        Maximal 2 Sätze, technischer Ton.
-        """
-    }
 }
 
 // MARK: - Fallback Service (ohne KI)

@@ -30,7 +30,7 @@ struct HomeView: View {
 
                 VStack(spacing: 12) {
                     SettingsRow(
-                        icon: .person2Fill,
+                        icon: "person.2.fill",
                         title: "Gruppen",
                         detail: "\(appModel.selectedGroupCount)",
                         rowType: .groups,
@@ -38,7 +38,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: .brainHeadProfile,
+                        icon: "brain.head.profile",
                         title: "Kategorien",
                         // Hier wird jetzt automatisch "Mix" angezeigt (durch ViewModel Logik)
                         detail: appModel.selectedCategoriesDisplay,
@@ -47,7 +47,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: .timer,
+                        icon: "timer",
                         title: "Zeit läuft weiter",
                         detail: appModel.isPartyMode ? "Kein Reset" : "Reset bei Treffer",
                         rowType: .partyMode,
@@ -61,7 +61,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: .exclamationmarkCircle,
+                        icon: "exclamationmark.circle",
                         title: "Punktabzug",
                         detail: appModel.isPenaltyEnabled ? appModel.penaltyLevel.title : "Aus",
                         rowType: .penalty,
@@ -80,7 +80,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: .lightbulbFill,
+                        icon: "lightbulb.fill",
                         title: "Hinweise",
                         detail: appModel.isHintsEnabled ? "An" : "Aus",
                         rowType: .hints,
@@ -94,7 +94,7 @@ struct HomeView: View {
                     )
 
                     SettingsRow(
-                        icon: .clockFill,
+                        icon: "clock.fill",
                         title: "Zeitlimit",
                         detail: appModel.isTimerEnabled ? "\(appModel.timerSelection)s" : "Aus",
                         rowType: .timer,
@@ -176,18 +176,11 @@ struct HomeView: View {
             Button {
                 dismiss()
             } label: {
-                Image(systemSymbol: .chevronLeft)
+                Image(systemName: "chevron.left")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
 
             Spacer()
@@ -196,18 +189,11 @@ struct HomeView: View {
                 HapticsService.impact(.light)
                 showLeaderboardSheet = true
             } label: {
-                Image(systemSymbol: .trophyFill)
+                Image(systemName: "trophy.fill")
                     .font(.headline)
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(BetBuddyTheme.accentGold.opacity(0.15))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.3), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
             .padding(.trailing, 8)
 
@@ -215,22 +201,24 @@ struct HomeView: View {
                 HapticsService.impact(.light)
                 showInfoSheet = true
             } label: {
-                Image(systemSymbol: .questionmark)
+                Image(systemName: "questionmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
         }
     }
 
+}
+
+#Preview {
+    HomeView(
+        onSelectGroups: {},
+        onSelectCategories: {},
+        onStart: {}
+    )
+    .environment(AppViewModel())
 }
 
 // MARK: - Casino Timer Sheet
@@ -250,14 +238,14 @@ private struct CasinoTimerSheet: View {
                 // Header
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemSymbol: .xmark)
+                        Image(systemName: "xmark")
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                     }
                     Spacer()
                     HStack(spacing: 6) {
-                        Image(systemSymbol: .clockFill)
+                        Image(systemName: "clock.fill")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentGold)
                         Text("ZEITLIMIT")
@@ -292,7 +280,7 @@ private struct CasinoTimerSheet: View {
                                                 ? BetBuddyTheme.accentGold.opacity(0.2)
                                                 : Color.white.opacity(0.06))
                                             .frame(width: 36, height: 36)
-                                        Image(systemSymbol: .timer)
+                                        Image(systemName: "timer")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundStyle(isSelected
                                                 ? BetBuddyTheme.accentGold
@@ -311,11 +299,11 @@ private struct CasinoTimerSheet: View {
                                     Spacer()
 
                                     if isSelected {
-                                        Image(systemSymbol: .checkmarkCircleFill)
+                                        Image(systemName: "checkmark.circle.fill")
                                             .font(.title3)
                                             .foregroundStyle(BetBuddyTheme.accentGold)
                                     } else {
-                                        Image(systemSymbol: .circle)
+                                        Image(systemName: "circle")
                                             .font(.title3)
                                             .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
                                     }
@@ -375,14 +363,14 @@ private struct CasinoPenaltySheet: View {
                 // Header
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemSymbol: .xmark)
+                        Image(systemName: "xmark")
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                     }
                     Spacer()
                     HStack(spacing: 6) {
-                        Image(systemSymbol: .exclamationmarkTriangleFill)
+                        Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentRuby)
                         Text("PUNKTABZUG")
@@ -435,11 +423,11 @@ private struct CasinoPenaltySheet: View {
                                 Spacer()
 
                                 if isSelected {
-                                    Image(systemSymbol: .checkmarkCircleFill)
+                                    Image(systemName: "checkmark.circle.fill")
                                         .font(.title3)
                                         .foregroundStyle(BetBuddyTheme.accentGold)
                                 } else {
-                                    Image(systemSymbol: .circle)
+                                    Image(systemName: "circle")
                                         .font(.title3)
                                         .foregroundStyle(BetBuddyTheme.textSilver.opacity(0.4))
                                 }

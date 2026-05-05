@@ -1,6 +1,6 @@
 import SwiftUI
-import SFSafeSymbols
 import Pow
+import SFSafeSymbols
 
 struct HoldToConfirmButton: View {
     var title: String = "Halten zum Bestätigen"
@@ -54,7 +54,7 @@ struct HoldToConfirmButton: View {
                     Circle()
                         .stroke(disabled ? Color.gray.opacity(0.3) : BetBuddyTheme.accentGold.opacity(0.5), lineWidth: 1.5)
                         .frame(width: 32, height: 32)
-                    Image(systemSymbol: .handPointUpLeftFill)
+                    Image(systemName: "hand.point.up.left.fill")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(disabled ? Color.gray : BetBuddyTheme.accentGold)
                 }
@@ -128,7 +128,7 @@ struct HoldToConfirmButton: View {
         .animation(.easeInOut, value: disabled)
         .changeEffect(.shine, value: isPressing, isEnabled: !disabled && isPressing)
         .changeEffect(.spray(origin: .center) {
-            Image(systemSymbol: .sparkles)
+            Image(systemName: "sparkles")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(BetBuddyTheme.accentGold)
         }, value: completionTrigger)
@@ -177,5 +177,16 @@ struct HoldToConfirmButton: View {
         progress = 1.0
         completionTrigger += 1
         action()
+    }
+}
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        VStack(spacing: 30) {
+            HoldToConfirmButton(title: "Hold to confirm", action: {})
+            HoldToConfirmButton(title: "Disabled button", action: {}, disabled: true)
+        }
+        .padding()
     }
 }

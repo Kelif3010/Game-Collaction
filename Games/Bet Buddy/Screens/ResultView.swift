@@ -1,8 +1,8 @@
 import SwiftUI
 import StoreKit
 import Foundation
-import SFSafeSymbols
 import Pow
+import SFSafeSymbols
 
 struct ResultView: View {
     let result: GameResult
@@ -70,7 +70,7 @@ struct ResultView: View {
                         radius: jackpotPulse ? 20 : 0
                     )
                     .changeEffect(.spray(origin: .center) {
-                        Image(systemSymbol: .sparkles)
+                        Image(systemName: "sparkles")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(BetBuddyTheme.accentGold)
                     }, value: outcomeEffectTrigger, isEnabled: result.outcome == .win)
@@ -153,7 +153,7 @@ struct ResultView: View {
         HStack {
             // Results Title
             HStack(spacing: 8) {
-                Image(systemSymbol: result.outcome == .win ? .crownFill : .xmarkCircleFill)
+                Image(systemName: result.outcome == .win ? "crown.fill" : "xmark.circle.fill")
                     .font(.system(size: 14))
                     .foregroundStyle(result.outcome == .win ? BetBuddyTheme.accentGold : BetBuddyTheme.accentRuby)
 
@@ -168,18 +168,11 @@ struct ResultView: View {
             Button {
                 onRestart()
             } label: {
-                Image(systemSymbol: .xmark)
+                Image(systemName: "xmark")
                     .font(.headline.bold())
                     .foregroundStyle(BetBuddyTheme.textChampagne)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                Circle()
-                                    .stroke(BetBuddyTheme.accentGold.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .modifier(GlassCircleButtonBackground())
             }
         }
     }
@@ -188,7 +181,7 @@ struct ResultView: View {
     private var outcomeBanner: some View {
         HStack(spacing: 12) {
             if result.outcome == .win {
-                Image(systemSymbol: .trophyFill)
+                Image(systemName: "trophy.fill")
                     .font(.system(size: 24))
                     .foregroundStyle(BetBuddyTheme.accentGold)
 
@@ -197,11 +190,11 @@ struct ResultView: View {
                     .foregroundStyle(BetBuddyTheme.accentGold)
                     .tracking(2)
 
-                Image(systemSymbol: .trophyFill)
+                Image(systemName: "trophy.fill")
                     .font(.system(size: 24))
                     .foregroundStyle(BetBuddyTheme.accentGold)
             } else {
-                Image(systemSymbol: .handThumbsdownFill)
+                Image(systemName: "hand.thumbsdown.fill")
                     .font(.system(size: 22))
                     .foregroundStyle(BetBuddyTheme.accentRuby)
 
@@ -210,7 +203,7 @@ struct ResultView: View {
                     .foregroundStyle(BetBuddyTheme.accentRuby)
                     .tracking(2)
 
-                Image(systemSymbol: .handThumbsdownFill)
+                Image(systemName: "hand.thumbsdown.fill")
                     .font(.system(size: 22))
                     .foregroundStyle(BetBuddyTheme.accentRuby)
             }
@@ -324,7 +317,7 @@ struct ResultView: View {
                 showRestartAlert = true
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemSymbol: .arrowCounterclockwise)
+                    Image(systemName: "arrow.counterclockwise")
                         .font(.system(size: 14, weight: .bold))
                     Text("Neustart")
                         .font(.system(size: 15, weight: .bold))
@@ -350,7 +343,7 @@ struct ResultView: View {
                 HStack(spacing: 8) {
                     Text("Nächste Runde")
                         .font(.system(size: 15, weight: .bold))
-                    Image(systemSymbol: .arrowRight)
+                    Image(systemName: "arrow.right")
                         .font(.system(size: 14, weight: .bold))
                 }
                 .foregroundStyle(BetBuddyTheme.textOnLight)
@@ -441,12 +434,12 @@ struct LeaderboardRowView: View {
         }
     }
 
-    private var rankIcon: SFSymbol {
+    private var rankIcon: String {
         switch index {
-        case 0: return .crownFill
-        case 1: return .medalFill
-        case 2: return .medalFill
-        default: return .circleFill
+        case 0: return "crown.fill"
+        case 1: return "medal.fill"
+        case 2: return "medal.fill"
+        default: return "circle.fill"
         }
     }
 
@@ -459,7 +452,7 @@ struct LeaderboardRowView: View {
                         .fill(rankColor.opacity(0.2))
                         .frame(width: 32, height: 32)
 
-                    Image(systemSymbol: rankIcon)
+                    Image(systemName: rankIcon)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(rankColor)
                 } else {
@@ -500,7 +493,7 @@ struct LeaderboardRowView: View {
                     .foregroundStyle(index == 0 ? BetBuddyTheme.accentGold : BetBuddyTheme.textChampagne)
                     .contentTransition(.numericText())
 
-                Image(systemSymbol: .circleFill)
+                Image(systemName: "circle.fill")
                     .font(.system(size: 8))
                     .foregroundStyle(rankColor.opacity(0.6))
             }
@@ -543,4 +536,22 @@ struct MoneyRainLottieView: View {
         .ignoresSafeArea()
         .allowsHitTesting(false)
     }
+}
+
+#Preview {
+    ResultView(
+        result: GameResult(
+            outcome: .win,
+            finalScore: 10,
+            challengeText: "How many cities in Italy?",
+            inputType: .numeric,
+            leaderboard: [
+                LeaderboardEntry(groupId: UUID(), name: "Team Blue", color: .blue, score: 20),
+                LeaderboardEntry(groupId: UUID(), name: "Team Red", color: .red, score: 15)
+            ]
+        ),
+        onRestart: {},
+        onNewChallenge: {}
+    )
+    .environment(AppViewModel())
 }

@@ -19,3 +19,14 @@ struct TimerPickerButton: View {
         .buttonStyle(.plain)
     }
 }
+
+#Preview {
+    ZStack {
+        BetBuddyBackgroundView()
+        HStack(spacing: 12) {
+            TimerPickerButton(title: "30s", value: 30, isSelected: true, action: {})
+            TimerPickerButton(title: "60s", value: 60, isSelected: false, action: {})
+        }
+        .padding()
+    }
+}

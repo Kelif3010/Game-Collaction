@@ -31,68 +31,66 @@ final class FFMultiplayerHandler {
 
         switch event.type {
 
-        // MARK: Host empfängt Lüge eines Clients
         case MPCEventType.ffBluffSubmit:
-            guard vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFBluffSubmitPayload.self, from: d) else { return }
-            vm.hostCollectBluff(payload)
+            guard vm.isHost, let d = event.payload else { return }
+            decode(FFBluffSubmitPayload.self, from: d, event: event.type) { vm.hostCollectBluff($0) }
 
-        // MARK: Host empfängt Vote eines Clients
         case MPCEventType.ffVoteCast:
-            guard vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFVoteCastPayload.self, from: d) else { return }
-            vm.hostCollectVote(payload)
+            guard vm.isHost, let d = event.payload else { return }
+            decode(FFVoteCastPayload.self, from: d, event: event.type) { vm.hostCollectVote($0) }
 
-        // MARK: Client empfängt anonyme Lügen-Liste (Voting beginnt)
         case MPCEventType.ffBluffsReady:
-            guard !vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFBluffsReadyPayload.self, from: d) else { return }
-            vm.clientReceiveBluffs(payload)
+            guard !vm.isHost, let d = event.payload else { return }
+            decode(FFBluffsReadyPayload.self, from: d, event: event.type) { vm.clientReceiveBluffs($0) }
 
-        // MARK: Client empfängt Lügen-Fortschritt
         case MPCEventType.ffBluffingStatus:
-            guard let d = event.payload,
-                  let payload = try? decoder.decode(FFBluffingStatusPayload.self, from: d) else { return }
-            vm.bluffSubmittedCount = payload.submittedCount
-            vm.totalMultiplayerPlayers = payload.totalPlayers
+            guard let d = event.payload else { return }
+            decode(FFBluffingStatusPayload.self, from: d, event: event.type) {
+                vm.bluffSubmittedCount = $0.submittedCount
+                vm.totalMultiplayerPlayers = $0.totalPlayers
+            }
 
-        // MARK: Client empfängt Voting-Fortschritt
         case MPCEventType.ffVotingStatus:
-            guard let d = event.payload,
-                  let payload = try? decoder.decode(FFVotingStatusPayload.self, from: d) else { return }
-            vm.voteCount = payload.votedCount
-            vm.totalMultiplayerPlayers = payload.totalPlayers
+            guard let d = event.payload else { return }
+            decode(FFVotingStatusPayload.self, from: d, event: event.type) {
+                vm.voteCount = $0.votedCount
+                vm.totalMultiplayerPlayers = $0.totalPlayers
+            }
 
-        // MARK: Client empfängt Auflösung
         case MPCEventType.ffReveal:
-            guard !vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFRevealPayload.self, from: d) else { return }
-            vm.clientReceiveReveal(payload)
+            guard !vm.isHost, let d = event.payload else { return }
+            decode(FFRevealPayload.self, from: d, event: event.type) { vm.clientReceiveReveal($0) }
 
-        // MARK: Client empfängt synchronen Wechsel zum Punktestand
         case MPCEventType.ffRevealScores:
-            guard !vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFRevealScoresPayload.self, from: d) else { return }
-            vm.clientShowRevealScores(payload)
+            guard !vm.isHost, let d = event.payload else { return }
+            decode(FFRevealScoresPayload.self, from: d, event: event.type) { vm.clientShowRevealScores($0) }
 
-        // MARK: Client empfängt nächste Runde
         case MPCEventType.ffNextRound:
-            guard !vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFNextRoundPayload.self, from: d) else { return }
-            vm.clientHandleNextRound(payload)
+            guard !vm.isHost, let d = event.payload else { return }
+            decode(FFNextRoundPayload.self, from: d, event: event.type) { vm.clientHandleNextRound($0) }
 
-        // MARK: Client empfängt Spielende
         case MPCEventType.ffGameOver:
-            guard !vm.isHost, let d = event.payload,
-                  let payload = try? decoder.decode(FFGameOverPayload.self, from: d) else { return }
-            vm.clientReceiveGameOver(payload)
+            guard !vm.isHost, let d = event.payload else { return }
+            decode(FFGameOverPayload.self, from: d, event: event.type) { vm.clientReceiveGameOver($0) }
 
-        // MARK: Spiel abgebrochen (Host hat verlassen)
         case MPCEventType.gameAbort:
             vm.returnToSetup()
 
         default:
             break
+        }
+    }
+
+    private func decode<T: Decodable>(
+        _ type: T.Type,
+        from data: Data,
+        event: String,
+        handler: (T) -> Void
+    ) {
+        do {
+            handler(try decoder.decode(type, from: data))
+        } catch {
+            assertionFailure("FF[\(event)] Decode-Fehler: \(error)")
         }
     }
 }

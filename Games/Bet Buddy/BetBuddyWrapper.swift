@@ -7,3 +7,7 @@ struct BetBuddyWrapper: View {
         BetBuddyRootView(viewModel: gameModel)
     }
 }
+
+#Preview {
+    BetBuddyWrapper()
+}

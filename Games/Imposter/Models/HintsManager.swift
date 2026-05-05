@@ -7,19 +7,23 @@
 
 import Foundation
 import Algorithms
+import Collections
+import DequeModule
 
 /// Manager-Klasse für die Verwaltung von Spion-Hinweisen
 @Observable
 class HintsManager {
-    private static var hintRotation: [String: Int] = [:]
+    private static var hintQueues: [String: Deque<String>] = [:]
 
     private static func pickHint(from hints: [String], key: String, word: String) -> String? {
-        let loweredWord = word.lowercased()
-        let filtered = hints.filter { !$0.lowercased().contains(loweredWord) }
+        let filtered = hints.filter { !$0.lowercased().contains(word.lowercased()) }
         guard !filtered.isEmpty else { return nil }
-        let index = hintRotation[key, default: 0] % filtered.count
-        hintRotation[key] = index + 1
-        return filtered[index]
+        if hintQueues[key] == nil || hintQueues[key]!.isEmpty {
+            hintQueues[key] = Deque(filtered)
+        }
+        guard let hint = hintQueues[key]?.popFirst() else { return nil }
+        hintQueues[key]?.append(hint)
+        return hint
     }
     
     /// Erstellt einen formatierten Hinweis-Text für Spione basierend auf der Skizze

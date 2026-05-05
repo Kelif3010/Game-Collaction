@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Bluff-Phase: Jeder Spieler gibt reihum seine Lüge ein
 struct FFBluffPhaseView: View {
-    @EnvironmentObject private var viewModel: FFViewModel
+    @Environment(FFViewModel.self) private var viewModel
     @FocusState private var textFieldFocused: Bool
 
     @State private var inputText = ""
@@ -10,6 +10,9 @@ struct FFBluffPhaseView: View {
     @State private var playerAppeared = false
     @State private var shakeTrigger = false
     @State private var inputGlow: CGFloat = 0.0
+    @State private var lightHaptic = false
+    @State private var mediumHaptic = false
+    @State private var errorHaptic = false
 
     private var round: FFRound? { viewModel.currentRound }
     private var currentPlayer: FFPlayer? { viewModel.currentInputPlayer }
@@ -60,17 +63,20 @@ struct FFBluffPhaseView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .animation(.spring(response: 0.35, dampingFraction: 0.82), value: textFieldFocused)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightHaptic)
+        .sensoryFeedback(.impact(weight: .medium), trigger: mediumHaptic)
+        .sensoryFeedback(.error, trigger: errorHaptic)
+        .animation(.snappy(duration: 0.35), value: textFieldFocused)
         .onAppear {
             inputText = ""
             shakeTrigger = false
             inputGlow = 0
             textFieldFocused = false
             inputText = viewModel.currentBluffText
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05)) {
+            withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(0.05)) {
                 appeared = true
             }
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.75).delay(0.3)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.25).delay(0.3)) {
                 playerAppeared = true
             }
         }
@@ -79,10 +85,10 @@ struct FFBluffPhaseView: View {
             inputGlow = 0
             appeared = false
             playerAppeared = false
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.82).delay(0.05)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.15).delay(0.05)) {
                 appeared = true
             }
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.75).delay(0.25)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.25).delay(0.25)) {
                 playerAppeared = true
             }
         }
@@ -107,7 +113,7 @@ struct FFBluffPhaseView: View {
     private var topBar: some View {
         HStack(spacing: 12) {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                lightHaptic.toggle()
                 viewModel.returnToSetup()
             } label: {
                 Image(systemName: "xmark")
@@ -129,7 +135,7 @@ struct FFBluffPhaseView: View {
                                     : Color.white.opacity(0.12)
                         )
                         .frame(height: 3)
-                        .animation(.spring(response: 0.35), value: currentIdx)
+                        .animation(.snappy(duration: 0.35), value: currentIdx)
                 }
             }
 
@@ -176,7 +182,7 @@ struct FFBluffPhaseView: View {
                 }
 
                 // Hero-Frage
-                Text(round?.question.localizedQuestion ?? "")
+                Text(round?.question.localizedQuestion(languageCode: viewModel.languageCode) ?? "")
                     .font(.system(size: 22, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
@@ -184,7 +190,7 @@ struct FFBluffPhaseView: View {
                     .padding(.horizontal, 24)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 14)
-                    .animation(.spring(response: 0.55, dampingFraction: 0.8).delay(0.08), value: appeared)
+                    .animation(.spring(duration: 0.55, bounce: 0.2).delay(0.08), value: appeared)
 
                 Spacer()
             }
@@ -229,7 +235,7 @@ struct FFBluffPhaseView: View {
                 )
                 .scaleEffect(playerAppeared ? 1 : 0.6)
                 .opacity(playerAppeared ? 1 : 0)
-                .animation(.spring(response: 0.4, dampingFraction: 0.65), value: playerAppeared)
+                .animation(.bouncy(duration: 0.4), value: playerAppeared)
             }
 
             fadeLine(direction: .leading)
@@ -312,16 +318,14 @@ struct FFBluffPhaseView: View {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .stroke(
                                 textFieldFocused
-                                    ? AnyShapeStyle(
-                                        LinearGradient(
-                                            colors: [
-                                                FFStyle.accentViolet.opacity(0.75),
-                                                FFStyle.accentIndigo.opacity(0.45)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
+                                    ? AnyShapeStyle(LinearGradient(
+                                        colors: [
+                                            FFStyle.accentViolet.opacity(0.75),
+                                            FFStyle.accentIndigo.opacity(0.45)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ))
                                     : AnyShapeStyle(Color.white.opacity(0.08)),
                                 lineWidth: 1.5
                             )
@@ -335,7 +339,7 @@ struct FFBluffPhaseView: View {
             .modifier(ShakeModifier(trigger: shakeTrigger))
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 10)
-            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: appeared)
+            .animation(.spring(duration: 0.5, bounce: 0.2).delay(0.15), value: appeared)
         }
     }
 
@@ -346,11 +350,11 @@ struct FFBluffPhaseView: View {
 
         return Button {
             guard canSubmit else {
-                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                errorHaptic.toggle()
                 withAnimation(.default) { shakeTrigger.toggle() }
                 return
             }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            mediumHaptic.toggle()
             textFieldFocused = false
             if viewModel.isMultiplayer {
                 viewModel.submitBluffMultiplayer(trimmed)
@@ -383,7 +387,7 @@ struct FFBluffPhaseView: View {
             )
         }
         .disabled(!canSubmit)
-        .animation(.spring(response: 0.25), value: canSubmit)
+        .animation(.snappy(duration: 0.25), value: canSubmit)
     }
 
     // MARK: - Multiplayer Warte-Screen
@@ -430,7 +434,7 @@ struct FFBluffPhaseView: View {
                                   ? FFStyle.accentViolet
                                   : Color.white.opacity(0.12))
                             .frame(width: 8, height: 8)
-                            .animation(.spring(response: 0.35).delay(Double(idx) * 0.05), value: submitted)
+                            .animation(.snappy(duration: 0.35).delay(Double(idx) * 0.05), value: submitted)
                     }
                 }
 
@@ -442,7 +446,7 @@ struct FFBluffPhaseView: View {
                         Capsule()
                             .fill(FFStyle.primaryGradient)
                             .frame(width: geo.size.width * progress, height: 3)
-                            .animation(.spring(response: 0.5), value: submitted)
+                            .animation(.smooth(duration: 0.5), value: submitted)
                     }
                 }
                 .frame(height: 3)
@@ -477,4 +481,9 @@ struct ShakeModifier: ViewModifier {
                 }
             }
     }
+}
+
+#Preview {
+    FFBluffPhaseView()
+        .environment(FFViewModel.preview)
 }

@@ -31,7 +31,7 @@ struct RoleActionView: View {
                         
                         if let role = revealedRole {
                             VStack(spacing: 8) {
-                                Image(systemSymbol: role.icon)
+                                Image(systemName: role.icon)
                                     .font(.system(size: 50))
                                     .foregroundStyle(.purple)
                                 Text(role.rawValue)

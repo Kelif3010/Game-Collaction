@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Hilfs-Typen
-struct FFThemeColor {
+struct FFThemeColor: Sendable {
     let primary: Color
     let secondary: Color
 }

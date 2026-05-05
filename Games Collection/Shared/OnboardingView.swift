@@ -108,7 +108,7 @@ struct OnboardingView: View {
             // Back button
             if step != .wow {
                 Button { goBack() } label: {
-                    Image(systemSymbol: .chevronLeft)
+                    Image(systemName: "chevron.left")
                         .font(.body.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
@@ -204,7 +204,7 @@ struct OnboardingView: View {
                 .frame(width: 150, height: 150)
                 .shadow(color: .cyan.opacity(0.4), radius: 28, y: 8)
 
-            Image(systemSymbol: .gamecontrollerFill)
+            Image(systemName: "gamecontroller.fill")
                 .font(.system(size: 64, weight: .bold))
                 .foregroundStyle(.white)
         }
@@ -227,17 +227,17 @@ struct OnboardingView: View {
             }
 
             VStack(spacing: 0) {
-                featureRow(symbol: .gamecontrollerFill, color: .cyan,
+                featureRow(symbol: "gamecontroller.fill", color: .cyan,
                            title: "6 Spiele für jede Runde",
                            detail: "Sofort bereit für kleine und große Gruppen.",
                            index: 0)
                 featureDivider
-                featureRow(symbol: .wifi, color: .green,
+                featureRow(symbol: "wifi", color: .green,
                            title: "Multiplayer über WLAN",
                            detail: "Zusammen spielen, ohne kompliziertes Setup.",
                            index: 1)
                 featureDivider
-                featureRow(symbol: .trophyFill, color: Color(red: 1, green: 0.75, blue: 0.1),
+                featureRow(symbol: "trophy.fill", color: Color(red: 1, green: 0.75, blue: 0.1),
                            title: "Punkte & Leaderboards",
                            detail: "Fortschritt und Sieger direkt in der App.",
                            index: 2)
@@ -246,13 +246,13 @@ struct OnboardingView: View {
         }
     }
 
-    private func featureRow(symbol: SFSymbol, color: Color, title: String, detail: String, index: Int) -> some View {
+    private func featureRow(symbol: String, color: Color, title: String, detail: String, index: Int) -> some View {
         HStack(spacing: 16) {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(color.opacity(0.18))
                 .frame(width: 52, height: 52)
                 .overlay {
-                    Image(systemSymbol: symbol)
+                    Image(systemName: symbol)
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(color)
                 }
@@ -321,7 +321,7 @@ struct OnboardingView: View {
                     .accessibilityHint("Wird nur auf diesem Gerät gespeichert")
                     .changeEffect(.shake(rate: .fast), value: invalidTrigger, isEnabled: !reduceMotion)
 
-                Label("Nur lokal auf diesem Gerät gespeichert", systemSymbol: .lockFill)
+                Label("Nur lokal auf diesem Gerät gespeichert", systemImage: "lock.fill")
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.white.opacity(0.44))
             }
@@ -336,7 +336,7 @@ struct OnboardingView: View {
                 HStack(spacing: 10) {
                     Text(step.buttonTitle)
                         .font(.headline.weight(.bold))
-                    Image(systemSymbol: step == .name ? .checkmark : .arrowRight)
+                    Image(systemName: step == .name ? "checkmark" : "arrow.right")
                         .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(.white)
@@ -352,7 +352,7 @@ struct OnboardingView: View {
             .animation(reduceMotion ? nil : .smooth(duration: 0.25), value: nameOK)
             .changeEffect(
                 .spray(origin: .center) {
-                    Image(systemSymbol: .sparkles)
+                    Image(systemName: "sparkles")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.yellow)
                 },

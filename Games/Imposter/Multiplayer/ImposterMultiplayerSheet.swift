@@ -3,7 +3,7 @@ import MultipeerConnectivity
 
 struct ImposterMultiplayerSheet: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject private var mpc = MultipeerManager.shared
+    @Environment(MultipeerManager.self) private var mpc
     @State private var lobby = MultiplayerLobbyCoordinator()
     
     // MARK: - Body
