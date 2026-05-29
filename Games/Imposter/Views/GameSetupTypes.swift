@@ -13,8 +13,6 @@ extension ImposterGameMode {
             return "Zwei‑Begriffe"
         case .roles:
             return "Rollen Modus"
-        case .questions:
-            return "Fragen Modus"
         @unknown default:
             return rawValue
         }

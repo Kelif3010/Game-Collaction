@@ -47,6 +47,22 @@ Wichtig dabei:
 
 So entsteht Runde für Runde ein Gespräch, aus dem die normalen Spieler den Spion finden wollen, während der Spion versucht herauszuhören, um welches geheime Wort es geht.
 
+## Zwei-Begriffe-Modus
+
+Im Zwei-Begriffe-Modus gibt es weiterhin Spione.
+Der Unterschied ist, dass die normalen Spieler nicht alle denselben Begriff sehen.
+Stattdessen werden die normalen Spieler verdeckt auf zwei verschiedene Begriffe aus derselben Kategorie verteilt.
+
+Das bedeutet:
+
+- manche normale Spieler sehen Begriff A
+- manche normale Spieler sehen Begriff B
+- Spione sehen keinen der beiden Begriffe
+- wenn Spion-Hinweise aktiv sind, bekommen Spione nur den neutralen Hinweis, dass zwei Begriffe im Spiel sind
+
+Die Gruppe muss also nicht nur auf verdächtige Antworten achten, sondern auch erkennen, dass es zwei legitime Bürger-Gruppen geben kann.
+Dadurch wirkt der Modus chaotischer und schwieriger als Klassisch, ohne die Grundregeln zu ändern.
+
 ## Die Abstimmung
 
 Nach der Gesprächsrunde stimmt die Gruppe ab, wer der Spion sein könnte.

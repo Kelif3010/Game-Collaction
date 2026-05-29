@@ -14,6 +14,8 @@ import OrderedCollections
 @Observable
 class GameLogic {
     var gameSettings: GameSettings
+    var startFailureMessage: String?
+    private let rolesModeViewModel = ImposterRolesModeViewModel()
 
     // Timer state — accessed from ImposterGameState extension
     var gameTimerTask: Task<Void, Never>?
@@ -60,6 +62,7 @@ class GameLogic {
     @MainActor
     @discardableResult
     func startGame() async -> Bool {
+        startFailureMessage = nil
         stopGameTimer()
 
         if !gameSettings.randomSpyCount {
@@ -83,6 +86,26 @@ class GameLogic {
 
         distributeRoles(playersCount: gameSettings.players.count)
 
+        if gameSettings.gameMode == .roles {
+            guard rolesModeViewModel.canGenerateRoles else {
+                startFailureMessage = "Rollen-Modus benötigt Apple Intelligence."
+                return false
+            }
+
+            do {
+                let roles = try await rolesModeViewModel.generateLocationRoles(
+                    for: gameWords.primary,
+                    playerCount: gameSettings.players.count
+                )
+                for index in gameSettings.players.indices {
+                    gameSettings.players[index].role = roles[index]
+                }
+            } catch {
+                startFailureMessage = error.localizedDescription
+                return false
+            }
+        }
+
         await assignWordsToPlayers(gameWords: gameWords)
 
         gameSettings.gamePhase = .cardReveal
@@ -93,7 +116,7 @@ class GameLogic {
 
     @MainActor
     func startMultiplayerGameAsHost() async -> Bool {
-        guard gameSettings.gameMode == .classic else { return false }
+        guard gameSettings.gameMode == .classic || gameSettings.gameMode == .twoWords else { return false }
         guard let category = gameSettings.chooseRoundCategory() else { return false }
 
         let mpc = MultipeerManager.shared
@@ -120,8 +143,10 @@ class GameLogic {
         gameSettings.multiplayerRematchWaiting = false
         gameSettings.shouldPresentVoting = false
 
-        let words = category.words
-        let secretWord = words.randomElement() ?? "Fehler"
+        guard gameSettings.gameMode != .twoWords || category.words.count >= 2 else { return false }
+        let shuffledWords = category.words.shuffled()
+        guard let secretWord = shuffledWords.first else { return false }
+        let secondaryWord = gameSettings.gameMode == .twoWords && shuffledWords.count >= 2 ? shuffledWords[1] : nil
         let showCategoryForSpies = gameSettings.shouldSpySeeCategory
         let showHintsForSpies = gameSettings.showSpyHints
 
@@ -141,11 +166,22 @@ class GameLogic {
         var indices = Array(0..<totalPlayers)
         indices.shuffle()
         let imposterIndices = Set(indices.prefix(impostersCount))
+        var citizenWordByIndex: [Int: String] = [:]
+        let citizenIndices = indices
+            .filter { !imposterIndices.contains($0) }
+            .shuffled()
+        for (offset, citizenIndex) in citizenIndices.enumerated() {
+            if let secondaryWord {
+                citizenWordByIndex[citizenIndex] = offset.isMultiple(of: 2) ? secretWord : secondaryWord
+            } else {
+                citizenWordByIndex[citizenIndex] = secretWord
+            }
+        }
 
         var assignments: [(peer: MCPeerID, payload: ImposterRolePayload)] = []
         for (index, playerName) in allPeers.enumerated() {
             let isImposter = imposterIndices.contains(index)
-            let assignedWord: String
+            var assignedWord: String
             if isImposter {
                 let otherSpyNames = allPeers.enumerated()
                     .filter { imposterIndices.contains($0.offset) && $0.offset != index }
@@ -156,11 +192,15 @@ class GameLogic {
                     categoryName: category.name,
                     categoryEmoji: category.emoji,
                     showCategory: showCategoryForSpies,
-                    showHints: showHintsForSpies,
+                    showHints: showHintsForSpies && secondaryWord == nil,
                     otherSpyNames: visibleSpyNames
                 )
+                if showHintsForSpies, secondaryWord != nil {
+                    let neutralHint = "Hinweis: Es sind zwei unterschiedliche Begriffe im Spiel."
+                    assignedWord = assignedWord.isEmpty ? neutralHint : "\(assignedWord)\n\n\(neutralHint)"
+                }
             } else {
-                assignedWord = secretWord
+                assignedWord = citizenWordByIndex[index] ?? secretWord
             }
 
             let assignedRole: RoleType = isImposter ? .saboteur : .secretAgent

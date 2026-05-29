@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PerkWordText: View {
-    @ObservedObject var gameManager: GameManager
+    @ObservedObject var viewModel: TimesUpGameViewModel
     let term: Term?
     var font: Font = .system(size: 48, weight: .bold)
     var weight: Font.Weight = .bold
@@ -17,8 +17,8 @@ struct PerkWordText: View {
     var color: Color = .primary
     
     var body: some View {
-        FlickerText(active: gameManager.shouldFlickerForCurrentTeam()) {
-            Text(gameManager.displayTextForCurrentTeam(term: term))
+        FlickerText(active: viewModel.shouldFlickerForCurrentTeam()) {
+            Text(viewModel.displayTextForCurrentTeam(term: term))
                 .font(font)
                 .fontWeight(weight)
                 .multilineTextAlignment(alignment)

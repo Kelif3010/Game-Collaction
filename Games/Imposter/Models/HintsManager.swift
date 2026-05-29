@@ -56,7 +56,7 @@ class HintsManager {
         
         // 3. Hinweis (wenn aktiviert und verfügbar)
         if showHints {
-            let hints = CategoryHints.getHints(for: word, in: categoryName)
+            let hints = CategoryHints.getBestSpyHintsOffline(for: word, in: categoryName).map(\.content)
             if let singleHint = HintsManager.pickHint(from: hints, key: hintKey, word: word) {
                 components.append("Hinweis: \(singleHint)")
             }
@@ -106,8 +106,12 @@ class HintsManager {
         
         // 2. Hinweis (wenn aktiviert und verfügbar) - mit KI-Unterstützung
         if showHints {
-            let hints = await CategoryHints.getHintsWithAI(for: word, in: categoryName, category: category)
+            let hintCandidates = await CategoryHints.getBestSpyHints(for: word, in: categoryName, category: category)
+            let hints = hintCandidates.map(\.content)
             if let singleHint = HintsManager.pickHint(from: hints, key: hintKey, word: word) {
+                if let metadata = hintCandidates.first(where: { $0.content == singleHint }) {
+                    print("💡 Spion-Hinweis: \(metadata.source.rawValue), \(metadata.strength.rawValue)")
+                }
                 components.append("Hinweis: \(singleHint)")
             }
         }

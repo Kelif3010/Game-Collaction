@@ -175,13 +175,13 @@ func addPlayer(name: String) {
 
 ---
 
-### IMP-08: `twoWords` und `questions` Spielmodi in Multiplayer nicht unterstützt — kein UI-Hinweis 🟠
+### IMP-08: `roles` Spielmodus in Multiplayer nicht unterstützt — kein UI-Hinweis 🟠
 
 **Datei:** `Games/Imposter/Views/GameSetupView+Logic.swift:64-67`
 
-Nur `classic` wird im Multiplayer unterstützt. Die Modi `twoWords`, `roles` und
-`questions` sind bei aktivem Multiplayer zwar im UI sichtbar, aber das Start-Button
-gibt erst beim Drücken einen Fehler. Es gibt keinen proaktiven Hinweis im Spielmodus-Sheet.
+Nur `classic` und `twoWords` werden im Multiplayer unterstützt. Der Modus `roles`
+ist bei aktivem Multiplayer zwar im UI sichtbar, aber das Start-Button gibt erst
+beim Drücken einen Fehler. Es gibt keinen proaktiven Hinweis im Spielmodus-Sheet.
 
 ---
 

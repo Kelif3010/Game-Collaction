@@ -23,7 +23,7 @@ extension GameLogic {
         // Pool of citizen IDs available for special role assignment
         var availableIds = playerIds.filter { !imposters.contains($0) }
 
-        let activeRoles = gameSettings.activeRoles.shuffled()
+        let activeRoles = gameSettings.gameMode == .roles ? [] : gameSettings.activeRoles.shuffled()
 
         for role in activeRoles {
             if !canAssignRole(role, availableCount: availableIds.count, totalPlayers: playersCount) {
@@ -72,33 +72,38 @@ extension GameLogic {
     func assignWordsToPlayers(gameWords: GameWords) async {
         guard let roundCategory = gameSettings.roundCategory else { return }
         let allPlayers = gameSettings.players
+        let assignedCitizenWords = makeCitizenWordAssignments(gameWords: gameWords)
 
         for i in gameSettings.players.indices {
             let player = gameSettings.players[i]
+            let citizenWord = assignedCitizenWords[player.id] ?? gameWords.primary
             let text: String
 
             if player.isImposter {
-                if gameSettings.showSpyHints {
+                if gameSettings.gameMode == .roles {
+                    text = ""
+                } else if gameSettings.showSpyHints {
                     let otherSpies = gameSettings.players
                         .filter { $0.isImposter && $0.id != player.id }
                         .map { $0.name }
 
-                    text = await HintsManager.createSpyCardTextWithAI(
-                        word: gameWords.primary,
+                    let spyText = await HintsManager.createSpyCardTextWithAI(
+                        word: spyHintWord(for: gameWords),
                         categoryName: roundCategory.name,
                         category: roundCategory,
                         categoryEmoji: roundCategory.emoji,
                         showCategory: gameSettings.shouldSpySeeCategory,
-                        showHints: true,
+                        showHints: shouldUseWordSpecificSpyHints(for: gameWords),
                         otherSpyNames: gameSettings.shouldSpiesSeeEachOther ? otherSpies : []
                     )
+                    text = appendTwoWordsSpyHintIfNeeded(to: spyText, gameWords: gameWords)
                 } else {
                     let otherSpies = gameSettings.players
                         .filter { $0.isImposter && $0.id != player.id }
                         .map { $0.name }
 
                     text = HintsManager.createSpyCardText(
-                        word: gameWords.primary,
+                        word: spyHintWord(for: gameWords),
                         categoryName: roundCategory.name,
                         categoryEmoji: roundCategory.emoji,
                         showCategory: gameSettings.shouldSpySeeCategory,
@@ -109,13 +114,13 @@ extension GameLogic {
             } else if let role = player.roleType {
                 text = HintsManager.createRoleCardText(
                     role: role,
-                    word: gameWords.primary,
+                    word: citizenWord,
                     category: roundCategory,
                     allPlayers: allPlayers,
                     currentPlayer: player
                 )
             } else {
-                text = gameWords.primary
+                text = citizenWord
             }
 
             gameSettings.players[i].word = text
@@ -133,19 +138,59 @@ extension GameLogic {
             return GameWords(primary: word, secondary: nil)
 
         case .twoWords:
+            guard category.words.count >= 2 else { return nil }
             let shuffledWords = category.words.shuffled()
             let primary = shuffledWords[0]
-            let secondary = shuffledWords.count > 1 ? shuffledWords[1] : primary
+            let secondary = shuffledWords[1]
             return GameWords(primary: primary, secondary: secondary)
 
         case .roles:
             guard let word = category.words.randomElement() else { return nil }
             return GameWords(primary: word, secondary: nil)
-
-        case .questions:
-            guard let word = category.words.randomElement() else { return nil }
-            return GameWords(primary: word, secondary: nil)
         }
+    }
+
+    private func makeCitizenWordAssignments(gameWords: GameWords) -> [UUID: String] {
+        let citizens = gameSettings.players
+            .filter { !$0.isImposter }
+            .shuffled()
+
+        guard gameSettings.gameMode == .twoWords,
+              let secondary = gameWords.secondary,
+              secondary != gameWords.primary else {
+            return Dictionary(uniqueKeysWithValues: citizens.map { ($0.id, gameWords.primary) })
+        }
+
+        var assignments: [UUID: String] = [:]
+        for (index, player) in citizens.enumerated() {
+            assignments[player.id] = index.isMultiple(of: 2) ? gameWords.primary : secondary
+        }
+        return assignments
+    }
+
+    private func spyHintWord(for gameWords: GameWords) -> String {
+        gameWords.primary
+    }
+
+    private func shouldUseWordSpecificSpyHints(for gameWords: GameWords) -> Bool {
+        guard gameSettings.gameMode == .twoWords,
+              let secondary = gameWords.secondary,
+              secondary != gameWords.primary else {
+            return true
+        }
+        return false
+    }
+
+    private func appendTwoWordsSpyHintIfNeeded(to text: String, gameWords: GameWords) -> String {
+        guard gameSettings.gameMode == .twoWords,
+              gameSettings.showSpyHints,
+              let secondary = gameWords.secondary,
+              secondary != gameWords.primary else {
+            return text
+        }
+
+        let hint = "Hinweis: Es sind zwei unterschiedliche Begriffe im Spiel."
+        return text.isEmpty ? hint : "\(text)\n\n\(hint)"
     }
 
     // MARK: - Imposter Selection

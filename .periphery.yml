@@ -1,0 +1,4 @@
+project: Games Collection.xcodeproj
+schemes:
+- Games Collection
+- Games Collection ohne Debug

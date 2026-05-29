@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PerkToastView: View {
-    let toast: GameManager.PerkToast
+    let toast: TimesUpGameViewModel.PerkToast
     
     var body: some View {
         HStack(spacing: 8) {

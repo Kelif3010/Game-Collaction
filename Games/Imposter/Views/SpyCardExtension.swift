@@ -537,11 +537,6 @@ struct RoleCardContent: View {
                 // --- HAUPTBEREICH (Wort oder Rolle) ---
                 
                 if card.isImposter {
-                    // SPION: Schlichtes Design (User Wunsch)
-                    // Kein Icon, kein Text in der Mitte.
-                    // Der Header sagt bereits "SPION".
-                    // Wir nutzen einen Spacer, damit Hints/Partner schön mittig/unten landen oder
-                    // einfach leerer Raum entsteht, der "geheimnisvoll" wirkt.
                     Spacer()
                         .frame(minHeight: 20)
                     
@@ -571,6 +566,32 @@ struct RoleCardContent: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal)
+                }
+
+                if gameSettings.gameMode == .roles,
+                   let role = card.player.role,
+                   !role.isEmpty {
+                    VStack(spacing: 8) {
+                        Text(card.isImposter ? "DEINE TARNROLLE" : "DEINE ROLLE")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundStyle(.white.opacity(0.55))
+
+                        Text(role)
+                            .font(.system(size: 26, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black.opacity(0.28))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 24)
                 }
                 
                 // --- ZUSATZINFOS (Unter dem Hauptbereich) ---

@@ -408,9 +408,8 @@ struct GamePlayView: View {
 
         if isLastPlayer {
             if MultipeerManager.shared.role == .host || MultipeerManager.shared.role == .unknown {
-                let picked = gameSettings.players.randomElement()
+                let picked = gameSettings.pickStartingPlayer()
                 startingPlayer = picked
-                gameSettings.startingPlayerName = picked?.name
                 gameLogic.broadcastGameState()
             }
             gameSettings.isTimerPaused = true

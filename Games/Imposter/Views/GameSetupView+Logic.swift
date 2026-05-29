@@ -26,7 +26,9 @@ extension GameSetupView {
         let baseReady = gameSettings.players.count >= minimumPlayersRequired
             && gameSettings.hasSelectedCategories
             && gameSettings.numberOfImposters < gameSettings.players.count
-        return baseReady && allPlayersReady
+        let rolesModeReady = gameSettings.gameMode != .roles
+            || (gameSettings.isRolesCategorySelected && AIService.shared.isAvailable)
+        return baseReady && rolesModeReady && allPlayersReady
     }
 
     var startButtonHintText: String {
@@ -47,6 +49,15 @@ extension GameSetupView {
         if gameSettings.numberOfImposters >= gameSettings.players.count && gameSettings.players.count > 0 {
             missingItems.append("Zu viele Spione für die Spieleranzahl")
         }
+
+        if gameSettings.gameMode == .roles {
+            if !gameSettings.isRolesCategorySelected {
+                missingItems.append("Kategorie Orte")
+            }
+            if !AIService.shared.isAvailable {
+                missingItems.append("Apple Intelligence")
+            }
+        }
         
         if mpc.role == .host && !allPlayersReady {
             let lobby = Set(mpc.lobbyPeers)
@@ -61,8 +72,8 @@ extension GameSetupView {
     func startGame() {
         if mpc.role == .host {
              // MPC Host Start
-             guard gameSettings.gameMode == .classic else {
-                 alertMessage = "Multiplayer unterstützt aktuell nur den klassischen Modus."
+             guard gameSettings.gameMode == .classic || gameSettings.gameMode == .twoWords else {
+                 alertMessage = "Multiplayer unterstützt aktuell nur Klassik und Zwei-Begriffe."
                  showingAlert = true
                  return
              }
@@ -92,7 +103,8 @@ extension GameSetupView {
                  if success {
                      route = .game
                  } else {
-                     alertMessage = "Spiel konnte nicht gestartet werden. Bitte prüfe, ob die gewählte Kategorie genug Wörter für den Spielmodus hat."
+                     alertMessage = gameLogic.startFailureMessage
+                        ?? "Spiel konnte nicht gestartet werden. Bitte prüfe, ob die gewählte Kategorie genug Wörter für den Spielmodus hat."
                      showingAlert = true
                  }
              }

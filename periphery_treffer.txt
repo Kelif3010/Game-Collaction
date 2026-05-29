@@ -1,0 +1,488 @@
+* Inspecting project...
+* Building Games Collection...
+* Building Games Collection ohne Debug...
+* Indexing...
+* Analyzing...
+
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Games_CollectionApp.swift:19:30: warning: Unused property 'externalDisplayManager'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Core/MPCEventTypes.swift:5:13: warning: Redundant public accessibility for enum 'MPCEventType' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Core/MultiplayerModels.swift:7:8: warning: Unused struct 'MPCGameStartEvent'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Core/MultiplayerModels.swift:15:8: warning: Unused struct 'MPCRoleAssignment'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Core/MultiplayerModels.swift:23:8: warning: Unused struct 'MPCGameStateUpdate'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Core/MultiplayerModels.swift:30:8: warning: Unused struct 'MPCGameEndEvent'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Multiplayer/Debug/MPCDebugView.swift:4:8: warning: Unused struct 'MPCDebugView'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Party/PartySessionManager.swift:98:9: warning: Unused property 'currentGame'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalPlayerManager.swift:7:9: warning: Assign-only property 'avatarColorHex' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalPlayerManager.swift:66:10: warning: Unused function 'getAllNames()'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalStatsManager.swift:12:9: warning: Unused property 'winRate'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalStatsManager.swift:67:9: warning: Unused property 'mvp'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalStatsManager.swift:71:9: warning: Unused property 'unluckyPlayer'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalStatsManager.swift:76:9: warning: Unused property 'sessionKing'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/GlobalStatsManager.swift:110:10: warning: Unused function 'resetAllStats()'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/QRCodeService.swift:36:10: warning: Unused function 'decodeFromSharing(_:type:)'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Services/SoundManager.swift:81:10: warning: Unused function 'vibrate(type:)'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Shared/GlobalRecapView.swift:3:8: warning: Unused struct 'GlobalRecapView'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Shared/GlobalRecapView.swift:107:8: warning: Unused struct 'GlobalHighlightCard'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Shared/SharedLottieView.swift:147:18: warning: Unused function 'installFallback(in:)'
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Views/GameCards/MenuGameCard.swift:6:9: warning: Assign-only property 'icon' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games Collection/Views/SessionKingCard.swift:3:8: warning: Unused struct 'SessionKingCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Components/GroupCountRow.swift:4:8: warning: Unused struct 'GroupCountRow'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Components/TimerPickerButton.swift:3:8: warning: Unused struct 'TimerPickerButton'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Models/GameResult.swift:10:9: warning: Assign-only property 'finalScore' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Models/GroupInfo.swift:26:9: warning: Unused property 'player1Name'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Models/GroupInfo.swift:31:9: warning: Unused property 'player2Name'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Models/GroupInfo.swift:80:19: warning: Unused function 'setPlayerName(_:at:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Models/LeaderboardEntry.swift:5:9: warning: Assign-only property 'groupId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:22:16: warning: Unused property 'backgroundCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:39:16: warning: Unused property 'accentSuccess'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:80:16: warning: Unused property 'emeraldGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:90:16: warning: Unused property 'rubyGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:101:16: warning: Unused property 'cardBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:102:16: warning: Unused property 'cardStroke'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:104:16: warning: Unused property 'cornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:107:17: warning: Unused function 'shadow(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:111:17: warning: Unused function 'textFieldBackground()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:194:8: warning: Unused struct 'ChipDigitView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:251:8: warning: Unused struct 'CasinoCardBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:311:8: warning: Unused struct 'GoldButtonStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:353:8: warning: Unused struct 'CasinoOutlineButtonStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/BetBuddyTheme.swift:376:8: warning: Unused struct 'ChipStackView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Resources/Data/ChallengeData.swift:13:16: warning: Unused property 'all'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/Screens/PlayerDrawView.swift:86:49: warning: Unused parameter 'spinDelay'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/ViewModels/AppViewModel.swift:277:10: warning: Unused function 'updatePlayerNames(player1:player2:for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Bet Buddy/ViewModels/AppViewModel.swift:514:10: warning: Unused function 'startTimer()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:6:9: warning: Assign-only property 'secondary' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:19:16: warning: Unused property 'backgroundDark'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:21:16: warning: Unused property 'textPrimary'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:58:16: warning: Unused property 'buttonRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:59:16: warning: Unused property 'cardPadding'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:60:16: warning: Unused property 'sectionSpacing'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:61:16: warning: Unused property 'headerHeight'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:64:17: warning: Unused function 'titleFont(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:68:17: warning: Unused function 'bodyFont(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:72:17: warning: Unused function 'labelFont(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:99:8: warning: Unused struct 'FFPrimaryButton'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Components/FFStyle.swift:138:8: warning: Unused struct 'FFHeader'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:28:9: warning: Assign-only property 'roundNumber' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:33:9: warning: Assign-only property 'phase' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:52:9: warning: Unused property 'answeredSubmission'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:64:10: warning: Unused enum case 'voting'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:65:10: warning: Unused enum case 'reveal'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFRound.swift:66:10: warning: Unused enum case 'finished'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFSettings.swift:13:9: warning: Unused property 'label'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFSettings.swift:36:9: warning: Unused property 'label'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFSettings.swift:43:9: warning: Assign-only property 'bluffTimer' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Models/FFSettings.swift:44:9: warning: Assign-only property 'voteTimer' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:19:9: warning: Assign-only property 'questionId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:32:9: warning: Assign-only property 'questionId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:45:9: warning: Assign-only property 'questionId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:76:9: warning: Assign-only property 'correctSubmissionId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:77:9: warning: Assign-only property 'roundIndex' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:93:9: warning: Assign-only property 'mvpBluffer' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Multiplayer/FFMultiplayerModels.swift:94:9: warning: Assign-only property 'mvpDetective' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:43:9: warning: Unused property 'allBluffsSubmitted'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:153:10: warning: Unused function 'removePlayer(at:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:157:10: warning: Unused function 'removePlayer(id:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:439:9: warning: Unused property 'allVotesCast'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:580:10: warning: Unused function 'startTimer(seconds:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:591:10: warning: Unused function 'stopTimer()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:602:9: warning: Unused property 'winner'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/ViewModels/FFViewModel.swift:648:16: warning: Unused property 'preview'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Views/FFGameOverView.swift:6:41: warning: Unused property 'dismiss'
+/Users/keno/Apps/App Backup/Games Collection/Games/Falsche Faehrte/Views/FFVotePhaseView.swift:28:17: warning: Unused property 'allVoted'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/Category.swift:343:19: warning: Unused function 'removeWord(at:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:303:17: warning: Unused function 'getFallbackHints(for:in:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:325:76: warning: Unused parameter 'category'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:343:17: warning: Unused function 'getBestSpyHint(for:in:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:359:17: warning: Unused function 'getHintsWithAI(for:in:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:368:17: warning: Unused function 'hasHints(for:in:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:379:17: warning: Unused function 'hasHintsWithAI(for:in:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:384:16: warning: Unused property 'availableCategories'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:391:17: warning: Unused function 'getWordsWithHints(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/CategoryHints.swift:406:17: warning: Unused function 'getFormattedHints(for:in:maxHints:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/GameLogic.swift:314:10: warning: Unused function 'deactivateMPCHandler()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/GameSettings.swift:372:9: warning: Unused property 'spyNames'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/GameSettings.swift:459:9: warning: Unused property 'displayName'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/GameWords.swift:21:9: warning: Unused property 'allWords'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/GameWords.swift:29:9: warning: Unused property 'displayString'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/HintsManager.swift:138:17: warning: Unused function 'areHintsAvailable(for:in:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/HintsManager.swift:149:17: warning: Unused function 'areHintsAvailableWithAI(for:in:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/HintsManager.swift:156:17: warning: Unused function 'getHintsStats(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/ImposterGameState.swift:158:10: warning: Unused function 'startMultiplayerTimerIfNeeded()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/ImposterGameState.swift:259:9: warning: Unused property 'allPlayersSeenCards'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/ImposterGameState.swift:263:9: warning: Unused property 'remainingPlayersCount'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/MPCImposterModels.swift:26:9: warning: Assign-only property 'role' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/MPCImposterModels.swift:88:9: warning: Assign-only property 'countdownSeconds' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/MPCImposterModels.swift:100:9: warning: Assign-only property 'pingId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/MPCImposterModels.swift:144:9: warning: Assign-only property 'hostName' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:27:10: warning: Unused function 'addPlayer(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:35:10: warning: Unused function 'removePlayer(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:41:10: warning: Unused function 'clearAllPlayers()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:47:10: warning: Unused function 'playerExists(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:53:9: warning: Unused property 'playerCount'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/SavedPlayers.swift:56:10: warning: Unused function 'markUsed(names:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:11:8: warning: Unused struct 'VoteResult'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:33:9: warning: Unused property 'totalVotes'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:266:10: warning: Unused function 'resetVoting()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:301:9: warning: Unused property 'allSpiesFound'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:308:9: warning: Assign-only property 'selectedPlayers' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:309:9: warning: Assign-only property 'correctGuesses' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:310:9: warning: Assign-only property 'incorrectGuesses' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:311:9: warning: Assign-only property 'gameEnded' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/VoteResult.swift:312:9: warning: Assign-only property 'playersWon' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/WordGuessing.swift:79:9: warning: Assign-only property 'wasCorrect' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/WordGuessing.swift:81:9: warning: Assign-only property 'spyWon' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Models/WordGuessing.swift:82:9: warning: Assign-only property 'gameEnded' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Multiplayer/ImposterMPCHandler.swift:29:10: warning: Unused function 'deactivate()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIModels.swift:64:8: warning: Unused struct 'AIHintDTO'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:8:8: warning: Unused struct 'GameContent'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:85:10: warning: Unused function 'generateGameContent(word:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:134:10: warning: Unused function 'generateAIHint(word:category:mustBeTrue:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:170:18: warning: Unused function 'decodeGameContent(from:category:word:expectedType:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:259:59: warning: Unused parameter 'word'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:369:75: warning: Unused parameter 'categoryName'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:389:30: warning: Unused function 'isGameContentValid(_:type:word:categoryName:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:413:30: warning: Unused function 'isChallengeLike(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:421:30: warning: Unused function 'matchesCategoryAnchor(_:categoryName:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:426:30: warning: Unused function 'categoryAnchors(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:558:10: warning: Unused function 'generateRole(for:playerName:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService+Hints.swift:574:10: warning: Unused function 'generateRoles(for:count:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:23:17: warning: Unused property 'synthesizer'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:25:17: warning: Unused property 'fallbackService'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:26:17: warning: Unused property 'settings'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:44:10: warning: Unused function 'generateMissionFlavor(for:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:68:10: warning: Unused function 'generateModeratorLog(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:92:18: warning: Unused function 'germanSiriVoice()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:114:10: warning: Unused function 'speak(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:139:7: warning: Unused class 'FallbackAIService'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:167:16: warning: Unused struct 'MissionTemplateCatalog'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/AIService.swift:209:10: warning: Unused function 'matches(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:19:17: warning: Unused property 'aiService'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:20:17: warning: Unused property 'settings'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:21:17: warning: Unused property 'voiceService'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:22:17: warning: Unused property 'moderatorLog'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:25:17: warning: Unused property 'hintInterval'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:26:17: warning: Unused property 'hintProbability'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:38:10: warning: Unused function 'startHints(for:category:players:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:74:10: warning: Unused function 'generateManualHint()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:80:18: warning: Unused function 'startHintTimer()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:92:18: warning: Unused function 'checkForHint()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:102:18: warning: Unused function 'generateHint()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:126:18: warning: Unused function 'createHint(word:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:140:18: warning: Unused function 'sanitizeContent(_:forbiddenWord:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:152:18: warning: Unused function 'mapGameContentToHint(_:word:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:179:18: warning: Unused function 'createFallbackContent(word:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:204:18: warning: Unused function 'getFallbackChallenge(category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:222:18: warning: Unused function 'getTrueFallbackHints(for:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:233:18: warning: Unused function 'getFalseFallbackHints(for:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:246:18: warning: Unused function 'activateHint(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:269:9: warning: Assign-only property 'isTrue' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:270:9: warning: Assign-only property 'word' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:271:9: warning: Assign-only property 'category' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:272:9: warning: Assign-only property 'timestamp' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/HintService.swift:274:5: warning: Unused initializer 'init(content:type:isTrue:word:category:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:18:17: warning: Unused property 'aiService'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:26:10: warning: Unused function 'logImposterSelection(selectedImposters:allPlayers:fairnessState:reason:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:63:10: warning: Unused function 'logFairnessAdjustment(player:oldWeight:newWeight:reason:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:88:10: warning: Unused function 'logError(_:context:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:131:18: warning: Unused function 'calculateFairnessScore(selectedImposters:allPlayers:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:138:18: warning: Unused function 'generateCooldownStatus(selectedImposters:fairnessState:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:154:10: warning: Unused function 'exportLogs()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:165:10: warning: Unused function 'clearLogs()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:170:10: warning: Unused function 'filterLogs(by:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:225:9: warning: Unused property 'displayName'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:238:9: warning: Unused property 'icon'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:252:8: warning: Unused struct 'LogExport'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/ModeratorLog.swift:258:8: warning: Unused struct 'ImposterSelection'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/StatsService.swift:37:9: warning: Unused property 'winRateAsCitizen'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/VoiceService.swift:49:10: warning: Unused function 'speakHint(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Services/VoiceService.swift:68:10: warning: Unused function 'speakMission(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/CompactPlayersList.swift:10:8: warning: Unused struct 'CompactPlayersList'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/CompactPlayersList.swift:101:8: warning: Unused struct 'PlayerSummaryCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/CompactPlayersList.swift:182:8: warning: Unused struct 'CompactPlayerCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/CompactPlayersList.swift:225:8: warning: Unused struct 'AllPlayersManagementSheet'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ExpandableSpyOptionsSection.swift:10:8: warning: Unused struct 'ExpandableSpyOptionsSection'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/FloatingStartButton.swift:10:8: warning: Unused struct 'FloatingStartButton'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/FloatingStartButton.swift:86:8: warning: Unused struct 'FloatingButtonContent'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/GameModeCard.swift:10:8: warning: Unused struct 'GameModeCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/GameModeCard.swift:75:16: warning: Unused struct 'GameModeCardBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ImposterStyle.swift:23:16: warning: Unused property 'spyDarkRed'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ImposterStyle.swift:24:16: warning: Unused property 'terminalGreen'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ImposterStyle.swift:29:16: warning: Unused property 'darkCardFill'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ImposterStyle.swift:79:8: warning: Unused struct 'TerminalText'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:33:8: warning: Unused struct 'ModernTextFieldStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:51:8: warning: Unused struct 'ModernPlayerCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:90:8: warning: Unused struct 'InfoCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:145:8: warning: Unused struct 'GameActionButton'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:178:8: warning: Unused struct 'ImposterCategoryCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/ModernUIComponents.swift:233:8: warning: Unused struct 'CategoryDetailCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Components/PlayerManagementSheet.swift:253:8: warning: Unused struct 'ScaleButtonStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/FairnessPolicy.swift:41:16: warning: Unused property 'default'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/FairnessState.swift:19:9: warning: Assign-only property 'a' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/FairnessState.swift:20:9: warning: Assign-only property 'b' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:40:17: warning: Unused property 'isHostOrLocal'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:443:9: warning: Assign-only property 'name' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:444:9: warning: Assign-only property 'word' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:445:9: warning: Assign-only property 'isImposter' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:446:9: warning: Assign-only property 'roleType' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GamePlayView.swift:447:9: warning: Assign-only property 'role' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:55:13: warning: Assign-only property 'gameMode' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:56:13: warning: Assign-only property 'spyCanSeeCategory' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:57:13: warning: Assign-only property 'spiesCanSeeEachOther' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:58:13: warning: Assign-only property 'randomSpyCount' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:59:13: warning: Assign-only property 'showSpyHints' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:60:13: warning: Assign-only property 'activeRoles' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:61:13: warning: Assign-only property 'selectedCategoryIds' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/GameSetupView.swift:62:13: warning: Assign-only property 'isMixAllCategories' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/ImposterCardRevealPhaseView.swift:11:9: warning: Assign-only property 'isMultiplayer' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/ImposterGameTimerView.swift:312:8: warning: Unused struct 'GameControlBtn'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/ImposterPicker.swift:25:9: warning: Assign-only property 'baseWeight' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/ImposterPicker.swift:30:12: warning: Unused struct 'CandidateDebug'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/ImposterPicker.swift:221:17: warning: Unused function 'pickImpostersDebug(players:count:policy:state:rng:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:6:15: warning: Redundant public accessibility for struct 'PlayerProfile' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:7:16: warning: Redundant public accessibility for property 'id' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:8:16: warning: Redundant public accessibility for property 'name' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:9:16: warning: Redundant public accessibility for property 'lastUsed' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:10:16: warning: Redundant public accessibility for property 'usageCount' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:14:12: warning: Unused initializer 'init(name:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:22:9: warning: Unused property 'normalizedName'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:36:10: warning: Redundant protocol 'PlayerProfilesStoring' (never used as an existential type)
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:77:46: warning: Redundant protocol conformance 'PlayerProfilesStoring'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:85:17: warning: Unused property 'encoder'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:114:10: warning: Unused function 'save(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:125:10: warning: Unused function 'add(name:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:143:10: warning: Unused function 'add(names:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:149:10: warning: Unused function 'remove(name:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:155:10: warning: Unused function 'clear()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:160:10: warning: Unused function 'markUsed(names:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:181:18: warning: Unused function 'persist()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/PlayerProfilesStore.swift:202:18: warning: Unused function 'indexOfName(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/Sheets/GameModeSheet.swift:5:9: warning: Assign-only property 'selected' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/SpyCardExtension.swift:15:9: warning: Unused property 'isEmojiLike'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/SpyCardExtension.swift:100:9: warning: Assign-only property 'isImposter' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/VotingResultsView.swift:544:8: warning: Unused struct 'ImposterResultCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/VotingView.swift:16:37: warning: Unused property 'colorScheme'
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/VotingView.swift:544:9: warning: Assign-only property 'gameSettings' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Imposter/Views/WordGuessingView.swift:213:9: warning: Assign-only property 'spies' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/AppModel.swift:151:10: warning: Unused function 'pickFairLiars()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/AppModel.swift:162:10: warning: Unused function 'resetScores()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/AppModel.swift:166:10: warning: Unused function 'getScore(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsCommonUI.swift:152:8: warning: Unused struct 'QuestionsFlipCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsCommonUI.swift:212:8: warning: Unused struct 'QuestionsTerminalBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsCommonUI.swift:239:8: warning: Unused struct 'QuestionsHintBanner'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsEffects.swift:18:8: warning: Unused struct 'Coin3D'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsEffects.swift:51:8: warning: Unused struct 'CoinFace'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsScoreboardView.swift:3:8: warning: Unused struct 'QuestionsScoreboardView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsVotingComponents.swift:8:9: warning: Assign-only property 'isSelected' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Components/QuestionsVotingComponents.swift:10:9: warning: Assign-only property 'selectionEnabled' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:9:9: warning: Assign-only property 'joinRound' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:13:9: warning: Assign-only property 'a' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:14:9: warning: Assign-only property 'b' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:28:9: warning: Assign-only property 'minCooldownRounds' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:29:9: warning: Assign-only property 'recentWindow' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:32:9: warning: Assign-only property 'newPlayerHardCooldownRounds' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:33:9: warning: Assign-only property 'newPlayerSoftPenaltyRounds' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionFairness.swift:34:9: warning: Assign-only property 'newPlayerPenaltyFactor' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:6:9: warning: Assign-only property 'isLiar' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:7:9: warning: Assign-only property 'word' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:8:9: warning: Assign-only property 'hasSeenCard' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:10:9: warning: Assign-only property 'isEliminated' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:12:9: warning: Assign-only property 'role' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Models/QuestionPlayer.swift:14:9: warning: Assign-only property 'isProtected' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsEngine.swift:21:17: warning: Unused property 'cancellables'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsEngine.swift:133:10: warning: Unused function 'startVoting()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsEngine.swift:144:10: warning: Unused function 'castVote(targetID:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsEngine.swift:159:10: warning: Unused function 'voteTally()'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsEngine.swift:167:18: warning: Unused function 'playerName(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:19:16: warning: Assign-only property 'topic' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:39:16: warning: Assign-only property 'role' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:41:16: warning: Assign-only property 'timestamp' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:63:15: warning: Redundant public accessibility for struct 'QuestionsConfig' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:64:16: warning: Redundant public accessibility for property 'numberOfLiars' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:65:16: warning: Redundant public accessibility for property 'selectedCategory' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:66:16: warning: Redundant public accessibility for property 'discussionTime' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:77:15: warning: Redundant public accessibility for struct 'QuestionsRoundState' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:78:16: warning: Redundant public accessibility for property 'roundIndex' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:79:16: warning: Redundant public accessibility for property 'promptPair' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:80:16: warning: Redundant public accessibility for property 'phase' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:81:16: warning: Redundant public accessibility for property 'currentPlayerIndex' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:82:16: warning: Redundant public accessibility for property 'answers' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:83:16: warning: Redundant public accessibility for property 'votes' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:85:12: warning: Redundant public accessibility for initializer 'init(roundIndex:promptPair:phase:currentPlayerIndex:answers:votes:)' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:107:9: warning: Assign-only property 'voterName' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:113:9: warning: Assign-only property 'votesReceived' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:114:9: warning: Assign-only property 'totalVotes' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:121:9: warning: Assign-only property 'hostUptime' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:131:9: warning: Assign-only property 'clientName' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:132:9: warning: Assign-only property 'pingId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:133:9: warning: Assign-only property 'clientSendUptime' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:134:9: warning: Assign-only property 'hostReceiveUptime' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:135:9: warning: Assign-only property 'hostSendUptime' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:140:9: warning: Assign-only property 'playerId' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:144:9: warning: Assign-only property 'playerName' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:156:13: warning: Redundant public accessibility for enum 'QuestionsDefaults' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:159:23: warning: Redundant public accessibility for property 'everyday' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:238:23: warning: Redundant public accessibility for property 'loveRelationships' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:293:23: warning: Redundant public accessibility for property 'couplesSafe' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:360:23: warning: Redundant public accessibility for property 'mindsetFuture' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:426:23: warning: Redundant public accessibility for property 'partySpicy' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:491:23: warning: Redundant public accessibility for property 'darkTaboo' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsModels.swift:554:23: warning: Redundant public accessibility for property 'all' (not used outside of Games_Collection)
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:23:16: warning: Unused property 'backgroundAccent'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:67:16: warning: Unused property 'accentGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:77:16: warning: Unused property 'dangerGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:87:16: warning: Unused property 'accent'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:88:16: warning: Unused property 'textAccent'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:184:16: warning: Unused property 'rowBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:185:16: warning: Unused property 'cardStroke'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:186:16: warning: Unused property 'containerCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:187:16: warning: Unused property 'rowCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:192:16: warning: Unused property 'primaryGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:204:16: warning: Unused property 'secondaryButtonBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:205:16: warning: Unused property 'secondaryButtonStroke'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsTheme.swift:279:8: warning: Unused struct 'TypewriterText'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingManager.swift:4:20: warning: Unused class 'QuestionsVotingManager'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingModels.swift:19:13: warning: Unused enum 'QuestionsVotingOutcome'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingModels.swift:25:9: warning: Unused property 'outcome'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingViews.swift:3:8: warning: Unused struct 'QuestionsVotingView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingViews.swift:64:16: warning: Unused struct 'QVPlayerCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/QuestionsVotingViews.swift:101:8: warning: Unused struct 'QuestionsVotingResultsView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/ViewModels/QuestionsGameViewModel.swift:81:9: warning: Unused property 'currentSpyIDs'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsMultiplayerSheet.swift:11:8: warning: Unused struct 'QuestionsMultiplayerSheet'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsMultiplayerSheet.swift:242:16: warning: Unused struct 'QuestionsLobbyView'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsMultiplayerSheet.swift:360:16: warning: Unused struct 'QuestionsLobbyPlayerCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsOnboardingSheet.swift:3:8: warning: Unused struct 'QuestionsOnboardingSheet'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsOnboardingSheet.swift:93:16: warning: Unused struct 'QuestionsOnboardingProgress'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsOnboardingSheet.swift:108:16: warning: Unused struct 'QuestionsOnboardingCard'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsSetupView+MPC.swift:16:10: warning: Unused function 'setupMPCListeners(viewModel:onDismiss:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsSetupView+MPC.swift:22:10: warning: Unused function 'startMPCGame(viewModel:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsSetupView+MPC.swift:34:10: warning: Unused function 'broadcastConfig(viewModel:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsSetupView+MPC.swift:45:10: warning: Unused function 'sendHostActivity(_:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/Question/Views/Setup/QuestionsTimerSheet.swift:3:8: warning: Unused struct 'QuestionsTimerSheet'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:17:9: warning: Unused property 'secondary'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:25:9: warning: Unused property 'gradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:41:16: warning: Unused property 'textPrimary'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:69:16: warning: Unused property 'rowCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:70:16: warning: Unused property 'buttonCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:74:16: warning: Unused property 'titleFont'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:75:16: warning: Unused property 'headingFont'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:76:16: warning: Unused property 'bodyFont'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/SoundCinemaStyle.swift:173:8: warning: Unused struct 'SoundCinemaHeader'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Components/WaveformAnimation.swift:107:9: warning: Assign-only property 'isEliminated' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Models/SoundCard.swift:57:9: warning: Assign-only property 'difficulty' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Models/SoundCinemaSettings.swift:37:9: warning: Unused property 'isElimination'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Models/SoundCinemaSettings.swift:47:9: warning: Unused property 'isValid'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Views/SoundCinemaGameOverView.swift:5:41: warning: Unused property 'dismiss'
+/Users/keno/Apps/App Backup/Games Collection/Games/Sound Cinema/Views/SoundCinemaGameView.swift:5:41: warning: Unused property 'dismiss'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/ViewModels/DrawingViewModel.swift:38:9: warning: Unused property 'name'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/ViewModels/DrawingViewModel.swift:317:18: warning: Unused function 'fillRectangleInBitmap(_:rect:color:isErasing:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/ViewModels/DrawingViewModel.swift:422:97: warning: Unused parameter 'fillColor'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/ViewModels/DrawingViewModel.swift:483:68: warning: Unused parameter 'color'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/ViewModels/DrawingViewModel.swift:582:9: warning: Unused property 'strokeCount'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingCanvasView.swift:90:36: warning: Unused parameter 'value'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingCanvasView.swift:158:18: warning: Unused function 'optimizedRenderStroke(_:context:viewSize:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingCanvasView.swift:169:18: warning: Unused function 'calculateBoundingBox(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingCanvasView.swift:199:18: warning: Unused function 'handleTouchInput(_:in:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingCanvasView.swift:210:18: warning: Unused function 'adaptiveLineWidth(for:baseWidth:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingColorPalette.swift:12:8: warning: Unused struct 'DrawingColorPalette'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingColorPalette.swift:56:8: warning: Unused struct 'ColorCircle'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingGameControlsView.swift:12:8: warning: Unused struct 'DrawingGameControlsView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingGameControlsView.swift:140:8: warning: Unused struct 'TermDisplayBanner'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingLineWidthSelector.swift:12:8: warning: Unused struct 'DrawingLineWidthSelector'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingLineWidthSelector.swift:58:8: warning: Unused struct 'LineWidthButton'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingLineWidthSelector.swift:96:8: warning: Unused struct 'DrawingLineWidthSlider'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingPhaseViews.swift:247:8: warning: Unused struct 'DrawingGuessedView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingPhaseViews.swift:338:8: warning: Unused struct 'DrawingPhaseViews_Previews'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Features/Drawing/Views/DrawingView.swift:81:8: warning: Unused struct 'DrawingToolsView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Categories/TimesUpCategoryType.swift:38:9: warning: Unused property 'isSelected'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/AppLanguage.swift:15:9: warning: Unused property 'displayName'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:143:9: warning: Assign-only property 'isTimerRunning' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:160:19: warning: Unused function 'debugDump(context:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:233:19: warning: Unused function 'getCurrentTermAndMarkSeen()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:288:9: warning: Unused property 'availableTermsForCurrentRound'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:293:9: warning: Unused property 'remainingTermsForCurrentTeam'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:363:19: warning: Unused function 'nextTerm()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:368:9: warning: Unused property 'hasTeamSeenAllAvailableTerms'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/GameState.swift:466:18: warning: Unused function 'isPenaltyCardReady(term:teamId:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/Term.swift:14:9: warning: Assign-only property 'isCompleted' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Core/Term.swift:43:27: warning: Unused function 'updateIsCompleted()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Perks/PerkBadge.swift:3:6: warning: Unused enum 'PerkBadge'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Perks/PerkPack.swift:46:9: warning: Unused property 'gradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Perks/PerkType.swift:68:9: warning: Unused property 'detailDescription'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Models/Perks/PerkType.swift:117:17: warning: Unused function 'random(from:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpAICategoryService.swift:282:9: warning: Unused property 'description'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpAICategoryService.swift:310:8: warning: Unused struct 'AIResponse'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpAICategoryService.swift:366:17: warning: Unused property 'termDatabase'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpAICategoryService.swift:466:9: warning: Assign-only property 'emptyEntries' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpAICategoryService.swift:467:9: warning: Assign-only property 'fillerCount' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Services/TimesUpHapticsService.swift:101:10: warning: Unused function 'prepare()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:54:18: warning: Unused function 'loadDefaultCategories(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:64:10: warning: Unused function 'reloadDefaults(for:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:196:10: warning: Unused function 'addTerm(to:term:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:205:10: warning: Unused function 'deleteTerm(from:termId:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:214:10: warning: Unused function 'updateTerm(in:termId:newText:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:285:10: warning: Unused function 'generateAICategoryVariation(basedOn:difficulty:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpCategoryViewModel.swift:315:10: warning: Unused function 'clearAIError()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:57:13: warning: Assign-only property 'teamName' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:58:13: warning: Assign-only property 'round' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:60:13: warning: Assign-only property 'streak' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:81:10: warning: Unused function 'shouldDarkenScreenForCurrentTeam()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:99:10: warning: Unused function 'slowMotionHintForCurrentTeam()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:106:10: warning: Unused function 'activeBadgesForCurrentTeam()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+PresentationState.swift:270:10: warning: Unused function 'slotRewardLastResultText()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+Scoring.swift:6:50: warning: Unused parameter 'reason'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+Scoring.swift:28:56: warning: Unused parameter 'reason'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+Scoring.swift:333:18: warning: Unused function 'logScoreChange(for:round:delta:reason:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel+Scoring.swift:336:26: warning: Unused parameter 'context'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:92:17: warning: Assign-only property 'lastAction' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:441:10: warning: Unused function 'checkForNextTermOrRoundEnd()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:454:10: warning: Unused function 'configureDevTestGame()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:476:12: warning: Unused struct 'DebugPositiveConfig'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:484:12: warning: Unused struct 'DebugNegativeConfig'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:493:10: warning: Unused function 'debugSetupForPreview()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/ViewModels/TimesUpGameViewModel.swift:509:10: warning: Unused function 'debugApply(positive:negative:)'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpGameComponents.swift:3:8: warning: Unused struct 'TeamBadgeBar'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpGameComponents.swift:19:16: warning: Unused struct 'TeamBadgeView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpGameComponents.swift:117:8: warning: Unused struct 'GameHeaderView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpRoundView.swift:474:8: warning: Unused struct 'PerkNoticeStack'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpRoundView.swift:510:16: warning: Unused struct 'PerkNoticeGroup'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpRoundView.swift:552:16: warning: Unused struct 'PerkAttackNoticeGroup'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpRoundView.swift:595:16: warning: Unused property 'timesUpNeonPrimary'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpRoundView.swift:604:8: warning: Unused struct 'StreakFlameView'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Game/TimesUpTransitionView.swift:484:9: warning: Assign-only property 'team' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Settings/TimesUpSettingsComponents.swift:26:9: warning: Assign-only property 'onToggle' is assigned, but never used
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:26:17: warning: Unused property 'ringColor'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:37:17: warning: Unused property 'isFrozen'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:45:17: warning: Unused property 'isTimeBombActive'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:50:17: warning: Unused property 'pressureColor'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:57:17: warning: Unused property 'pressureGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:146:17: warning: Unused property 'timerCaption'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:166:16: warning: Unused struct 'PressureRingTickMarks'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:186:16: warning: Unused struct 'TimerStatusBadges'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Shared/TimerView.swift:209:16: warning: Unused struct 'TimerEffectBadge'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:18:16: warning: Unused property 'primaryBlue'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:21:16: warning: Unused property 'primaryPurple'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:24:16: warning: Unused property 'successGreen'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:27:16: warning: Unused property 'warningOrange'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:30:16: warning: Unused property 'errorRed'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:54:16: warning: Unused property 'successGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:68:16: warning: Unused property 'errorGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:75:16: warning: Unused property 'streakGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:82:16: warning: Unused property 'termsBadgeGradient'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:97:16: warning: Unused property 'smallCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:100:16: warning: Unused property 'iconCornerRadius'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:106:16: warning: Unused property 'verticalPadding'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:120:16: warning: Unused property 'containerBackground'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:126:16: warning: Unused property 'containerStroke'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:134:16: warning: Unused property 'secondaryText'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:142:16: warning: Unused property 'standardButtonSize'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:145:16: warning: Unused property 'iconButtonSize'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:195:8: warning: Unused struct 'TimesUpIconBadge'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:213:8: warning: Unused struct 'TimesUpSheetHeader'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:244:8: warning: Unused struct 'TimesUpRowStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:261:8: warning: Unused struct 'TimesUpContainerStyle'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:278:10: warning: Unused function 'timesUpRowStyle()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:283:10: warning: Unused function 'timesUpContainerStyle()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:288:10: warning: Unused function 'timesUpBackground()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:300:17: warning: Unused function 'selection()'
+/Users/keno/Apps/App Backup/Games Collection/Games/TimesUp/Views/Style/TimesUpStyle.swift:304:17: warning: Unused function 'notification(_:)'

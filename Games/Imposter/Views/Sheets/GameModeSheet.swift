@@ -16,7 +16,14 @@ struct GameModeSheet: View {
     }
     
     private var canUseRolesMode: Bool {
-        return gameSettings.isRolesCategorySelected
+        return gameSettings.isRolesCategorySelected && AIService.shared.isAvailable
+    }
+
+    private var rolesModeUnavailableText: String {
+        if !gameSettings.isRolesCategorySelected {
+            return "Rollen-Modus ist nur mit der Kategorie \"Orte\" verfügbar."
+        }
+        return "Rollen-Modus benötigt Apple Intelligence."
     }
 
     var body: some View {
@@ -32,7 +39,7 @@ struct GameModeSheet: View {
                     if !canUseRolesMode {
                         HStack(spacing: 12) {
                             ImposterIconBadge(systemName: "lock.fill", tint: .orange)
-                            Text("Rollen-Modus ist nur mit der Kategorie \"Orte\" verfügbar.")
+                            Text(rolesModeUnavailableText)
                                 .font(.subheadline)
                                 .foregroundStyle(ImposterStyle.mutedText)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -42,7 +49,7 @@ struct GameModeSheet: View {
                     }
 
                     VStack(spacing: 12) {
-                        ForEach(ImposterGameMode.allCases.filter { $0 != .questions }, id: \.self) { mode in
+                        ForEach(ImposterGameMode.allCases, id: \.self) { mode in
                             let isDisabled = mode == .roles && !canUseRolesMode
                             Button {
                                 if isDisabled {

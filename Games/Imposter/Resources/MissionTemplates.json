@@ -100,6 +100,42 @@
       ]
     },
     {
+      "key": "alltagsgegenstaende",
+      "aliases": ["alltagsgegenstand", "gegenstand", "gegenstaende", "objekt", "ding"],
+      "texts": [
+        "In {category} wirken kleine Details schnell verdaechtig.",
+        "Sprich ueber Nutzung, nicht ueber genaue Form.",
+        "Alltag klingt harmlos. Nutze das fuer dein Cover.",
+        "Wenn du unsicher bist, bleib bei Zweck und Gewohnheit.",
+        "Ein fehlendes Detail kann auffallen. Halte es allgemein.",
+        "Beschreibe Situationen, nicht den Gegenstand selbst."
+      ]
+    },
+    {
+      "key": "events",
+      "aliases": ["event", "anlass", "anlaesse", "feier", "party", "termin"],
+      "texts": [
+        "In {category} zaehlen Stimmung und Erwartungen.",
+        "Sprich ueber Vorbereitung, ohne den Anlass zu nennen.",
+        "Viele Anlaesse haben Rituale. Bleib bei allgemeinen.",
+        "Nutze Worte wie Gaeste, Planung und Ablauf vorsichtig.",
+        "Ein zu konkretes Detail kann dich sofort verraten.",
+        "Wenn du unsicher bist, rede ueber die Stimmung danach."
+      ]
+    },
+    {
+      "key": "schule_uni",
+      "aliases": ["schule", "uni", "universitaet", "studium", "campus", "lernen"],
+      "texts": [
+        "In {category} helfen Routine und Druck als Tarnung.",
+        "Sprich ueber Gruppen, Regeln und Termine.",
+        "Nenne keine exakten Faecher, wenn du unsicher bist.",
+        "Viele kennen {category} aus peinlichen Momenten.",
+        "Bleib bei Lernen, Pausen und Organisation.",
+        "Ein glaubwuerdiger Insider bleibt knapp und ruhig."
+      ]
+    },
+    {
       "key": "marken",
       "aliases": ["marke", "brand", "firma", "produkt", "logo"],
       "texts": [

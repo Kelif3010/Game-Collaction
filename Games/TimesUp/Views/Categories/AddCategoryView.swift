@@ -1,0 +1,334 @@
+//
+//  AddCategoryView.swift
+//  TimesUp
+//
+//  Created by Ken  on 23.09.25.
+//
+
+import SwiftUI
+
+struct AddCategoryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var categoryViewModel: TimesUpCategoryViewModel
+
+    @State private var categoryName = ""
+    @State private var newTermText = ""
+    @State private var terms: [DraftTerm] = []
+    
+    // AI Vars
+    @State private var showAIGenerator = false
+    @State private var aiTheme = ""
+    @State private var selectedDifficulty: CategoryDifficulty = .medium
+    
+    @StateObject private var translationService = TimesUpWordTranslationService()
+    @State private var isTranslatingTerms = false
+    @State private var translatingTermId: DraftTerm.ID?
+
+    // Theme
+    private let backgroundGradient = LinearGradient(
+        colors: [
+            Color.black,
+            Color(.systemGray6).opacity(0.3),
+            Color.blue.opacity(0.15),
+            Color.purple.opacity(0.1)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    var canSave: Bool {
+        !categoryName.isEmpty && terms.count >= 5
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                backgroundGradient.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title2.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                                .modifier(GlassCircleButtonBackground())
+                        }
+                        Spacer()
+                        Text(LocalizedStringKey("Neue Kategorie"))
+                            .font(.title2.bold())
+                            .foregroundStyle(.white)
+                        Spacer()
+                        // Save Button
+                        Button(action: saveCategory) {
+                            Text(LocalizedStringKey("Speichern"))
+                                .font(.headline.bold())
+                                .foregroundStyle(canSave ? .green : .gray)
+                        }
+                        .disabled(!canSave)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            
+                            // 1. Name Input
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(LocalizedStringKey("Name der Kategorie"))
+                                    .font(.headline)
+                                    .foregroundStyle(.white.opacity(0.8))
+                                
+                                TextField("", text: $categoryName, prompt: Text(LocalizedStringKey("z.B. 90er Hits")).foregroundStyle(.gray))
+                                    .padding()
+                                    .background(Color.white.opacity(0.08))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(.white)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    )
+                            }
+                            .padding(.horizontal)
+                            
+                            // 2. AI Generator Toggle Section
+                            VStack(alignment: .leading, spacing: 0) {
+                                Button {
+                                    withAnimation { showAIGenerator.toggle() }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                            .foregroundStyle(.purple)
+                                        Text(LocalizedStringKey("KI-Unterstützung"))
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .rotationEffect(.degrees(showAIGenerator ? 90 : 0))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .padding()
+                                    .background(Color.white.opacity(0.05))
+                                }
+                                
+                                if showAIGenerator {
+                                    VStack(spacing: 16) {
+                                        TextField("", text: $aiTheme, prompt: Text(LocalizedStringKey("Thema für KI (z.B. Weltraum)")).foregroundStyle(.gray))
+                                            .padding()
+                                            .background(Color.black.opacity(0.3))
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .foregroundStyle(.white)
+                                        
+                                        Picker(LocalizedStringKey("Schwierigkeit"), selection: $selectedDifficulty) {
+                                            ForEach(CategoryDifficulty.allCases, id: \.self) { diff in
+                                                Text(LocalizedStringKey(diff.rawValue)).tag(diff)
+                                            }
+                                        }
+                                        .pickerStyle(.segmented)
+                                        .onAppear {
+                                             UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.darkGray
+                                             UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+                                             UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.lightGray], for: .normal)
+                                        }
+
+                                        Button(action: generateAICategory) {
+                                            HStack {
+                                                if categoryViewModel.isGeneratingAI {
+                                                    ProgressView().tint(.white)
+                                                } else {
+                                                    Image(systemName: "wand.and.stars")
+                                                }
+                                                Text(categoryViewModel.isGeneratingAI ? String(localized: "Generiere...") : String(localized: "Vorschläge generieren"))
+                                            }
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(aiTheme.isEmpty ? Color.gray.opacity(0.3) : Color.purple)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        }
+                                        .disabled(aiTheme.isEmpty || categoryViewModel.isGeneratingAI)
+                                    }
+                                    .padding()
+                                    .background(Color.white.opacity(0.02))
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .padding(.horizontal)
+
+                            // 3. Add Words
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text(LocalizedStringKey("Begriffe"))
+                                        .font(.headline)
+                                        .foregroundStyle(.white.opacity(0.8))
+                                    Spacer()
+                                    let minLabel = String(localized: "min.")
+                                    Text("\(terms.count) / 5 \(minLabel)")
+                                        .font(.caption)
+                                        .foregroundStyle(terms.count >= 5 ? .green : .orange)
+                                }
+                                
+                                HStack(spacing: 12) {
+                                    TextField("", text: $newTermText, prompt: Text(LocalizedStringKey("Neues Wort...")).foregroundStyle(.gray))
+                                        .padding()
+                                        .background(Color.white.opacity(0.08))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .foregroundStyle(.white)
+                                        .onSubmit { addTerm() }
+                                    
+                                    Button(action: addTerm) {
+                                        Image(systemName: "plus")
+                                            .font(.title2.bold())
+                                            .foregroundStyle(.white)
+                                            .frame(width: 50, height: 50)
+                                            .background(newTermText.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                                            .clipShape(Circle())
+                                    }
+                                    .disabled(newTermText.trimmingCharacters(in: .whitespaces).isEmpty)
+                                }
+                                
+                                // Translation All
+                                if !terms.isEmpty {
+                                    Button(action: translateAllTerms) {
+                                        HStack {
+                                            if isTranslatingTerms {
+                                                ProgressView().tint(.blue)
+                                            } else {
+                                                Image(systemName: "globe")
+                                            }
+                                            Text(LocalizedStringKey("Alle fehlenden Englisch-Übersetzungen ergänzen"))
+                                                .font(.subheadline)
+                                        }
+                                        .foregroundStyle(.blue)
+                                        .padding(.vertical, 4)
+                                    }
+                                    .disabled(isTranslatingTerms)
+                                }
+                                
+                                // List
+                                LazyVStack(spacing: 10) {
+                                    ForEach($terms) { $term in
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(term.text)
+                                                    .font(.body.bold())
+                                                    .foregroundStyle(.white)
+                                                
+                                                TextField(String(localized: "Englisch (optional)"), text: Binding(
+                                                    get: { term.englishTranslation ?? "" },
+                                                    set: { term.englishTranslation = $0.isEmpty ? nil : $0 }
+                                                ))
+                                                .font(.caption)
+                                                .foregroundStyle(.gray)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            // Single Translate
+                                            Button {
+                                                translateTerm(term.id)
+                                            } label: {
+                                                if translatingTermId == term.id {
+                                                    ProgressView().tint(.blue).scaleEffect(0.7)
+                                                } else {
+                                                    Image(systemName: "globe")
+                                                        .foregroundStyle(.blue.opacity(0.7))
+                                                }
+                                            }
+                                            .padding(.trailing, 8)
+
+                                            // Delete
+                                            Button {
+                                                if let idx = terms.firstIndex(where: { $0.id == term.id }) {
+                                                    terms.remove(at: idx)
+                                                }
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundStyle(.red.opacity(0.6))
+                                            }
+                                        }
+                                        .padding()
+                                        .background(Color.white.opacity(0.05))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.bottom, 40)
+                    }
+                }
+            }
+            .navigationBarHidden(true)
+        }
+    }
+    
+    // Logic
+    private func saveCategory() {
+        categoryViewModel.addCategory(name: categoryName, terms: terms.map { Term(text: $0.text, englishTranslation: $0.englishTranslation) })
+        dismiss()
+    }
+    
+    private func addTerm() {
+        guard !newTermText.isEmpty else { return }
+        terms.append(DraftTerm(text: newTermText))
+        newTermText = ""
+    }
+    
+    private func generateAICategory() {
+        Task {
+            await categoryViewModel.generateAICategory(
+                theme: aiTheme,
+                difficulty: selectedDifficulty
+            )
+            // Note: Since categoryViewModel adds it directly, we might want to intercept it or just populate fields?
+            // The original implementation seemed to add it to the manager directly.
+            // If we want to populate THIS form, we'd need different logic in Manager.
+            // Assuming default behavior is fine (adds to list), user can then see it in list.
+            // OR: If the user wants to EDIT the generated one before saving, that's complex.
+            // Let's stick to standard behavior: It generates and adds it.
+            dismiss()
+        }
+    }
+
+    private func translateAllTerms() {
+        guard !isTranslatingTerms else { return }
+        isTranslatingTerms = true
+        Task {
+            for index in terms.indices {
+                let text = terms[index].text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !text.isEmpty else { continue }
+                if let english = terms[index].englishTranslation, !english.isEmpty { continue }
+                
+                let translation = await translationService.translateToEnglish(text)
+                await MainActor.run {
+                    terms[index].englishTranslation = translation
+                }
+            }
+            await MainActor.run { isTranslatingTerms = false }
+        }
+    }
+
+    private func translateTerm(_ id: DraftTerm.ID) {
+        guard translatingTermId == nil else { return }
+        guard let index = terms.firstIndex(where: { $0.id == id }) else { return }
+        translatingTermId = id
+        Task {
+            let translation = await translationService.translateToEnglish(terms[index].text)
+            await MainActor.run {
+                terms[index].englishTranslation = translation
+                translatingTermId = nil
+            }
+        }
+    }
+}
+
+struct DraftTerm: Identifiable {
+    let id = UUID()
+    var text: String
+    var englishTranslation: String?
+}

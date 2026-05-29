@@ -200,9 +200,11 @@ extension AIService {
                 let prompt = """
                 Kategorie: "\(categoryName)"
                 Geheimes Wort: "\(word)"
-                Erstelle \(count) vage Hinweise (ein Satz, 6–12 Wörter).
+                Erstelle \(count) vage Hinweise (ein Satz, 5–12 Wörter).
                 Regeln: Wort nie nennen, keine Zahlen/Buchstaben, keine Vergleiche/Superlative.
-                Beginne jeden Hinweis mit "Es".
+                Hinweise sollen konkrete Assoziationen geben, aber nicht loesen.
+                Vermeide generische Saetze wie "Es passt zur Kategorie" oder "Man kennt es allgemein".
+                Beginne jeden Hinweis mit "Es", "Man", "Viele" oder "Menschen".
                 Gib genau \(count) Hinweise zurück.
                 """
                 
@@ -274,6 +276,34 @@ extension AIService {
                 "Es wird oft zubereitet",
                 "Es kann warm oder kalt sein"
             ]
+        } else if category.contains("film") || category.contains("serie") || category.contains("kino") {
+            hints = [
+                "Es hat eine erkennbare Stimmung",
+                "Viele verbinden damit bestimmte Figuren",
+                "Es wird oft gemeinsam geschaut",
+                "Es kann spannend oder vertraut wirken"
+            ]
+        } else if category.contains("alltagsgegen") || category.contains("gegenstand") || category.contains("objekt") {
+            hints = [
+                "Es wird oft im Alltag benutzt",
+                "Es liegt manchmal einfach herum",
+                "Man merkt es besonders, wenn es fehlt",
+                "Es hat meistens einen praktischen Zweck"
+            ]
+        } else if category.contains("event") || category.contains("anlass") || category.contains("anläss") {
+            hints = [
+                "Es bringt Menschen zusammen",
+                "Es hat oft eine bestimmte Stimmung",
+                "Man bereitet sich manchmal darauf vor",
+                "Danach gibt es oft Geschichten"
+            ]
+        } else if category.contains("schule") || category.contains("uni") || category.contains("studium") {
+            hints = [
+                "Es passt zu Lernen und Alltag",
+                "Viele kennen es aus Gruppen",
+                "Es kann Druck oder Routine ausloesen",
+                "Es hat oft mit Regeln zu tun"
+            ]
         } else if category.contains("stadt") || category.contains("land") || category.contains("ort") {
             hints = [
                 "Es ist ein Ort",
@@ -340,22 +370,25 @@ extension AIService {
 
     nonisolated private func isSpyHintValid(_ hint: String, word: String, categoryName: String) -> Bool {
         let trimmed = hint.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 8, trimmed.count <= 80 else { return false }
+        guard trimmed.count >= 12, trimmed.count <= 90 else { return false }
         guard !containsDigits(trimmed) else { return false }
         guard !trimmed.contains("?") else { return false }
         
         let normalized = normalizeForMatching(trimmed)
+        guard !normalized.isEmpty else { return false }
         guard !containsForbiddenWord(trimmed, word: word) else { return false }
         guard !containsBannedPattern(normalized) else { return false }
+        guard !containsWeakSpyHintPattern(normalized) else { return false }
         guard matchesCategoryAnchor(normalized, categoryName: categoryName) else { return false }
         
         let wordCount = normalized.split(separator: " ").count
-        guard wordCount >= 4, wordCount <= 12 else { return false }
+        guard wordCount >= 5, wordCount <= 13 else { return false }
+        guard hasEnoughDescriptiveContent(normalized) else { return false }
         
         let startsOk = normalized.hasPrefix("es ")
             || normalized.hasPrefix("man ")
-            || normalized.hasPrefix("das ding ")
-            || normalized.hasPrefix("dieses ding ")
+            || normalized.hasPrefix("viele ")
+            || normalized.hasPrefix("menschen ")
         return startsOk
     }
 
@@ -369,9 +402,6 @@ extension AIService {
         
         guard !containsForbiddenWord(trimmed, word: word) else { return false }
         guard !containsBannedPattern(normalized) else { return false }
-        if type != .challenge {
-            guard matchesCategoryAnchor(normalized, categoryName: categoryName) else { return false }
-        }
         
         let wordCount = normalized.split(separator: " ").count
         let minWords = type == .challenge ? 3 : 4
@@ -411,6 +441,18 @@ extension AIService {
         if name.contains("stadt") || name.contains("land") || name.contains("ort") {
             return ["ort", "stadt", "land", "reise", "menschen", "gebaud", "gebaeud", "besuch", "dort"]
         }
+        if name.contains("film") || name.contains("serie") || name.contains("kino") {
+            return ["film", "serie", "kino", "figur", "szene", "geschichte", "genre", "schau", "stream", "folge"]
+        }
+        if name.contains("alltagsgegen") || name.contains("gegenstand") || name.contains("objekt") {
+            return ["alltag", "benutz", "ding", "objekt", "praktisch", "hand", "liegt", "gebrauch"]
+        }
+        if name.contains("event") || name.contains("anlass") {
+            return ["event", "anlass", "feier", "menschen", "stimmung", "termin", "party", "vorbereit"]
+        }
+        if name.contains("schule") || name.contains("uni") || name.contains("studium") {
+            return ["schule", "uni", "lern", "pruf", "pruef", "klasse", "kurs", "lehrer", "student", "campus"]
+        }
         if name.contains("beruf") || name.contains("job") {
             return ["beruf", "arbeit", "job", "dienst", "profi"]
         }
@@ -439,6 +481,7 @@ extension AIService {
             "beginnt mit", "endet mit", "buchstabe", "buchstaben", "silbe", "silben",
             "reimt", "klingt", "heisst", "wort", "name", "abkurzung",
             "nummer", "zahl", "preis", "euro", "dollar",
+            "es ist ein tier", "es ist eine frucht", "es ist ein beruf", "es ist ein ort",
             "wie ein", "wie eine", "wie der", "wie die", "wie das",
             "schneller als", "langsamer als", "grosser als", "kleiner als",
             "am schnellsten", "am grossten", "am kleinsten",
@@ -453,6 +496,52 @@ extension AIService {
         }
         
         return false
+    }
+
+    nonisolated private func containsWeakSpyHintPattern(_ normalized: String) -> Bool {
+        let weakPhrases = [
+            "passt zur kategorie",
+            "passt gut zur kategorie",
+            "in dieser kategorie",
+            "ist in der kategorie",
+            "ist in dieser kategorie",
+            "kommt oft vor",
+            "kommt haeufig vor",
+            "kommt haufig vor",
+            "man kennt es allgemein",
+            "kennt man allgemein",
+            "viele kennen es",
+            "viele kennen das",
+            "hat eine klare stimmung",
+            "hat eine bestimmte stimmung",
+            "laesst mehrere antworten offen",
+            "lasst mehrere antworten offen",
+            "kann vieles bedeuten",
+            "ist schwer zu beschreiben",
+            "ist nicht leicht zu erraten",
+            "ist etwas besonderes",
+            "wirkt interessant",
+            "wirkt bekannt",
+            "ist ziemlich bekannt",
+            "hat viele eigenschaften"
+        ]
+        return weakPhrases.contains { normalized.contains($0) }
+    }
+
+    nonisolated private func hasEnoughDescriptiveContent(_ normalized: String) -> Bool {
+        let fillerWords: Set<String> = [
+            "es", "man", "viele", "menschen", "das", "die", "der", "den", "dem", "ein", "eine", "einer",
+            "einem", "einen", "und", "oder", "aber", "auch", "oft", "sehr", "eher", "meist", "meistens",
+            "kann", "koennte", "konnte", "wird", "wirkt", "hat", "ist", "sind", "sein", "bei", "mit",
+            "zu", "zur", "zum", "im", "in", "am", "an", "auf", "aus", "fuer", "fur", "von", "als"
+        ]
+        let meaningfulWords = normalized
+            .split(separator: " ")
+            .map(String.init)
+            .filter { word in
+                word.count >= 4 && !fillerWords.contains(word)
+            }
+        return meaningfulWords.count >= 2
     }
 
     nonisolated private func containsForbiddenWord(_ text: String, word: String) -> Bool {
@@ -551,5 +640,64 @@ extension AIService {
         }
         #endif
         return Array(repeating: "Besucher", count: count)
+    }
+
+    @MainActor
+    func generateStrictLocationRoles(for location: String, count: Int) async -> [String]? {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            guard isAvailable else { return nil }
+            let prompt = """
+            Ort: "\(location)"
+            Erzeuge genau \(count) verschiedene, kurze deutsche Rollen fuer diesen Ort.
+            Regeln: 1-3 Woerter pro Rolle, keine Namen, keine Saetze, keine Duplikate.
+            Beispiele fuer Krankenhaus: Arzt, Patient, Pfleger, Empfangskraft.
+            """
+            do {
+                let session = makeHintSession()
+                let response = try await session.respond(to: prompt, generating: AIRoleListResponse.self)
+                let roles = response.content.roles
+                    .map { cleanLocationRole($0) }
+                    .filter { isLocationRoleValid($0) }
+                    .uniquedPreservingOrder()
+                guard roles.count >= count else { return nil }
+                return Array(roles.prefix(count))
+            } catch {
+                return nil
+            }
+        }
+        #endif
+        return nil
+    }
+
+    nonisolated private func cleanLocationRole(_ role: String) -> String {
+        var cleaned = role.trimmingCharacters(in: .whitespacesAndNewlines)
+        cleaned = cleaned.trimmingCharacters(in: CharacterSet(charactersIn: "\"“”'.,;:-"))
+        cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleaned
+    }
+
+    nonisolated private func isLocationRoleValid(_ role: String) -> Bool {
+        guard role.count >= 3, role.count <= 32 else { return false }
+        guard role.rangeOfCharacter(from: .decimalDigits) == nil else { return false }
+        guard !role.contains("?"), !role.contains(".") else { return false }
+        let words = normalizeForMatching(role).split(separator: " ")
+        guard (1...3).contains(words.count) else { return false }
+        let banned = ["rolle", "spieler", "person", "besucher"]
+        return !words.contains { banned.contains(String($0)) }
+    }
+}
+
+private extension Array where Element == String {
+    func uniquedPreservingOrder() -> [String] {
+        var seen: Set<String> = []
+        var result: [String] = []
+        for item in self {
+            let key = item.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            result.append(item)
+        }
+        return result
     }
 }

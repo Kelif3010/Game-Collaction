@@ -67,6 +67,8 @@ class GameSettings {
     var timeRemaining: Int = 300
     var isTimerPaused: Bool = false
     var startingPlayerName: String? = nil
+    private var lastRoundCategoryId: UUID? = nil
+    private var lastStartingPlayerId: UUID? = nil
     var currentCardBackAnimation: String = "Fingerprint biometric scan"
     var multiplayerStartAtHostUptime: TimeInterval? = nil
     var hostClockOffset: TimeInterval = 0
@@ -110,9 +112,13 @@ class GameSettings {
         self.timeLimit = defaults.integer(forKey: "imposter.timeLimit") > 0 ? defaults.integer(forKey: "imposter.timeLimit") : 300
         
         let gameModeKey = "imposter.gameMode"
-        if let raw = defaults.string(forKey: gameModeKey),
-           let mode = ImposterGameMode(rawValue: raw) {
-            self.gameMode = mode
+        if let raw = defaults.string(forKey: gameModeKey) {
+            if let mode = ImposterGameMode(rawValue: raw) {
+                self.gameMode = mode
+            } else {
+                self.gameMode = .classic
+                defaults.set(ImposterGameMode.classic.rawValue, forKey: gameModeKey)
+            }
         } else if let data = defaults.data(forKey: gameModeKey),
                   let mode = try? JSONDecoder().decode(ImposterGameMode.self, from: data) {
             self.gameMode = mode
@@ -215,7 +221,9 @@ class GameSettings {
         } else {
             pool = []
         }
-        let chosen = pool.randomElement()
+        let filteredPool = pool.count > 1 ? pool.filter { $0.id != lastRoundCategoryId } : pool
+        let chosen = filteredPool.randomElement() ?? pool.randomElement()
+        lastRoundCategoryId = chosen?.id
         roundCategory = chosen
         return chosen
     }
@@ -281,6 +289,7 @@ class GameSettings {
     
     func resetGame() {
         currentPlayerIndex = 0
+        startingPlayerName = nil
         gamePhase = .setup
         timeRemaining = timeLimit
         isTimerPaused = false
@@ -378,6 +387,14 @@ class GameSettings {
         numberOfImposters = min(max(1, numberOfImposters), maxAllowedImpostersCap)
     }
     
+    func pickStartingPlayer() -> Player? {
+        let available = players.count > 1 ? players.filter { $0.id != lastStartingPlayerId } : players
+        let picked = available.randomElement() ?? players.randomElement()
+        lastStartingPlayerId = picked?.id
+        startingPlayerName = picked?.name
+        return picked
+    }
+
     // MARK: - MPC Helpers
     func toMPCConfig() -> ImposterGameConfig {
         return ImposterGameConfig(
@@ -427,7 +444,17 @@ enum ImposterGameMode: String, CaseIterable, Codable {
     case classic = "Klassisch"
     case twoWords = "Zwei-Begriffe"
     case roles = "Rollen Modus"
-    case questions = "Fragen Modus"
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = (try? container.decode(String.self)) ?? ""
+        self = ImposterGameMode(rawValue: rawValue) ?? .classic
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
     
     var displayName: String {
         return self.rawValue
@@ -441,8 +468,6 @@ enum ImposterGameMode: String, CaseIterable, Codable {
             return "Spieler werden in zwei Gruppen mit verschiedenen Begriffen aufgeteilt"
         case .roles:
             return "Jeder Spieler erhält eine KI-generierte Rolle basierend auf dem Ort (nur mit Kategorie 'Orte')"
-        case .questions:
-            return "Fragen-basierter Modus (Platzhalter – Logik folgt)"
         }
     }
     
@@ -454,8 +479,6 @@ enum ImposterGameMode: String, CaseIterable, Codable {
             return "doc.on.doc.fill"
         case .roles:
             return "theatermasks.fill"
-        case .questions:
-            return "questionmark.circle.fill"
         }
     }
 }

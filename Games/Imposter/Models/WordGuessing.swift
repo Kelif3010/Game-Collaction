@@ -29,7 +29,7 @@ class WordGuessingManager {
         
         let result = WordGuessResult(
             wasCorrect: true,
-            correctWord: getCurrentWord(),
+            correctWord: getCurrentWordsDisplay(),
             spyWon: true,
             gameEnded: true
         )
@@ -55,11 +55,22 @@ class WordGuessingManager {
         return result
     }
     
-    /// Gibt das aktuelle Wort zurück (für normale Spieler)
-    private func getCurrentWord() -> String {
-        // Das echte Wort der normalen Spieler finden
-        let normalPlayer = gameSettings.players.first { !$0.isImposter }
-        return normalPlayer?.word ?? "Unbekannt"
+    /// Gibt die aktuellen Bürger-Begriffe zurück. Im Zwei-Begriffe-Modus können das zwei Wörter sein.
+    private func getCurrentWordsDisplay() -> String {
+        let words = gameSettings.players
+            .filter { !$0.isImposter && $0.roleType?.team != .imposter && $0.roleType != .confused }
+            .map { player in
+                player.word.components(separatedBy: "\n\n").first ?? player.word
+            }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .reduce(into: [String]()) { uniqueWords, word in
+                if !uniqueWords.contains(word) {
+                    uniqueWords.append(word)
+                }
+            }
+
+        return words.isEmpty ? "Unbekannt" : words.joined(separator: " / ")
     }
 }
 
